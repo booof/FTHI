@@ -1,2 +1,13 @@
 # FTHI
-A Custom 2D Game Engine
+This is a custom 2D game engine complete with dynamic lighting, 2D physics, a level editor, and dynamic scripting. This engine is still a WIP so expect frequent changes and new additions.
+
+
+Prerequisites:
+
+To run this engine, both Visual Studio 2022 and Cmake must be installed. The source code of this engine is to be compiled and run through Visual Studio 2022 using the default "Local Windows Debugger" using the Debug mode with x64 as to be compatible with included libraries. Cmake is required to be able to apply scripting. The contents of this repository are to be placed in a directory named "FTHI"
+
+
+Tutorial:
+
+Upon a successful launch of this engine, there will be a window with a GUI. On this GUI, click the "Create Project" button and navigate to where you would like to create a project. Name this project however you like. After waiting through the creation and initial build of the project, you will be brought to a blank, grey screen. This is the level editor. New projects don't have any objects, so, to create a new object, press the space bar to open the New Object GUI. In this GUI, click on the type of object you wish to create. Upon the creation of a new object, the object will automatically be placed in "select mode". In this mode, the object can be moved and resized by holding left click on the object and dragging it. To edit more specific values of the object, right click to open the Object Editor GUI. To exit select mode, left click outside the object or press ESC. To apply scripting to objects, press f7 to open the Script Wizard GUI. Navigate to the File tab (the first tab from
+the left) and click the "add" file button. Name this file howver you like. Now, press the "open" file button to open this file. In this file, create a function using the following syntax: "void [Name of Script](Object::Object *object_ptr) {}". Save this file and return to the Script Wizard GUI. Navigate to the Object Script Tab (the third tab) and press the "add" script button. Click on the script name and name it however you like. Next, click on the loop-function box (third column) of the new script and rename it to the name of your script function. Exit out of the Script Wizard and press f5 to start compiling your script. If the compilation is successful, there will be green text in the top-left corner of the screen. If not, a notification will pop up and tell you to open the debugger (accessed by pressing f6) to fix the errors. If your compilation was successful, you can now attatch your script to an object by opening the objects's Object Editor GUI and renaming the contents of the script box to the name of your script. Exit this window and press enter to save you work. Press f1 to run your project.
