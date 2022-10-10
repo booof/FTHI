@@ -1,0 +1,1131 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Main">
+      <UniqueIdentifier>{0c36eb5e-d9f1-4d73-a2c4-3b96816baf7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source">
+      <UniqueIdentifier>{c74581c3-bbf5-4d09-b912-910e9affd080}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class">
+      <UniqueIdentifier>{b5f0ba2e-69fd-4bbd-8294-15c94d3ff404}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects">
+      <UniqueIdentifier>{28cd0f54-8f17-44a2-8323-1f3085a15f27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Render">
+      <UniqueIdentifier>{e06c78f6-cf39-45df-b00c-f45381f8a311}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Physics">
+      <UniqueIdentifier>{85dde4f3-7608-4d2b-8b5e-780b6796c8c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class">
+      <UniqueIdentifier>{d27d6a8f-9fab-4e0e-8385-b2f302bf6fc0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source">
+      <UniqueIdentifier>{3edb66a0-798f-44e4-b8a1-8d3ab94c094b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Render">
+      <UniqueIdentifier>{5dee6f98-20df-4ebd-b32f-a212a77647aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects">
+      <UniqueIdentifier>{4d50ea49-6cbb-44a9-bedc-a20135f2fdae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Physics">
+      <UniqueIdentifier>{76737c44-83fd-4593-9af2-66c31c9abd9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Physics\Hinge">
+      <UniqueIdentifier>{9e10cbaf-86b8-44f4-9114-dd6c4b43222b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Physics\Rigid Body">
+      <UniqueIdentifier>{b9826a6c-5267-4b16-9907-f13daecbe15a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Physics\Soft Body">
+      <UniqueIdentifier>{f2968b9d-efba-4f33-8983-9c4654ba5eb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Physics\Hinge">
+      <UniqueIdentifier>{60664bab-2eb0-43a4-b427-1d72cf1b9a26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Physics\Soft Body">
+      <UniqueIdentifier>{a6d7d47d-98a3-4eb3-804b-1e9c0da2b9e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Physics\Rigid Body">
+      <UniqueIdentifier>{4d3467ee-f827-484c-a5f8-521bc6a13876}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Render\Template">
+      <UniqueIdentifier>{7a339ce1-e402-457a-8f8e-700c3e6fa9f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Render\Struct">
+      <UniqueIdentifier>{97808dd0-a1da-455a-8c89-f379916de037}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Render\Shape">
+      <UniqueIdentifier>{58039cac-f8a7-4274-bd9e-21627f16c523}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Terrain">
+      <UniqueIdentifier>{eb06fc55-f73c-4326-ba07-d70d243fd688}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Terrain">
+      <UniqueIdentifier>{0d69cc19-f85a-4d83-a796-0107ddb60051}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Render\Objects">
+      <UniqueIdentifier>{c44b1b9d-bb42-4596-8382-86178c67418b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Render\Objects">
+      <UniqueIdentifier>{a1bf5ee6-334b-4b00-b6f9-9b3963176bab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Render\Camera">
+      <UniqueIdentifier>{5b9bb27a-c51e-4ee5-bbb5-d2cfaa8f0d37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Lighting">
+      <UniqueIdentifier>{a7734f7c-81b8-4637-a773-7e944a8d73f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Lighting">
+      <UniqueIdentifier>{90b8162b-ee65-437a-ab8b-6bd43a4839b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Collision">
+      <UniqueIdentifier>{d22283fb-7e93-40e1-9675-41053c3034e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Collision\Horizontal">
+      <UniqueIdentifier>{6e7fd6c9-e230-4a78-b3fb-5e0e972868ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Collision\Vertical">
+      <UniqueIdentifier>{980d38b0-4b1e-4b1a-83a9-606c44a7c420}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Collision\Horizontal\Line">
+      <UniqueIdentifier>{f5cda47e-ad63-489a-8b03-8526270256c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Collision\Horizontal\Slope">
+      <UniqueIdentifier>{7331e3da-1fe4-4337-bc7f-169bc8f18123}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Collision\Horizontal\Slant">
+      <UniqueIdentifier>{d1fb8d71-5a53-4e28-a29a-353d598d3215}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Collision\Vertical\Line">
+      <UniqueIdentifier>{649c93a2-17b8-46e4-8237-929083920c57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Collision\Vertical\Curve">
+      <UniqueIdentifier>{7160695c-321b-48ce-bdea-a5a65ca60b6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Collision">
+      <UniqueIdentifier>{eac84958-a178-4192-bf82-705f852a7ff8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Collision\Horizontal">
+      <UniqueIdentifier>{5a106626-c29d-44f8-820c-805c383c8321}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Collision\Vertical">
+      <UniqueIdentifier>{1ae939e3-59f7-4cde-93a5-8918b42c4134}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Collision\Horizontal\Line">
+      <UniqueIdentifier>{e286c3e9-e248-41f7-ab4f-7adb0bb98bfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Collision\Horizontal\Slope">
+      <UniqueIdentifier>{3ec294ea-f61f-4774-8f29-900724a9378f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Collision\Horizontal\Slant">
+      <UniqueIdentifier>{24ee6f7c-44aa-420a-ae19-46018bf4283e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Collision\Vertical\Line">
+      <UniqueIdentifier>{2d9411d1-aaa5-4a30-ad0f-cb69e563b598}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Collision\Vertical\Curve">
+      <UniqueIdentifier>{4432ebe7-0c9e-477f-adcc-1428d0123954}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Scritps">
+      <UniqueIdentifier>{ff74cc7a-8ade-4e5f-a771-03e1998012dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Scritps\Object">
+      <UniqueIdentifier>{64246f09-4891-4b21-b1a7-7e7f92732e7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Scritps\Object\Mask">
+      <UniqueIdentifier>{81e11676-51e6-4162-b4f1-10b822fe8cd1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Collision\Trigger">
+      <UniqueIdentifier>{73ce86b0-2c24-47aa-a508-ad3a390dc39c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Objects\Collision\Trigger">
+      <UniqueIdentifier>{fee550ee-520e-425a-b905-62643cb40c31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Vertices">
+      <UniqueIdentifier>{4c11c65b-4ee5-414a-a7b1-daec24581ec6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Vertices\Rectangle">
+      <UniqueIdentifier>{f9f09e97-bc1b-4d69-94f1-dc78d19a866a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Vertices\Trapezoid">
+      <UniqueIdentifier>{317dc5e0-51a1-4a59-a5b2-48df0df7df60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Vertices\Triangle">
+      <UniqueIdentifier>{4d4d5ecc-7b81-4363-9f3f-2b4f256ea455}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Vertices\Circle">
+      <UniqueIdentifier>{1f6727f4-1ba4-4a2d-ace4-9b383baccc1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Vertices\Line">
+      <UniqueIdentifier>{f9125c04-6c33-41e1-a301-2a6eedcbbee7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Vertices\Buffer">
+      <UniqueIdentifier>{d8eba595-9625-473d-a194-98614b683d7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Vertices\Visualizer">
+      <UniqueIdentifier>{c61e4c58-9e51-40cb-8030-8f936182490a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Render\Shader">
+      <UniqueIdentifier>{59913e92-104b-461a-9ecb-108e872193a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Shaders">
+      <UniqueIdentifier>{4ee3a1d2-1728-41fa-a2a8-11d0d8c8a005}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Shaders\Frag">
+      <UniqueIdentifier>{aa4d74e0-6237-41e6-a799-4c7d6c8e07bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Shaders\Geom">
+      <UniqueIdentifier>{deb949b4-e5e1-4cf5-a05d-df1a2f6aaad8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Shaders\Vert">
+      <UniqueIdentifier>{24e50e07-2f6f-4447-9504-d6ac1f362b03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Algorithms">
+      <UniqueIdentifier>{f8100c09-00f8-4e2a-95fa-226fff61c54b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Algorithms\Sorting">
+      <UniqueIdentifier>{04c65c9d-ca40-4c1e-8d42-6344c098e087}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Loops">
+      <UniqueIdentifier>{d1add77c-3522-4ef9-a93d-2e0dc8f1381f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Loaders">
+      <UniqueIdentifier>{3938c51a-a983-4361-9b24-a2af464fa9f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Rendering">
+      <UniqueIdentifier>{1ee8b43a-995f-4913-bef9-ad0e91edb1fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Include">
+      <UniqueIdentifier>{436d5f32-7759-472e-ae7c-4d463a8605f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Render\Editor">
+      <UniqueIdentifier>{e545963c-4e29-4a31-961d-ae0baac6b715}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Render\GUI">
+      <UniqueIdentifier>{b18cf707-e3bd-4f69-b045-912d1c0d4aee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Events">
+      <UniqueIdentifier>{ace10e56-9904-4eaa-b84b-32a9ec04073f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Algorithms">
+      <UniqueIdentifier>{115c72fe-3bde-4b70-b448-338e6b55aa89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Events">
+      <UniqueIdentifier>{b00c687f-c933-4708-881b-9c34ca44842f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Loaders">
+      <UniqueIdentifier>{be8b4436-d403-485f-a59c-7cb23d361a1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Vertices">
+      <UniqueIdentifier>{049726a9-3ba9-4e1c-a8f3-a0db90cbbf22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Algorithms\Sorting">
+      <UniqueIdentifier>{83f31ed8-493c-4fda-a7dc-3e68f49b4627}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Vertices\Buffer">
+      <UniqueIdentifier>{f7b93b46-a950-4d94-b6b9-f1751d54e686}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Vertices\Rectangle">
+      <UniqueIdentifier>{339d5b72-6f00-414f-9940-941fd5294681}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Vertices\Trapezoid">
+      <UniqueIdentifier>{f23b569b-b352-4395-8575-479f5713b030}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Vertices\Triangle">
+      <UniqueIdentifier>{a961307e-606c-4830-803e-b8c3d2390b12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Vertices\Circle">
+      <UniqueIdentifier>{28920e0d-f9a2-4528-ab36-852e53338bce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Vertices\Line">
+      <UniqueIdentifier>{af8d1096-da47-4117-928f-cb08b6bf22f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Vertices\Visualizer">
+      <UniqueIdentifier>{a01bc062-fddd-4548-b2b4-95b938393c0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Loops">
+      <UniqueIdentifier>{7c9d03ef-6e07-461a-9a74-3a7564ccec80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Render\Editor">
+      <UniqueIdentifier>{5f330e41-45c6-4772-a26e-e590abb8010e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Render\GUI">
+      <UniqueIdentifier>{5c2d8c19-b0f0-4b00-a02c-484f2f285860}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Render\Shape">
+      <UniqueIdentifier>{0b7dea01-772f-410c-b379-66f655f0f125}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Render\Shader">
+      <UniqueIdentifier>{17eb687c-2a4e-44da-a432-97bc3bfc4152}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Render\Struct">
+      <UniqueIdentifier>{4369bc6a-760b-4a93-89df-445a0a1a2187}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Class\Render\Camera">
+      <UniqueIdentifier>{020d3a23-0fbd-4c6e-9336-01743ce4e8ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Rendering">
+      <UniqueIdentifier>{cf4f1af4-9097-44e7-8dfd-9eda43f502b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Algorithms\QuickMath">
+      <UniqueIdentifier>{491f4c6b-5071-4dba-8088-c7a5b4c7de97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Collisions">
+      <UniqueIdentifier>{09a5d94c-fa0a-4d3a-a4bd-8a1d99f24342}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Collisions\Point Collisions">
+      <UniqueIdentifier>{20e439c3-767c-4468-8e6d-7d27b8932552}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Source\Algorithms\Common">
+      <UniqueIdentifier>{b24e13f3-e6bc-4fbf-b516-51d9c11d11cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Algorithms\Common">
+      <UniqueIdentifier>{b593087e-3c68-4278-b6c7-5f1e31820709}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Include">
+      <UniqueIdentifier>{4d9e2aa4-1246-4ceb-b25f-d73c63013035}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scripts">
+      <UniqueIdentifier>{3b3f11ce-cf8b-40ca-b798-bffa1cce9b0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Render\Objects\Scripts">
+      <UniqueIdentifier>{ec0368d9-1e24-41a7-8f72-11c99a1ffff5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scripts\Global">
+      <UniqueIdentifier>{5c02696e-eba1-4185-ae4e-b899333b0d42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scripts\Function">
+      <UniqueIdentifier>{a931fae2-03f1-4d27-9b01-42537f93e91f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scripts\Object">
+      <UniqueIdentifier>{a1cd44a8-08f1-49a5-96bf-ead29e599925}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scripts\Object\Terrain">
+      <UniqueIdentifier>{f5b40650-599c-4399-a0f3-0c6d23d8723d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scripts\Global\Events">
+      <UniqueIdentifier>{2c6e92aa-6eb4-41a9-8a4c-7fb4b591264f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Entity">
+      <UniqueIdentifier>{c6c389f2-5a3b-461c-a191-73fb13cbcb87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Class\Objects\Effects">
+      <UniqueIdentifier>{cd0ce4f8-0473-4b6d-bdcf-93f5e6acb01d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scripts\Object\Entity">
+      <UniqueIdentifier>{41a25eda-09e9-418b-8109-e66512f49860}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Collisions\Mask Collisions">
+      <UniqueIdentifier>{c909a844-158d-410b-a963-51a66c005934}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Source\Collisions\Physics Collisions">
+      <UniqueIdentifier>{d39ba359-7985-47b2-8094-e24077146e45}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main\Source.cpp">
+      <Filter>Source Files\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidBody.cpp">
+      <Filter>Source Files\Class\Objects\Physics\Rigid Body</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Terrain\TerrainBase.cpp">
+      <Filter>Source Files\Class\Objects\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Object.cpp">
+      <Filter>Source Files\Class\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Objects\Level.cpp">
+      <Filter>Source Files\Class\Render\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Lighting\Directional.cpp">
+      <Filter>Source Files\Class\Objects\Lighting</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Lighting\LightBase.cpp">
+      <Filter>Source Files\Class\Objects\Lighting</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Lighting\Point.cpp">
+      <Filter>Source Files\Class\Objects\Lighting</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Lighting\Spot.cpp">
+      <Filter>Source Files\Class\Objects\Lighting</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Objects\TextureHandler.cpp">
+      <Filter>Source Files\Class\Render\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Line\CeilingMaskLine.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Horizontal\Line</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slant\CeilingMaskSlant.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Horizontal\Slant</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slope\CeilingMaskSlope.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Horizontal\Slope</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Curve\Curve.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Vertical\Curve</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\FloorMask.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Horizontal</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Line\FloorMaskLine.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Horizontal\Line</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slant\FloorMaskSlant.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Horizontal\Slant</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slope\FloorMaskSlope.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Horizontal\Slope</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Curve\LeftMaskCurve.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Vertical\Curve</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Line\LeftMaskLine.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Vertical\Line</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Curve\RightMaskCurve.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Vertical\Curve</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Line\RightMaskLine.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Vertical\Line</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slant\Slant.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Horizontal\Slant</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slope\Slope.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Horizontal\Slope</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Line\VerticalLine.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Vertical\Line</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Line\HorizotnalLine.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Horizontal\Line</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Resources\Scripts\Object\Masks\TestMask.cpp">
+      <Filter>Resource Files\Scritps\Object\Mask</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\CollisionMask.cpp">
+      <Filter>Source Files\Class\Objects\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Objects\SubLevel.cpp">
+      <Filter>Source Files\Class\Render\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Collision\Trigger\TriggerMask.cpp">
+      <Filter>Source Files\Class\Objects\Collision\Trigger</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Algorithms\Sorting\SortingAlgorithms.cpp">
+      <Filter>Source Files\Source\Algorithms\Sorting</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Loops\Loop.cpp">
+      <Filter>Source Files\Source\Loops</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\GUI\Box.cpp">
+      <Filter>Source Files\Class\Render\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Shape\Circle.cpp">
+      <Filter>Source Files\Class\Render\Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Vertices\Circle\CircleVertices.cpp">
+      <Filter>Source Files\Source\Vertices\Circle</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Editor\EditorWindow.cpp">
+      <Filter>Source Files\Class\Render\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Events\EventListeners.cpp">
+      <Filter>Source Files\Source\Events</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Loaders\Fonts.cpp">
+      <Filter>Source Files\Source\Loaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Rendering\Initialize.cpp">
+      <Filter>Source Files\Source\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Vertices\Line\LineVertices.cpp">
+      <Filter>Source Files\Source\Vertices\Line</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Struct\LinkedList.cpp">
+      <Filter>Source Files\Class\Render\Struct</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Vertices\Buffer\ObjectBuffers.cpp">
+      <Filter>Source Files\Source\Vertices\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Shape\Polygon.cpp">
+      <Filter>Source Files\Class\Render\Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Shape\Rectangle.cpp">
+      <Filter>Source Files\Class\Render\Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Vertices\Rectangle\RectangleVertices.cpp">
+      <Filter>Source Files\Source\Vertices\Rectangle</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Editor\Selector.cpp">
+      <Filter>Source Files\Class\Render\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Shader\Shader.cpp">
+      <Filter>Source Files\Class\Render\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\GUI\TextObject.cpp">
+      <Filter>Source Files\Class\Render\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Shape\Trapezoid.cpp">
+      <Filter>Source Files\Class\Render\Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Vertices\Trapezoid\TrapezoidVertices.cpp">
+      <Filter>Source Files\Source\Vertices\Trapezoid</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Shape\Triangle.cpp">
+      <Filter>Source Files\Class\Render\Shape</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Vertices\Triangle\TriangleVertices.cpp">
+      <Filter>Source Files\Source\Vertices\Triangle</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Vertices\Visualizer\Visualizer.cpp">
+      <Filter>Source Files\Source\Vertices\Visualizer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Collisions\Point Collisions\PointCollisions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Editor\EditorOptions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Algorithms\Common\Common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\GUI\ToggleGroup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Includes\Globals.cpp">
+      <Filter>Source Files\Include</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\GUI\ColorWheel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Rendering\PostRender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Rendering\PreRender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Rendering\EditorFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Objects\UnsavedLevel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Objects\ChangeController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Lighting\Beam.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Camera\Camera.cpp">
+      <Filter>Source Files\Class\Render\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Algorithms\Quick Math\QuickMath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Loaders\Textures.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Editor\Notification.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Loaders\Audio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Rendering\Exit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\GLAD\glad.c">
+      <Filter>Source Files\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Entity\EntityBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Entity\Controllables.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Entity\NPC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Entity\Interactables.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Entity\Dynamics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Collisions\Mask Collisions\MaskCollisions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Editor\ProjectSelector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidRectangle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidTrapezoid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidTriangle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidCircle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidPolygon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Physics\Softody\SoftBody.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Physics\Softody\SpringMass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Physics\Softody\Wire.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Physics\Hinge\Anchor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Object\Physics\Hinge\Hinge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Collisions\Physics Collisions\PhysicsCollisions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Editor\ScriptWizard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\GUI\ScrollBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Editor\Debugger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Editor\ObjectInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\Class\Object\Physics\PhysicsBase.h">
+      <Filter>Header Files\Class\Objects\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Physics\Hinge\Hinge.h">
+      <Filter>Header Files\Class\Objects\Physics\Hinge</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Object.h">
+      <Filter>Header Files\Class\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidBody.h">
+      <Filter>Header Files\Class\Objects\Physics\Rigid Body</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Physics\Softody\SoftBody.h">
+      <Filter>Header Files\Class\Objects\Physics\Soft Body</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Struct\Struct.h">
+      <Filter>Header Files\Class\Render\Struct</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Struct\Texture.h">
+      <Filter>Header Files\Class\Render\Struct</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Shape\Shape.h">
+      <Filter>Header Files\Class\Render\Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Shape\Rectangle.h">
+      <Filter>Header Files\Class\Render\Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Shape\Trapezoid.h">
+      <Filter>Header Files\Class\Render\Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Shape\Triangle.h">
+      <Filter>Header Files\Class\Render\Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Shape\Polygon.h">
+      <Filter>Header Files\Class\Render\Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Terrain\TerrainBase.h">
+      <Filter>Header Files\Class\Objects\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Terrain\Foreground.h">
+      <Filter>Header Files\Class\Objects\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Terrain\Formerground.h">
+      <Filter>Header Files\Class\Objects\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Terrain\Background.h">
+      <Filter>Header Files\Class\Objects\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Terrain\Backdrop.h">
+      <Filter>Header Files\Class\Objects\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\Level.h">
+      <Filter>Header Files\Class\Render\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Struct\LinkedList.h">
+      <Filter>Header Files\Class\Render\Struct</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Camera\Camera.h">
+      <Filter>Header Files\Class\Render\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\TextureHandler.h">
+      <Filter>Header Files\Class\Render\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Lighting\Directional.h">
+      <Filter>Header Files\Class\Objects\Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Lighting\Point.h">
+      <Filter>Header Files\Class\Objects\Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Lighting\Spot.h">
+      <Filter>Header Files\Class\Objects\Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Lighting\Beam.h">
+      <Filter>Header Files\Class\Objects\Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Lighting\LightBase.h">
+      <Filter>Header Files\Class\Objects\Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\CollisionMask.h">
+      <Filter>Header Files\Class\Objects\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\FloorMask.h">
+      <Filter>Header Files\Class\Objects\Collision\Horizontal</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\CeilingMask.h">
+      <Filter>Header Files\Class\Objects\Collision\Horizontal</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Line\FloorMaskLine.h">
+      <Filter>Header Files\Class\Objects\Collision\Horizontal\Line</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Line\CeilingMaskLine.h">
+      <Filter>Header Files\Class\Objects\Collision\Horizontal\Line</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slant\FloorMaskSlant.h">
+      <Filter>Header Files\Class\Objects\Collision\Horizontal\Slant</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slant\CeilingMaskSlant.h">
+      <Filter>Header Files\Class\Objects\Collision\Horizontal\Slant</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slope\FloorMaskSlope.h">
+      <Filter>Header Files\Class\Objects\Collision\Horizontal\Slope</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slope\CeilingMaskSlope.h">
+      <Filter>Header Files\Class\Objects\Collision\Horizontal\Slope</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Line\HorizotnalLine.h">
+      <Filter>Header Files\Class\Objects\Collision\Horizontal\Line</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slant\Slant.h">
+      <Filter>Header Files\Class\Objects\Collision\Horizontal\Slant</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slope\Slope.h">
+      <Filter>Header Files\Class\Objects\Collision\Horizontal\Slope</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Curve\LeftMaskCurve.h">
+      <Filter>Header Files\Class\Objects\Collision\Vertical\Curve</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Curve\RightMaskCurve.h">
+      <Filter>Header Files\Class\Objects\Collision\Vertical\Curve</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Curve\Curve.h">
+      <Filter>Header Files\Class\Objects\Collision\Vertical\Curve</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Line\VerticalLine.h">
+      <Filter>Header Files\Class\Objects\Collision\Vertical\Line</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Line\LeftMaskLine.h">
+      <Filter>Header Files\Class\Objects\Collision\Vertical\Line</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\LeftMask.h">
+      <Filter>Header Files\Class\Objects\Collision\Vertical</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\RightMask.h">
+      <Filter>Header Files\Class\Objects\Collision\Vertical</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Line\RightMaskLine.h">
+      <Filter>Header Files\Class\Objects\Collision\Vertical\Line</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\SubLevel.h">
+      <Filter>Header Files\Class\Render\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Collision\Trigger\TriggerMask.h">
+      <Filter>Header Files\Class\Objects\Collision\Trigger</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Vertices\Vertices.h">
+      <Filter>Header Files\Source\Vertices</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Vertices\Rectangle\RectangleVertices.h">
+      <Filter>Header Files\Source\Vertices\Rectangle</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Vertices\Buffer\ObjectBuffers.h">
+      <Filter>Header Files\Source\Vertices\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Vertices\Visualizer\Visualizer.h">
+      <Filter>Header Files\Source\Vertices\Visualizer</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Shader\Shader.h">
+      <Filter>Header Files\Class\Render\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Vertices\Line\LineVertices.h">
+      <Filter>Header Files\Source\Vertices\Line</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Vertices\Circle\CircleVertices.h">
+      <Filter>Header Files\Source\Vertices\Circle</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Vertices\Trapezoid\TrapezoidVertices.h">
+      <Filter>Header Files\Source\Vertices\Trapezoid</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Vertices\Triangle\TriangleVertices.h">
+      <Filter>Header Files\Source\Vertices\Triangle</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Algorithms\Algorithms.h">
+      <Filter>Header Files\Source\Algorithms</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Algorithms\Sorting\SortingAlgorithms.h">
+      <Filter>Header Files\Source\Algorithms\Sorting</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Shape\Circle.h">
+      <Filter>Header Files\Class\Render\Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Loops\Loop.h">
+      <Filter>Header Files\Source\Loops</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Loaders\Fonts.h">
+      <Filter>Header Files\Source\Loaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Rendering\PostRender.h">
+      <Filter>Header Files\Source\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Rendering\PreRender.h">
+      <Filter>Header Files\Source\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Rendering\Initialize.h">
+      <Filter>Header Files\Source\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Includes\Constants.h">
+      <Filter>Header Files\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Includes\ExternalLibs.h">
+      <Filter>Header Files\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Includes\Globals.h">
+      <Filter>Header Files\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Includes\Macros.h">
+      <Filter>Header Files\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Events\EventListeners.h">
+      <Filter>Header Files\Source\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\Box.h">
+      <Filter>Header Files\Class\Render\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\EditorWindow.h">
+      <Filter>Header Files\Class\Render\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\TextObject.h">
+      <Filter>Header Files\Class\Render\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\Selector.h">
+      <Filter>Header Files\Class\Render\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Struct\EditorStructs.h">
+      <Filter>Header Files\Class\Render\Struct</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\GroupSelector.h">
+      <Filter>Header Files\Class\Render\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Algorithms\Quick Math\QuickMath.h">
+      <Filter>Header Files\Source\Algorithms\QuickMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Collisions\Point Collisions\PointCollisions.h">
+      <Filter>Header Files\Source\Collisions\Point Collisions</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\GUI.h">
+      <Filter>Header Files\Class\Render\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\Element.h">
+      <Filter>Header Files\Class\Render\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\EditorOptions.h">
+      <Filter>Header Files\Class\Render\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Algorithms\Common\Common.h">
+      <Filter>Header Files\Source\Algorithms\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\ToggleGroup.h">
+      <Filter>Header Files\Class\Render\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\ColorWheel.h">
+      <Filter>Header Files\Class\Render\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\ScrollBar.h">
+      <Filter>Header Files\Class\Render\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Rendering\EditorFunctions.h">
+      <Filter>Header Files\Source\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\ChangeController.h">
+      <Filter>Header Files\Class\Render\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Loaders\Textures.h">
+      <Filter>Header Files\Source\Loaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\Notification.h">
+      <Filter>Header Files\Class\Render\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Com\DR_WAV\dr_wav.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Com\DR_WAV\dr_mp3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Loaders\Audio.h">
+      <Filter>Header Files\Source\Loaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Rendering\Exit.h">
+      <Filter>Header Files\Source\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Audio\AudioHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\MaterialWizard.h">
+      <Filter>Header Files\Class\Render\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\GUIWizard.h">
+      <Filter>Header Files\Class\Render\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\ScriptWizard.h">
+      <Filter>Header Files\Class\Render\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\TextureWizard.h">
+      <Filter>Header Files\Class\Render\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\ScriptHandler.h">
+      <Filter>Header Files\Class\Render\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\Scripts\ObjectScripts.h">
+      <Filter>Header Files\Class\Render\Objects\Scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\Scripts\ObjectScriptHeader.h">
+      <Filter>Header Files\Class\Render\Objects\Scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\Scripts\GlobalScripts.h">
+      <Filter>Header Files\Class\Render\Objects\Scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\Scripts\GlobalScriptHeader.h">
+      <Filter>Header Files\Class\Render\Objects\Scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Entity\EntityBase.h">
+      <Filter>Header Files\Class\Objects\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Entity\NPC.h">
+      <Filter>Header Files\Class\Objects\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Entity\Interactables.h">
+      <Filter>Header Files\Class\Objects\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Entity\Controllables.h">
+      <Filter>Header Files\Class\Objects\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Entity\Dynamics.h">
+      <Filter>Header Files\Class\Objects\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Collisions\Mask Collisions\MaskCollisions.h">
+      <Filter>Header Files\Source\Collisions\Mask Collisions</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\ProjectSelector.h">
+      <Filter>Header Files\Class\Render\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidRectangle.h">
+      <Filter>Header Files\Class\Objects\Physics\Rigid Body</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidTrapezoid.h">
+      <Filter>Header Files\Class\Objects\Physics\Rigid Body</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidTriangle.h">
+      <Filter>Header Files\Class\Objects\Physics\Rigid Body</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidCircle.h">
+      <Filter>Header Files\Class\Objects\Physics\Rigid Body</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidPolygon.h">
+      <Filter>Header Files\Class\Objects\Physics\Rigid Body</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Physics\Softody\SpringMass.h">
+      <Filter>Header Files\Class\Objects\Physics\Soft Body</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Physics\Softody\Wire.h">
+      <Filter>Header Files\Class\Objects\Physics\Soft Body</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Object\Physics\Hinge\Anchor.h">
+      <Filter>Header Files\Class\Objects\Physics\Hinge</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Source\Collisions\Physics Collisions\PhysicsCollisions.h">
+      <Filter>Header Files\Source\Collisions\Physics Collisions</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Struct\List.h">
+      <Filter>Header Files\Class\Render\Struct</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\UnsavedLevel.h">
+      <Filter>Header Files\Class\Render\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\Debugger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Struct\Heap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\ObjectInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\Class\Render\Shader\vert\ObjectShader.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\ObjectShader.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\ColorShader.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\ColorShaderStatic.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\FontShader.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\Framebuffer.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\GlobalFontShader.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\Normals.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\ParticleShaderColor.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\ParticleShaderTexture.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\SingleColor.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\TextureShader.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\TextureShaderStatic.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\geom\ColorShader.geom">
+      <Filter>Resource Files\Shaders\Geom</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\geom\ColorShaderStatic.geom">
+      <Filter>Resource Files\Shaders\Geom</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\geom\ColorShaderStaticLine.geom">
+      <Filter>Resource Files\Shaders\Geom</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\geom\Normals.geom">
+      <Filter>Resource Files\Shaders\Geom</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\geom\ParticleShaderColor.geom">
+      <Filter>Resource Files\Shaders\Geom</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\geom\ParticleShaderTexture.geom">
+      <Filter>Resource Files\Shaders\Geom</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\geom\SingleColor.geom">
+      <Filter>Resource Files\Shaders\Geom</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\geom\TextureShader.geom">
+      <Filter>Resource Files\Shaders\Geom</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\geom\TextureShaderStatic.geom">
+      <Filter>Resource Files\Shaders\Geom</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\ColorShader.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\ColorShaderStatic.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\FontShader.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_Bloom.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_Core.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_HDR.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_HDR_Channeling.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_HDR_Grayscale.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_HDR_Inverse.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_HDR_Kernel.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\ParticleShaderColor.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\ParticleShaderTexture.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\SingleColor.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\TextureShader.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\ObjectShaderStatic.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\ObjectShaderStatic.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\LevelBorderShader.vert">
+      <Filter>Resource Files\Shaders\Vert</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\geom\LevelBorderShader.geom">
+      <Filter>Resource Files\Shaders\Geom</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\LevelBorderShader.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\test.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\frag\TextureShaderStatic.frag">
+      <Filter>Resource Files\Shaders\Frag</Filter>
+    </None>
+    <None Include="Source\Class\Render\Shader\vert\OffsetFontShader.vert" />
+  </ItemGroup>
+</Project>

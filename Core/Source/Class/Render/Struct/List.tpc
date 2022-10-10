@@ -1,0 +1,211 @@
+//#include "List.h"
+
+template<class Type>
+bool Struct::List<Type>::binarySearch(uint32_t uuid, uint32_t left, uint32_t right)
+{
+	// If Left > Right, Return False
+	if (left > right)
+		return false;
+
+	// Get Half Index For Static Objects
+	int half = (int)glm::floor((left + right) * 0.5f);
+
+	// If UUID ofTest is Equal to UUID of Half Index, Return True
+	if (uuid == object_array[half]->uuid)
+		return true;
+
+	// If UUID of Test is Less Than UUID in Half Index, Recusivly Check Left Half of Array
+	if (uuid < object_array[half]->uuid)
+		return binarySearch(uuid, left, half - 1);
+
+	// If UUID of Test is Greater Than UUID in Half Index, Recusivly Check Right Half of Array
+	return binarySearch(uuid, half + 1, right);
+}
+
+template<class Type>
+void Struct::List<Type>::removeStatic(uint32_t index)
+{
+	// Delete Object in Array
+	delete object_array[index];
+
+	// Move All Proceding Objects Down In Array
+	for (unsigned int i = index; i < end_index - 1; i++)
+		object_array[i] = object_array[i + 1];
+
+	// Decrement End Index
+	end_index--;
+}
+
+template<class Type>
+void Struct::List<Type>::removeDynamic(uint32_t index)
+{
+	// Delete Objet in Array
+	delete object_array[index];
+
+	// Swap End Object With Deleted Object
+	object_array[index] = object_array[start_index];
+
+	// Increment Start Index
+	start_index++;
+}
+
+template<class Type>
+inline Struct::List<Type>::List()
+{
+	// Allocate Memory for Object Array
+	array_size = static_object_count + dynamic_object_count;
+	object_array = new Type*[array_size];
+
+	// Store Indicies
+	start_index = dynamic_object_count;
+	type_seperator = dynamic_object_count;
+	end_index = dynamic_object_count;
+}
+
+template<class Type>
+Struct::List<Type>::~List()
+{
+	// Delete All Objects Stored in List
+	for (unsigned int i = start_index; i < end_index; i++)
+		delete object_array[i];
+
+	// Delete Array
+	delete[] object_array;
+}
+
+template<class Type>
+void Struct::List<Type>::erase()
+{
+	// Delete All Objects Stored in List
+	for (unsigned int i = start_index; i < end_index; i++)
+		delete object_array[i];
+
+	// Reset Indicies
+	start_index = dynamic_object_count;
+	type_seperator = dynamic_object_count;
+	end_index = dynamic_object_count;
+}
+
+template<class Type>
+bool Struct::List<Type>::testIn(uint32_t uuid)
+{
+	return binarySearch(uuid, type_seperator, end_index - 1);
+}
+
+template<class Type>
+bool Struct::List<Type>::appendStatic(Type* object)
+{
+	// If Array is Full, Throw Error
+	if (end_index == array_size)
+		throw "ERROR: ARRAY IS FULL";
+
+	// If End Index Equals the Type Seperator, Insert First Object
+	if (type_seperator == end_index)
+	{
+		object_array[type_seperator] = object;
+		end_index++;
+		return true;
+	}
+
+	// Store Object UUID
+	uint32_t& uuid = object->uuid;
+
+	// If Object Does Not Already Exist in Array, Insert Object
+	if (!binarySearch(uuid, type_seperator, end_index - 1))
+	{
+		// Perform Insertion Sort
+		unsigned int test_index = end_index - 1;
+		while (test_index >= type_seperator && object_array[test_index]->uuid > uuid)
+		{
+			object_array[test_index + 1] = object_array[test_index];
+			test_index--;
+		}
+
+		// Insert Object Into Array
+		object_array[test_index + 1] = object;
+
+		// Increment End Index
+		end_index++;
+
+		return true;
+	}
+
+	return false;
+}
+
+template<class Type>
+void Struct::List<Type>::appendDynamic(Type* object)
+{
+	// If Array is Full, Throw Error
+	if (start_index == 0)
+		throw "ERROR: ARRAY IS FULL";
+
+	// Insert Object at End of Dynamic End of Array
+	start_index--;
+	object[start_index] = object;
+}
+
+template<class Type>
+void Struct::List<Type>::removeObject(uint32_t index)
+{
+	// If Index is Outside of Array, Throw Error
+	if (index < start_index || index >= end_index)
+		throw "ERROR: INVALID INDEX";
+
+	// Object Is a Dynamic Object
+	if (index < type_seperator)
+		removeDynamic(index);
+
+	// Object is a Static Object
+	else
+		removeStatic(index);
+}
+
+template<class Type>
+void Struct::List<Type>::removeObject(Iterator it)
+{
+	removeObject(it.index);
+}
+
+template<class Type>
+Struct::List<Type>::Iterator Struct::List<Type>::begin()
+{
+	return Iterator(start_index, object_array);
+}
+
+template<class Type>
+Struct::List<Type>::Iterator Struct::List<Type>::beginDynamic()
+{
+	return Iterator(start_index, object_array);
+}
+
+template<class Type>
+Struct::List<Type>::Iterator Struct::List<Type>::endDynamic()
+{
+	return Iterator(type_seperator, object_array);
+}
+
+template<class Type>
+Struct::List<Type>::Iterator Struct::List<Type>::indexSeperator()
+{
+	return Iterator(type_seperator, object_array);
+}
+
+template<class Type>
+Struct::List<Type>::Iterator Struct::List<Type>::beginStatic()
+{
+	return Iterator(type_seperator, object_array);
+}
+
+template<class Type>
+Struct::List<Type>::Iterator Struct::List<Type>::endStatic()
+{
+	return Iterator(end_index, object_array);
+}
+
+template<class Type>
+Struct::List<Type>::Iterator Struct::List<Type>::end()
+{
+	return Iterator(end_index, object_array);
+}
+

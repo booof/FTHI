@@ -1,0 +1,57 @@
+﻿  Source.cpp
+  CeilingMaskLine.cpp
+  FloorMaskLine.cpp
+  CeilingMaskSlant.cpp
+  FloorMaskSlant.cpp
+  CeilingMaskSlope.cpp
+  FloorMaskSlope.cpp
+  TriggerMask.cpp
+  LeftMaskCurve.cpp
+  RightMaskCurve.cpp
+  LeftMaskLine.cpp
+  RightMaskLine.cpp
+  Controllables.cpp
+  Dynamics.cpp
+  Interactables.cpp
+  NPC.cpp
+  Beam.cpp
+  Directional.cpp
+  Point.cpp
+  Spot.cpp
+  Generating Code...
+  Compiling...
+  Anchor.cpp
+  Hinge.cpp
+  RigidBody.cpp
+  SoftBody.cpp
+  SpringMass.cpp
+  Wire.cpp
+  TerrainBase.cpp
+  Debugger.cpp
+  EditorOptions.cpp
+  EditorWindow.cpp
+  Notification.cpp
+  ProjectSelector.cpp
+  ScriptWizard.cpp
+  Selector.cpp
+  Box.cpp
+  ToggleGroup.cpp
+  ChangeController.cpp
+  Level.cpp
+  UnsavedLevel.cpp
+  Circle.cpp
+  Generating Code...
+  Compiling...
+  Polygon.cpp
+  Rectangle.cpp
+  Trapezoid.cpp
+  Triangle.cpp
+  EventListeners.cpp
+  Loop.cpp
+  EditorFunctions.cpp
+  Exit.cpp
+  Initialize.cpp
+  PostRender.cpp
+  PreRender.cpp
+  Generating Code...
+  Core.vcxproj -> C:\Users\ellio\OneDrive\Documents\Visual Studio 2019 - Copy\projects\Game Engine\FTHI\x64\Debug\Core.exe

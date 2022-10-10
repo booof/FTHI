@@ -1,0 +1,1 @@
+namespace Object { class Object; }

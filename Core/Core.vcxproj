@@ -1,0 +1,419 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Lib\GLAD\glad.c" />
+    <ClCompile Include="..\Resources\Scripts\Object\Masks\TestMask.cpp" />
+    <ClCompile Include="Main\Source.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\CollisionMask.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\FloorMask.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Line\CeilingMaskLine.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Line\FloorMaskLine.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Line\HorizotnalLine.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slant\CeilingMaskSlant.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slant\FloorMaskSlant.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slant\Slant.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slope\CeilingMaskSlope.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slope\FloorMaskSlope.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Horizontal\Slope\Slope.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Trigger\TriggerMask.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Curve\Curve.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Curve\LeftMaskCurve.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Curve\RightMaskCurve.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Line\LeftMaskLine.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Line\RightMaskLine.cpp" />
+    <ClCompile Include="Source\Class\Object\Collision\Vertical\Line\VerticalLine.cpp" />
+    <ClCompile Include="Source\Class\Object\Entity\Controllables.cpp" />
+    <ClCompile Include="Source\Class\Object\Entity\Dynamics.cpp" />
+    <ClCompile Include="Source\Class\Object\Entity\EntityBase.cpp" />
+    <ClCompile Include="Source\Class\Object\Entity\Interactables.cpp" />
+    <ClCompile Include="Source\Class\Object\Entity\NPC.cpp" />
+    <ClCompile Include="Source\Class\Object\Lighting\Beam.cpp" />
+    <ClCompile Include="Source\Class\Object\Lighting\Directional.cpp" />
+    <ClCompile Include="Source\Class\Object\Lighting\LightBase.cpp" />
+    <ClCompile Include="Source\Class\Object\Lighting\Point.cpp" />
+    <ClCompile Include="Source\Class\Object\Lighting\Spot.cpp" />
+    <ClCompile Include="Source\Class\Object\Object.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\Hinge\Anchor.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\Hinge\Hinge.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidBody.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidCircle.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidPolygon.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidRectangle.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidTrapezoid.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidTriangle.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\Softody\SoftBody.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\Softody\SpringMass.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\Softody\Wire.cpp" />
+    <ClCompile Include="Source\Class\Object\Terrain\TerrainBase.cpp" />
+    <ClCompile Include="Source\Class\Render\Camera\Camera.cpp" />
+    <ClCompile Include="Source\Class\Render\Editor\Debugger.cpp" />
+    <ClCompile Include="Source\Class\Render\Editor\EditorOptions.cpp" />
+    <ClCompile Include="Source\Class\Render\Editor\EditorWindow.cpp" />
+    <ClCompile Include="Source\Class\Render\Editor\Notification.cpp" />
+    <ClCompile Include="Source\Class\Render\Editor\ObjectInfo.cpp" />
+    <ClCompile Include="Source\Class\Render\Editor\ProjectSelector.cpp" />
+    <ClCompile Include="Source\Class\Render\Editor\ScriptWizard.cpp" />
+    <ClCompile Include="Source\Class\Render\Editor\Selector.cpp" />
+    <ClCompile Include="Source\Class\Render\GUI\Box.cpp" />
+    <ClCompile Include="Source\Class\Render\GUI\ColorWheel.cpp" />
+    <ClCompile Include="Source\Class\Render\GUI\ScrollBar.cpp" />
+    <ClCompile Include="Source\Class\Render\GUI\TextObject.cpp" />
+    <ClCompile Include="Source\Class\Render\GUI\ToggleGroup.cpp" />
+    <ClCompile Include="Source\Class\Render\Objects\ChangeController.cpp" />
+    <ClCompile Include="Source\Class\Render\Objects\Level.cpp" />
+    <ClCompile Include="Source\Class\Render\Objects\SubLevel.cpp" />
+    <ClCompile Include="Source\Class\Render\Objects\TextureHandler.cpp" />
+    <ClCompile Include="Source\Class\Render\Objects\UnsavedLevel.cpp" />
+    <ClCompile Include="Source\Class\Render\Shader\Shader.cpp" />
+    <ClCompile Include="Source\Class\Render\Shape\Circle.cpp" />
+    <ClCompile Include="Source\Class\Render\Shape\Polygon.cpp" />
+    <ClCompile Include="Source\Class\Render\Shape\Rectangle.cpp" />
+    <ClCompile Include="Source\Class\Render\Shape\Trapezoid.cpp" />
+    <ClCompile Include="Source\Class\Render\Shape\Triangle.cpp" />
+    <ClCompile Include="Source\Class\Render\Struct\LinkedList.cpp" />
+    <ClCompile Include="Source\Includes\Globals.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Algorithms\Common\Common.cpp" />
+    <ClCompile Include="Source\Source\Algorithms\Quick Math\QuickMath.cpp" />
+    <ClCompile Include="Source\Source\Algorithms\Sorting\SortingAlgorithms.cpp" />
+    <ClCompile Include="Source\Source\Collisions\Mask Collisions\MaskCollisions.cpp" />
+    <ClCompile Include="Source\Source\Collisions\Physics Collisions\PhysicsCollisions.cpp" />
+    <ClCompile Include="Source\Source\Collisions\Point Collisions\PointCollisions.cpp" />
+    <ClCompile Include="Source\Source\Events\EventListeners.cpp" />
+    <ClCompile Include="Source\Source\Loaders\Audio.cpp" />
+    <ClCompile Include="Source\Source\Loaders\Fonts.cpp" />
+    <ClCompile Include="Source\Source\Loaders\Textures.cpp" />
+    <ClCompile Include="Source\Source\Loops\Loop.cpp" />
+    <ClCompile Include="Source\Source\Rendering\EditorFunctions.cpp" />
+    <ClCompile Include="Source\Source\Rendering\Exit.cpp" />
+    <ClCompile Include="Source\Source\Rendering\Initialize.cpp" />
+    <ClCompile Include="Source\Source\Rendering\PostRender.cpp" />
+    <ClCompile Include="Source\Source\Rendering\PreRender.cpp" />
+    <ClCompile Include="Source\Source\Vertices\Buffer\ObjectBuffers.cpp" />
+    <ClCompile Include="Source\Source\Vertices\Circle\CircleVertices.cpp" />
+    <ClCompile Include="Source\Source\Vertices\Line\LineVertices.cpp" />
+    <ClCompile Include="Source\Source\Vertices\Rectangle\RectangleVertices.cpp" />
+    <ClCompile Include="Source\Source\Vertices\Trapezoid\TrapezoidVertices.cpp" />
+    <ClCompile Include="Source\Source\Vertices\Triangle\TriangleVertices.cpp" />
+    <ClCompile Include="Source\Source\Vertices\Visualizer\Visualizer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Com\DR_WAV\dr_mp3.h" />
+    <ClInclude Include="..\Com\DR_WAV\dr_wav.h" />
+    <ClInclude Include="Source\Class\Object\Collision\CollisionMask.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\CeilingMask.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\FloorMask.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Line\CeilingMaskLine.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Line\FloorMaskLine.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Line\HorizotnalLine.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slant\CeilingMaskSlant.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slant\FloorMaskSlant.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slant\Slant.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slope\CeilingMaskSlope.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slope\FloorMaskSlope.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Horizontal\Slope\Slope.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Trigger\TriggerMask.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Curve\Curve.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Curve\LeftMaskCurve.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Curve\RightMaskCurve.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\LeftMask.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Line\LeftMaskLine.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Line\RightMaskLine.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\Line\VerticalLine.h" />
+    <ClInclude Include="Source\Class\Object\Collision\Vertical\RightMask.h" />
+    <ClInclude Include="Source\Class\Object\Entity\Controllables.h" />
+    <ClInclude Include="Source\Class\Object\Entity\Dynamics.h" />
+    <ClInclude Include="Source\Class\Object\Entity\EntityBase.h" />
+    <ClInclude Include="Source\Class\Object\Entity\Interactables.h" />
+    <ClInclude Include="Source\Class\Object\Entity\NPC.h" />
+    <ClInclude Include="Source\Class\Object\Lighting\Beam.h" />
+    <ClInclude Include="Source\Class\Object\Lighting\Directional.h" />
+    <ClInclude Include="Source\Class\Object\Lighting\LightBase.h" />
+    <ClInclude Include="Source\Class\Object\Lighting\Point.h" />
+    <ClInclude Include="Source\Class\Object\Lighting\Spot.h" />
+    <ClInclude Include="Source\Class\Object\Object.h" />
+    <ClInclude Include="Source\Class\Object\Physics\Hinge\Anchor.h" />
+    <ClInclude Include="Source\Class\Object\Physics\Hinge\Hinge.h" />
+    <ClInclude Include="Source\Class\Object\Physics\PhysicsBase.h" />
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidBody.h" />
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidCircle.h" />
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidPolygon.h" />
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidRectangle.h" />
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidTrapezoid.h" />
+    <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidTriangle.h" />
+    <ClInclude Include="Source\Class\Object\Physics\Softody\SoftBody.h" />
+    <ClInclude Include="Source\Class\Object\Physics\Softody\SpringMass.h" />
+    <ClInclude Include="Source\Class\Object\Physics\Softody\Wire.h" />
+    <ClInclude Include="Source\Class\Object\Terrain\Backdrop.h" />
+    <ClInclude Include="Source\Class\Object\Terrain\Background.h" />
+    <ClInclude Include="Source\Class\Object\Terrain\Foreground.h" />
+    <ClInclude Include="Source\Class\Object\Terrain\Formerground.h" />
+    <ClInclude Include="Source\Class\Object\Terrain\TerrainBase.h" />
+    <ClInclude Include="Source\Class\Render\Audio\AudioHandler.h" />
+    <ClInclude Include="Source\Class\Render\Camera\Camera.h" />
+    <ClInclude Include="Source\Class\Render\Editor\Debugger.h" />
+    <ClInclude Include="Source\Class\Render\Editor\EditorOptions.h" />
+    <ClInclude Include="Source\Class\Render\Editor\EditorWindow.h" />
+    <ClInclude Include="Source\Class\Render\Editor\GroupSelector.h" />
+    <ClInclude Include="Source\Class\Render\Editor\GUIWizard.h" />
+    <ClInclude Include="Source\Class\Render\Editor\MaterialWizard.h" />
+    <ClInclude Include="Source\Class\Render\Editor\Notification.h" />
+    <ClInclude Include="Source\Class\Render\Editor\ObjectInfo.h" />
+    <ClInclude Include="Source\Class\Render\Editor\ProjectSelector.h" />
+    <ClInclude Include="Source\Class\Render\Editor\ScriptWizard.h" />
+    <ClInclude Include="Source\Class\Render\Editor\Selector.h" />
+    <ClInclude Include="Source\Class\Render\Editor\TextureWizard.h" />
+    <ClInclude Include="Source\Class\Render\GUI\Box.h" />
+    <ClInclude Include="Source\Class\Render\GUI\ColorWheel.h" />
+    <ClInclude Include="Source\Class\Render\GUI\Element.h" />
+    <ClInclude Include="Source\Class\Render\GUI\GUI.h" />
+    <ClInclude Include="Source\Class\Render\GUI\ScrollBar.h" />
+    <ClInclude Include="Source\Class\Render\GUI\TextObject.h" />
+    <ClInclude Include="Source\Class\Render\GUI\ToggleGroup.h" />
+    <ClInclude Include="Source\Class\Render\Objects\ChangeController.h" />
+    <ClInclude Include="Source\Class\Render\Objects\Level.h" />
+    <ClInclude Include="Source\Class\Render\Objects\ScriptHandler.h" />
+    <ClInclude Include="Source\Class\Render\Objects\Scripts\GlobalScriptHeader.h" />
+    <ClInclude Include="Source\Class\Render\Objects\Scripts\GlobalScripts.h" />
+    <ClInclude Include="Source\Class\Render\Objects\Scripts\ObjectScriptHeader.h" />
+    <ClInclude Include="Source\Class\Render\Objects\Scripts\ObjectScripts.h" />
+    <ClInclude Include="Source\Class\Render\Objects\SubLevel.h" />
+    <ClInclude Include="Source\Class\Render\Objects\TextureHandler.h" />
+    <ClInclude Include="Source\Class\Render\Objects\UnsavedLevel.h" />
+    <ClInclude Include="Source\Class\Render\Shader\Shader.h" />
+    <ClInclude Include="Source\Class\Render\Shape\Circle.h" />
+    <ClInclude Include="Source\Class\Render\Shape\Polygon.h" />
+    <ClInclude Include="Source\Class\Render\Shape\Rectangle.h" />
+    <ClInclude Include="Source\Class\Render\Shape\Shape.h" />
+    <ClInclude Include="Source\Class\Render\Shape\Trapezoid.h" />
+    <ClInclude Include="Source\Class\Render\Shape\Triangle.h" />
+    <ClInclude Include="Source\Class\Render\Struct\EditorStructs.h" />
+    <ClInclude Include="Source\Class\Render\Struct\Heap.h" />
+    <ClInclude Include="Source\Class\Render\Struct\LinkedList.h" />
+    <ClInclude Include="Source\Class\Render\Struct\List.h" />
+    <ClInclude Include="Source\Class\Render\Struct\Struct.h" />
+    <ClInclude Include="Source\Class\Render\Struct\Texture.h" />
+    <ClInclude Include="Source\Includes\Constants.h" />
+    <ClInclude Include="Source\Includes\ExternalLibs.h" />
+    <ClInclude Include="Source\Includes\Globals.h" />
+    <ClInclude Include="Source\Includes\Macros.h" />
+    <ClInclude Include="Source\Source\Algorithms\Algorithms.h" />
+    <ClInclude Include="Source\Source\Algorithms\Common\Common.h" />
+    <ClInclude Include="Source\Source\Algorithms\Quick Math\QuickMath.h" />
+    <ClInclude Include="Source\Source\Algorithms\Sorting\SortingAlgorithms.h" />
+    <ClInclude Include="Source\Source\Collisions\Mask Collisions\MaskCollisions.h" />
+    <ClInclude Include="Source\Source\Collisions\Physics Collisions\PhysicsCollisions.h" />
+    <ClInclude Include="Source\Source\Collisions\Point Collisions\PointCollisions.h" />
+    <ClInclude Include="Source\Source\Events\EventListeners.h" />
+    <ClInclude Include="Source\Source\Loaders\Audio.h" />
+    <ClInclude Include="Source\Source\Loaders\Fonts.h" />
+    <ClInclude Include="Source\Source\Loaders\Textures.h" />
+    <ClInclude Include="Source\Source\Loops\Loop.h" />
+    <ClInclude Include="Source\Source\Rendering\EditorFunctions.h" />
+    <ClInclude Include="Source\Source\Rendering\Exit.h" />
+    <ClInclude Include="Source\Source\Rendering\Initialize.h" />
+    <ClInclude Include="Source\Source\Rendering\PostRender.h" />
+    <ClInclude Include="Source\Source\Rendering\PreRender.h" />
+    <ClInclude Include="Source\Source\Vertices\Buffer\ObjectBuffers.h" />
+    <ClInclude Include="Source\Source\Vertices\Circle\CircleVertices.h" />
+    <ClInclude Include="Source\Source\Vertices\Line\LineVertices.h" />
+    <ClInclude Include="Source\Source\Vertices\Rectangle\RectangleVertices.h" />
+    <ClInclude Include="Source\Source\Vertices\Trapezoid\TrapezoidVertices.h" />
+    <ClInclude Include="Source\Source\Vertices\Triangle\TriangleVertices.h" />
+    <ClInclude Include="Source\Source\Vertices\Vertices.h" />
+    <ClInclude Include="Source\Source\Vertices\Visualizer\Visualizer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\Class\Render\Shader\frag\ColorShader.frag" />
+    <None Include="Source\Class\Render\Shader\frag\ColorShaderStatic.frag" />
+    <None Include="Source\Class\Render\Shader\frag\FontShader.frag" />
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_Bloom.frag" />
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_Core.frag" />
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_HDR.frag" />
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_HDR_Channeling.frag" />
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_HDR_Grayscale.frag" />
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_HDR_Inverse.frag" />
+    <None Include="Source\Class\Render\Shader\frag\Framebuffer_HDR_Kernel.frag" />
+    <None Include="Source\Class\Render\Shader\frag\LevelBorderShader.frag" />
+    <None Include="Source\Class\Render\Shader\frag\ObjectShader.frag" />
+    <None Include="Source\Class\Render\Shader\frag\ObjectShaderStatic.frag" />
+    <None Include="Source\Class\Render\Shader\frag\ParticleShaderColor.frag" />
+    <None Include="Source\Class\Render\Shader\frag\ParticleShaderTexture.frag" />
+    <None Include="Source\Class\Render\Shader\frag\SingleColor.frag" />
+    <None Include="Source\Class\Render\Shader\frag\test.frag" />
+    <None Include="Source\Class\Render\Shader\frag\TextureShader.frag" />
+    <None Include="Source\Class\Render\Shader\frag\TextureShaderStatic.frag" />
+    <None Include="Source\Class\Render\Shader\geom\ColorShader.geom" />
+    <None Include="Source\Class\Render\Shader\geom\ColorShaderStatic.geom" />
+    <None Include="Source\Class\Render\Shader\geom\ColorShaderStaticLine.geom" />
+    <None Include="Source\Class\Render\Shader\geom\LevelBorderShader.geom" />
+    <None Include="Source\Class\Render\Shader\geom\Normals.geom" />
+    <None Include="Source\Class\Render\Shader\geom\ParticleShaderColor.geom" />
+    <None Include="Source\Class\Render\Shader\geom\ParticleShaderTexture.geom" />
+    <None Include="Source\Class\Render\Shader\geom\SingleColor.geom" />
+    <None Include="Source\Class\Render\Shader\geom\TextureShader.geom" />
+    <None Include="Source\Class\Render\Shader\geom\TextureShaderStatic.geom" />
+    <None Include="Source\Class\Render\Shader\vert\ColorShader.vert" />
+    <None Include="Source\Class\Render\Shader\vert\ColorShaderStatic.vert" />
+    <None Include="Source\Class\Render\Shader\vert\FontShader.vert" />
+    <None Include="Source\Class\Render\Shader\vert\Framebuffer.vert" />
+    <None Include="Source\Class\Render\Shader\vert\GlobalFontShader.vert" />
+    <None Include="Source\Class\Render\Shader\vert\LevelBorderShader.vert" />
+    <None Include="Source\Class\Render\Shader\vert\Normals.vert" />
+    <None Include="Source\Class\Render\Shader\vert\ObjectShader.vert" />
+    <None Include="Source\Class\Render\Shader\vert\ObjectShaderStatic.vert" />
+    <None Include="Source\Class\Render\Shader\vert\OffsetFontShader.vert" />
+    <None Include="Source\Class\Render\Shader\vert\ParticleShaderColor.vert" />
+    <None Include="Source\Class\Render\Shader\vert\ParticleShaderTexture.vert" />
+    <None Include="Source\Class\Render\Shader\vert\SingleColor.vert" />
+    <None Include="Source\Class\Render\Shader\vert\TextureShader.vert" />
+    <None Include="Source\Class\Render\Shader\vert\TextureShaderStatic.vert" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{FCAB9AA6-D74E-4C57-861F-E43ABA9AAA96}</ProjectGuid>
+    <RootNamespace>Core</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(SolutionDir)/Com/AL;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)/Lib/AL;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir)/Com/AL;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)/Lib/AL;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)/Com/GLEW;$(SolutionDir)/Com/GLFW;$(SolutionDir)/Com/GLM;$(SolutionDir)/Com/SOIL;$(SolutionDir)/Core/Source;$(SolutionDir)/Core/Source/Class;$(SolutionDir)/Com/FREETYPE;$(SolutionDir)/Core/Source/Includes;$(SolutionDir)/Core/Source/Source;$(SolutionDir)/Com/AL;$(SolutionDir)/Com/DR_WAV;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>$(SolutionDir)/Lib/GLEW;$(SolutionDir)/Lib/GLFW;$(SolutionDir)/Lib/SOIL;$(SolutionDir)/Lib/FREETYPE;$(SolutionDir)/Lib/AL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glew32.lib;glfw3.lib;soil2-debug.lib;freetype.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/VERBOSE %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)/Com/GLFW;$(SolutionDir)/Com/GLM;$(SolutionDir)/Com/SOIL;$(SolutionDir)/Core/Source;$(SolutionDir)/Core/Source/Class;$(SolutionDir)/Com/FREETYPE;$(SolutionDir)/Core/Source/Includes;$(SolutionDir)/Core/Source/Source;$(SolutionDir)/Com/AL;$(SolutionDir)/Com/DR_WAV;$(SolutionDir)/Com/GLAD;$(SolutionDir)/Com/KHR;$(SolutionDir)/Lib/GLAD/gl.c;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <EnableModules>false</EnableModules>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>$(SolutionDir)/Lib/GLFW;$(SolutionDir)/Lib/SOIL;$(SolutionDir)/Lib/FREETYPE;$(SolutionDir)/Lib/AL;$(SolutionDir)/Bin/OpenAL32.dll;$(SolutionDir)/Core/EngineLibs/TestProject/Build/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;glfw3dll.lib;soil2.lib;freetyped.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;FT2_BUILD_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
