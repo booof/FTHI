@@ -11,6 +11,7 @@ namespace Object::Mask
 	// Class for Ceiling Masks with Shape of Vertical Line
 	class Ceiling::CeilingMaskLine : public Ceiling::CeilingMask, public HorizontalLine
 	{
+	public:
 
 #ifdef EDITOR
 
@@ -23,7 +24,12 @@ namespace Object::Mask
 		// Return Position of Object
 		glm::vec2 returnPosition();
 
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, HorizontalLineData& data);
+
 #endif
+
+	private:
 
 		// Test Collisions of Object
 		bool testCollisions(glm::vec2 test_position, float error);

@@ -500,16 +500,16 @@ namespace Render::Objects
 			uint8_t stack_size = 0;
 
 			// Tail of Stack
-			uint8_t tail;
+			uint8_t tail = 0;
 
 			// Current Head of Stack
-			uint8_t head;
+			uint8_t head = 0;
 
 			// Current Index in Stack
 			uint8_t stack_index = 0;
 
 			// Array
-			LevelInstance** stack_array;
+			LevelInstance** stack_array = nullptr;
 
 		public:
 
@@ -553,7 +553,7 @@ namespace Render::Objects
 		// Pointer to Unmodified Data
 		// Stored In Case There is a Need to Revert All Changes in an Individual Level
 		// If Reverted To, Data Will Appear as a New Instance in Stack, Allowing for Undoing if Needed
-		LevelInstance* unmodified_data;
+		LevelInstance* unmodified_data = nullptr;
 		bool selected_unmodified = true;
 		// IDEA: If Selected Unmodified is False, Create Yellow Border Around Level to Signify It was Changed
 		//       If Selected Unmodified is True and There are Instances in Stack, Create Blue Border around Level
@@ -562,16 +562,16 @@ namespace Render::Objects
 		//       These Colors Should be Similar to Visual Studio Colors in Respect to Making Changes in a File
 
 		// Path to Object Data
-		std::string object_path;
+		std::string object_path = "";
 
 		// Path to Editor Configuration Data
-		std::string editor_path;
+		std::string editor_path = "";
 
 		// Vertex Object for Unsaved Level State Outline
-		GLuint VAO, VBO;
+		GLuint VAO = 0, VBO = 0;
 
 		// Model Matrix
-		glm::mat4 model;
+		glm::mat4 model = glm::mat4(1.0f);
 
 		// Allocate Memory for Arrays
 		void allocateForArrays(LevelInstance& instance);

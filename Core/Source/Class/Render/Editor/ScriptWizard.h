@@ -2,8 +2,9 @@
 #define SCRIPT_WIZARD_H
 
 #include "ExternalLibs.h"
+#include "Render/GUI/MasterElement.h"
 #include "Render/GUI/Box.h"
-#include "Render/GUI/ScrollBar.h"
+#include "Render/GUI/VerticalScrollBar.h"
 
 // Welcome to the Script Wizard!
 // This Wizard Will Show All Currently Used Scripts and Their Index
@@ -91,8 +92,11 @@ namespace Editor
 		// Highlight Vertex Object
 		GLuint highlightVAO = NULL, highlightVBO = NULL;
 
+		// Master Element
+		GUI::MasterElement master;
+
 		// ScrollBar
-		ScrollBar bar;
+		GUI::VerticalScrollBar bar;
 		bool scrolling = false;
 		float scoll_offset = 0.0f;
 		

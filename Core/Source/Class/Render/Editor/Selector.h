@@ -23,6 +23,8 @@ typedef void (Editor::Selector::* func)(float(&endpoints)[8], Render::Objects::U
 
 namespace Editor
 {
+	class ObjectInfo;
+
 	// List of Editing Shapes
 	enum EditingShapes : unsigned char
 	{
@@ -46,6 +48,16 @@ namespace Editor
 		EAST,
 		SOUTH,
 		WEST
+	};
+
+	// A Struct for a Pointer to Limb Attatched to Currently Selected Object
+	struct ConnectedLimb
+	{
+		// Pointer to Limb
+		Object::Physics::Soft::Spring* limb_ptr = nullptr;
+
+		// Connected Object Index
+		bool connected_first = true;
 	};
 
 	// Selector Class
@@ -161,6 +173,10 @@ namespace Editor
 		Object::Physics::Soft::NodeData* node_list;
 		int node_count = 0;
 
+		// List of Connected Libs for Complex Physics Objects
+		ConnectedLimb* connected_limbs = nullptr;
+		int connected_limbs_count = 0;
+
 		// Initialize Selector for Object
 		void initializeSelector();
 
@@ -251,6 +267,9 @@ namespace Editor
 
 		// Store Data for Entities
 		void storeSelectorDataEntity();
+
+		// Object Info for Shapes
+		void getShapeInfo(Shape::Shape* shape);
 
 		
 		// End of Storing Data Functions
@@ -413,7 +432,10 @@ namespace Editor
 		glm::vec2 pivot;
 
 		// Pointer to Level Object
-		Render::Objects::Level* level;
+		Render::Objects::Level* level = nullptr;
+
+		// Pointer to the Object Info Object
+		ObjectInfo* info = nullptr;
 
 		// Pointer to Unsaved Level The Object Originates From
 		Render::Objects::UnsavedLevel* level_of_origin;
@@ -426,6 +448,9 @@ namespace Editor
 		// Initial Positions for Connection Objects
 		glm::vec2 connection_pos_left;
 		glm::vec2 connection_pos_right;
+
+		// Pointer to Node Currently Being Edited
+		Object::Physics::Soft::Node* node_pointer = nullptr;
 
 		// Initialize Object
 		Selector();
@@ -471,6 +496,9 @@ namespace Editor
 
 		// Return Position of Object
 		glm::vec2 getObjectPosition();
+
+		// Store Pointers to Limbs
+		void storeLimbPointers(int index, Object::Physics::Soft::Spring* limbs, int limbs_size);
 	};
 }
 

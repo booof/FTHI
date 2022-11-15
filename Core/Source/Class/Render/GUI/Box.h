@@ -1,7 +1,7 @@
 #ifndef BOX_H
 #define BOX_H
 
-#include "ExternalLibs.h"
+#include "Element.h"
 
 namespace GUI
 {
@@ -65,7 +65,7 @@ namespace GUI
 	};
 
 	// Box Class for GUIs
-	class Box
+	class Box : public Element
 	{
 		// Data
 		BoxData data;
@@ -120,7 +120,10 @@ namespace GUI
 		Box();
 
 		// Move the Box
-		void move(float new_x, float new_y);
+		void moveElement(float new_x, float new_y);
+
+		// Link Value Through a Pointer
+		void linkValue(void* value);
 
 		// Set Data Pointer
 		void setDataPointer(void* data_pointer_);
@@ -135,7 +138,7 @@ namespace GUI
 		void setGroupFalse();
 
 		// Set State
-		bool toggleState(float mouseX, float mouseY);
+		bool updateElement();
 
 		// Set State to True
 		void setTrue();
@@ -150,7 +153,7 @@ namespace GUI
 		std::string getText();
 
 		// Blitz Box
-		void blitzBox();
+		void blitzElement();
 
 		// Blitz Text
 		void blitzText(float offset = 0.0f);

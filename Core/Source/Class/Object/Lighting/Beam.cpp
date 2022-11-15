@@ -158,10 +158,7 @@ void Object::Light::Beam::Beam::select(Editor::Selector& selector, Editor::Objec
 	selector.editor_data.name = name;
 
 	// Store Object Information
-	object_info.clearAll();
-	object_info.setObjectType("Beam Light", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	info(object_info, name, data, beam);
 
 	// Set Selector to Active Highlight
 	selector.activateHighlighter();
@@ -207,6 +204,15 @@ void Object::Light::Beam::Beam::write(std::ofstream& object_file, std::ofstream&
 glm::vec2 Object::Light::Beam::Beam::returnPosition()
 {
 	return data.position;
+}
+
+void Object::Light::Beam::Beam::info(Editor::ObjectInfo& object_info, std::string& name, LightData& data, BeamData& beam)
+{
+	// Store Object Information
+	object_info.clearAll();
+	object_info.setObjectType("Beam Light", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 }
 
 #endif

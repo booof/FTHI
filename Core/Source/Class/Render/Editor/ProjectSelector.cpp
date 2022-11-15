@@ -781,6 +781,9 @@ void Editor::ProjectSelector::initializeProjectSelector()
     temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::TOGGLE_BOX, 47.0f, -30.0f, -1.0f, 3.0f, 3.0f, true, "", glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
     box_startup_enabled = GUI::Box(temp_box_data);
 
+    // Generate Master Element
+    master_element = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 100.0f);
+
     // Open Project File
     std::ifstream project_list_file;
     //project_list_file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
@@ -819,7 +822,7 @@ void Editor::ProjectSelector::select_project()
     readProjectListFile(&instances, instance_count);
 
     // Generate the Scroll Bar
-    project_selection_bar = ScrollBar(21.0f, 24.0f, 1.0f, 59.0f, instance_count * 10.0f, 0.0f);
+    project_selection_bar = GUI::VerticalScrollBar(21.0f, 24.0f, 1.0f, 59.0f, instance_count * 10.0f, 0.0f);
 
     // Disable Framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -852,6 +855,7 @@ void Editor::ProjectSelector::select_project()
         glfwPollEvents();
         float modified_mouse_x = (float)Global::mouseX / Global::zoom_scale;
         float modified_mouse_y = (float)Global::mouseY / Global::zoom_scale;
+        master_element.updateElement();
 
         // Draw Window
         glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(temp));
@@ -860,13 +864,13 @@ void Editor::ProjectSelector::select_project()
         glBindVertexArray(0);
 
         // Draw Boxes
-        box_search.blitzBox();
-        box_open_project.blitzBox();
-        box_open_project_directory.blitzBox();
-        box_remove_project.blitzBox();
-        box_create_project.blitzBox();
-        box_add_project.blitzBox();
-        box_startup_enabled.blitzBox();
+        box_search.blitzElement();
+        box_open_project.blitzElement();
+        box_open_project_directory.blitzElement();
+        box_remove_project.blitzElement();
+        box_create_project.blitzElement();
+        box_add_project.blitzElement();
+        box_startup_enabled.blitzElement();
 
         // Start Scissor Region
         glScissor((GLint)192, (GLint)106, (GLsizei)590, (GLsizei)425);
@@ -967,10 +971,10 @@ void Editor::ProjectSelector::select_project()
         else
         {
             // Test Mouse Collisions on Search Box
-            if (box_search.toggleState(modified_mouse_x, modified_mouse_y) || box_search.texting) {}
+            if (box_search.updateElement() || box_search.texting) {}
 
             // Test Mouse Collisions on Create Project Box
-            else if (box_create_project.toggleState(modified_mouse_x, modified_mouse_y))
+            else if (box_create_project.updateElement())
             {
                 Global::LeftClick = false;
                 if (createProject())
@@ -980,7 +984,7 @@ void Editor::ProjectSelector::select_project()
             }
 
             // Test Mouse Collisions on Add Project Box
-            else if (box_add_project.toggleState(modified_mouse_x, modified_mouse_y))
+            else if (box_add_project.updateElement())
             {
                 Global::LeftClick = false;
                 if (addProject(instances, instance_count))
@@ -990,13 +994,13 @@ void Editor::ProjectSelector::select_project()
             }
 
             // Test Mouse Collisions on Startup Enabled Toggle Box
-            else if (box_startup_enabled.toggleState(modified_mouse_x, modified_mouse_y)) {}
+            else if (box_startup_enabled.updateElement()) {}
 
             // If a Project is Selected, Enable Collisions on Project Specific Boxes
             else if (current_project_index != -1)
             {
                 // Test Mouse Collisions on Open Project Box
-                if (box_open_project.toggleState(modified_mouse_x, modified_mouse_y))
+                if (box_open_project.updateElement())
                 {
                     Global::LeftClick = false;
                     current_project_name = instances[current_project_index].name;
@@ -1007,14 +1011,14 @@ void Editor::ProjectSelector::select_project()
                 }
 
                 // Test Mouse Collisions on Open Project Directory Box
-                else if (box_open_project_directory.toggleState(modified_mouse_x, modified_mouse_y))
+                else if (box_open_project_directory.updateElement())
                 {
                     Global::LeftClick = false;
                     ShellExecute(NULL, "explore", instances[current_project_index].path.c_str(), NULL, NULL, SW_SHOWDEFAULT);
                 }
 
                 // Test Mouse Collisions on Remove Project Box
-                else if (box_remove_project.toggleState(modified_mouse_x, modified_mouse_y))
+                else if (box_remove_project.updateElement())
                 {
                     Global::LeftClick = false;
                     removeProjectFromFile(current_project_index);
@@ -1030,7 +1034,7 @@ void Editor::ProjectSelector::select_project()
         glScissor(0, 0, (GLsizei)Global::screenWidth, (GLsizei)Global::screenHeight);
 
         // Draw ScrollBar
-        project_selection_bar.Update();
+        project_selection_bar.blitzElement();
 
         // Basic Text Rendering
         Global::fontShader.Use();

@@ -94,6 +94,9 @@ namespace Object::Mask::Trigger
 		// Return Position of Object
 		glm::vec2 returnPosition();
 
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, TriggerData& data);
+
 #endif
 
 		// Return Pointer to Position

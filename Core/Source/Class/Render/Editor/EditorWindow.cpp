@@ -153,6 +153,12 @@ void Editor::EditorWindow::initializeWindow()
 		// Inrease Index
 		index++;
 	}
+
+	// Generate the Master Element
+	GUI::DefaultElements* default_elements = new GUI::DefaultElements();
+	default_elements->vertical_bar = &bar1;
+	default_elements->default_bar = &bar1;
+	master = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 100.0f, default_elements);
 }
 
 void Editor::EditorWindow::genBackground()
@@ -214,7 +220,7 @@ void Editor::EditorWindow::genBackground()
 	glBindVertexArray(0);
 
 	// Create Scroll Bars
-	bar1 = ScrollBar();
+	bar1 = GUI::VerticalScrollBar();
 }
 
 void Editor::EditorWindow::genSegregators()
@@ -1522,9 +1528,87 @@ void Editor::EditorWindow::genBoxesSpringMassNode(uint8_t& box_offset, uint8_t& 
 {
 	// Position Offset is in Position Boxes in Common Vertices
 	
-	// Node Name is in the Name Location in Common Vertices, But it is the Current Index of the Node in the Array
+	// Node Name is in the Name Location in Common Vertices
 
+	// X-Pos Box
+	temp_box_data.width = 45.0f * scale;
+	temp_box_data.height = 5.0f;
+	temp_box_data.position = glm::vec2(-15.0f * scale, windowTop - 32.0f);
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(node_data.position.x));
+	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset]->setDataPointer(&node_data.position.x);
+	box_offset++;
 
+	// X-Pos Text
+	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 33.0f);
+	temp_text_data.text = "OffsetX:";
+	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	text_offset++;
+
+	// Y-Pos Box
+	temp_box_data.position = glm::vec2(-15.0f * scale, windowTop - 39.0f);
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(node_data.position.y));
+	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset]->setDataPointer(&node_data.position.y);
+	box_offset++;
+
+	// Y-Pos Text
+	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 40.0f);
+	temp_text_data.text = "OffsetY:";
+	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	text_offset++;
+
+	// Name Text
+	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 47.0f);
+	temp_text_data.text = "Name:         " + std::to_string(node_data.name);
+	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	text_offset++;
+
+	// File Text
+	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 54.0f);
+	temp_text_data.text = "File:         " + file_name;
+	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	text_offset++;
+
+	// Radius Box
+	temp_box_data.position.y = windowTop - 61.0f;
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(node_data.radius));
+	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset]->setDataPointer(&node_data.radius);
+	box_offset++;
+
+	// Radius Text
+	temp_text_data.position.y = windowTop - 62.0f;
+	temp_text_data.text = "Radius: ";
+	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	text_offset++;
+
+	// Mass Box
+	temp_box_data.position.y = windowTop - 68.0f;
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(node_data.mass));
+	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset]->setDataPointer(&node_data.mass);
+	box_offset++;
+
+	// Mass Text
+	temp_text_data.position.y = windowTop - 69.0f;
+	temp_text_data.text = "Mass: ";
+	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	text_offset++;
+
+	// Health Box
+	temp_box_data.position.y = windowTop - 75.0f;
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(node_data.health));
+	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset]->setDataPointer(&node_data.health);
+	box_offset++;
+
+	// Health Text
+	temp_text_data.position.y = windowTop - 76.0f;
+	temp_text_data.text = "Health: ";
+	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	text_offset++;
 }
 
 void Editor::EditorWindow::genBoxesSpringMassSpring(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
@@ -1579,7 +1663,7 @@ void Editor::EditorWindow::genBoxesSpringMassSpring(uint8_t& box_offset, uint8_t
 	temp_box_data.position.y = windowTop - 53.0f;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spring_data.Dampening));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&spring_data.Stiffness);
+	boxes[box_offset]->setDataPointer(&spring_data.Dampening);
 	box_offset++;
 
 	// Dampening Text
@@ -2335,8 +2419,8 @@ void Editor::EditorWindow::updateScrollBars()
 			editing_model = glm::translate(editing_model, glm::vec3(window_position.x, window_position.y + (height / 2 - editingOffset), 0.0f));
 
 			// Update Scroll Bars
-			bar1.Move(bar1X + window_position.x, window_position.y + height / 2 - 10 * scale);
-			bar2.Move(bar2X + window_position.x, window_position.y + height / 2 - 10 * scale);
+			bar1.moveElement(bar1X + window_position.x, window_position.y + height / 2 - 10 * scale);
+			bar2.moveElement(bar2X + window_position.x, window_position.y + height / 2 - 10 * scale);
 		}
 	}
 
@@ -3129,14 +3213,14 @@ void Editor::EditorWindow::finalizeNewObjectVertices(float distance)
 
 	// Create ScrollBar
 	bar1X = border2X - 2 * scale;
-	bar1 = ScrollBar(bar1X, position.y + height / 2 - 10 * scale, 2.0f * scale, editorHeight, editorHeightFull, bar1.percent);
+	bar1 = GUI::VerticalScrollBar(bar1X, position.y + height / 2 - 10 * scale, 2.0f * scale, editorHeight, editorHeightFull, bar1.percent);
 
 	if (!active_window && false)
 	{
 		editing_model = glm::translate(glm::mat4(1.0f), glm::vec3(position.x, position.y + (height / 2 - editingOffset), 0.0f));
 	}
 
-	bar1.Move(bar1X + window_position.x, window_position.y + height / 2 - 10 * scale);
+	bar1.moveElement(bar1X + window_position.x, window_position.y + height / 2 - 10 * scale);
 
 	editing_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 }
@@ -3638,7 +3722,7 @@ void Editor::EditorWindow::updateEditorMode()
 	{
 		for (int i = 0; i < boxes_size; i++)
 		{
-			if (boxes[i]->toggleState((float)mouseStaticX, (float)mouseStaticY))
+			if (boxes[i]->updateElement())
 			{
 				// If Active Wheel and Index is a Color Box, Update Color Wheel
 				if (wheel_active && i >= wheel_box_start && i < wheel_box_start + 4)
@@ -4224,7 +4308,13 @@ void Editor::EditorWindow::genObjectEditorWindow()
 				// SpringMass Node
 				if (springmass_node_modified)
 				{
+					// Allocate Memory
+					resetBoxes(5, 7);
 
+					// Generate Node Boxes
+					genBoxesSpringMassNode(box_offset, text_offset, windowTop);
+
+					editorHeightFull = 80.0f;
 				}
 
 				// SpringMass Spring
@@ -4337,8 +4427,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	editingOffset = height / 2;
 	editorHeight = height - 12 * scale;
 	bar1X = border2X - 2 * scale;
-	bar1 = ScrollBar(bar1X, position.y + height / 2 - 10 * scale, 2.0f * scale, editorHeight, editorHeightFull, bar1.percent);
-	bar1.Move(bar1X + window_position.x, window_position.y + height / 2 - 10 * scale);
+	bar1 = GUI::VerticalScrollBar(bar1X, position.y + height / 2 - 10 * scale, 2.0f * scale, editorHeight, editorHeightFull, bar1.percent);
+	bar1.moveElement(bar1X + window_position.x, window_position.y + height / 2 - 10 * scale);
 	//editing_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	editing_model = glm::translate(editing_model, glm::vec3(window_position.x, window_position.y + (height / 2 - editingOffset), 0.0f));
 
@@ -4430,7 +4520,7 @@ void Editor::EditorWindow::drawWindow()
 	glBindVertexArray(0);
 
 	// Draw ScrollBars
-	bar1.Update();
+	bar1.blitzElement();
 
 	// Scales Clipping Area
 	double widthScalar = (double)Global::screenWidth / (2 * (double)Global::halfScalarX);
@@ -4469,6 +4559,9 @@ void Editor::EditorWindow::drawWindow()
 	// Draw Object Editing Features
 	if (editing_mode == EDITING_MODES::EDIT_OBJECT)
 	{
+		// Update Master Element
+		master.updateElement();
+
 		// Send Other Model Matrix to Shader
 		glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(editing_model));
 
@@ -4479,7 +4572,7 @@ void Editor::EditorWindow::drawWindow()
 
 		// Draw Boxes
 		for (uint8_t i = 0; i < boxes_size; i++)
-			boxes[i]->blitzBox();
+			boxes[i]->blitzElement();
 
 		// Draw Color Wheel
 		if (wheel_active)

@@ -5,9 +5,11 @@
 #include "Macros.h"
 
 // GUI Objects
-#include "Class/Render/GUI/ScrollBar.h"
+#include "Class/Render/GUI/VerticalScrollBar.h"
+#include "Class/Render/GUI/HorizontalScrollBar.h"
 #include "Class/Render/GUI/Box.h"
 #include "Class/Render/GUI/ToggleGroup.h"
+#include "Class/Render/GUI/MasterElement.h"
 
 namespace Render::Objects
 {
@@ -50,6 +52,8 @@ namespace Editor
 		float option_camera_speed = 1.0f;
 		float option_shift_speed = 1.0f;
 		float option_scroll_speed = 3.0f;
+		float option_object_info_max_width_percent = 1.0f;
+		float option_object_info_text_size_percent = 1.0f;
 
 		// Pointer to Level Object
 		Render::Objects::Level* level;
@@ -184,7 +188,7 @@ namespace Editor
 		float y_offset = 0.0f;
 
 		// Scrollbar
-		ScrollBar bar;
+		GUI::VerticalScrollBar bar;
 
 		// Offset of Scroll Bar
 		float bar_offset = 0.0f;
@@ -216,6 +220,11 @@ namespace Editor
 		// Size of Object Arrays
 		uint8_t box_count;
 		uint8_t group_count;
+
+		// Test Horizontal Scroll Bar
+		GUI::HorizontalScrollBar test_bar;
+		GUI::HorizontalScrollBar test_bar2;
+		GUI::MasterElement master;
 	};
 }
 

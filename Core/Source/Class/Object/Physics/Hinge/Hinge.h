@@ -166,6 +166,9 @@ namespace Object::Physics::Hinge
 		// Return Position of Object
 		glm::vec2 returnPosition();
 
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, HingeData& data, std::string& file_name);
+
 #endif
 	};
 }

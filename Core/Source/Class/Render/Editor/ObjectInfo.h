@@ -22,7 +22,7 @@ namespace Editor
 			std::string identifier = "";
 
 			// Identifier Color
-			glm::vec4 identifier_color;
+			glm::vec4 identifier_color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 			// Size of Text
 			float text_size = 0;
@@ -36,10 +36,10 @@ namespace Editor
 		public:
 
 			// Blitz Text Function
-			virtual float blitzText(float x, float y) = 0;
+			virtual void blitzText(float x, float& y, float max_height) = 0;
 
 			// Get Size of Text
-			virtual float getTextSize() = 0;
+			virtual float getTextSize(float max_width) = 0;
 
 			// Set Size and Scale
 			void setSizeScale(float size, float scale);
@@ -47,8 +47,14 @@ namespace Editor
 			// Returns the Size (Width) of the Text
 			float returnSize();
 
-			// Returns the Scale (Height) of the Text
+			// Returns the Scale (Size) of the Text
 			float returnScale();
+
+			// Set Scale of Text
+			void setScale(float new_scale);
+
+			// Returns the Height Offset of the Text
+			float returnHeightOffset(float max_height);
 		};
 
 		// Class for String Text Objects
@@ -66,10 +72,10 @@ namespace Editor
 			TextString(std::string identifier_, glm::vec4 identifier_color_, std::string* value_, glm::vec4 value_color_);
 
 			// Blitz Text
-			float blitzText(float x, float y);
+			void blitzText(float x, float& y, float max_height);
 
 			// Get Size of Text
-			float getTextSize();
+			float getTextSize(float max_width);
 
 			// Set Value
 			void setValue(std::string* value_);
@@ -93,10 +99,10 @@ namespace Editor
 			TextSingleValue(std::string identifier_, glm::vec4 identifier_color_, void* value_, glm::vec4 value_color_, bool is_int);
 
 			// Blitz Text
-			float blitzText(float x, float y);
+			void blitzText(float x, float& y, float max_height);
 
 			// Get Size of Text
-			float getTextSize();
+			float getTextSize(float max_width);
 
 			// Set Value
 			void setValue(void* value_);
@@ -139,10 +145,10 @@ namespace Editor
 				std::string secondary_identifier_2_, glm::vec4 secondary_color_2_, void* value1_, void* value2_, glm::vec4 value_color_, bool is_int);
 
 			// Blitz Text
-			float blitzText(float x, float y);
+			void blitzText(float x, float& y, float max_height);
 
 			// Get Size of Text
-			float getTextSize();
+			float getTextSize(float max_width);
 
 			// Set Values
 			void setValues(void* value1_, void* value2_);
@@ -166,10 +172,10 @@ namespace Editor
 			TextBoolean(std::string identifier_, glm::vec4 identifier_color_, bool* value_, glm::vec4 value_color_);
 
 			// Blitz Text
-			float blitzText(float x, float y);
+			void blitzText(float x, float& y, float max_height);
 
 			// Get Size of Text
-			float getTextSize();
+			float getTextSize(float max_width);
 
 			// Set Value
 			void setValue(bool* value_);
@@ -217,6 +223,15 @@ namespace Editor
 
 		// Model Matrix
 		glm::mat4 model;
+
+		// Max Width
+		float max_width = 1.0f;
+
+		// Max Height
+		float max_height = 1.0f;
+
+		// Max Scale
+		float max_scale = 1.0;
 
 	public:
 

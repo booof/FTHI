@@ -57,6 +57,9 @@ namespace Object::Light::Beam
 		// Return Position of Object
 		glm::vec2 returnPosition();
 
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, LightData& data, BeamData& beam);
+
 		// Slope and Y-Intercept of Line for Editing
 		float Slope;
 		float Intercept;

@@ -46,25 +46,25 @@ namespace Object
 	struct ObjectData
 	{
 		// Constant Position of Object
-		glm::vec2 position;
+		glm::vec2 position = glm::vec2(0.0f, 0.0f);
 
 		// Z-Pos of Object
-		float zpos;
+		float zpos = -1.0f;
 
 		// Colors of Object
-		glm::vec4 colors;
+		glm::vec4 colors = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 		// Normals of Object
-		glm::vec3 normals;
+		glm::vec3 normals = glm::vec3(0.0f, 0.0f, 1.0f);
 
 		// Name of Texture
-		int texture_name;
+		int texture_name = 0;
 
 		// Name of Material
-		int material_name;
+		int material_name = 0;
 
 		// Script
-		int script;
+		int script = 0;
 	};
 
 	// Definition for Object
@@ -94,17 +94,17 @@ namespace Object
 		bool active = true;
 
 		// Which Level Array The Object Should be Placed Into
-		uint8_t storage_type;
+		uint8_t storage_type = 0;
 
 		// Initializer Function for Scripts
-		void (*init)(Object*);
+		void (*init)(Object*) = nullptr;
 
 		// Loop Function for Scripts
-		void (*loop)(Object*);
+		void (*loop)(Object*) = nullptr;
 
 		// Uninitializer Function for Scripts
 		//virtual void del() = 0;
-		void (*del)(Object*);
+		void (*del)(Object*) = nullptr;
 
 		// The External Data Used by the Object (Used for Individual Object Specific Data in Scripts)
 		void* external_data = nullptr;

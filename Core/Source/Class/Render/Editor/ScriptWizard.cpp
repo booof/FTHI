@@ -218,8 +218,11 @@ void Editor::ScriptWizard::initializeScriptWizard()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+    // Generate Master Element
+    master = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 80.0f);
+
     // Generate ScrollBar
-    bar = ScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 100.0f, 0.0f);
+    bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 100.0f, 0.0f);
 
     // Generate Add Instance Box
     GUI::BoxData temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::NULL_BOX, -46.5f, -35.5f, -1.0f, 20.0f, 5.0, true, "Add", glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 0.7f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -272,7 +275,7 @@ void Editor::ScriptWizard::updateScriptWizard()
 	// File Loop
 	if (current_loop == 0)
 	{
-		bar = ScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
+		bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
 		numbers_size = files_size;
 
 	}
@@ -280,14 +283,14 @@ void Editor::ScriptWizard::updateScriptWizard()
 	// Global Loop
 	else if (current_loop == 1)
 	{
-		bar = ScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f);
+		bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f);
 		numbers_size = globals_size;
 	}
 
 	// Object Loop
 	else
 	{
-		bar = ScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f);
+		bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f);
 		numbers_size = objects_size;
 	}
 
@@ -316,6 +319,7 @@ void Editor::ScriptWizard::updateScriptWizard()
 		glfwPollEvents();
 		float modified_mouse_x = (float)Global::mouseX / Global::zoom_scale;
 		float modified_mouse_y = (float)Global::mouseY / Global::zoom_scale;
+        master.updateElement();
 
         // If Escape is Pressed, Exit Loop
         if (Global::Keys[GLFW_KEY_ESCAPE])
@@ -381,19 +385,19 @@ void Editor::ScriptWizard::updateScriptWizard()
 		glScissor(0, 0, (GLsizei)Global::screenWidth, (GLsizei)Global::screenHeight);
 
 		// Draw ScrollBar
-		bar.Update();
+		bar.blitzElement();
 
 		// Draw Boxes
 		glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(temp));
-		box_add_instance.blitzBox();
-        box_remove_instance.blitzBox();
+		box_add_instance.blitzElement();
+        box_remove_instance.blitzElement();
         if (current_loop == 0)
-            box_load_instance.blitzBox();
+            box_load_instance.blitzElement();
         else
-            box_modify_instance.blitzBox();
-        box_move_instance.blitzBox();
-        box_open_instance.blitzBox();
-        box_exit.blitzBox();
+            box_modify_instance.blitzElement();
+        box_move_instance.blitzElement();
+        box_open_instance.blitzElement();
+        box_exit.blitzElement();
 
 		// Edit Text of Object if a TextBox is Selected
 		if (Global::texting || Global::stoped_texting)
@@ -488,7 +492,7 @@ void Editor::ScriptWizard::updateScriptWizard()
 				// File Loop
 				if (current_loop == 0)
 				{
-					bar = ScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
+					bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
 					numbers_size = files_size;
 
 				}
@@ -496,14 +500,14 @@ void Editor::ScriptWizard::updateScriptWizard()
 				// Global Loop
 				else if (current_loop == 1)
 				{
-					bar = ScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f);
+					bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f);
 					numbers_size = globals_size;
 				}
 
 				// Object Loop
 				else
 				{
-					bar = ScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f);
+					bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f);
 					numbers_size = objects_size;
 				}
 
@@ -612,7 +616,7 @@ void Editor::ScriptWizard::updateScriptWizard()
 		else
 		{
 			// Test Mouse on Add Instance
-			if (box_add_instance.toggleState(modified_mouse_x, modified_mouse_y))
+			if (box_add_instance.updateElement())
 			{
 				Global::LeftClick = false;
 
@@ -621,7 +625,7 @@ void Editor::ScriptWizard::updateScriptWizard()
                 {
                     if (addFile())
                     {
-                        bar = ScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
+                        bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
                         numbers_size = files_size;
                     }
                 }
@@ -630,7 +634,7 @@ void Editor::ScriptWizard::updateScriptWizard()
                 else if (current_loop == 1)
                 {
                     addGlobal();
-                    bar = ScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f);
+                    bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f);
                     numbers_size = globals_size;
                 }
 
@@ -638,7 +642,7 @@ void Editor::ScriptWizard::updateScriptWizard()
                 else
                 {
                     addObject();
-                    bar = ScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f);
+                    bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f);
                     numbers_size = objects_size;
                 }
 
@@ -647,44 +651,44 @@ void Editor::ScriptWizard::updateScriptWizard()
 			}
 
 			// Test Mouse on Remove Instance Box
-            if (selected_row != -1 && box_remove_instance.toggleState(modified_mouse_x, modified_mouse_y))
+            if (selected_row != -1 && box_remove_instance.updateElement())
             {
 
             }
 
             // If Loop is File Loop, Test Mouse on Load Instance Box
-            else if (current_loop == 0 && box_load_instance.toggleState(modified_mouse_x, modified_mouse_y))
+            else if (current_loop == 0 && box_load_instance.updateElement())
             {
                 Global::LeftClick = false;
                 if (loadFile())
                 {
-                    bar = ScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
+                    bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
                     numbers_size = files_size;
                     Global::scroll_bar = &bar;
                 }
             }
 
             // If Loop is Not File Loop, Test Mouse on Modify Instance Box
-            else if (current_loop && selected_row != -1 && box_modify_instance.toggleState(modified_mouse_x, modified_mouse_y))
+            else if (current_loop && selected_row != -1 && box_modify_instance.updateElement())
             {
 
             }
 
             // Test Mouse on Move Instance Box
-            else if (selected_row != -1 && box_move_instance.toggleState(modified_mouse_x, modified_mouse_y))
+            else if (selected_row != -1 && box_move_instance.updateElement())
             {
 
             }
 
             // Test Mouse on Open Instance Box
-            else if (selected_row != -1 && box_open_instance.toggleState(modified_mouse_x, modified_mouse_y))
+            else if (selected_row != -1 && box_open_instance.updateElement())
             {
                 Global::LeftClick = false;
                 openFile(selected_row);
             }
 
             // Test Mouse on Exit Box
-            else if (box_exit.toggleState(modified_mouse_x, modified_mouse_y))
+            else if (box_exit.updateElement())
             {
                 Global::LeftClick = false;
                 looping = false;
@@ -758,7 +762,7 @@ void Editor::ScriptWizard::updateScriptWizard()
         if (Global::texting)
         {
             Global::colorShaderStatic.Use();
-            box_edit_value.blitzBox();
+            box_edit_value.blitzElement();
             Global::fontShader.Use();
             box_edit_value.blitzText();
         }

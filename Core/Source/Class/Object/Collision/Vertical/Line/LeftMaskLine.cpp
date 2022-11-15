@@ -39,11 +39,7 @@ void Object::Mask::Left::LeftMaskLine::select(Editor::Selector& selector, Editor
 	selector.editor_data.name = name;
 
 	// Store Object Information
-	object_info.clearAll();
-	object_info.setObjectType("Left Wall Mask Vertical Line", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
-	object_info.addSingleValue("Height: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &data.height, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), false);
+	info(object_info, name, data);
 
 	// Set Selector to Active Highlight
 	selector.activateHighlighter();
@@ -52,6 +48,16 @@ void Object::Mask::Left::LeftMaskLine::select(Editor::Selector& selector, Editor
 glm::vec2 Object::Mask::Left::LeftMaskLine::returnPosition()
 {
 	return data.position;
+}
+
+void Object::Mask::Left::LeftMaskLine::info(Editor::ObjectInfo& object_info, std::string& name, VerticalLineData& data)
+{
+	// Store Object Information
+	object_info.clearAll();
+	object_info.setObjectType("Left Wall Mask Vertical Line", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addSingleValue("Height: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &data.height, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), false);
 }
 
 #endif

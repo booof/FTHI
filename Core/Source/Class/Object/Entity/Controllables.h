@@ -30,6 +30,9 @@ namespace Object::Entity
 		// Select Object 
 		void select(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data);
+
 #endif
 
 	};

@@ -122,7 +122,7 @@ void Editor::Debugger::readErrorLog()
 	//std::cout << "end error\n\n\n\n\n";
 
 	// Generate ScrollBar
-	bar = ScrollBar(60.0f, 26.0f, 1.0f, 56.0f, 5.0f * errors.size(), 0.0f);
+	bar = GUI::VerticalScrollBar(60.0f, 26.0f, 1.0f, 56.0f, 5.0f * errors.size(), 0.0f);
 }
 
 void Editor::Debugger::initializeDebugger()
@@ -247,8 +247,11 @@ void Editor::Debugger::initializeDebugger()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
+	// Generate Master Element
+	master = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 80.0f);
+
 	// Generate Scroll Bar
-	bar = ScrollBar(60.0f, 26.0f, 1.0f, 56.0f, 100.0f, 0.0f);
+	bar = GUI::VerticalScrollBar(60.0f, 26.0f, 1.0f, 56.0f, 100.0f, 0.0f);
 
 	// Open File Box
 	GUI::BoxData temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::NULL_BOX, 18.0f, -33.5f, -1.0f, 20.0f, 5.0f, true, "Open", glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 0.7f), glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
@@ -341,7 +344,7 @@ void Editor::Debugger::updateWindow()
 	glDisable(GL_DEPTH_TEST);
 
 	// Bind ScrollBar
-	Global::scroll_bar = &bar;
+	Global::scroll_bar = static_cast<GUI::ScrollBar*>(&bar);
 	glfwSetScrollCallback(Global::window, Source::Listeners::ScrollBarCallback);
 
 	Global::colorShaderStatic.Use();
@@ -360,6 +363,7 @@ void Editor::Debugger::updateWindow()
 		glfwPollEvents();
 		float modified_mouse_x = (float)Global::mouseX / Global::zoom_scale;
 		float modified_mouse_y = (float)Global::mouseY / Global::zoom_scale;
+		master.updateElement();
 
 		// If Currently Recompiling, Test if Compiling Finished
 		if (!looked_at_least_once && std::filesystem::exists(std::filesystem::path(Global::project_scripts_path + "\\..\\compilation complete")))
@@ -405,9 +409,9 @@ void Editor::Debugger::updateWindow()
 		glBindVertexArray(0);
 
 		// Draw Boxes
-		box_open_file.blitzBox();
-		box_recompile_project.blitzBox();
-		box_exit.blitzBox();
+		box_open_file.blitzElement();
+		box_recompile_project.blitzElement();
+		box_exit.blitzElement();
 
 		// Calculate the Translated Model Matrix for Loop Bodies
 		float offset = bar.BarOffset;
@@ -438,7 +442,7 @@ void Editor::Debugger::updateWindow()
 		glScissor(0, 0, (GLsizei)Global::screenWidth, (GLsizei)Global::screenHeight);
 
 		// Draw ScrollBar
-		bar.Update();
+		bar.blitzElement();
 
 		// Test Mouse on ScrollBar
 		if (!scrolling && bar.TestColloisions())
@@ -496,7 +500,7 @@ void Editor::Debugger::updateWindow()
 		else
 		{
 			// Test Open File Box
-			if (box_open_file.toggleState(modified_mouse_x, modified_mouse_y))
+			if (box_open_file.updateElement())
 			{
 				// Disable Left Click
 				Global::LeftClick = false;
@@ -509,7 +513,7 @@ void Editor::Debugger::updateWindow()
 			}
 
 			// Test Recompile Box
-			else if (looked_at_least_once && box_recompile_project.toggleState(modified_mouse_x, modified_mouse_y))
+			else if (looked_at_least_once && box_recompile_project.updateElement())
 			{
 				// Disable Left Click
 				Global::LeftClick = false;
@@ -519,7 +523,7 @@ void Editor::Debugger::updateWindow()
 			}
 
 			// Test Exit Box
-			else if (box_exit.toggleState(modified_mouse_x, modified_mouse_y))
+			else if (box_exit.updateElement())
 			{
 				// Disable Left Click
 				Global::LeftClick = false;

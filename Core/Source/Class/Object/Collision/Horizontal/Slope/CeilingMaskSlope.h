@@ -11,6 +11,7 @@ namespace Object::Mask
 	// Class for Ceiling Mask With Shape of Inverse Tangent Function
 	class Ceiling::CeilingMaskSlope : public Ceiling::CeilingMask, public Slope
 	{
+	public:
 
 #ifdef EDITOR
 
@@ -23,7 +24,12 @@ namespace Object::Mask
 		// Return Position of Object
 		glm::vec2 returnPosition();
 
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, SlopeData& data);
+
 #endif
+
+	private:
 
 		// Test Collisions of Object
 		bool testCollisions(glm::vec2 test_position, float error);

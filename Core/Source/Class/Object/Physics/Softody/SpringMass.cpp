@@ -59,6 +59,21 @@ Object::Physics::Soft::SpringMass::SpringMass(uint32_t& uuid_, ObjectData& data_
 
 }
 
+Object::Physics::Soft::SpringMass::~SpringMass()
+{
+	// Delete Node Map
+	if (node_count)
+		delete[] node_map;
+
+	// Delete Skip Node Array
+	if (node_count)
+		delete[] skip_nodes;
+
+	// Delete Skip Spring Array
+	if (spring_count)
+		delete[] skip_springs;
+}
+
 glm::vec2* Object::Physics::Soft::SpringMass::pointerToPosition()
 {
 	return &data.position;
@@ -95,16 +110,23 @@ void Object::Physics::Soft::SpringMass::read()
 		uint8_t byte = 0;
 		file.read((char*)&node_count, 1);
 		if (node_count)
-			nodes = new Node[node_count];
+		{
+			nodes = new Node[node_count + 1]; // +1 is in event selected node is Being Edited
+			skip_nodes = new bool[node_count] {0};
+		}
 		file.read((char*)&spring_count, 1);
 		if (spring_count)
+		{
 			springs = new Spring[spring_count];
+			skip_springs = new bool[spring_count] {0};
+		}
 
 		// Read Rest of File
 		NodeData node_data;
 		Spring spring_data;
 		int node_index = 0;
 		int spring_index = 0;
+		int max_node_name = 0;
 		while (!file.eof())
 		{
 			// Read Type
@@ -127,8 +149,24 @@ void Object::Physics::Soft::SpringMass::read()
 			{
 				file.read((char*)&spring_data, sizeof(spring_data));
 				springs[spring_index] = Spring(spring_data);
+				max_node_name = (spring_data.Node1 > max_node_name) ? spring_data.Node1 : max_node_name;
+				max_node_name = (spring_data.Node2 > max_node_name) ? spring_data.Node2 : max_node_name;
 				spring_index++;
 			}
+		}
+
+		// Construct the Node Name Map
+		node_map = new int16_t[max_node_name + 1]{0};
+		for (int i = 0; i < max_node_name + 1; i++)
+			node_map[i] = 0x7FFF;
+		for (int i = 0; i < node_count; i++)
+			node_map[nodes[i].Name] = i;
+
+		// Link Springs to Correct Node
+		for (int i = 0; i < spring_count; i++)
+		{
+			springs[i].Node1 = node_map[springs[i].Node1];
+			springs[i].Node2 = node_map[springs[i].Node2];
 		}
 	}
 }
@@ -173,11 +211,7 @@ void Object::Physics::Soft::SpringMass::select(Editor::Selector& selector, Edito
 	selector.editor_data.name = name;
 
 	// Store Object Information
-	object_info.clearAll();
-	object_info.setObjectType("SpringMass", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
-	object_info.addTextValue("File: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &file_name, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
+	info(object_info, name, data, file_name);
 
 	// Reset Some Values
 	selector.springmass_node_modified = false;
@@ -203,4 +237,32 @@ bool Object::Physics::Soft::SpringMass::testMouseCollisions(float x, float y)
 glm::vec2 Object::Physics::Soft::SpringMass::returnPosition()
 {
 	return data.position;
+}
+
+void Object::Physics::Soft::SpringMass::select2(Editor::Selector& selector)
+{
+	// Update Node Map
+	node_map[selector.node_data.name] = node_count;
+
+	// Store Pointer to Node
+	selector.node_pointer = &nodes[node_count];
+
+	// Link Springs to Correct Node
+	for (int i = 0; i < spring_count; i++)
+	{
+		if (springs[i].Node1 == 0x7FFF)
+			springs[i].Node1 = node_count;
+		if (springs[i].Node2 == 0x7FFF)
+			springs[i].Node2 = node_count;
+	}
+}
+
+void Object::Physics::Soft::SpringMass::info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, std::string& file_name)
+{
+	// Store Object Information
+	object_info.clearAll();
+	object_info.setObjectType("SpringMass", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addTextValue("File: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &file_name, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
 }

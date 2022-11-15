@@ -32,6 +32,8 @@ void Loop::loop()
 
 	// Object Info
 	Editor::ObjectInfo* object_info = new Editor::ObjectInfo();
+	selector->info = object_info;
+
 
 #ifdef FFMPEG
 

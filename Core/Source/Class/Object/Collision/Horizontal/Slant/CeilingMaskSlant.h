@@ -11,6 +11,7 @@ namespace Object::Mask
 	// Class for Ceiling Mask With Shape of Sloped Line
 	class Ceiling::CeilingMaskSlant : public Ceiling::CeilingMask, public Slant
 	{
+	public:
 
 #ifdef EDITOR
 
@@ -22,8 +23,13 @@ namespace Object::Mask
 
 		// Return Position of Object
 		glm::vec2 returnPosition();
+
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, SlantData& data);
 		
 #endif
+
+	private:
 
 		// Test Collisions of Object
 		bool testCollisions(glm::vec2 test_position, float error);

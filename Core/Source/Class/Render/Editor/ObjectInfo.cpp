@@ -5,6 +5,7 @@
 #include "Source/Loaders/Fonts.h"
 #include "Source/Vertices/Rectangle/RectangleVertices.h"
 #include "Source/Algorithms/Common/Common.h"
+#include "EditorOptions.h"
 
 #define DEFAULT_TEXT_HEIGHT 25
 #define MAX_TEXT_SIZE 43.875f
@@ -31,11 +32,11 @@ Editor::ObjectInfo::ObjectInfo()
 
 	// Generate Outline Vertices
 	float vertices[42];
-	Vertices::Rectangle::genRectColor(-1.0f, -1.0f, -1.0f, 50.0f, 80.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), vertices);
+	Vertices::Rectangle::genRectColor(-0.1f, -0.1f, -0.9f, 50.0f, 80.0f, glm::vec4(0.0f, 0.0f, 0.0f, 0.7f), vertices);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 168, vertices);
 
 	// Generate Background Vertices
-	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -0.9f, 49.0f, 79.0f, glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), vertices);
+	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -0.8f, 49.0f, 79.0f, glm::vec4(0.4f, 0.4f, 0.4f, 0.7f), vertices);
 	glBufferSubData(GL_ARRAY_BUFFER, 168, 168, vertices);
 
 	// Enable Position Vertices
@@ -54,38 +55,45 @@ Editor::ObjectInfo::ObjectInfo()
 void Editor::ObjectInfo::drawInfo()
 {
 	// If Type Text is Empty, Do Nothing
-	if (type_text == "" || !active)
+	if (type_text == "" || !active || Global::editor_options->option_object_info_max_width_percent == 0 || Global::editor_options->option_object_info_text_size_percent == 0)
 		return;
 
 	// If Should Restructure Flag is True, Determine How the Layout Should be Established
 	if (should_restructure)
 	{
+		// Determine Size of Text
+		max_width = MAX_TEXT_SIZE * Global::editor_options->option_object_info_max_width_percent;
+		max_height = DEFAULT_TEXT_HEIGHT * Global::editor_options->option_object_info_text_size_percent;
+		max_scale = 0.143 * Global::editor_options->option_object_info_text_size_percent;
+
 		// Determine the Scale and Size of the Type Text Object
-		type_scale = 0.25f;
-		float type_size = Source::Fonts::getTextSize(type_text, 0.25f);
-		if (type_size > MAX_TEXT_SIZE)
+		type_scale = 0.25f * Global::editor_options->option_object_info_text_size_percent;
+		float type_size = Source::Fonts::getTextSize(type_text, type_scale);
+		if (type_size > max_width)
 		{
-			type_scale = (MAX_TEXT_SIZE * 0.25f) / type_size;
-			type_size = MAX_TEXT_SIZE;
+			type_scale = (max_width * type_scale) / type_size;
+			type_size = max_width;
 		}
 		max_text_size = type_size + 1;
 
 		// Determine the Current Width and Height of the Text
 		float temp_size = 0.0f;
-		current_height = DEFAULT_TEXT_HEIGHT * type_scale;
+		float type_height_offset = (32.0f + TEXT_HEIGHT_OFFSET) * type_scale * 1.1f;
+		current_height = type_height_offset;
 		for (int i = 0; i < text_objects.size(); i++)
 		{
-			temp_size = text_objects[i]->getTextSize() + 1;
+			text_objects[i]->setScale(max_scale);
+			temp_size = text_objects[i]->getTextSize(max_width) + 1;
 			max_text_size = (max_text_size > temp_size) ? max_text_size : temp_size;
-			current_height += DEFAULT_TEXT_HEIGHT * text_objects[i]->returnScale() + TEXT_HEIGHT_OFFSET;
+			current_height += text_objects[i]->returnHeightOffset(max_height);
 		}
 
 		// Set Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(113.0f - max_text_size, 82.0f - current_height, 0.0));
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(113.0f - max_text_size, 88.0f - current_height, 0.0));
 
 		// Set Position of Text
-		type_text_position = glm::vec2((84.0f - (max_text_size - type_size) * type_scale - type_size), 41.9f);
-		first_text_position = glm::vec2((90.0f - max_text_size), (41.0f - DEFAULT_TEXT_HEIGHT * type_scale));
+		type_text_position = glm::vec2(89.5f - (max_text_size + type_size) * 0.5f, 49.9f - 32.0f * type_scale);
+		first_text_position = glm::vec2((90.0f - max_text_size), (49.9f - type_height_offset));
 
 		// Disable Flag
 		should_restructure = false;
@@ -109,7 +117,7 @@ void Editor::ObjectInfo::drawInfo()
 	// Draw Text Objects
 	float text_height = first_text_position.y;
 	for (int i = 0; i < text_objects.size(); i++)
-		text_height -= text_objects[i]->blitzText(first_text_position.x, text_height);
+		text_objects[i]->blitzText(first_text_position.x, text_height, max_height);
 }
 
 void Editor::ObjectInfo::setObjectType(std::string type, glm::vec4 color)
@@ -266,6 +274,16 @@ float Editor::ObjectInfo::TextMaster::returnScale()
 	return text_scale;
 }
 
+void Editor::ObjectInfo::TextMaster::setScale(float new_scale)
+{
+	text_scale = new_scale;
+}
+
+float Editor::ObjectInfo::TextMaster::returnHeightOffset(float max_height)
+{
+	return (max_height + TEXT_HEIGHT_OFFSET) * text_scale * 1.3f;
+}
+
 Editor::ObjectInfo::TextString::TextString(std::string identifier_, glm::vec4 identifier_color_, std::string* value_, glm::vec4 value_color_)
 {
 	// Store Values
@@ -275,26 +293,24 @@ Editor::ObjectInfo::TextString::TextString(std::string identifier_, glm::vec4 id
 	color = value_color_;
 }
 
-float Editor::ObjectInfo::TextString::blitzText(float x, float y)
+void Editor::ObjectInfo::TextString::blitzText(float x, float& y, float max_height)
 {
 	// Render Text
+	y -= returnHeightOffset(max_height);
 	x = Source::Fonts::renderText(identifier, x, y, text_scale, identifier_color, true);
 	Source::Fonts::renderText(*value_string, x, y, text_scale, color, true);
-
-	// Return Offset Created From Rendering
-	return DEFAULT_TEXT_HEIGHT * text_scale + TEXT_HEIGHT_OFFSET;
 }
 
-float Editor::ObjectInfo::TextString::getTextSize()
+float Editor::ObjectInfo::TextString::getTextSize(float max_width)
 {
 	// Get Size of Text
 	text_size = Source::Fonts::getTextSize(identifier + *value_string, text_scale);
 
 	// Clamp Size and Scale, If Needed
-	if (text_size > MAX_TEXT_SIZE)
+	if (text_size > max_width)
 	{
-		text_scale = (MAX_TEXT_SIZE * text_scale) / text_size;
-		text_size = MAX_TEXT_SIZE;
+		text_scale = (max_width * text_scale) / text_size;
+		text_size = max_width;
 	}
 
 	// Return Size of Text
@@ -313,37 +329,42 @@ Editor::ObjectInfo::TextSingleValue::TextSingleValue(std::string identifier_, gl
 	identifier = identifier_;
 	identifier_color = identifier_color_;
 	color = value_color_;
+	interpret_as_int = is_int;
 
 	// Set Values
 	setValue(value_);
 }
 
-float Editor::ObjectInfo::TextSingleValue::blitzText(float x, float y)
+void Editor::ObjectInfo::TextSingleValue::blitzText(float x, float& y, float max_height)
 {
 	// Render Text
+	y -= returnHeightOffset(max_height);
 	x = Source::Fonts::renderText(identifier, x, y, text_scale, identifier_color, true);
 	Source::Fonts::renderText(value_string, x, y, text_scale, color, true);
-
-	// Return Offset Created From Rendering
-	return DEFAULT_TEXT_HEIGHT * text_scale + TEXT_HEIGHT_OFFSET;
 }
 
-float Editor::ObjectInfo::TextSingleValue::getTextSize()
+float Editor::ObjectInfo::TextSingleValue::getTextSize(float max_width)
 {
 	// Convert Value Into String
 	if (interpret_as_int)
 		value_string = std::to_string(*static_cast<int*>(value));
 	else
-		value_string = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*static_cast<float*>(value)));
+	{
+		std::stringstream value_stream;
+		value_stream << std::fixed << std::setprecision(4) << *static_cast<float*>(value);
+		value_string = value_stream.str();
+		//value_string = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*static_cast<float*>(value)));
+	}
+
 
 	// Get Size of Text
 	text_size = Source::Fonts::getTextSize(identifier + value_string, text_scale);
 
 	// Clamp Size and Scale, If Needed
-	if (text_size > MAX_TEXT_SIZE)
+	if (text_size > max_width)
 	{
-		text_scale = (MAX_TEXT_SIZE * text_scale) / text_size;
-		text_size = MAX_TEXT_SIZE;
+		text_scale = (max_width * text_scale) / text_size;
+		text_size = max_width;
 	}
 
 	// Return Size of Text
@@ -367,25 +388,24 @@ Editor::ObjectInfo::TextDoubleValue::TextDoubleValue(std::string identifier_, gl
 	secondary_identifier_color_1 = secondary_color_1_;
 	secondary_identifier_color_2 = secondary_color_2_;
 	value_color = value_color_;
+	interpret_as_int = is_int;
 
 	// Set Values
 	setValues(value1_, value2_);
 }
 
-float Editor::ObjectInfo::TextDoubleValue::blitzText(float x, float y)
+void Editor::ObjectInfo::TextDoubleValue::blitzText(float x, float& y, float max_height)
 {
 	// Render Text
+	y -= returnHeightOffset(max_height);
 	x = Source::Fonts::renderText(identifier, x, y, text_scale, identifier_color, true);
 	x = Source::Fonts::renderText(secondary_identifier_1, x, y, text_scale, secondary_identifier_color_1, true);
 	x = Source::Fonts::renderText(value_string_1, x, y, text_scale, value_color, true);
 	x = Source::Fonts::renderText(secondary_identifier_2, x, y, text_scale, secondary_identifier_color_2, true);
 	Source::Fonts::renderText(value_string_2, x, y, text_scale, value_color, true);
-
-	// Return Offset Created From Rendering
-	return DEFAULT_TEXT_HEIGHT * text_scale + TEXT_HEIGHT_OFFSET;
 }
 
-float Editor::ObjectInfo::TextDoubleValue::getTextSize()
+float Editor::ObjectInfo::TextDoubleValue::getTextSize(float max_width)
 {
 	// Convert Value Into String
 	if (interpret_as_int)
@@ -395,18 +415,23 @@ float Editor::ObjectInfo::TextDoubleValue::getTextSize()
 	}
 	else
 	{
-		value_string_1 = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*static_cast<float*>(value1)));
-		value_string_2 = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*static_cast<float*>(value2)));
+		std::stringstream value_stream1, value_stream2;
+		value_stream1 << std::fixed << std::setprecision(4) << *static_cast<float*>(value1);
+		value_string_1 = value_stream1.str();
+		value_stream2 << std::fixed << std::setprecision(4) << *static_cast<float*>(value2);
+		value_string_2 = value_stream2.str();
+		//value_string_1 = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*static_cast<float*>(value1)));
+		//value_string_2 = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*static_cast<float*>(value2)));
 	}
 
 	// Get Size of Text
 	text_size = Source::Fonts::getTextSize(identifier + secondary_identifier_1 + value_string_1 + secondary_identifier_2 + value_string_2, text_scale);
 
 	// Clamp Size and Scale, If Needed
-	if (text_size > MAX_TEXT_SIZE)
+	if (text_size > max_width)
 	{
-		text_scale = (MAX_TEXT_SIZE * text_scale) / text_size;
-		text_size = MAX_TEXT_SIZE;
+		text_scale = (max_width * text_scale) / text_size;
+		text_size = max_width;
 	}
 
 	// Return Size of Text
@@ -429,17 +454,15 @@ Editor::ObjectInfo::TextBoolean::TextBoolean(std::string identifier_, glm::vec4 
 	color = value_color_;
 }
 
-float Editor::ObjectInfo::TextBoolean::blitzText(float x, float y)
+void Editor::ObjectInfo::TextBoolean::blitzText(float x, float& y, float max_height)
 {
 	// Render Text
+	y -= returnHeightOffset(max_height);
 	x = Source::Fonts::renderText(identifier, x, y, text_scale, identifier_color, true);
 	Source::Fonts::renderText(value_string, x, y, text_scale, color, true);
-
-	// Return Offset Created From Rendering
-	return DEFAULT_TEXT_HEIGHT * text_scale + TEXT_HEIGHT_OFFSET;
 }
 
-float Editor::ObjectInfo::TextBoolean::getTextSize()
+float Editor::ObjectInfo::TextBoolean::getTextSize(float max_width)
 {
 	// Get Text
 	if (*value)
@@ -451,10 +474,10 @@ float Editor::ObjectInfo::TextBoolean::getTextSize()
 	text_size = Source::Fonts::getTextSize(identifier + value_string, text_scale);
 
 	// Clamp Size and Scale, If Needed
-	if (text_size > MAX_TEXT_SIZE)
+	if (text_size > max_width)
 	{
-		text_scale = (MAX_TEXT_SIZE * text_scale) / text_size;
-		text_size = MAX_TEXT_SIZE;
+		text_scale = (max_width * text_scale) / text_size;
+		text_size = max_width;
 	}
 
 	// Return Size of Text

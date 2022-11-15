@@ -5,11 +5,10 @@
 #include "Macros.h"
 #include "Constants.h"
 
-class ScrollBar;
-
 namespace GUI
 {
 	class Box;
+	class ScrollBar;
 }
 
 namespace Editor
@@ -104,7 +103,7 @@ namespace Global
 	extern bool stoped_texting;
 
 	// The ScrollBar Object Used for Scrolling
-	extern ScrollBar* scroll_bar;
+	extern GUI::ScrollBar* scroll_bar;
 
 	// Values of Current Screen Width and Height
 	extern unsigned int screenWidth;

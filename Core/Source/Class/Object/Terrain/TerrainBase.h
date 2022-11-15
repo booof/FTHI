@@ -67,6 +67,9 @@ namespace Object::Terrain
 		// Return Shape of Object
 		Shape::Shape* returnShapePointer();
 
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, Shape::Shape* shape);
+
 #endif
 
 		// Returns Reference to Object Data

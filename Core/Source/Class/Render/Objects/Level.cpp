@@ -21,6 +21,7 @@
 #include "Source/Algorithms/Common/Common.h"
 #include "Class/Render/Shader/Shader.h"
 #include "ChangeController.h"
+#include "Source/Vertices/Visualizer/Visualizer.h"
 
 // Collisions
 #include "Source/Collisions/Mask Collisions/MaskCollisions.h"
@@ -1174,6 +1175,17 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 		return true;
 
 	// Test Selector on Hinge Objects
+	for (physics_list.it = physics_list.beginStatic(); physics_list.it != physics_list.endStatic(); physics_list.it++)
+	{
+		// Get Pointer to Object
+		Object::Physics::PhysicsBase* object_pointer = &*(physics_list.it);
+
+		// Test if Object is a SpringMass
+		if (object_pointer->type == Object::Physics::PHYSICS_TYPES::TYPE_HINGE)
+		{
+
+		}
+	}
 
 	// Test Selector on SpringMass Objects
 	for (physics_list.it = physics_list.beginStatic(); physics_list.it != physics_list.endStatic(); physics_list.it++)
@@ -1191,12 +1203,16 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 			if (object.lock || object.skip_selection)
 			{
 				Global::Selected_Cursor = Global::CURSORS::LOCK;
-				return 0;
+				continue;
 			}
 
 			// Iterate Through Springs
 			for (int i = 0; i < object.spring_count; i++)
 			{
+				// Test if Spring is to be Skipped
+				if (object.skip_springs[i])
+					continue;
+
 				// Calculate the Angle Between Nodes
 				glm::vec2& node_pos_1 = object.nodes[object.springs[i].Node1].Position;
 				glm::vec2& node_pos_2 = object.nodes[object.springs[i].Node2].Position;
@@ -1270,6 +1286,14 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 					// If Mouse Distance is Less Than Max Distance, There is a Collision
 					if (mouse_distance < max_distance)
 					{
+						// Test if User is Going to Skip Spring
+						if (Global::Keys[GLFW_KEY_TAB])
+						{
+							Global::Keys[GLFW_KEY_TAB] = false;
+							object.skip_springs[i] = true;
+							continue;
+						}
+
 						// Enable Highlighter
 						selector.highlighting = true;
 						object_info.active = true;
@@ -1282,6 +1306,8 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						selector.object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
 						selector.object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
 						selector.spring_data = object.springs[i];
+						selector.spring_data.Node1 = object.nodes[object.springs[i].Node1].Name;
+						selector.spring_data.Node2 = object.nodes[object.springs[i].Node2].Name;
 						selector.springmass_node_modified = false;
 						selector.springmass_spring_modified = true;
 						selector.object_index = 0;
@@ -1291,13 +1317,22 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						selector.connection_pos_left = node_pos_1;
 						selector.connection_pos_right = node_pos_2;
 						selector.activateHighlighter();
+						object_info.clearAll();
+						object_info.setObjectType("SpringMass Spring", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+						object_info.addDoubleValue("Nodes: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "L: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " R: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &object.nodes[object.springs[i].Node1].Name, &object.nodes[object.springs[i].Node2].Name, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), true);
+						object_info.addSingleValue("Rest Length: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object.springs[i].RestLength, glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), false);
+						object_info.addSingleValue("Max Length: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object.springs[i].MaxLength, glm::vec4(0.0f, 0.9f, 0.0f, 1.0f), false);
+						object_info.addSingleValue("Spring Constant: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object.springs[i].Stiffness, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), false);
+						object_info.addSingleValue("Dampening: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object.springs[i].Dampening, glm::vec4(0.9f, 0.0f, 0.9f, 1.0f), false);
+
+						// IDEA: Draw Red Circle at Left Node and Blue Circle at Right Node When Selecting
+						Vertices::Visualizer::visualizePoint(object.nodes[object.springs[i].Node1].Position, 0.5f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+						Vertices::Visualizer::visualizePoint(object.nodes[object.springs[i].Node2].Position, 0.5f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 
 						// If Left Click, Select Object
 						if (Global::LeftClick)
 						{
 							Global::LeftClick = false;
-
-							//return true;
 
 							// Copy File Data Into Stream
 							std::stringstream file_stream;
@@ -1376,9 +1411,21 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 			// Iterate Through Nodes
 			for (int i = 0; i < object.node_count; i++)
 			{
+				// Test if Node is to be Skipped
+				if (object.skip_nodes[i])
+					continue;
+
 				// Test if Mouse Intersects Node
 				if (glm::distance(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), object.nodes[i].Position) < object.nodes[i].Radius)
 				{
+					// Test if User is Going to Skip Node
+					if (Global::Keys[GLFW_KEY_TAB])
+					{
+						Global::Keys[GLFW_KEY_TAB] = false;
+						object.skip_nodes[i] = true;
+						continue;
+					}
+
 					// Enable Highlighter
 					selector.highlighting = true;
 					object_info.active = true;
@@ -1403,6 +1450,10 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 					selector.object_data.position = object.returnPosition();
 					selector.file_name = object.file_name;
 					selector.activateHighlighter();
+					object_info.clearAll();
+					object_info.setObjectType("SpringMass Node", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+					object_info.addSingleValue("Index: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object.nodes[i].Name, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), true);
+					object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &object.nodes[i].Position.x, &object.nodes[i].Position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 
 					// If Left Click, Select Object
 					if (Global::LeftClick)
@@ -1466,9 +1517,11 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						// Close File
 						out_file.close();
 
+						// ReRead Data in SpringMass File
 						object.read();
 
-						// Reload All SpringMass Objects With Matching File
+						// Perform Secondary Selection to Link Springs
+						object.select2(selector);
 
 						// Enable Selector for Editing
 						selector.active = true;
@@ -1730,8 +1783,31 @@ void Render::Objects::Level::removeMarkedFromList()
 
 void Render::Objects::Level::resetObjectPassOver()
 {
+	// General Objects
 	for (int i = 0; i < object_count.total_object_count; i++)
 		objects[i]->skip_selection = false;
+
+	// Entities
+	for (entity_list.it = entity_list.begin(); entity_list.it != entity_list.end(); entity_list.it++)
+		(*entity_list.it).skip_selection = false;
+
+	// Physics
+	for (Struct::List<Object::Physics::PhysicsBase>::Iterator it = physics_list.begin(); it != physics_list.end(); it++)
+	{
+		(*it).skip_selection = false;
+
+		// SpringMass
+		if ((*it).type == Object::Physics::PHYSICS_TYPES::TYPE_SPRING_MASS)
+		{
+			Object::Physics::Soft::SpringMass& spring_mass = *static_cast<Object::Physics::Soft::SpringMass*>(&*it);
+			for (int i = 0; i < spring_mass.node_count; i++)
+				spring_mass.skip_nodes[i] = false;
+			for (int i = 0; i < spring_mass.spring_count; i++)
+				spring_mass.skip_springs[i] = false;
+		}
+
+		// Hinge
+	}
 }
 
 void Render::Objects::Level::resetLevel()

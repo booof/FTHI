@@ -121,7 +121,7 @@ GUI::Box::Box(BoxData& data_)
 
 GUI::Box::Box() {}
 
-void GUI::Box::move(float new_x, float new_y)
+void GUI::Box::moveElement(float new_x, float new_y)
 {
 	// Store New Coordinates
 	data.position = glm::vec2(new_x, new_y);
@@ -131,6 +131,17 @@ void GUI::Box::move(float new_x, float new_y)
 
 	// Update Position in Buffer Data
 	initializeVertices();
+}
+
+void GUI::Box::linkValue(void* value)
+{
+	// Function Box
+	if (data.mode == FUNCTION_BOX)
+		setFunctionPointer(*static_cast<std::function<void()>*>(value));
+
+	// Data Box
+	else
+		setDataPointer(value);
 }
 
 void GUI::Box::setDataPointer(void* data_pointer_)
@@ -172,10 +183,20 @@ void GUI::Box::setGroupFalse()
 	}
 }
 
-bool GUI::Box::toggleState(float mouseX, float mouseY)
+bool GUI::Box::updateElement()
 {
+	// Stop Updating if Another Object is Being Updated
+	if (modified_by_user)
+		return false;
+
 	// Default Highligher is False
 	highlighted = false;
+
+	// Get Mouse Positions
+	//float mouseX = Global::mouseX / Global::zoom_scale;
+	//float mouseY = Global::mouseY / Global::zoom_scale;
+	float mouseX = gui_mouse_position.x;
+	float mouseY = gui_mouse_position.y;
 
 	// Test if Mouse is Inside Box
 	if (mouseX > lower_left.x && mouseX < lower_left.x + data.width)
@@ -382,7 +403,7 @@ std::string GUI::Box::getText()
 	return data.button_text;
 }
 
-void GUI::Box::blitzBox()
+void GUI::Box::blitzElement()
 {
 	// Bind Vertex Object
 	glBindVertexArray(VAO);

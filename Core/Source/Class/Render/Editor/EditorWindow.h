@@ -2,9 +2,10 @@
 #define EDITOR_WINDOW_H
 
 // GUI Objects
+#include "Render/GUI/MasterElement.h"
 #include "Render/GUI/Box.h"
 #include "Render/GUI/TextObject.h"
-#include "Render/GUI/ScrollBar.h"
+#include "Render/GUI/VerticalScrollBar.h"
 #include "Render/GUI/ColorWheel.h"
 
 // Objects Data List
@@ -144,6 +145,9 @@ namespace Editor
 		// Temporary Holder for Text Values
 		GUI::TextData temp_text_data;
 
+		// Master Element
+		GUI::MasterElement master;
+
 		// Array of Boxes
 		GUI::Box** boxes;
 		uint8_t boxes_size = 0;
@@ -156,8 +160,8 @@ namespace Editor
 		uint8_t texts_size = 0;
 
 		// Scroll Bar 
-		ScrollBar bar1;
-		ScrollBar bar2;
+		GUI::VerticalScrollBar bar1;
+		GUI::VerticalScrollBar bar2;
 
 		// Color Wheel
 		ColorWheel wheel;

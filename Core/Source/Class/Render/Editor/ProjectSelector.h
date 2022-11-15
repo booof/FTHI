@@ -3,7 +3,8 @@
 
 #include "ExternalLibs.h"
 #include "Render/GUI/Box.h"
-#include "Render/GUI/ScrollBar.h"
+#include "Render/GUI/MasterElement.h"
+#include "Render/GUI/VerticalScrollBar.h"
 
 // The Eventual Goal of this Engine is to Allow for the Creation of Video Games, (Preferably More Than One)
 // This GUI is Intended to Allow the User to Select Which Game They Currently Want to Work On
@@ -105,9 +106,12 @@ namespace Editor
 		GUI::Box box_add_project;
 
 		// Bar for Project Selection List
-		ScrollBar project_selection_bar;
+		GUI::VerticalScrollBar project_selection_bar;
 		bool scrolling = false;
 		float scoll_offset = 0.0f;
+
+		// Master Element
+		GUI::MasterElement master_element;
 
 		// Initial Constructor
 		ProjectSelector() {}

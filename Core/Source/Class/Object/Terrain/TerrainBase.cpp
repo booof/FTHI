@@ -154,9 +154,6 @@ void Object::Terrain::TerrainBase::initializeTerrain(int& offset_, int& instance
 
 void Object::Terrain::TerrainBase::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	// Map to Shape Names
-	static std::string shape_name_map[] = { "Rectangle", "Trapezoid", "Triangle", "Circle", "Polygon" };
-
 	// Store Object Identifier
 	selector.object_identifier[0] = TERRAIN;
 	selector.object_identifier[1] = layer;
@@ -172,12 +169,7 @@ void Object::Terrain::TerrainBase::select(Editor::Selector& selector, Editor::Ob
 	selector.editor_data.name = name;
 
 	// Store Object Information
-	object_info.clearAll();
-	object_info.setObjectType("Terrain", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addTextValue("Shape: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &shape_name_map[shape->shape], glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
-	shape->selectInfo(object_info);
+	info(object_info, name, data, shape);
 
 	// Set Selector to Active Highlight
 	selector.activateHighlighter();
@@ -191,6 +183,20 @@ glm::vec2 Object::Terrain::TerrainBase::returnPosition()
 Shape::Shape* Object::Terrain::TerrainBase::returnShapePointer()
 {
 	return shape;
+}
+
+void Object::Terrain::TerrainBase::info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, Shape::Shape* shape)
+{
+	// Map to Shape Names
+	static std::string shape_name_map[] = { "Rectangle", "Trapezoid", "Triangle", "Circle", "Polygon" };
+
+	// Store Object Information
+	object_info.clearAll();
+	object_info.setObjectType("Terrain", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addTextValue("Shape: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &shape_name_map[shape->shape], glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	shape->selectInfo(object_info);
 }
 
 Object::ObjectData& Object::Terrain::TerrainBase::returnObjectData()

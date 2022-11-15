@@ -142,10 +142,7 @@ void Object::Physics::Hinge::Anchor::select(Editor::Selector& selector, Editor::
 	selector.editor_data.name = name;
 
 	// Store Object Information
-	object_info.clearAll();
-	object_info.setObjectType("Anchor", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	info(object_info, name, data);
 
 	// Set Selector to Active Highlight
 	selector.activateHighlighter();
@@ -167,4 +164,13 @@ bool Object::Physics::Hinge::Anchor::testMouseCollisions(float x, float y)
 glm::vec2 Object::Physics::Hinge::Anchor::returnPosition()
 {
 	return data.position;
+}
+
+void Object::Physics::Hinge::Anchor::info(Editor::ObjectInfo& object_info, std::string& name, AnchorData& data)
+{
+	// Store Object Information
+	object_info.clearAll();
+	object_info.setObjectType("Anchor", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 }

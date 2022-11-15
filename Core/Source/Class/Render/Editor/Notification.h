@@ -2,6 +2,7 @@
 #define NOTIFICATION_H
 
 #include "ExternalLibs.h"
+#include "Class/Render/GUI/MasterElement.h"
 #include "Class/Render/GUI/Box.h"
 #include "Class/Render/GUI/TextObject.h"
 #include "Class/Render/Struct/Texture.h"
@@ -47,6 +48,9 @@ namespace Editor
 
 		// Message Texture
 		Struct::SingleTexture texture_message = Struct::SingleTexture();
+
+		// Master Element for Buttons
+		GUI::MasterElement master;
 
 		// OK Button
 		GUI::Box box_ok;

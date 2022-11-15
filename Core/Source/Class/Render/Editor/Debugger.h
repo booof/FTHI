@@ -12,7 +12,8 @@
 // If This GUI Detects an Error in the Code, A Notification Will Pop-Up Telling the User About Errors in the Code, Similar to Visual Studio
 
 #include "ExternalLibs.h"
-#include "Render/GUI/ScrollBar.h"
+#include "Render/GUI/MasterElement.h"
+#include "Render/GUI/VerticalScrollBar.h"
 #include "Render/GUI/Box.h"
 
 namespace Editor
@@ -75,8 +76,11 @@ namespace Editor
 		std::vector<DebugError> errors;
 		int errors_size = 0;
 
+		// Master Element
+		GUI::MasterElement master;
+
 		// ScrollBar
-		ScrollBar bar;
+		GUI::VerticalScrollBar bar;
 		bool scrolling = false;
 		float scoll_offset = 0.0f;
 

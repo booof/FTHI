@@ -7,6 +7,7 @@
 #include "Class/Render/Objects/Level.h"
 #include "Class/Render/Objects/ChangeController.h"
 #include "Class/Render/Objects/UnsavedLevel.h"
+#include "Class/Render/Editor/ObjectInfo.h"
 
 // Globals
 #include "Globals.h"
@@ -25,7 +26,31 @@
 #include "Object/Collision/Vertical/LeftMask.h"
 #include "Object/Collision/Vertical/RightMask.h"
 #include "Object/Collision/Horizontal/CeilingMask.h"
+#include "Object/Collision/Horizontal/Line/FloorMaskLine.h"
+#include "Object/Collision/Horizontal/Slant/FloorMaskSlant.h"
+#include "Object/Collision/Horizontal/Slope/FloorMaskSlope.h"
+#include "Object/Collision/Vertical/Line/LeftMaskLine.h"
+#include "Object/Collision/Vertical/Curve/LeftMaskCurve.h"
+#include "Object/Collision/Vertical/Line/RightMaskLine.h"
+#include "Object/Collision/Vertical/Curve/RightMaskCurve.h"
+#include "Object/Collision/Horizontal/Line/CeilingMaskLine.h"
+#include "Object/Collision/Horizontal/Slant/CeilingMaskSlant.h"
+#include "Object/Collision/Horizontal/Slope/CeilingMaskSlope.h"
+#include "Object/Collision/Trigger/TriggerMask.h"
 #include "Object/Terrain/TerrainBase.h"
+#include "Object/Lighting/Directional.h"
+#include "Object/Lighting/Point.h"
+#include "Object/Lighting/Spot.h"
+#include "Object/Lighting/Beam.h"
+#include "Object/Physics/RigidBody/RigidBody.h"
+#include "Object/Physics/Softody/SpringMass.h"
+#include "Object/Physics/Softody/Wire.h"
+#include "Object/Physics/Hinge/Anchor.h"
+#include "Object/Physics/Hinge/Hinge.h"
+#include "Object/Entity/NPC.h"
+#include "Object/Entity/Controllables.h"
+#include "Object/Entity/Interactables.h"
+#include "Object/Entity/Dynamics.h"
 
 // Shader
 #include "Class/Render/Shader/Shader.h"
@@ -246,6 +271,13 @@ void Editor::Selector::deselectObject()
 
 void Editor::Selector::deselectNode()
 {
+	// Reset Connected List if Needed
+	if (connected_limbs_count)
+	{
+		delete[] connected_limbs;
+		connected_limbs_count = 0;
+	}
+
 	// Copy File Data Into Stream
 	std::stringstream file_stream;
 	std::ifstream in_file;
@@ -496,6 +528,37 @@ void Editor::Selector::clear()
 glm::vec2 Editor::Selector::getObjectPosition()
 {
 	return glm::vec2(*object_x, *object_y);
+}
+
+void Editor::Selector::storeLimbPointers(int index, Object::Physics::Soft::Spring* limbs, int limbs_size)
+{
+	// Note: This Function Assumes Nodes Were Already Mapped
+
+	// Reset Connected List if Needed
+	if (connected_limbs_count)
+	{
+		delete[] connected_limbs;
+		connected_limbs_count = 0;
+	}
+
+	// Determine the Number of Connected Nodes
+	for (int i = 0; i < limbs_size; i++)
+		connected_limbs += ((limbs[i].Node1 == index) || (limbs[i].Node2 == index));
+
+	// Allocate Memory for Connected Limb List
+	connected_limbs = new ConnectedLimb[connected_limbs_count];
+
+	// Store Pointers to Connected Limbs
+	int connected_index = 0;
+	for (int i = 0; i < limbs_size; i++)
+	{
+		if ((limbs[i].Node1 == index) || (limbs[i].Node2 == index))
+		{
+			connected_limbs[connected_index].limb_ptr = &limbs[i];
+			connected_limbs[connected_index].connected_first = limbs[i].Node1 == index;
+			connected_index++;
+		}
+	}
 }
 
 void Editor::Selector::initializeSelector()
@@ -1200,6 +1263,12 @@ void Editor::Selector::storeSelectorDataHorizontalMasks()
 		object_y = &horizontal_line_data.position.y;
 		object_width = &horizontal_line_data.width;
 
+		// Get Object Info
+		if (object_identifier[1] == Object::Mask::FLOOR)
+			Object::Mask::Floor::FloorMaskLine::info(*info, editor_data.name, horizontal_line_data, floor_mask_platform);
+		else
+			Object::Mask::Ceiling::CeilingMaskLine::info(*info, editor_data.name, horizontal_line_data);
+
 		break;
 	}
 
@@ -1215,6 +1284,12 @@ void Editor::Selector::storeSelectorDataHorizontalMasks()
 		object_opposite_x = &slant_data.position2.x;
 		object_opposite_y = &slant_data.position2.y;
 
+		// Get Object Info
+		if (object_identifier[1] == Object::Mask::FLOOR)
+			Object::Mask::Floor::FloorMaskSlant::info(*info, editor_data.name, slant_data, floor_mask_platform);
+		else
+			Object::Mask::Ceiling::CeilingMaskSlant::info(*info, editor_data.name, slant_data);
+
 		break;
 	}
 
@@ -1229,6 +1304,12 @@ void Editor::Selector::storeSelectorDataHorizontalMasks()
 		object_y = &slope_data.position.y;
 		object_width = &slope_data.width;
 		object_height = &slope_data.height;
+
+		// Get Object Info
+		if (object_identifier[1] == Object::Mask::FLOOR)
+			Object::Mask::Floor::FloorMaskSlope::info(*info, editor_data.name, slope_data, floor_mask_platform);
+		else
+			Object::Mask::Ceiling::CeilingMaskSlope::info(*info, editor_data.name, slope_data);
 
 		break;
 	}
@@ -1484,6 +1565,12 @@ void Editor::Selector::storeSelectorDataVerticalMasks()
 		object_y = &vertical_line_data.position.y;
 		object_height = &vertical_line_data.height;
 
+		// Get Object Info
+		if (object_identifier[1] == Object::Mask::LEFT_WALL)
+			Object::Mask::Left::LeftMaskLine::info(*info, editor_data.name, vertical_line_data);
+		else
+			Object::Mask::Right::RightMaskLine::info(*info, editor_data.name, vertical_line_data);
+
 		break;
 	}
 
@@ -1498,6 +1585,12 @@ void Editor::Selector::storeSelectorDataVerticalMasks()
 		object_y = &curve_data.position.y;
 		object_width = &curve_data.width;
 		object_height = &curve_data.height;
+
+		// Get Object Info
+		if (object_identifier[1] == Object::Mask::LEFT_WALL)
+			Object::Mask::Left::LeftMaskCurve::info(*info, editor_data.name, curve_data);
+		else
+			Object::Mask::Right::RightMaskCurve::info(*info, editor_data.name, curve_data);
 
 		break;
 	}
@@ -1612,6 +1705,9 @@ void Editor::Selector::storeSelectorDataTriggerMasks()
 	// Store Object Data
 	object_x = &trigger_data.position.x;
 	object_y = &trigger_data.position.y;
+
+	// Get Object Info
+	Object::Mask::Trigger::TriggerMask::info(*info, editor_data.name, trigger_data);
 }
 
 void Editor::Selector::allocateSelectorVerticesShapes(int index)
@@ -1875,6 +1971,9 @@ void Editor::Selector::storeSelectorDataShapes(int index)
 		object_width = rectangle_data.pointerToWidth();
 		object_height = rectangle_data.pointerToHeight();
 
+		// Get Object Info
+		getShapeInfo(&rectangle_data);
+
 		break;
 	}
 
@@ -1890,6 +1989,9 @@ void Editor::Selector::storeSelectorDataShapes(int index)
 		object_width_modifier = trapezoid_data.pointerToWidthOffset();
 		object_height_modifier = trapezoid_data.pointerToHeightOffset();
 
+		// Get Object Info
+		getShapeInfo(&trapezoid_data);
+
 		break;
 	}
 
@@ -1904,6 +2006,9 @@ void Editor::Selector::storeSelectorDataShapes(int index)
 		coords2 = *triangle_data.pointerToSecondPosition();
 		coords3 = *triangle_data.pointerToThirdPosition();
 
+		// Get Object Info
+		getShapeInfo(&triangle_data);
+
 		break;
 	}
 
@@ -1917,6 +2022,9 @@ void Editor::Selector::storeSelectorDataShapes(int index)
 		object_radius = circle_data.pointerToRadius();
 		object_inner_radius = circle_data.pointerToRadiusInner();
 
+		// Get Object Info
+		getShapeInfo(&circle_data);
+
 		break;
 	}
 
@@ -1929,6 +2037,9 @@ void Editor::Selector::storeSelectorDataShapes(int index)
 		// Store Object Data
 		object_radius = polygon_data.pointerToRadius();
 		object_inner_radius = polygon_data.pointerToRaidusInner();
+
+		// Get Object Info
+		getShapeInfo(&polygon_data);
 
 		break;
 	}
@@ -2206,6 +2317,9 @@ void Editor::Selector::storeSelectorDataLights()
 		// Enable Resize
 		enable_resize = true;
 
+		// Get Object Info
+		Object::Light::Directional::Directional::info(*info, editor_data.name, light_data, directional_data);
+
 		break;
 	}
 
@@ -2259,6 +2373,9 @@ void Editor::Selector::storeSelectorDataLights()
 
 		// Disable Resize
 		enable_resize = false;
+
+		// Get Object Info
+		Object::Light::Point::Point::info(*info, editor_data.name, light_data, point_data);
 
 		break;
 	}
@@ -2314,6 +2431,9 @@ void Editor::Selector::storeSelectorDataLights()
 		// Disable Resize
 		enable_resize = false;
 
+		// Get Object Info
+		Object::Light::Spot::Spot::info(*info, editor_data.name, light_data, spot_data);
+
 		break;
 	}
 
@@ -2364,6 +2484,9 @@ void Editor::Selector::storeSelectorDataLights()
 
 		// Enable Resize
 		enable_resize = true;
+
+		// Get Object Info
+		Object::Light::Beam::Beam::info(*info, editor_data.name, light_data, beam_data);
 
 		break;
 	}
@@ -2713,6 +2836,12 @@ void Editor::Selector::storeSelectorDataSoftBody()
 			// Set Object Position
 			object_x = &node_data.position.x;
 			object_y = &node_data.position.y;
+
+			// Get Object Info
+			info->clearAll();
+			info->setObjectType("SpringMass Node", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+			info->addSingleValue("Index: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &node_data.name, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), true);
+			info->addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &node_data.position.x, &node_data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 		}
 
 		// Edit Spring
@@ -2720,6 +2849,15 @@ void Editor::Selector::storeSelectorDataSoftBody()
 		{
 			// Shape is a SpringMass Spring
 			editing_shape = SPRINGMASS_SPRING;
+
+			// Get Object Info
+			info->clearAll();
+			info->setObjectType("SpringMass Spring", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+			info->addDoubleValue("Nodes: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "L: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " R: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &spring_data.Node1, &spring_data.Node2, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), true);
+			info->addSingleValue("Rest Length: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &spring_data.RestLength, glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), false);
+			info->addSingleValue("Max Length: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &spring_data.MaxLength, glm::vec4(0.0f, 0.9f, 0.0f, 1.0f), false);
+			info->addSingleValue("Spring Constant: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &spring_data.Stiffness, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), false);
+			info->addSingleValue("Dampening: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &spring_data.Dampening, glm::vec4(0.9f, 0.0f, 0.9f, 1.0f), false);
 		}
 
 		// Edit Core
@@ -2731,6 +2869,9 @@ void Editor::Selector::storeSelectorDataSoftBody()
 			// Set Object Position
 			object_x = &object_data.position.x;
 			object_y = &object_data.position.y;
+
+			// Get Object Info
+			Object::Physics::Soft::SpringMass::info(*info, editor_data.name, object_data, file_name);
 		}
 
 		break;
@@ -2749,6 +2890,9 @@ void Editor::Selector::storeSelectorDataSoftBody()
 		// Set Object Position
 		object_x = &object_data.position.x;
 		object_y = &object_data.position.y;
+
+		// Get Object Info
+		Object::Physics::Soft::Wire::info(*info, editor_data.name, object_data, wire_data);
 
 		break;
 	}
@@ -2870,6 +3014,9 @@ void Editor::Selector::storeSelectorDataHinge()
 		object_x = &anchor_data.position.x;
 		object_y = &anchor_data.position.y;
 
+		// Get Object Info
+		Object::Physics::Hinge::Anchor::info(*info, editor_data.name, anchor_data);
+
 		break;
 	}
 
@@ -2879,6 +3026,9 @@ void Editor::Selector::storeSelectorDataHinge()
 		// Set Object Position
 		object_x = &hinge_data.position.x;
 		object_y = &anchor_data.position.y;
+
+		// Get Object Info
+		Object::Physics::Hinge::Hinge::info(*info, editor_data.name, hinge_data, file_name);
 
 		break;
 	}
@@ -2976,8 +3126,22 @@ void Editor::Selector::storeSelectorDataEntity()
 	object_x = &object_data.position.x;
 	object_y = &object_data.position.y;
 
+	// Get Object Info
+	Object::Entity::NPC::info(*info, editor_data.name, object_data);
+
 	// Disable Resize
 	enable_resize = false;
+}
+
+void Editor::Selector::getShapeInfo(Shape::Shape* shape)
+{
+	// Selected Object is Terrain
+	if (object_identifier[0] == Object::TERRAIN)
+		Object::Terrain::TerrainBase::info(*info, editor_data.name, object_data, shape);
+
+	// Selected Object is Rigid Body
+	else
+		Object::Physics::Rigid::RigidBody::info(*info, editor_data.name, object_data, shape);
 }
 
 void Editor::Selector::uninitializeSelector()
@@ -3081,6 +3245,9 @@ void Editor::Selector::editObject()
 
 	// Edit Object
 	update_functions[editing_shape]();
+
+	// Update Object Info
+	info->forceResize();
 
 	// If Object is a Lighting Object, Update Shader Data
 	if (lighting_object)
@@ -4163,6 +4330,7 @@ void Editor::Selector::updateSpringMassNode()
 			node_data.position -= object_data.position;
 			deselectNode();
 			level->reloadAll();
+			return;
 		}
 	}
 
@@ -4179,6 +4347,10 @@ void Editor::Selector::updateSpringMassNode()
 		*object_y = (float)(Global::mouseRelativeY + offset_y);
 		model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
 	}
+
+	// Update Node in Origin Object
+	*node_pointer = Object::Physics::Soft::Node(node_data);
+	//std::cout << node_pointer->Position.x << " " << node_pointer->Position.y << "  i\n";
 }
 
 void Editor::Selector::updateSpringMassSpring()
@@ -4285,7 +4457,7 @@ void Editor::Selector::updateSpringMassSpring()
 		if (resizing)
 		{
 			// Iterate Through All Nodes and Find the Closest Match to Mouse Position
-			float shortest_length = 10000.0f;
+			float shortest_length = 1000000.0f;
 			float temp_distance = 0;
 			int shortest_index = 0;
 			for (int i = 0; i < node_count; i++)
@@ -4299,21 +4471,34 @@ void Editor::Selector::updateSpringMassSpring()
 			}
 
 			// Set Endpoint to Closest Value if Index is New
-			if (spring_data.Node1 != shortest_index && spring_data.Node2 != shortest_index)
+			if (spring_data.Node1 != node_list[shortest_index].name && spring_data.Node2 != node_list[shortest_index].name)
 			{
+				glm::vec2 other_pos = glm::vec2(0.0f);
+
 				// Left Endpoint
 				if (change_horizontal)
 				{
-					spring_data.Node1 = shortest_index;
+					spring_data.Node1 = node_list[shortest_index].name;
 					connection_pos_left = node_list[shortest_index].position;
+					for (int i = 0; i < node_count; i++)
+						if (node_list[i].name == spring_data.Node2)
+							other_pos = node_list[i].position;
+
 				}
 
 				// Right Endpoint
 				else if (change_vertical)
 				{
-					spring_data.Node2 = shortest_index;
+					spring_data.Node2 = node_list[shortest_index].name;
 					connection_pos_right = node_list[shortest_index].position;
+					for (int i = 0; i < node_count; i++)
+						if (node_list[i].name == spring_data.Node1)
+							other_pos = node_list[i].position;
 				}
+
+				// Reset Rest and Max Lengths
+				spring_data.RestLength = glm::distance(node_list[shortest_index].position, other_pos);
+				spring_data.MaxLength = 2 * spring_data.RestLength;
 
 				// Change Vertices
 				genSelectorVerticesSoftBody();

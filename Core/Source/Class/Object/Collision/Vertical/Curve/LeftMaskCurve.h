@@ -11,6 +11,7 @@ namespace Object::Mask
 	// Class for Left Wall Mask With Shape of Logarithmic Function
 	class Left::LeftMaskCurve : public Left::LeftMask, public Curve
 	{
+	public:
 
 #ifdef EDITOR
 
@@ -23,7 +24,12 @@ namespace Object::Mask
 		// Return Position of Object
 		glm::vec2 returnPosition();
 
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, CurveData& data);
+
 #endif
+
+	private:
 
 		// Test Collisions of Object
 		bool testCollisions(glm::vec2 test_position, float error);

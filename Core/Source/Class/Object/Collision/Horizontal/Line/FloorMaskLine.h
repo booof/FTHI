@@ -11,6 +11,7 @@ namespace Object::Mask
 	// Class for Floor Masks With Shape of Horizontal Line
 	class Floor::FloorMaskLine : public Floor::FloorMask, public HorizontalLine
 	{
+	public:
 
 #ifdef EDITOR
 
@@ -22,6 +23,9 @@ namespace Object::Mask
 
 		// Return Position of Object
 		glm::vec2 returnPosition();
+
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, HorizontalLineData& data, bool platform);
 			
 #endif
 

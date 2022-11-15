@@ -167,11 +167,7 @@ void Object::Light::Directional::Directional::select(Editor::Selector& selector,
 	selector.editor_data.name = name;
 
 	// Store Object Information
-	object_info.clearAll();
-	object_info.setObjectType("Directional Light", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos1: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
-	object_info.addDoubleValue("Pos2: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &directional.position2.x, &directional.position2.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	info(object_info, name, data, directional);
 
 	// Set Selector to Active Highlight
 	selector.activateHighlighter();
@@ -217,6 +213,16 @@ void Object::Light::Directional::Directional::write(std::ofstream& object_file, 
 glm::vec2 Object::Light::Directional::Directional::returnPosition()
 {
 	return data.position;
+}
+
+void Object::Light::Directional::Directional::info(Editor::ObjectInfo& object_info, std::string& name, LightData& data, DirectionalData& directional)
+{
+	// Store Object Information
+	object_info.clearAll();
+	object_info.setObjectType("Directional Light", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addDoubleValue("Pos1: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addDoubleValue("Pos2: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &directional.position2.x, &directional.position2.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 }
 
 #endif

@@ -167,6 +167,9 @@ void Editor::Notification::initializeNotification()
     // Generate Label Text
     label_text = GUI::TextObject(Source::Render::Initialize::constructText(-34.0f, 17.0f, 0.12f, glm::vec4(0.0, 0.0f, 0.0f, 1.0f), true, ""));
 
+    // Generate Master Element
+    master = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 70.0f, 40.0f);
+
     // Generate OK Box
     GUI::BoxData temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::NULL_BOX, 0.0f, 0.0f, -1.0f, 20.0f, 4.0f, true, "OK", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
     box_ok = GUI::Box(temp_box_data);
@@ -223,7 +226,7 @@ void Editor::Notification::notificationMessage(NOTIFICATION_MESSAGES type, std::
     prepareForMessage(type, &texture, &text, text_size, message);
 
     // Move OK Button to Bottom Center of Window
-    box_ok.move(0.0f, -17.0f);
+    box_ok.moveElement(0.0f, -17.0f);
 
     // Loop Until Button is Pressed
     bool stop_looping = false;
@@ -235,6 +238,7 @@ void Editor::Notification::notificationMessage(NOTIFICATION_MESSAGES type, std::
 
         // Handle Inputs
         glfwPollEvents();
+        master.updateElement();
 
         // Draw Window
         Global::colorShaderStatic.Use();
@@ -245,7 +249,7 @@ void Editor::Notification::notificationMessage(NOTIFICATION_MESSAGES type, std::
         glBindVertexArray(0);
 
         // Draw Button
-        box_ok.blitzBox();
+        box_ok.blitzElement();
         glUniform1i(Global::staticLocColor, 0);
 
         // Draw Label
@@ -273,7 +277,7 @@ void Editor::Notification::notificationMessage(NOTIFICATION_MESSAGES type, std::
             text[i].blitzText();
 
         // Perform Collision Detection on Box
-        stop_looping = box_ok.toggleState((float)Global::mouseX / Global::zoom_scale, (float)Global::mouseY / Global::zoom_scale);
+        stop_looping = box_ok.updateElement();
 
         Global::LeftClick = false;
 
@@ -299,10 +303,10 @@ bool Editor::Notification::notificationCancelOption(NOTIFICATION_MESSAGES type, 
     prepareForMessage(type, &texture, &text, text_size, message);
 
     // Move OK Button to Bottom Left of Window
-    box_ok.move(-16.0f, -17.0f);
+    box_ok.moveElement(-16.0f, -17.0f);
 
     // Move Cancel Button to Bottom Right of Window
-    box_cancel.move(16.0f, -17.0f);
+    box_cancel.moveElement(16.0f, -17.0f);
 
     // Loop Until Button is Pressed
     uint8_t stop_looping = 0;
@@ -314,6 +318,7 @@ bool Editor::Notification::notificationCancelOption(NOTIFICATION_MESSAGES type, 
 
         // Handle Inputs
         glfwPollEvents();
+        master.updateElement();
 
         // Draw Window
         Global::colorShaderStatic.Use();
@@ -324,8 +329,8 @@ bool Editor::Notification::notificationCancelOption(NOTIFICATION_MESSAGES type, 
         glBindVertexArray(0);
 
         // Draw Buttons
-        box_ok.blitzBox();
-        box_cancel.blitzBox();
+        box_ok.blitzElement();
+        box_cancel.blitzElement();
         glUniform1i(Global::staticLocColor, 0);
 
         // Draw Label
@@ -354,11 +359,11 @@ bool Editor::Notification::notificationCancelOption(NOTIFICATION_MESSAGES type, 
             text[i].blitzText();
 
         // Perform Collision Detection on OK Box
-        if (box_ok.toggleState((float)Global::mouseX / Global::zoom_scale, (float)Global::mouseY / Global::zoom_scale))
+        if (box_ok.updateElement())
             stop_looping = 1;
 
         // Perform Collision Detection on Cancel Box
-        if (box_cancel.toggleState((float)Global::mouseX / Global::zoom_scale, (float)Global::mouseY / Global::zoom_scale))
+        if (box_cancel.updateElement())
             stop_looping = 2;
 
         Global::LeftClick = false;

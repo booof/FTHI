@@ -1,71 +1,84 @@
 #ifndef SCROLL_BAR_H
 #define SCROLL_BAR_H
 
-#include "ExternalLibs.h"
+#include "Element.h"
 
-// Allows GUIs to Scroll
-class ScrollBar
+// IDEA: The Percent Paremeter in the Constructor Should be a Pointer to the Percent Variable
+// The Percent Variable Should be Replaced Entirely by the Percent Pointer
+
+namespace GUI
 {
-public:
+	// Allows GUIs to Scroll
+	class ScrollBar : public Element
+	{
+	public:
 
-	// Value of yPos of Bar Over Max yPos
-	float percent = 0;
+		// Value of yPos of Bar Over Max yPos
+		float percent = 0;
 
-	// Positions of Bar
-	float BarPosX, BarPosY;
+		// Positions of Bar
+		float BarPosX, BarPosY;
 
-	// The Bar Offset
-	float BarOffset = 0.0f;
+		// The Bar Offset
+		float BarOffset = 0.0f;
 
-	ScrollBar(float xPos, float yPos, float width, float height, float size, float per);
+		// Update Function
+		bool updateElement();
 
-	// Default Constructor
-	ScrollBar();
+		// Link Value Through a Pointer
+		void linkValue(void* value_ptr);
 
-	// Moves Scroll Bar if GUI is Moved
-	void Move(float newX, float newY);
+		// Update Bar
+		void blitzElement();
 
-	// Test Collisions
-	bool TestColloisions();
+		// Test Collisions
+		virtual bool TestColloisions() = 0;
 
-	// Move Bar
-	float Scroll(float newY);
+		// Move Bar
+		virtual float Scroll(float newY) = 0;
 
-	// Update Bar
-	void Update();
+	protected:
 
-private:
+		// Determines if Current Object is Being Modified by User
+		bool is_being_modified = false;
 
-	// Default Y Position of Bar
-	float DefaultY = 0;
+		// The Pointer to the Value Connected to Percent
+		float* percent_ptr = nullptr;
 
-	// Min Corrdinate Positions
-	float MinPos;
+		// Default Position of Bar
+		float DefaultPosition = 0;
 
-	// Max Coordinate Positions
-	float MaxPos;
+		// Min Corrdinate Positions
+		float MinPos;
 
-	// Size of Bar
-	float BarWidth, BarHeight;
+		// Max Coordinate Positions
+		float MaxPos;
 
-	// Percentage Constant
-	float percent_constant = 0;
+		// Size of Bar
+		float BarWidth, BarHeight;
 
-	// The Height Difference
-	float height_difference = 0.0f;
+		// Percentage Constant
+		float percent_constant = 0;
 
-	// Model Matrix for Background
-	glm::mat4 model_Background = glm::mat4(1.0f);
+		// The Size Difference
+		float size_difference = 0.0f;
 
-	// Model Matrix for ScrollBar
-	glm::mat4 model_Scroll = glm::mat4(1.0f);
+		// Model Matrix for Background
+		glm::mat4 model_Background = glm::mat4(1.0f);
 
-	// Nullified View Matrix for GUI
-	glm::mat4 view_null = glm::mat4(1.0f);
+		// Model Matrix for ScrollBar
+		glm::mat4 model_Scroll = glm::mat4(1.0f);
 
-	// Array Objects
-	GLuint BackgroundVAO, BackgroundVBO;
-	GLuint ScrollVAO, ScrollVBO;
-};
+		// Nullified View Matrix for GUI
+		glm::mat4 view_null = glm::mat4(1.0f);
+
+		// Array Objects
+		GLuint BackgroundVAO, BackgroundVBO;
+		GLuint ScrollVAO, ScrollVBO;
+	};
+
+	// The Offset for Scrolling
+	inline float scroll_offset = 0.0f;
+}
 
 #endif

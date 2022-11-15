@@ -11,6 +11,7 @@ namespace Object::Mask
 	// Class for Floor Mask With Shape of Inverse Tangent Function
 	class Floor::FloorMaskSlope : public Floor::FloorMask, public Slope
 	{
+	public:
 
 #ifdef EDITOR
 
@@ -23,7 +24,12 @@ namespace Object::Mask
 		// Return Position of Object
 		glm::vec2 returnPosition();
 
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, SlopeData& data, bool platform);
+
 #endif
+
+	private:
 
 		// Test Collisions of Object
 		bool testCollisions(glm::vec2 test_position, float error, bool fallthrough);

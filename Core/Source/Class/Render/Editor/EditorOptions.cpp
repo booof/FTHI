@@ -87,6 +87,12 @@ void Editor::EditorOptions::read()
 	std::getline(file, string);
 	option_scroll_speed = Source::Algorithms::Common::convertStringToFloat(string);
 
+	std::getline(file, string);
+	option_object_info_max_width_percent = Source::Algorithms::Common::convertStringToFloat(string);
+
+	std::getline(file, string);
+	option_object_info_text_size_percent = Source::Algorithms::Common::convertStringToFloat(string);
+
 	// Close File
 	file.close();
 }
@@ -114,7 +120,9 @@ void Editor::EditorOptions::write()
 	}
 	file << option_camera_speed << "\n"
 		<< option_shift_speed << "\n"
-		<< option_scroll_speed << "\n";
+		<< option_scroll_speed << "\n"
+		<< option_object_info_max_width_percent << "\n"
+		<< option_object_info_text_size_percent << "\n";
 
 	// Close File
 	file.close();
@@ -205,7 +213,7 @@ void Editor::EditorOptions::initialize_gui()
 	draw_vertices[mode]();
 
 	// Initialize Scroll Bar
-	bar = ScrollBar(Global::halfScalarX - 1.0f * Scale, 40.0f, 2.0f * Scale, 90.0f, options_height, bar.percent);
+	bar = GUI::VerticalScrollBar(Global::halfScalarX - 1.0f * Scale, 40.0f, 2.0f * Scale, 90.0f, options_height, bar.percent);
 	y_offset = height_difference * bar.percent;
 	secondary_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, y_offset, 0.0f));
 
@@ -297,6 +305,15 @@ void Editor::EditorOptions::initialize_gui()
 	// Unbind Objects
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+	test_bar = GUI::HorizontalScrollBar(0.0f, -30.0f, 80.0f, 5.0f, 100.0f, option_object_info_max_width_percent);
+	test_bar2 = GUI::HorizontalScrollBar(0.0f, -40.0f, 80.0f, 5.0f, 100.0f, option_object_info_text_size_percent);
+	test_bar.linkValue(&option_object_info_max_width_percent);
+	test_bar2.linkValue(&option_object_info_text_size_percent);
+	master = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, height);
+	GUI::DefaultElements* temp = new GUI::DefaultElements;
+	temp->vertical_bar = &bar;
+	master.linkValue(temp);
 }
 
 void Editor::EditorOptions::Blitz()
@@ -344,10 +361,21 @@ void Editor::EditorOptions::Blitz()
 
 	// Render Boxes
 	for (int i = 0; i < box_count; i++)
-		box_array[i].blitzBox();
+		box_array[i].blitzElement();
+
+	// Update Master Element
+	master.updateElement();
 
 	// Update Scrollbar
-	bar.Update();
+	bar.blitzElement();
+
+	if (mode == 3)
+	{
+		if (test_bar.updateElement() || test_bar2.updateElement())
+			write();
+		test_bar.blitzElement();
+		test_bar2.blitzElement();
+	}
 
 	// Render Mode Specific Text
 	Global::fontShader.Use();
@@ -638,7 +666,7 @@ void Editor::EditorOptions::updateBoxes(glm::vec2 cursor)
 	for (int i = 0; i < box_count; i++)
 	{
 		// Test if Mouse Toggled Box
-		box_array[i].toggleState(cursor.x, cursor.y);
+		box_array[i].updateElement();
 	}
 }
 
@@ -1218,4 +1246,6 @@ void Editor::EditorOptions::resetToDefault()
 	option_camera_speed = 1.0f;
 	option_shift_speed = 1.0f;
 	option_scroll_speed = 3.0f;
+	option_object_info_max_width_percent = 1.0f;
+	option_object_info_text_size_percent = 1.0f;
 }

@@ -318,9 +318,6 @@ void Object::Physics::Rigid::RigidBody::write(std::ofstream& object_file, std::o
 
 void Object::Physics::Rigid::RigidBody::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	// Map to Shape Names
-	static std::string shape_name_map[] = { "Rectangle", "Trapezoid", "Triangle", "Circle", "Polygon" };
-
 	// Store Object Identifier
 	selector.object_identifier[0] = PHYSICS;
 	selector.object_identifier[1] = (uint8_t)PHYSICS_BASES::RIGID_BODY;
@@ -338,12 +335,7 @@ void Object::Physics::Rigid::RigidBody::select(Editor::Selector& selector, Edito
 	selector.editor_data.name = name;
 
 	// Store Object Information
-	object_info.clearAll();
-	object_info.setObjectType("Rigid Body", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addTextValue("Shape: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &shape_name_map[shape->shape], glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
-	shape->selectInfo(object_info);
+	info(object_info, name, data, shape);
 
 	// Set Selector to Active Highlight
 	selector.activateHighlighter();
@@ -357,4 +349,18 @@ bool Object::Physics::Rigid::RigidBody::testMouseCollisions(float x, float y)
 glm::vec2 Object::Physics::Rigid::RigidBody::returnPosition()
 {
 	return data.position;
+}
+
+void Object::Physics::Rigid::RigidBody::info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, Shape::Shape* shape)
+{
+	// Map to Shape Names
+	static std::string shape_name_map[] = { "Rectangle", "Trapezoid", "Triangle", "Circle", "Polygon" };
+
+	// Store Object Information
+	object_info.clearAll();
+	object_info.setObjectType("Rigid Body", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addTextValue("Shape: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &shape_name_map[shape->shape], glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	shape->selectInfo(object_info);
 }

@@ -68,7 +68,7 @@ namespace Global
 	bool stoped_texting = false;
 
 	// The ScrollBar Object Used for Scrolling
-	ScrollBar* scroll_bar = nullptr;
+	GUI::ScrollBar* scroll_bar = nullptr;
 
 	// Values of Current Screen Width and Height
 	unsigned int screenWidth = 1280;

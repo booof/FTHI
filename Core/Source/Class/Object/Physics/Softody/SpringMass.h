@@ -14,10 +14,22 @@ namespace Object::Physics::Soft
 
 		// File Path
 		std::string file_name = "NULL";
-		std::string path;
+		std::string path = "";
+
+		// The Map for the Nodes
+		int16_t* node_map = nullptr;
+
+		// The Skip Array for Nodes
+		bool* skip_nodes = nullptr;
+
+		// The Skip Array for Springs
+		bool* skip_springs = nullptr;
 
 		// Initialize Object
 		SpringMass(uint32_t & uuid_, ObjectData& data_, std::string& file_name_);
+
+		// Deconstructor
+		~SpringMass();
 
 		glm::vec2* pointerToPosition();
 
@@ -37,6 +49,12 @@ namespace Object::Physics::Soft
 
 		// Return Position of Object
 		glm::vec2 returnPosition();
+
+		// Secondary Selection Function
+		void select2(Editor::Selector& selector);
+
+		// Select Object Info
+		static void info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, std::string& file_name);
 
 #endif
 	};
