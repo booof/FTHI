@@ -36,6 +36,13 @@ void Editor::EditorOptions::read()
 	// Open Options File
 	std::ifstream file("../Resources/Config/Editing.cfg");
 
+	// If File Does Not Exist, Load From Defaults
+	if (!file.good())
+	{
+		resetToDefault();
+		return;
+	}
+
 	// Copy Lines From File to Memory
 	std::string string;
 
@@ -1248,4 +1255,7 @@ void Editor::EditorOptions::resetToDefault()
 	option_scroll_speed = 3.0f;
 	option_object_info_max_width_percent = 1.0f;
 	option_object_info_text_size_percent = 1.0f;
+
+	// Save Changes
+	write();
 }

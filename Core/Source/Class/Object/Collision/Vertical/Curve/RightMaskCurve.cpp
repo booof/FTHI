@@ -98,7 +98,7 @@ Object::Mask::Right::RightMaskCurve::RightMaskCurve(CurveData& data_) : Curve(da
 #ifdef EDITOR
 
 	// Initialize Visualizer
-	initializeVisualizer(VAO, VBO, model, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), 1);
+	initializeVisualizer(VAO, VBO, model, glm::vec4(0.04f, 0.0f, 0.27f, 1.0f), 1);
 	number_of_vertices = 22;
 
 	// Only Attach Scripts if in Gameplay Mode

@@ -41,17 +41,17 @@ void Source::Render::Initialize::initialize()
 	//std::filesystem::current_path(Global::engine_path + "\\Core");
 
 	// Get the Default Project Directory
-	Global::project_directory_path = Global::engine_path;
-	Global::project_directory_path.resize(Global::project_directory_path.size() - 5);
-	Global::project_directory_path += "\\Projects";
+	Global::default_project_directory_path = Global::engine_path;
+	Global::default_project_directory_path.resize(Global::default_project_directory_path.size() - 5);
+	Global::default_project_directory_path += "\\Projects";
 
 	// Test if Project Directory Exists
-	if (std::filesystem::exists(Global::project_directory_path))
-		std::cout << "Default Project Path: " << Global::project_directory_path << "\n";
+	if (std::filesystem::exists(Global::default_project_directory_path))
+		std::cout << "Default Project Path: " << Global::default_project_directory_path << "\n";
 	else
 	{
-		std::cout << "Default Project Path Does Not Exist\nCreating New Directory At:" << Global::project_directory_path << "\n";
-		std::filesystem::create_directory(Global::project_directory_path);
+		std::cout << "Default Project Path Does Not Exist\nCreating New Directory At:" << Global::default_project_directory_path << "\n";
+		std::filesystem::create_directory(Global::default_project_directory_path);
 	}
 
 	// Set Random Number Generator

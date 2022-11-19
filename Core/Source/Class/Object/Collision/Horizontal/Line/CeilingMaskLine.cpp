@@ -95,7 +95,7 @@ Object::Mask::Ceiling::CeilingMaskLine::CeilingMaskLine(HorizontalLineData& data
 #ifdef EDITOR
 
 	// Create Visualizer
-	initializeVisualizer(VAO, VBO, model, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	initializeVisualizer(VAO, VBO, model, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
 	number_of_vertices = 2;
 
 	// Only Attach Scripts if in Gameplay Mode

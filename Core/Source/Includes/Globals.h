@@ -47,7 +47,7 @@ namespace Global
 	extern std::string engine_path;
 
 	// The Path to the Project Directory
-	extern std::string project_directory_path;
+	extern std::string default_project_directory_path;
 
 	// Script Functions
 	extern bindFunctionPointerPointer bindFunctionPointer;
@@ -60,6 +60,8 @@ namespace Global
 	extern std::string project_map_path;
 	extern std::string project_scripts_path;
 	extern std::string script_folder_path;
+	extern std::string project_solution_path;
+	extern std::string project_name;
 
 	// RNG
 	extern uint64_t rng;

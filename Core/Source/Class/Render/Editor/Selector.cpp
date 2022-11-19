@@ -1038,10 +1038,11 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks()
 	case Object::Mask::HORIZONTAL_LINE:
 	{
 		// Generate and Store Object Vertices
+		glm::vec3 temp_color = object_identifier[1] == Object::Mask::FLOOR ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(1.0f, 0.0f, 1.0f);
 		float half_width = horizontal_line_data.width * 0.5f;
 		float object_vertices[] = {
-			0.0f - half_width, 0.0f, -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-			0.0f + half_width, 0.0f, -1.0f,  1.0f, 0.0f, 0.0f, 1.0f };
+			0.0f - half_width, 0.0f, -1.0f,  temp_color.x, temp_color.y, temp_color.z, 1.0f,
+			0.0f + half_width, 0.0f, -1.0f,  temp_color.x, temp_color.y, temp_color.z, 1.0f };
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 56, object_vertices);
 
 		// Bind Outline VAO
@@ -1063,9 +1064,10 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks()
 	case Object::Mask::HORIZONTAL_SLANT:
 	{
 		// Generate and Store Object Vertices
+		glm::vec3 temp_color = object_identifier[1] == Object::Mask::FLOOR ? glm::vec3(0.0f, 1.0f, 1.0f) : glm::vec3(0.28f, 0.0f, 0.34f);
 		float object_vertices[] = {
-			0.0f,                                           0.0f,				                          	-1.0f,  0.0f, 1.0f, 1.0f, 1.0f,
-			slant_data.position2.x - slant_data.position.x, slant_data.position2.y - slant_data.position.y, -1.0f,  0.0f, 1.0f, 1.0f, 1.0f };
+			0.0f,                                           0.0f,				                          	-1.0f,  temp_color.x, temp_color.y, temp_color.z, 1.0f,
+			slant_data.position2.x - slant_data.position.x, slant_data.position2.y - slant_data.position.y, -1.0f,  temp_color.x, temp_color.y, temp_color.z, 1.0f };
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 56, object_vertices);
 
 		// Bind Outline VAO
@@ -1092,7 +1094,7 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks()
 	{
 		// Generate and Store Object Vertices
 		float object_vertices[154];
-		Vertices::Line::genLineSimplifiedCurve1(0.0f, 0.0f, -1.0f, slope_data.height, slope_data.width, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 11, object_vertices);
+		Vertices::Line::genLineSimplifiedCurve1(0.0f, 0.0f, -1.0f, slope_data.height, slope_data.width, object_identifier[1] == Object::Mask::FLOOR ? glm::vec4(0.04f, 0.24f, 1.0f, 1.0f) : glm::vec4(0.0f, 0.0f, 0.45f, 1.0f), 11, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 616, object_vertices);
 		object_vertex_count = 22;
 
@@ -1116,134 +1118,6 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks()
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	/*
-	// Parse Horizontal Mask Shapes
-
-	switch (object_identifier[2])
-	{
-
-	// Horizontal Line
-	case Object::Mask::HORIZONTAL_LINE:
-	{
-		// Bind Object VAO
-		glBindVertexArray(objectVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
-
-		// Generate and Store Object Vertices
-		float half_width = horizontal_line_data.width * 0.5f;
-		float object_vertices[] = {
-			0.0f - half_width, 0.0f, -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-			0.0f + half_width, 0.0f, -1.0f,  1.0f, 0.0f, 0.0f, 1.0f };
-		glBufferData(GL_ARRAY_BUFFER, sizeof(object_vertices), object_vertices, GL_STATIC_DRAW);
-		object_vertex_count = 2;
-
-		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
-
-		// Generate and Store Outline Vertices
-		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, horizontal_line_data.width, 1.0f, outline_vertices);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(outline_vertices), outline_vertices, GL_STATIC_DRAW);
-		outline_vertex_count = 8;
-
-		// Store Pointers to Data
-		object_x = &horizontal_line_data.position.x;
-		object_y = &horizontal_line_data.position.y; 
-		object_width = &horizontal_line_data.width;
-
-		break;
-	}
-
-	// Horizontal Slant
-	case Object::Mask::HORIZONTAL_SLANT:
-	{
-		static float opposite_x = 0, opposite_y = 0;
-
-		// Bind Object VAO
-		glBindVertexArray(objectVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
-
-		// Generate and Store Object Vertices
-		float object_vertices[] = {
-			0.0f,                                           0.0f,				                          	-1.0f,  0.0f, 1.0f, 1.0f, 1.0f,
-			slant_data.position2.x - slant_data.position.x, slant_data.position2.y - slant_data.position.y, -1.0f,  0.0f, 1.0f, 1.0f, 1.0f };
-		glBufferData(GL_ARRAY_BUFFER, sizeof(object_vertices), object_vertices, GL_STATIC_DRAW);
-		object_vertex_count = 2;
-
-		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
-
-		// Generate and Store Outline Vertices
-		float outline_vertices[56];
-		Vertices::Line::genLineHighlighter(0.0f, slant_data.position2.x - slant_data.position.x, 0.0f, slant_data.position2.y - slant_data.position.y, -0.9f, outline_vertices);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(outline_vertices), outline_vertices, GL_STATIC_DRAW);
-		outline_vertex_count = 8;
-
-		// Store Pointers to Data
-		object_x = &slant_data.position.x;
-		object_y = &slant_data.position.y;
-		object_opposite_x = &slant_data.position2.x;
-		object_opposite_y = &slant_data.position2.y;
-
-		// Generate Line Data
-		slope = (slant_data.position2.y - slant_data.position.y) / (slant_data.position2.x - slant_data.position.x);
-		intercept = slant_data.position.y - (slope * slant_data.position.x);
-
-		break;
-	}
-
-	// Horizontal Slope
-	case Object::Mask::HORIZONTAL_SLOPE:
-	{
-		// Bind Object VAO
-		glBindVertexArray(objectVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
-
-		// Generate and Store Object Vertices
-		float object_vertices[154];
-		Vertices::Line::genLineSimplifiedCurve1(0.0f, 0.0f, -1.0f, slope_data.height, slope_data.width, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 11, object_vertices);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(object_vertices), object_vertices, GL_STATIC_DRAW);
-		object_vertex_count = 22;
-
-		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
-		
-		// Generate and Store Outline Vertices
-		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, slope_data.width, slope_data.height, outline_vertices);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(outline_vertices), outline_vertices, GL_STATIC_DRAW);
-		outline_vertex_count = 8;
-
-		// Store Pointers to Data
-		object_x = &slope_data.position.x;
-		object_y = &slope_data.position.y;
-		object_width = &slope_data.width;
-		object_height = &slope_data.height;
-
-		break;
-	}
-
-	}
-
-	// Object Does Not Consist of Color and Texture
-	visualize_object = false;
-
-	// Object is Composed of Lines
-	visualize_lines = true;
-
-	// Object Only Has Color
-	visualize_texture = false;
-
-	// Set Initial Position Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
-
-	// Enable Resize
-	enable_resize = true;
-	*/
 }
 
 void Editor::Selector::storeSelectorDataHorizontalMasks()
@@ -1396,10 +1270,11 @@ void Editor::Selector::genSelectorVerticesVerticalMasks()
 	case Object::Mask::VERTICAL_LINE:
 	{
 		// Generate and Store Object Vertices
+		glm::vec3 temp_color = object_identifier[1] == Object::Mask::LEFT_WALL ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(0.0f, 0.0f, 1.0f);
 		float half_height = vertical_line_data.height * 0.5f;
 		float object_vertices[] = {
-			0.0f, 0.0f + half_height, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-			0.0f, 0.0f - half_height, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f };
+			0.0f, 0.0f + half_height, -1.0f, temp_color.x, temp_color.y, temp_color.z, 1.0f,
+			0.0f, 0.0f - half_height, -1.0f, temp_color.x, temp_color.y, temp_color.z, 1.0f };
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 56, object_vertices);
 
 		// Bind Outline VAO
@@ -1430,7 +1305,7 @@ void Editor::Selector::genSelectorVerticesVerticalMasks()
 		float x_offset = (21.0f * curve_data.width - 25.0f) / 30.0f;
 		int8_t sign = (object_identifier[1] == 1) ? 1 : -1;
 		float object_vertices[154];
-		Vertices::Line::genLineSimplifiedCurve2(-curve_data.width / 2 * sign, -curve_data.height / 2, -3.0f, curve_data.width, slope, amplitude, x_offset, sign, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 11, object_vertices);
+		Vertices::Line::genLineSimplifiedCurve2(-curve_data.width / 2 * sign, -curve_data.height / 2, -3.0f, curve_data.width, slope, amplitude, x_offset, sign, object_identifier[1] == Object::Mask::LEFT_WALL ? glm::vec4(1.0f, 0.4f, 0.0f, 1.0f) : glm::vec4(0.04f, 0.0f, 0.27f, 1.0f), 11, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 616, object_vertices);
 
 		// Bind Outline VAO
@@ -1453,99 +1328,6 @@ void Editor::Selector::genSelectorVerticesVerticalMasks()
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	/*
-	// Parse Vertical Mask Shapes
-
-	switch (object_identifier[2])
-	{
-
-	// Vertical Line
-	case Object::Mask::VERTICAL_LINE:
-	{
-		// Bind Object VAO
-		glBindVertexArray(objectVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
-
-		// Generate and Store Object Vertices
-		float half_height = vertical_line_data.height * 0.5f;
-		float object_vertices[] = {
-			0.0f, 0.0f + half_height, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-			0.0f, 0.0f - half_height, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f };
-		glBufferData(GL_ARRAY_BUFFER, sizeof(object_vertices), object_vertices, GL_STATIC_DRAW);
-		object_vertex_count = 2;
-
-		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
-
-		// Generate and Store Outline Vertices
-		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, 1.0f, vertical_line_data.height, outline_vertices);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(outline_vertices), outline_vertices, GL_STATIC_DRAW);
-		outline_vertex_count = 8;
-
-		// Store Pointers to Data
-		object_x = &vertical_line_data.position.x;
-		object_y = &vertical_line_data.position.y;
-		object_height = &vertical_line_data.height;
-
-		break;
-	}
-
-	// Vertical Curve
-	case Object::Mask::VERTICAL_CURVE:
-	{
-		// Bind Object VAO
-		glBindVertexArray(objectVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
-
-		// Generate and Store Object Vertices
-		float slope = curve_data.height / 6.0f;
-		float amplitude = (1.0f + (6.0f / curve_data.width));
-		float x_offset = (21.0f * curve_data.width - 25.0f) / 30.0f;
-		int8_t sign = (object_identifier[1] == 1) ? 1 : -1;
-		float object_vertices[154];
-		Vertices::Line::genLineSimplifiedCurve2(-curve_data.width / 2 * sign, -curve_data.height / 2, -3.0f, curve_data.width, slope, amplitude, x_offset, sign, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 11, object_vertices);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(object_vertices), object_vertices, GL_STATIC_DRAW);
-		object_vertex_count = 22;
-
-		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
-
-		// Generate and Store Outline Vertices
-		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, curve_data.width, curve_data.height, outline_vertices);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(outline_vertices), outline_vertices, GL_STATIC_DRAW);
-		outline_vertex_count = 8;
-
-		// Store Pointers to Data
-		object_x = &curve_data.position.x;
-		object_y = &curve_data.position.y;
-		object_width = &curve_data.width;
-		object_height = &curve_data.height;
-
-		break;
-	}
-
-	}
-
-	// Object Does Not Consist of Color and Texture
-	visualize_object = false;
-
-	// Object is Composed of Lines
-	visualize_lines = true;
-
-	// Object Only Has Color
-	visualize_texture = false;
-
-	// Set Initial Position Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
-
-	// Enable Resize
-	enable_resize = true;
-	*/
 }
 
 void Editor::Selector::storeSelectorDataVerticalMasks()

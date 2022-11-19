@@ -3,3 +3,19 @@
 ################################################################################
 
 /.vs
+
+# Ignore the Debug Builds
+x64
+Debug
+Core/Debug
+Core/x64
+
+# Ignore the Editing Congiguration File
+Resources/Config/Editing.cfg
+
+# Ignore the Project List File
+Resources/Data/projects.dat
+
+# Ignore the Engine Build
+Core/EngineLibs/Code/Build
+Core/EngineLibs/Code/out

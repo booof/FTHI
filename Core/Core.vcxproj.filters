@@ -621,6 +621,15 @@
     <ClCompile Include="Source\Class\Render\Editor\ObjectInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Class\Render\GUI\HorizontalScrollBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\GUI\VerticalScrollBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\GUI\MasterElement.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Class\Object\Physics\PhysicsBase.h">
@@ -993,6 +1002,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Class\Render\Editor\ObjectInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\HorizontalScrollBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\VerticalScrollBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\MasterElement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\Grid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\GUIController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

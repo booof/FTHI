@@ -20,7 +20,7 @@
 
 // GLM
 #include "../../../Com/GLM/glm.hpp"
-//#include "../../../Com/GLFW/glfw3.h"
+#include "../../../Com/GLFW/glfw3.h"
 
 // Camera
 #include "../../Source/Class/Render/Camera/Camera.h"

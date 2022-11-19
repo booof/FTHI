@@ -4,7 +4,7 @@
 #ifndef DLL_HEADER
 #include "ExternalLibs.h"
 #else DLL_CODE
-#include "C:\Users\ellio\OneDrive\Documents\Visual Studio 2019 - Copy\projects\Game Engine\FTHI\Core\Source\Includes\ExternalLibsDll.h"
+#include "C:\Users\ellio\source\repos\FTHI\Core\EngineLibs\Header\DLLHeader.h"
 #endif
 
 namespace Render::Camera

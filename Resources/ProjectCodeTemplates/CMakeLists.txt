@@ -6,11 +6,11 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 add_library(project_lib SHARED Main.cpp ScriptHandler.cpp
 )
 target_precompile_headers(project_lib PRIVATE 
-"C:/Users/ellio/OneDrive/Documents/Visual Studio 2019 - Copy/projects/Game Engine/FTHI/Core/EngineLibs/Header/DLLHeader.h"
+"C:/Users/ellio/source/repos/FTHI/Core/EngineLibs/Header/DLLHeader.h"
 "Globals.h"
 "Constants.h"
 )
-target_link_libraries(project_lib "C:/Users/ellio/OneDrive/Documents/Visual Studio 2019 - Copy/projects/Game Engine/FTHI/Core/EngineLibs/Code/Build/Debug/enginecode.lib")
+target_link_libraries(project_lib "C:/Users/ellio/source/repos/FTHI/Core/EngineLibs/Code/Build/Debug/enginecode.lib")
 target_compile_definitions(project_lib PRIVATE "BUILD_DLL")
 set(installable_libs project_lib)
 install(TARGETS ${installable_libs} DESTINATION lib)

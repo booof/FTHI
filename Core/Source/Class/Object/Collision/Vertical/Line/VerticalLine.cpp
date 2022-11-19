@@ -38,7 +38,7 @@ void Object::Mask::VerticalLine::initializeVisualizer(GLuint& VAO, GLuint& VBO, 
 	glEnableVertexAttribArray(0);
 
 	// Assign Color Vertices
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (void*)(3 * sizeof(GL_FLOAT)));
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(3 * sizeof(GL_FLOAT)));
 	glEnableVertexAttribArray(1);
 
 	// Unbind Object

@@ -39,7 +39,8 @@ GUI::MasterElement::MasterElement(glm::vec2 position, float width, float height)
 GUI::MasterElement::~MasterElement()
 {
 	// Delete Default Structure
-	delete defaults;
+	if (defaults != nullptr)
+		delete defaults;
 }
 
 bool GUI::MasterElement::updateElement()

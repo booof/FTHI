@@ -103,7 +103,7 @@ Object::Mask::Ceiling::CeilingMaskSlope::CeilingMaskSlope(SlopeData& data_) : Sl
 #ifdef EDITOR
 
 	// Create Visualizer
-	initializeVisualizer(VAO, VBO, model, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+	initializeVisualizer(VAO, VBO, model, glm::vec4(0.0f, 0.0f, 0.45f, 1.0f));
 	number_of_vertices = 22;
 
 	// Only Attach Scripts if in Gameplay Mode

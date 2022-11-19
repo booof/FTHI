@@ -2051,13 +2051,13 @@ void Editor::EditorWindow::displayText()
 				initial_height -= change_in_height;
 
 				// Draw Slant Label
-				Source::Fonts::renderText("Floor Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
-				Source::Fonts::renderText("  Slant", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("Floor Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), true);
+				Source::Fonts::renderText("  Slant", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Slope Label
-				Source::Fonts::renderText("Floor Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
-				Source::Fonts::renderText("  Slope", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("Floor Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.04f, 0.24f, 1.0f, 1.0f), true);
+				Source::Fonts::renderText("  Slope", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.04f, 0.24f, 1.0f, 1.0f), true);
 
 				break;
 			}
@@ -2071,8 +2071,8 @@ void Editor::EditorWindow::displayText()
 				initial_height -= change_in_height;
 
 				// Draw Curve Label
-				Source::Fonts::renderText("Left Wall Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
-				Source::Fonts::renderText("   Curve", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("Left Wall Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(1.0f, 0.4f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("   Curve", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(1.0f, 0.4f, 0.0f, 1.0f), true);
 
 				break;
 			}
@@ -2086,8 +2086,8 @@ void Editor::EditorWindow::displayText()
 				initial_height -= change_in_height;
 
 				// Draw Curve Label
-				Source::Fonts::renderText("Right Wall Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
-				Source::Fonts::renderText("   Curve", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("Right Wall Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.04f, 0.0f, 0.27f, 1.0f), true);
+				Source::Fonts::renderText("   Curve", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.04f, 0.0f, 0.27f, 1.0f), true);
 
 				break;
 			}
@@ -2101,13 +2101,13 @@ void Editor::EditorWindow::displayText()
 				initial_height -= change_in_height;
 
 				// Draw Slant Label
-				Source::Fonts::renderText("Ceiling Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
-				Source::Fonts::renderText("  Slant", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("Ceiling Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.28f, 0.0f, 0.34f, 1.0f), true);
+				Source::Fonts::renderText("  Slant", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.28f, 0.0f, 0.34f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Slope Label
-				Source::Fonts::renderText("Ceiling Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
-				Source::Fonts::renderText("  Slope", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("Ceiling Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.0f, 0.0f, 0.45f, 1.0f), true);
+				Source::Fonts::renderText("  Slope", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.0f, 0.0f, 0.45f, 1.0f), true);
 
 				break;
 			}

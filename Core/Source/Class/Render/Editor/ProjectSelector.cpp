@@ -60,7 +60,7 @@ void Editor::ProjectSelector::readProjectListFile(ProjectInstance** instances, i
     // Open Project File
     std::ifstream file;
     //file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
-    file.open("../Resources/Data/EngineData/projects.dat");
+    file.open("../Resources/Data/projects.dat");
 
     // Project File is Empty
     std::stringstream file_stream;
@@ -255,6 +255,8 @@ void Editor::ProjectSelector::loadProject()
     Global::project_map_path = current_project_path + "\\Code\\Maps\\";
     Global::project_scripts_path = current_project_path + "\\Code\\Scripts\\";
     Global::script_folder_path = current_project_path + "\\Scripts";
+    Global::project_solution_path = current_project_path + "\\Build\\Project.sln";
+    Global::project_name = current_project_name;
 
     // Read Script Files
     script_wizard->loadScriptData();
@@ -401,14 +403,14 @@ void Editor::ProjectSelector::addProjectToFile(ProjectInstance instance)
     std::stringstream file_stream;
     std::ifstream in_file;
     //in_file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
-    in_file.open("../Resources/Data/EngineData/projects.dat");
+    in_file.open("../Resources/Data/projects.dat");
     file_stream << in_file.rdbuf();
     in_file.close();
 
     // Open File for Writing
     std::ofstream out_file;
     //out_file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
-    out_file.open("../Resources/Data/EngineData/projects.dat");
+    out_file.open("../Resources/Data/projects.dat");
 
     // Project File is Empty
     if (file_stream.str().size() < 2)
@@ -462,14 +464,14 @@ void Editor::ProjectSelector::removeProjectFromFile(int index)
     std::stringstream file_stream;
     std::ifstream in_file;
     //in_file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
-    in_file.open("../Resources/Data/EngineData/projects.dat");
+    in_file.open("../Resources/Data/projects.dat");
     file_stream << in_file.rdbuf();
     in_file.close();
 
     // Open File for Writing
     std::ofstream out_file;
     //out_file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
-    out_file.open("../Resources/Data/EngineData/projects.dat");
+    out_file.open("../Resources/Data/projects.dat");
 
 	// Copy the Startup Enabled Flag
 	char temp_byte;
@@ -528,7 +530,7 @@ bool Editor::ProjectSelector::createProject()
     file_dialogue.lpstrTitle = "Select A Valid Project File (.dprj)";
     file_dialogue.nMaxFileTitle = sizeof(szTitle);
     //file_dialogue.lpstrInitialDir = "C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\Projects";
-    file_dialogue.lpstrInitialDir = Global::project_directory_path.c_str();
+    file_dialogue.lpstrInitialDir = Global::default_project_directory_path.c_str();
     file_dialogue.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
     // Allow User to Search for Project
@@ -546,6 +548,7 @@ bool Editor::ProjectSelector::createProject()
         std::filesystem::create_directories(current_project_path + "\\Code\\Maps");
         std::filesystem::create_directories(current_project_path + "\\Code\\Scripts");
         std::filesystem::create_directories(current_project_path + "\\Data");
+        std::filesystem::create_directories(current_project_path + "\\Data\\CommonData");
         std::filesystem::create_directories(current_project_path + "\\Data\\LevelData");
         std::filesystem::create_directories(current_project_path + "\\Data\\EditorLevelData");
         std::filesystem::create_directories(current_project_path + "\\Fonts");
@@ -636,7 +639,7 @@ bool Editor::ProjectSelector::addProject(ProjectInstance* instances, int& instan
     file_dialogue.lpstrTitle = "Select A Valid Project File (.dprj)";
     file_dialogue.nMaxFileTitle = sizeof(szTitle);
     //file_dialogue.lpstrInitialDir = "C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\Projects";
-    file_dialogue.lpstrInitialDir = Global::project_directory_path.c_str();
+    file_dialogue.lpstrInitialDir = Global::default_project_directory_path.c_str();
     file_dialogue.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
     // Allow User to Search for Project
@@ -787,7 +790,7 @@ void Editor::ProjectSelector::initializeProjectSelector()
     // Open Project File
     std::ifstream project_list_file;
     //project_list_file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
-    project_list_file.open("../Resources/Data/EngineData/projects.dat");
+    project_list_file.open("../Resources/Data/projects.dat");
 
     // Read Enable Startup Boolean
     project_list_file.read((char*)&startup_enabled, 1);

@@ -1,0 +1,2 @@
+C:/Users/ellio/source/repos/FTHI/Com/GLM/out/build/x64-Debug/CMakeFiles/edit_cache.dir
+C:/Users/ellio/source/repos/FTHI/Com/GLM/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir
