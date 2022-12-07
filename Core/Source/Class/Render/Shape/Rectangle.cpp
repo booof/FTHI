@@ -28,6 +28,11 @@ void Shape::Rectangle::initializeVertices(Object::ObjectData& data, int& offset,
 
 #ifdef EDITOR
 
+void Shape::Rectangle::writeShape(std::ofstream& object_file)
+{
+	object_file.write((char*)(this) + 8, sizeof(Rectangle) - 8);
+}
+
 void Shape::Rectangle::selectShape(Editor::Selector& selector)
 {
 	selector.rectangle_data = *this;
@@ -66,6 +71,11 @@ Shape::Rectangle::Rectangle(float width_, float height_)
 {
 	width = width_;
 	height = height_;
+}
+
+Shape::Rectangle::Rectangle(std::ifstream& object_file)
+{
+	object_file.read((char*)(this) + 8, sizeof(Rectangle) - 8);
 }
 
 float* Shape::Rectangle::pointerToWidth()

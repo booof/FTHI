@@ -3,6 +3,7 @@
 
 #ifndef DLL_HEADER
 #include "Macros.h"
+#include "ExternalLibs.h"
 #endif
 
 namespace Editor
@@ -43,6 +44,9 @@ namespace Shape
 		virtual void initializeVertices(Object::ObjectData& data, int& offset, int instance) = 0;
 
 #ifdef EDITOR
+
+		// Write Shape to File
+		virtual void writeShape(std::ofstream& object_file) = 0;
 
 		// Select Shape Data
 		virtual void selectShape(Editor::Selector& selector) = 0;

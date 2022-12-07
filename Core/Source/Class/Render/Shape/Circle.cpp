@@ -29,6 +29,11 @@ void Shape::Circle::initializeVertices(Object::ObjectData& data, int& offset, in
 
 #ifdef EDITOR
 
+void Shape::Circle::writeShape(std::ofstream& object_file)
+{
+	object_file.write((char*)(this) + 8, sizeof(Circle) - 8);
+}
+
 void Shape::Circle::selectShape(Editor::Selector& selector)
 {
 	selector.circle_data = *this;
@@ -49,6 +54,11 @@ Shape::Circle::Circle(float radius1, float radius2)
 	radius = radius1;
 	radius_inner = radius2;
 	shape = CIRCLE;
+}
+
+Shape::Circle::Circle(std::ifstream& object_file)
+{
+	object_file.read((char*)(this) + 8, sizeof(Circle) - 8);
 }
 
 float* Shape::Circle::pointerToRadius()

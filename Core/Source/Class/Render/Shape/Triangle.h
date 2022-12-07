@@ -23,6 +23,9 @@ class Shape::Triangle : public Shape
 
 #ifdef EDITOR
 
+	// Write Shape to File
+	void writeShape(std::ofstream& object_file);
+
 	// Select Shape Data
 	void selectShape(Editor::Selector& selector);
 
@@ -39,6 +42,9 @@ public:
 
 	// Initialize New Data
 	Triangle(glm::vec2 pos2, glm::vec2 pos3);
+
+	// Read from File
+	Triangle(std::ifstream& object_file);
 
 	// Return Pointer to Second Vertex
 	glm::vec2* pointerToSecondPosition();

@@ -28,6 +28,9 @@ class Shape::Trapezoid : public Shape
 
 #ifdef EDITOR
 
+	// Write Shape to File
+	void writeShape(std::ofstream& object_file);
+
 	// Select Shape Data
 	void selectShape(Editor::Selector& selector);
 
@@ -44,6 +47,9 @@ public:
 
 	// Initialize New Data
 	Trapezoid(float width_, float height_, float w_offest, float h_offset);
+
+	// Read from File
+	Trapezoid(std::ifstream& object_file);
 
 	// Return Pointer to Width
 	float* pointerToWidth();

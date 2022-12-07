@@ -27,6 +27,9 @@ class Shape::Polygon : public Shape
 
 #ifdef EDITOR
 
+	// Write Shape to File
+	void writeShape(std::ofstream& object_file);
+
 	// Select Shape Data
 	void selectShape(Editor::Selector& selector);
 
@@ -43,6 +46,9 @@ public:
 
 	// Initialize New Data
 	Polygon(float radius1, float radius2, unsigned char sides, float a_offset);
+
+	// Read from File
+	Polygon(std::ifstream& object_file);
 
 	// Return Pointer to Radius
 	float* pointerToRadius();

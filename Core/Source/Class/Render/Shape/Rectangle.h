@@ -22,6 +22,9 @@ class Shape::Rectangle : public Shape
 
 #ifdef EDITOR
 
+	// Write Shape to File
+	void writeShape(std::ofstream& object_file);
+
 	// Select Shape Data
 	void selectShape(Editor::Selector& selector);
 
@@ -38,6 +41,9 @@ public:
 
 	// Initialize New Data
 	Rectangle(float width_, float height_);
+
+	// Read from File
+	Rectangle(std::ifstream& object_file);
 
 	// Return Pointer to Width
 	float* pointerToWidth();

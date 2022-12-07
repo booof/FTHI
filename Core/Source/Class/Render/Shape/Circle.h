@@ -21,6 +21,9 @@ class Shape::Circle : public Shape
 
 #ifdef EDITOR
 
+	// Write Shape to File
+	void writeShape(std::ofstream& object_file);
+
 	// Select Shape Data
 	void selectShape(Editor::Selector& selector);
 
@@ -37,6 +40,9 @@ public:
 	
 	// Initialize New Data
 	Circle(float radius1, float radius2);
+
+	// Read from File
+	Circle(std::ifstream& object_file);
 
 	// Return Pointer to Radius
 	float* pointerToRadius();

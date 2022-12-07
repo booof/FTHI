@@ -33,6 +33,11 @@ void Shape::Polygon::initializeVertices(Object::ObjectData& data, int& offset, i
 
 #ifdef EDITOR
 
+void Shape::Polygon::writeShape(std::ofstream& object_file)
+{
+	object_file.write((char*)(this) + 8, sizeof(Polygon) - 8);
+}
+
 void Shape::Polygon::selectShape(Editor::Selector& selector)
 {
 	selector.polygon_data = *this;
@@ -56,6 +61,11 @@ Shape::Polygon::Polygon(float radius1, float radius2, unsigned char sides, float
 	number_of_sides = sides;
 	angle_offset = a_offset;
 	shape = POLYGON;
+}
+
+Shape::Polygon::Polygon(std::ifstream& object_file)
+{
+	object_file.read((char*)(this) + 8, sizeof(Polygon) - 8);
 }
 
 float* Shape::Polygon::pointerToRadius()

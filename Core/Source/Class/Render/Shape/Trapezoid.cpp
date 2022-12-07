@@ -29,6 +29,11 @@ void Shape::Trapezoid::initializeVertices(Object::ObjectData& data, int& offset,
 
 #ifdef EDITOR
 
+void Shape::Trapezoid::writeShape(std::ofstream& object_file)
+{
+	object_file.write((char*)(this) + 8, sizeof(Trapezoid) - 8);
+}
+
 void Shape::Trapezoid::selectShape(Editor::Selector& selector)
 {
 	selector.trapezoid_data = *this;
@@ -52,6 +57,11 @@ Shape::Trapezoid::Trapezoid(float width_, float height_, float w_offest, float h
 	width_offset = w_offest;
 	height_offset = h_offset;
 	shape = TRAPEZOID;
+}
+
+Shape::Trapezoid::Trapezoid(std::ifstream& object_file)
+{
+	object_file.read((char*)(this) + 8, sizeof(Trapezoid) - 8);
 }
 
 float* Shape::Trapezoid::pointerToWidth()

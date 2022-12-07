@@ -30,6 +30,11 @@ void Shape::Triangle::initializeVertices(Object::ObjectData& data, int& offset, 
 
 #ifdef EDITOR
 
+void Shape::Triangle::writeShape(std::ofstream& object_file)
+{
+	object_file.write((char*)(this) + 8, sizeof(Triangle) - 8);
+}
+
 void Shape::Triangle::selectShape(Editor::Selector& selector)
 {
 	selector.triangle_data = *this;
@@ -56,6 +61,11 @@ Shape::Triangle::Triangle(glm::vec2 pos2, glm::vec2 pos3)
 	position2 = pos2;
 	position3 = pos3;
 	shape = TRIANGLE;
+}
+
+Shape::Triangle::Triangle(std::ifstream& object_file)
+{
+	object_file.read((char*)(this) + 8, sizeof(Triangle) - 8);
 }
 
 glm::vec2* Shape::Triangle::pointerToSecondPosition()
