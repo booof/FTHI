@@ -1,2 +1,4 @@
-﻿  Selector.cpp
+﻿  DataClasses.cpp
+C:\Users\ellio\source\repos\FTHI\Core\Source\Class\Render\Struct\DataClasses.cpp(519,44): warning C4267: 'initializing': conversion from 'size_t' to 'uint16_t', possible loss of data
+C:\Users\ellio\source\repos\FTHI\Core\Source\Class\Render\Struct\DataClasses.cpp(603,44): warning C4267: 'initializing': conversion from 'size_t' to 'uint16_t', possible loss of data
   Core.vcxproj -> C:\Users\ellio\source\repos\FTHI\x64\Debug\Core.exe

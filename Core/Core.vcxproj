@@ -91,6 +91,7 @@
     <ClCompile Include="Source\Class\Render\Shape\Rectangle.cpp" />
     <ClCompile Include="Source\Class\Render\Shape\Trapezoid.cpp" />
     <ClCompile Include="Source\Class\Render\Shape\Triangle.cpp" />
+    <ClCompile Include="Source\Class\Render\Struct\DataClasses.cpp" />
     <ClCompile Include="Source\Class\Render\Struct\LinkedList.cpp" />
     <ClCompile Include="Source\Includes\Globals.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
