@@ -14,9 +14,6 @@
 #include "Class/Render/Editor/ProjectSelector.h"
 #include "Class/Render/Editor/Debugger.h"
 
-typedef void(__stdcall* funct_pointer1)(int);
-typedef int(__stdcall* funct_pointer2)();
-
 void why_do_i_have_to_mak_a_function_to_call_this()
 {
 	// Generate Change Controller
@@ -25,6 +22,14 @@ void why_do_i_have_to_mak_a_function_to_call_this()
 
 void Source::Render::Initialize::initialize()
 {
+	//////////////////////////////////
+	// Splash Screen Initialization //
+	//////////////////////////////////
+
+	std::string splash_path = "../x64/Debug/DisplaySplash.dll";
+	HINSTANCE splash_dll = LoadLibrary(splash_path.c_str());
+	GetProcAddress(splash_dll, "openSplash")();
+
 	//////////////////////////
 	// Initial Engine Setup //
 	//////////////////////////
@@ -71,6 +76,7 @@ void Source::Render::Initialize::initialize()
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 	glfwWindowHint(GLFW_SAMPLES, 8);
+	glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 
 	// Create Window
 	Global::window = glfwCreateWindow(Global::screenWidth, Global::screenHeight, "For The Hell Of It", NULL, NULL);
@@ -82,6 +88,8 @@ void Source::Render::Initialize::initialize()
 		exit(-1);
 	}
 
+	
+
 	// Bind Graphics Context
 	glfwMakeContextCurrent(Global::window);
 	glfwSetFramebufferSizeCallback(Global::window, Source::Listeners::framebuffer_size_callback);
@@ -92,6 +100,14 @@ void Source::Render::Initialize::initialize()
 	glfwSetCursorPosCallback(Global::window, Source::Listeners::CursorCallback);
 	glfwSetMouseButtonCallback(Global::window, Source::Listeners::MouseCallback);
 	glfwSetScrollCallback(Global::window, Source::Listeners::ScrollCallback);
+
+	// Move Window to Center of Screen
+	MONITORINFO monitor_info = { 0 };
+	GetMonitorInfo(MonitorFromPoint({0}, MONITOR_DEFAULTTOPRIMARY), &monitor_info);
+	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	glfwSetWindowPos(Global::window,
+		monitor_info.rcWork.left + (monitor_info.rcWork.right - monitor_info.rcWork.left + Global::screenWidth / 2) / 2,
+		monitor_info.rcWork.top + (monitor_info.rcWork.bottom - monitor_info.rcWork.left + Global::screenHeight / 2) / 2);
 
 	// Initialize GLAD
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -695,7 +711,19 @@ void Source::Render::Initialize::initialize()
 
 #endif
 
-	// Initialize DLL
+	// Allow the Splash Screen to Fade
+	FARPROC fade_function = GetProcAddress(splash_dll, "fadeSplash");
+	while (fade_function())
+		Sleep(4);
+
+	// Make the Window Visible
+	glfwShowWindow(Global::window);
+
+	// Disable Splash Screen
+	GetProcAddress(splash_dll, "closeSplash")();
+	FreeLibrary(splash_dll);
+
+	// Prompt User to Load a Project
 	//project_selector->readProjectListFile();
 	project_selector->initializeProjectSelector();
 }

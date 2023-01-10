@@ -928,10 +928,6 @@ void Editor::ScriptWizard::writeScriptData()
     std::ofstream object_scripts_file;
     std::ofstream object_scripts_map_file;
 
-    // CMake Files
-    std::ifstream cmake_read;
-    std::ofstream cmake_write;
-
     // Perform Object Script Mapping to All Files, if Object Scripts Were Moved
     if (object_scripts_moved)
     {
@@ -961,26 +957,7 @@ void Editor::ScriptWizard::writeScriptData()
     file_list_file.close();
 
     // Write Files to CMakeLists
-    //cmake_read.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\ProjectCodeTemplates\\CMakeLists.txt");
-    cmake_read.open("../Resources/ProjectCodeTemplates/CMakeLists.txt");
-    cmake_write.open(Global::project_scripts_path + "\\..\\CMakeLists.txt");
-    std::string line = "";
-    for (int i = 0; i < 6; i++)
-    {
-        std::getline(cmake_read, line);
-        cmake_write << line << "\n";
-    }
-    for (int i = 0; i < files_size; i++)
-    {
-        cmake_write << "\"" << backToForwardShash(files[i].path) << files[i].name << "\"\n";
-    }
-    for (int i = 0; i < 10; i++)
-    {
-        std::getline(cmake_read, line);
-        cmake_write << line << "\n";
-    }
-    cmake_write.close();
-    cmake_read.close();
+    genCMakeList();
 
     // Write Global Scripts Header
     int temp_global_array_size = globals_size;
@@ -1029,6 +1006,34 @@ void Editor::ScriptWizard::writeScriptData()
 
     // Reset Modified Flag
     modified = false;
+}
+
+void Editor::ScriptWizard::genCMakeList()
+{
+    // CMake Files
+    std::ifstream cmake_read;
+    std::ofstream cmake_write;
+
+    //cmake_read.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\ProjectCodeTemplates\\CMakeLists.txt");
+    cmake_read.open("../Resources/ProjectCodeTemplates/CMakeLists.txt");
+    cmake_write.open(Global::project_scripts_path + "\\..\\CMakeLists.txt");
+    std::string line = "";
+    for (int i = 0; i < 6; i++)
+    {
+        std::getline(cmake_read, line);
+        cmake_write << line << "\n";
+    }
+    for (int i = 0; i < files_size; i++)
+    {
+        cmake_write << "\"" << backToForwardShash(files[i].path) << files[i].name << "\"\n";
+    }
+    for (int i = 0; i < 10; i++)
+    {
+        std::getline(cmake_read, line);
+        cmake_write << line << "\n";
+    }
+    cmake_write.close();
+    cmake_read.close();
 }
 
 Editor::ScriptWizard* Editor::ScriptWizard::get()

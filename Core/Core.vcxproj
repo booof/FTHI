@@ -20,8 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Lib\GLAD\glad.c" />
-    <ClCompile Include="..\Resources\Scripts\Object\Masks\TestMask.cpp" />
-    <ClCompile Include="Main\Source.cpp" />
     <ClCompile Include="Source\Class\Object\Collision\CollisionMask.cpp" />
     <ClCompile Include="Source\Class\Object\Collision\Horizontal\FloorMask.cpp" />
     <ClCompile Include="Source\Class\Object\Collision\Horizontal\Line\CeilingMaskLine.cpp" />
@@ -107,6 +105,7 @@
     <ClCompile Include="Source\Source\Loaders\Fonts.cpp" />
     <ClCompile Include="Source\Source\Loaders\Textures.cpp" />
     <ClCompile Include="Source\Source\Loops\Loop.cpp" />
+    <ClCompile Include="Source\Source\Main\Source.cpp" />
     <ClCompile Include="Source\Source\Rendering\EditorFunctions.cpp" />
     <ClCompile Include="Source\Source\Rendering\Exit.cpp" />
     <ClCompile Include="Source\Source\Rendering\Initialize.cpp" />
@@ -386,7 +385,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>NotSet</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)/Lib/GLFW;$(SolutionDir)/Lib/SOIL;$(SolutionDir)/Lib/FREETYPE;$(SolutionDir)/Lib/AL;$(SolutionDir)/Bin/OpenAL32.dll;$(SolutionDir)/Core/EngineLibs/TestProject/Build/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;glfw3dll.lib;soil2.lib;freetyped.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>

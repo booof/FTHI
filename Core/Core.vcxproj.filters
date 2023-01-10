@@ -339,9 +339,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main\Source.cpp">
-      <Filter>Source Files\Main</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidBody.cpp">
       <Filter>Source Files\Class\Objects\Physics\Rigid Body</Filter>
     </ClCompile>
@@ -416,9 +413,6 @@
     </ClCompile>
     <ClCompile Include="Source\Class\Object\Collision\Horizontal\Line\HorizotnalLine.cpp">
       <Filter>Source Files\Class\Objects\Collision\Horizontal\Line</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Resources\Scripts\Object\Masks\TestMask.cpp">
-      <Filter>Resource Files\Scritps\Object\Mask</Filter>
     </ClCompile>
     <ClCompile Include="Source\Class\Object\Collision\CollisionMask.cpp">
       <Filter>Source Files\Class\Objects\Collision</Filter>
@@ -631,6 +625,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Class\Render\Struct\DataClasses.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Source\Main\Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

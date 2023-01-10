@@ -11,6 +11,9 @@
 
 void Editor::Debugger::readErrorLog()
 {
+	// The String That Determines if Line is an Error
+	const char* error_keyword = "): error ";
+
 	// Debug Error File
 	std::ifstream file;
 
@@ -25,28 +28,49 @@ void Editor::Debugger::readErrorLog()
 	// Open File
 	file.open(Global::script_folder_path + "\\..\\LastBuildOutput.txt");
 
-	// Read Each Line in File
+	// Variables Used to Get Each Line in File
 	std::string line;
 	std::string current_file_name = "";
-	bool reading_output = true;
+
+	// If First Line Has a CMAKE Error, Rebuild the Solution
+	std::getline(file, line);
+	if (line.substr(0, 39) == "CMake Error: The current CMakeCache.txt")
+	{
+		std::cout << Global::project_file_path << "\n";
+
+		std::string cmd_path = "start "" /b CALL \"" + Global::engine_path + "\\Core\\EngineLibs\\ProjectBuilder\\ProjectBuilder.bat\" \"" + Global::project_file_path + "\\..\\Build\"";
+		system(cmd_path.c_str());
+		return;
+	}
+
+	// Read Each Line in File
 	while (std::getline(file, line))
 	{
-		// Read Dummy Lines Until "Copyright" is Found
-		if (!reading_output)
-		{
-			std::string temp = line.substr(0, 9);
-			if (temp == "Copyright")
-				reading_output = true;
-		}
-
 		// If First Character is a Space, Save Current_file_name
-		else if (line[0] == ' ')
+		if (line[0] == ' ')
 		{
 			current_file_name = line.substr(2, line.size() - 2);
 		}
 
 		else
 		{
+			// Test if the Error Keyword is in Line
+			int error_index = 0;
+			for (int i = 0; i < line.size(); i++)
+			{
+				if (line[i] == error_keyword[error_index])
+				{
+					error_index++;
+					if (error_index == 9)
+						break;
+				}
+
+				else
+					error_index = 0;
+			}
+			if (error_index != 9)
+				continue;
+
 			// Don't Read Empty Lines
 			if (line.size() < 2)
 				continue;

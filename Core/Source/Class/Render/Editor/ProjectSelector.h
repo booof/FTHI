@@ -31,7 +31,7 @@
 // First Line/Byte: Startup Enabled Boolean
 // Second Line/Byte: Number of Projects
 // Next Lines:
-// Project Layout : project_name, project_path, date_last_modified, raw_date_last_modified
+// Project Layout : project_name, project_path, date_last_modified, raw_date_last_modified, File Path
 // NOTE: date_last_modified is equal to the time at which Project was Last Saved
 // ALSO: date_last_modified = mm/dd/yyyy hour:min
 
@@ -127,6 +127,9 @@ namespace Editor
 
 		// Load Project
 		void loadProject();
+
+		// Rebuild Project
+		void rebuildProject();
 
 		// Function to Copy File Contents to Another File
 		void copyFileContents(std::string read_path, std::string write_path);

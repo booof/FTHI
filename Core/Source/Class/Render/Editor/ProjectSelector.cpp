@@ -16,6 +16,25 @@
 //#include <shobjidl.h> 
 #include <time.h>
 
+// Add Code to Check Project Origin and Test if It Needs to Be Rebuilt
+// Do the Same for the Project Library Build
+
+// Ideal Format for Project File:
+// /*Name-Of-Project*/
+// Date Created: /*date*/
+// Date Last Modified: /*date*/
+// Path: /*Path-To-Project-File*/
+
+// When Project is First Created, Assign Name of Project and
+// Store Date Created and Date Last Modified as the Current Time
+// Also Store Path Project is Being Created in
+
+// When Project is Loaded, Initially Compare the Project Path With
+// The Path the File is Accessed From. If they Don't Match, Rebuild
+// the Entire Project with CMake to Avoid Compiler Errors'
+
+// When a Project is Saved, Update the Date Last Modified
+
 typedef void(__stdcall* bindFunctionPointerPointers)(int, Object::Object*);
 typedef void(__stdcall* updateGlobalScriptsPointers)();
 typedef void(__stdcall* DLLMAIN)(bool*, double*, double*, glm::vec2*, float*, float*, bool*, bool*, float*, Render::Camera::Camera*, float*);
@@ -95,6 +114,8 @@ void Editor::ProjectSelector::readProjectListFile(ProjectInstance** instances, i
     std::string line = "";
     while (std::getline(file, line))
     {
+        std::cout << "line:  " << line << "\n";
+
         // Determine Where to Store File Data
         switch (project_line_count)
         {
@@ -249,7 +270,7 @@ void Editor::ProjectSelector::loadProject()
     }
 
     // Bind Path to Level Data
-    Global::project_file_path = current_project_path + "\\" + current_project_name;
+    Global::project_file_path = current_project_path + "\\" + current_project_name + ".dprj";
     Global::level_data_path = current_project_path + "\\Data\\LevelData\\";
     Global::editor_level_data_path = current_project_path + "\\Data\\EditorLevelData\\";
     Global::project_map_path = current_project_path + "\\Code\\Maps\\";
@@ -261,12 +282,64 @@ void Editor::ProjectSelector::loadProject()
     // Read Script Files
     script_wizard->loadScriptData();
 
+    // Get the Project Path From the Project File
+    std::ifstream project_file;
+    project_file.open(Global::project_file_path);
+    std::string line;
+    for (int i = 0; i < 4; i++)
+        std::getline(project_file, line);
+    project_file.close();
+
+    // If The Paths Don't Match, Rebuild the Project
+    //std::cout << Global::project_file_path << " h\n";
+    //std::cout << line << " g\n";
+    if (line != Global::project_file_path)
+        rebuildProject();
+
     // Tell Level to Reload All
     if (project_initialized)
         change_controller->reset();
 
     // Enable Project
     project_initialized = true;
+}
+
+void Editor::ProjectSelector::rebuildProject()
+{
+    std::cout << "The Project has Detected it has Been Moved to a New Directory. Rebuilding Project\n";
+
+    // Delete the Old Files
+    std::filesystem::remove_all(current_project_path + "\\Build");
+    std::filesystem::remove(current_project_path + "\\Build");
+    std::filesystem::remove(current_project_path + "\\LastBuildOutput.txt");
+    std::filesystem::remove(current_project_path + "\\Code\\CMakeLists.txt");
+    std::filesystem::remove(current_project_path + "\\Code\\compilation complete");
+    while (std::filesystem::exists(std::filesystem::path(current_project_path + "\\Code\\compilation complete"))) {}
+
+    // Recreate the CMakeLists File
+    std::filesystem::create_directories(current_project_path + "\\Build");
+    script_wizard->genCMakeList();
+
+    // Rebuild the Project
+    std::string cmd_path = "start "" /b CALL \"" + Global::engine_path + "\\Core\\EngineLibs\\ProjectBuilder\\ProjectBuilder.bat\" \"" + current_project_path + "\\Build\"";
+    system(cmd_path.c_str());
+
+    // Store New Path
+    std::ifstream project_file_in;
+    std::ofstream project_file_out;
+    std::string lines[3];
+    project_file_in.open(Global::project_file_path);
+    for (int i = 0; i < 3; i++)
+        std::getline(project_file_in, lines[i]);
+    project_file_in.close();
+    project_file_out.open(Global::project_file_path);
+    for (int i = 0; i < 3; i++)
+        project_file_out << lines[i] << "\n";
+    project_file_out << Global::project_file_path << "\n";
+    project_file_out.close();
+
+    // Wait for Project to Finish Building
+    while (!std::filesystem::exists(std::filesystem::path(current_project_path + "\\Code\\compilation complete"))) {}
 }
 
 void Editor::ProjectSelector::copyFileContents(std::string read_path, std::string write_path)
@@ -592,6 +665,7 @@ bool Editor::ProjectSelector::createProject()
         std::string current_time = getDateAndTime();
         project_file << "Date Created: " << current_time << "\n";
         project_file << "Date Last Modified: " << current_time << "\n";
+        project_file << current_project_path + "\\" + current_project_name + ".dprj\n";
         project_file.close();
 
         // Generate Project Instance From Project

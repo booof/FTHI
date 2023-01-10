@@ -214,6 +214,9 @@ namespace Editor
 		// Write Script Data
 		void writeScriptData();
 
+		// Generate CMakeList
+		void genCMakeList();
+
 		// Return the Singleton
 		static ScriptWizard* get();
 
