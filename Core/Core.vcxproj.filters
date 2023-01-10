@@ -546,9 +546,6 @@
     <ClCompile Include="Source\Source\Rendering\Exit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\GLAD\glad.c">
-      <Filter>Source Files\Main</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Class\Object\Entity\EntityBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

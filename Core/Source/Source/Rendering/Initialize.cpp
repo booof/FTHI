@@ -42,9 +42,6 @@ void Source::Render::Initialize::initialize()
 			Global::engine_path[i] = '\\';
 	std::cout << "Loading Engine From: " << Global::engine_path << "\n";
 
-	//Global::engine_path = "C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI";
-	//std::filesystem::current_path(Global::engine_path + "\\Core");
-
 	// Get the Default Project Directory
 	Global::default_project_directory_path = Global::engine_path;
 	Global::default_project_directory_path.resize(Global::default_project_directory_path.size() - 5);
@@ -86,9 +83,7 @@ void Source::Render::Initialize::initialize()
 		std::cout << "Failed to Initialize Window" << std::endl;
 		glfwTerminate();
 		exit(-1);
-	}
-
-	
+	}	
 
 	// Bind Graphics Context
 	glfwMakeContextCurrent(Global::window);
@@ -103,11 +98,12 @@ void Source::Render::Initialize::initialize()
 
 	// Move Window to Center of Screen
 	MONITORINFO monitor_info = { 0 };
-	GetMonitorInfo(MonitorFromPoint({0}, MONITOR_DEFAULTTOPRIMARY), &monitor_info);
+	monitor_info.cbSize = sizeof(monitor_info);
+	GetMonitorInfo(MonitorFromPoint(POINT{0}, MONITOR_DEFAULTTOPRIMARY), &monitor_info);
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	glfwSetWindowPos(Global::window,
-		monitor_info.rcWork.left + (monitor_info.rcWork.right - monitor_info.rcWork.left + Global::screenWidth / 2) / 2,
-		monitor_info.rcWork.top + (monitor_info.rcWork.bottom - monitor_info.rcWork.left + Global::screenHeight / 2) / 2);
+		monitor_info.rcWork.left + (monitor_info.rcWork.right - monitor_info.rcWork.left - Global::screenWidth) / 2,
+		monitor_info.rcWork.top + (monitor_info.rcWork.bottom - monitor_info.rcWork.top - Global::screenHeight) / 2);
 
 	// Initialize GLAD
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {

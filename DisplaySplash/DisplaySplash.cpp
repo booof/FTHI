@@ -6,9 +6,7 @@
 #define EXPORT __declspec(dllimport)
 #endif
 
-#include <iostream>
 #include <wincodec.h>
-#include <wincodecsdk.h>
 #pragma comment(lib, "WindowsCodecs.lib")
 
 #include "resource.h"
@@ -112,8 +110,8 @@ EXPORT void __stdcall openSplash()
 	monitor_info.cbSize = sizeof(monitor_info);
 	GetMonitorInfo(MonitorFromPoint(point_zero, MONITOR_DEFAULTTOPRIMARY), &monitor_info);
 	POINT splash_pos = { 0 };
-	splash_pos.x = monitor_info.rcWork.left + (monitor_info.rcWork.right - monitor_info.rcWork.left - splash_size.cx / 2) / 2;
-	splash_pos.y = monitor_info.rcWork.left + (monitor_info.rcWork.bottom - monitor_info.rcWork.top - splash_size.cy / 2) / 2;
+	splash_pos.x = monitor_info.rcWork.left + (monitor_info.rcWork.right - monitor_info.rcWork.left - splash_size.cx) / 2;
+	splash_pos.y = monitor_info.rcWork.top + (monitor_info.rcWork.bottom - monitor_info.rcWork.top - splash_size.cy) / 2;
 
 	// Set Blend Function
 	BLENDFUNCTION blend = { 0 };

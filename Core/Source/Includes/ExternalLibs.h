@@ -13,15 +13,16 @@
 #include <Windows.h>
 
 // OpenGL Libraries
-#include <glad/glad.h>
-#include <glfw3.h>
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
-#include <gtc/type_ptr.hpp>
+#include <GLAD/glad.h>
+#include <GLFW/include/GLFW/glfw3.h>
+
+#include <../Com/GLM/glm.hpp>
+#include <../Com/GLM/gtc/matrix_transform.hpp>
+#include <../Com/GLM/gtc/type_ptr.hpp>
 
 // OpenAL Libraries
-#include <al.h>
-#include <alc.h>
+#include <OPENAL/include/AL/al.h>
+#include <OPENAL/include/AL/alc.h>
 
 // Loaders 
 #include "SOIL2.h"
