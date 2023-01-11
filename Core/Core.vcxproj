@@ -299,6 +299,9 @@
     <ProjectReference Include="..\DisplaySplash\DisplaySplash.vcxproj">
       <Project>{fdd42e0d-fa0d-42d3-bbd4-104d3aef1d92}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Modules\FREETYPE\FREETYPE.vcxproj">
+      <Project>{618f18b0-88d2-463a-aa2d-ac6f4bec355c}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Modules\GLAD\GLAD.vcxproj">
       <Project>{68b9cffd-0f48-4b19-b1b5-c975797cddec}</Project>
     </ProjectReference>

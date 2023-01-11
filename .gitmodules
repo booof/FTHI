@@ -4,3 +4,6 @@
 [submodule "Modules/OPENAL/OPENAL"]
 	path = Modules/OPENAL/OPENAL
 	url = https://github.com/kcat/openal-soft
+[submodule "Modules/FREETYPE/FREETYPE"]
+	path = Modules/FREETYPE/FREETYPE
+	url = https://github.com/freetype/freetype.git
