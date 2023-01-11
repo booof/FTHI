@@ -509,7 +509,7 @@ void Editor::Debugger::updateWindow()
 				if (temp_selected_row != -1 && temp_selected_row == selected_row)
 				{
 					// Get Command to Open File in Default Program
-					std::string command = Global::engine_path + "\\Lib\\OPENVS\\OpenVisualStudio \"" + Global::project_solution_path + "\" \"" + errors[selected_row].file_path + "\" " + std::to_string(errors[selected_row].line) + " " + std::to_string(errors[selected_row].column);
+					std::string command = Global::engine_path + "\\OpenVS\\OpenVisualStudio \"" + Global::project_solution_path + "\" \"" + errors[selected_row].file_path + "\" " + std::to_string(errors[selected_row].line) + " " + std::to_string(errors[selected_row].column);
 
 					// Run Command
 					system(command.c_str());
@@ -530,7 +530,7 @@ void Editor::Debugger::updateWindow()
 				Global::LeftClick = false;
 
 				// Get Command to Open File in Default Program
-				std::string command = Global::engine_path + "\\Lib\\OPENVS\\OpenVisualStudio \"" + Global::project_solution_path + "\" \"" + errors[selected_row].file_path + "\" " + std::to_string(errors[selected_row].line) + " " + std::to_string(errors[selected_row].column);
+				std::string command = Global::engine_path + "\\OpenVS\\OpenVisualStudio \"" + Global::project_solution_path + "\" \"" + errors[selected_row].file_path + "\" " + std::to_string(errors[selected_row].line) + " " + std::to_string(errors[selected_row].column);
 
 				// Run Command
 				system(command.c_str());

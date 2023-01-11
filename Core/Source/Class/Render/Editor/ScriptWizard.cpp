@@ -1198,7 +1198,7 @@ bool Editor::ScriptWizard::loadFile()
 void Editor::ScriptWizard::openFile(int index)
 {
     // Get Command to Open File in Default Program
-    std::string command = Global::engine_path + "\\Lib\\OPENVS\\OpenVisualStudio \"" + Global::project_solution_path + "\" \"" + files[index].path + files[index].name + "\" 0 0";
+    std::string command = Global::engine_path + "\\OpenVS\\OpenVisualStudio \"" + Global::project_solution_path + "\" \"" + files[index].path + files[index].name + "\" 0 0";
 
     // Run Command
     system(command.c_str());
