@@ -296,17 +296,17 @@
     <None Include="Source\Class\Render\Shader\vert\TextureShaderStatic.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Dependencies\GLAD\GLAD.vcxproj">
-      <Project>{68b9cffd-0f48-4b19-b1b5-c975797cddec}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Dependencies\GLFW\GLFW.vcxproj">
-      <Project>{5d65efe6-5432-46e6-beb0-db3545abf5d6}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Dependencies\OPENAL\OPENAL.vcxproj">
-      <Project>{3b1ecb7d-64cd-43e2-8515-340e2749db4c}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\DisplaySplash\DisplaySplash.vcxproj">
       <Project>{fdd42e0d-fa0d-42d3-bbd4-104d3aef1d92}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Modules\GLAD\GLAD.vcxproj">
+      <Project>{68b9cffd-0f48-4b19-b1b5-c975797cddec}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Modules\GLFW\GLFW.vcxproj">
+      <Project>{39c0b91c-5f1f-4143-a3fd-d9c549c8692f}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Modules\OPENAL\OPENAL.vcxproj">
+      <Project>{d682834c-273f-425c-acbe-6e5304fe12f4}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -392,14 +392,14 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)/Dependencies;$(SolutionDir)/Com/SOIL;$(SolutionDir)/Core/Source;$(SolutionDir)/Core/Source/Class;$(SolutionDir)/Com/FREETYPE;$(SolutionDir)/Core/Source/Includes;$(SolutionDir)/Core/Source/Source;$(SolutionDir)/Com/AL;$(SolutionDir)/Com/DR_WAV;$(SolutionDir)/Com/GLAD;$(SolutionDir)/Com/KHR;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/Modules;$(SolutionDir)/Com/SOIL;$(SolutionDir)/Core/Source;$(SolutionDir)/Core/Source/Class;$(SolutionDir)/Com/FREETYPE;$(SolutionDir)/Core/Source/Includes;$(SolutionDir)/Core/Source/Source;$(SolutionDir)/Com/AL;$(SolutionDir)/Com/DR_WAV;$(SolutionDir)/Com/GLAD;$(SolutionDir)/Com/KHR;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)/Lib/SOIL;$(SolutionDir)/Lib/FREETYPE;$(SolutionDir)/Lib/AL;$(SolutionDir)/Bin/OpenAL32.dll;$(SolutionDir)/Core/EngineLibs/TestProject/Build/Debug;$(SolutionDir)/Dependencies/GLFW/bin/src/Debug;$(SolutionDir)/Dependencies/OPENAL/bin/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/Lib/SOIL;$(SolutionDir)/Lib/FREETYPE;$(SolutionDir)/Lib/AL;$(SolutionDir)/Bin/OpenAL32.dll;$(SolutionDir)/Core/EngineLibs/TestProject/Build/Debug;$(SolutionDir)/Modules/GLFW/bin/src/Debug;$(SolutionDir)/Modules/OPENAL/bin/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;soil2.lib;freetyped.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

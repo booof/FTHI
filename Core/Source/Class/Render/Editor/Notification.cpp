@@ -6,7 +6,7 @@
 #include "Source/Vertices/Rectangle/RectangleVertices.h"
 #include "Source/Loaders/Textures.h"
 #include "Source/Loaders/Audio.h"
-#include "OPENAL/include/AL/alext.h"
+#include "OPENAL/OPENAL/include/AL/alext.h"
 
 void Editor::Notification::prepareForMessage(NOTIFICATION_MESSAGES type, Struct::SingleTexture** texture, GUI::TextObject** text, uint8_t& text_size, std::string& message)
 {

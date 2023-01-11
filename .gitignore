@@ -6,6 +6,8 @@
 
 # Ignore the Debug Builds
 x64
+.vs
+bin
 Debug
 Core/Debug
 Core/x64
