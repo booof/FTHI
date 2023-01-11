@@ -1,7 +1,7 @@
 #include "Audio.h"
 
 #include "Globals.h"
-#include "dr_wav.h"
+#include <DRLIB/DRLIB/dr_wav.h>
 
 void Source::Audio::getCurrentAudioDevice()
 {

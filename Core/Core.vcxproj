@@ -119,8 +119,6 @@
     <ClCompile Include="Source\Source\Vertices\Visualizer\Visualizer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Com\DR_WAV\dr_mp3.h" />
-    <ClInclude Include="..\Com\DR_WAV\dr_wav.h" />
     <ClInclude Include="Source\Class\Object\Collision\CollisionMask.h" />
     <ClInclude Include="Source\Class\Object\Collision\Horizontal\CeilingMask.h" />
     <ClInclude Include="Source\Class\Object\Collision\Horizontal\FloorMask.h" />
@@ -299,6 +297,9 @@
     <ProjectReference Include="..\DisplaySplash\DisplaySplash.vcxproj">
       <Project>{fdd42e0d-fa0d-42d3-bbd4-104d3aef1d92}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Modules\DRLIB\DRLIB.vcxproj">
+      <Project>{5762bc00-b755-4b72-b2d5-85f625a1eed4}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Modules\FREETYPE\FREETYPE.vcxproj">
       <Project>{618f18b0-88d2-463a-aa2d-ac6f4bec355c}</Project>
     </ProjectReference>
@@ -308,8 +309,14 @@
     <ProjectReference Include="..\Modules\GLFW\GLFW.vcxproj">
       <Project>{39c0b91c-5f1f-4143-a3fd-d9c549c8692f}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Modules\GLM\GLM.vcxproj">
+      <Project>{1006b56b-0a34-4da0-bb32-e12030e5ce4d}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Modules\OPENAL\OPENAL.vcxproj">
       <Project>{d682834c-273f-425c-acbe-6e5304fe12f4}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Modules\SOIL2\SOIL2.vcxproj">
+      <Project>{0e48927b-13a0-43ef-8bc9-e6b3b9fd3451}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -395,15 +402,15 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)/Modules;$(SolutionDir)/Com/SOIL;$(SolutionDir)/Core/Source;$(SolutionDir)/Core/Source/Class;$(SolutionDir)/Com/FREETYPE;$(SolutionDir)/Core/Source/Includes;$(SolutionDir)/Core/Source/Source;$(SolutionDir)/Com/AL;$(SolutionDir)/Com/DR_WAV;$(SolutionDir)/Com/GLAD;$(SolutionDir)/Com/KHR;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/Modules;$(SolutionDir)/Core/Source;$(SolutionDir)/Core/Source/Class;$(SolutionDir)/Modules/FREETYPE/FREETYPE/include;$(SolutionDir)/Core/Source/Includes;$(SolutionDir)/Core/Source/Source;$(SolutionDir)/Com/DR_WAV;$(SolutionDir)/Com/KHR;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)/Lib/SOIL;$(SolutionDir)/Lib/FREETYPE;$(SolutionDir)/Lib/AL;$(SolutionDir)/Bin/OpenAL32.dll;$(SolutionDir)/Core/EngineLibs/TestProject/Build/Debug;$(SolutionDir)/Modules/GLFW/bin/src/Debug;$(SolutionDir)/Modules/OPENAL/bin/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;soil2.lib;freetyped.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)/Modules/GLFW/bin/src/Debug;$(SolutionDir)/Modules/OPENAL/bin/Debug;$(SolutionDir)/Modules/FREETYPE/bin/Debug;$(SolutionDir)/Modules/SOIL2/bin/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;OpenAL32.lib;freetyped.lib;soil2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

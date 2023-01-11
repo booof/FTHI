@@ -896,12 +896,6 @@
     <ClInclude Include="Source\Class\Render\Editor\Notification.h">
       <Filter>Header Files\Class\Render\Editor</Filter>
     </ClInclude>
-    <ClInclude Include="..\Com\DR_WAV\dr_wav.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Com\DR_WAV\dr_mp3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Source\Loaders\Audio.h">
       <Filter>Header Files\Source\Loaders</Filter>
     </ClInclude>

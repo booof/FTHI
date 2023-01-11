@@ -7,3 +7,12 @@
 [submodule "Modules/FREETYPE/FREETYPE"]
 	path = Modules/FREETYPE/FREETYPE
 	url = https://github.com/freetype/freetype.git
+[submodule "Modules/SOIL2/SOIL2"]
+	path = Modules/SOIL2/SOIL2
+	url = https://github.com/SpartanJ/SOIL2.git
+[submodule "Modules/GLM/GLM"]
+	path = Modules/GLM/GLM
+	url = https://github.com/g-truc/glm.git
+[submodule "Modules/DRLIB/DRLIB"]
+	path = Modules/DRLIB/DRLIB
+	url = https://github.com/mackron/dr_libs.git
