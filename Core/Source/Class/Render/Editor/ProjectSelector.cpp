@@ -78,7 +78,6 @@ void Editor::ProjectSelector::readProjectListFile(ProjectInstance** instances, i
 {
     // Open Project File
     std::ifstream file;
-    //file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
     file.open("../Resources/Data/projects.dat");
 
     // Project File is Empty
@@ -173,10 +172,12 @@ void Editor::ProjectSelector::recompileProject()
     // Reset Debugger Flags
     debugger->enableFlag();
 
+    // Regenerate CMakeLists
+    script_wizard->genCMakeList();
+
     // Run Batch Script to Recompile the Project
     std::filesystem::remove(current_project_path + "\\Code\\compilation complete");
-    //std::string cmd_path = "Start "" /b CALL \"C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Core\\EngineLibs\\ProjectCompiler\\ProjectCompiler.bat\" \"" + current_project_path + "\\Build\"";
-    std::string cmd_path = "Start "" /b CALL \"" + Global::engine_path + "\\Core\\EngineLibs\\ProjectCompiler\\ProjectCompiler.bat\" \"" + current_project_path + "\\Build\"";
+    std::string cmd_path = "Start "" /b CALL \"" + Global::engine_path + "\\Core\\EngineLibs\\ProjectCompiler\\" + CONFIG_DIR + "\\ProjectCompiler.bat\" \"" + current_project_path + "\\Build\"";
     system(cmd_path.c_str());
 }
 
@@ -216,15 +217,11 @@ void Editor::ProjectSelector::loadDLL()
         FreeLibrary(test_dll);
     }
 
-    // Delete the PDB File Because The Program Will Crash Otherwise
-    std::filesystem::remove(current_project_path + "\\Build\\Debug\\project_lib.pdb");
-
     // Free Error Log
     SetLastError(0);
 
     // Open the DLL
-    //std::string dll_path = current_project_path + "\\Build\\Release\\project_lib.dll";
-    std::string dll_path = current_project_path + "\\Build\\Debug\\project_lib.dll";
+    std::string dll_path = current_project_path + "\\Build\\" + CONFIG_DIR + "\\project_lib.dll";
     test_dll = LoadLibrary(TEXT(dll_path.c_str()));
     if (GetLastError())
     {
@@ -260,6 +257,23 @@ void Editor::ProjectSelector::loadProject()
     if (Global::project_file_path == current_project_path + "\\" + current_project_name)
         return;
 
+    // If Project Does Not Exist, Notify the User and Return
+    if (!std::filesystem::exists(current_project_path + "\\" + current_project_name + ".dprj"))
+    {
+        // Send Notification Message
+        glScissor(0, 0, (GLsizei)Global::screenWidth, (GLsizei)Global::screenHeight);
+        std::string message = "ERROR: PROJECT DOES NOT EXIST\n\nThis Project or the Path to the Project\nis Missing or Does Not Exist\n\nYou Will be Returned to the Project Selector\nUpon Closing This Notification";
+        notification_->notificationMessage(EDITOR::NOTIFICATION_MESSAGES::NOTIFICATION_ERROR, message);
+
+        // Reset Renderer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDisable(GL_DEPTH_TEST);
+        Global::colorShaderStatic.Use();
+        glUniform1i(Global::staticLocColor, 1);
+
+        return;
+    }
+
     // If Another Project is Currently Loaded, Prompt User if They Want to Save
     if (Global::project_file_path != "")
     {
@@ -291,8 +305,6 @@ void Editor::ProjectSelector::loadProject()
     project_file.close();
 
     // If The Paths Don't Match, Rebuild the Project
-    //std::cout << Global::project_file_path << " h\n";
-    //std::cout << line << " g\n";
     if (line != Global::project_file_path)
         rebuildProject();
 
@@ -321,7 +333,7 @@ void Editor::ProjectSelector::rebuildProject()
     script_wizard->genCMakeList();
 
     // Rebuild the Project
-    std::string cmd_path = "start "" /b CALL \"" + Global::engine_path + "\\Core\\EngineLibs\\ProjectBuilder\\ProjectBuilder.bat\" \"" + current_project_path + "\\Build\"";
+    std::string cmd_path = "start "" /b CALL \"" + Global::engine_path + "\\Core\\EngineLibs\\ProjectBuilder\\" + CONFIG_DIR + "\\ProjectBuilder.bat\" \"" + current_project_path + "\\Build\"";
     system(cmd_path.c_str());
 
     // Store New Path
@@ -475,14 +487,12 @@ void Editor::ProjectSelector::addProjectToFile(ProjectInstance instance)
     // Copy File Data Into Stream
     std::stringstream file_stream;
     std::ifstream in_file;
-    //in_file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
     in_file.open("../Resources/Data/projects.dat");
     file_stream << in_file.rdbuf();
     in_file.close();
 
     // Open File for Writing
     std::ofstream out_file;
-    //out_file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
     out_file.open("../Resources/Data/projects.dat");
 
     // Project File is Empty
@@ -536,14 +546,12 @@ void Editor::ProjectSelector::removeProjectFromFile(int index)
     // Copy File Data Into Stream
     std::stringstream file_stream;
     std::ifstream in_file;
-    //in_file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
     in_file.open("../Resources/Data/projects.dat");
     file_stream << in_file.rdbuf();
     in_file.close();
 
     // Open File for Writing
     std::ofstream out_file;
-    //out_file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
     out_file.open("../Resources/Data/projects.dat");
 
 	// Copy the Startup Enabled Flag
@@ -585,16 +593,11 @@ void Editor::ProjectSelector::removeProjectFromFile(int index)
 
 bool Editor::ProjectSelector::createProject()
 {
-    // Documentation for OPENFILENAME
-    //https://docs.microsoft.com/en-us/windows/win32/api/commdlg/ns-commdlg-openfilenamea
-
     // Generate Open File Dialogue
     OPENFILENAME file_dialogue = { 0 };
     TCHAR szFile[260] = { 0 };
     TCHAR szTitle[260] = { 0 };
-    // Initialize remaining fields of OPENFILENAME structure
     file_dialogue.lStructSize = sizeof(OPENFILENAME);
-    //file_dialogue.hwndOwner = hWnd;
     file_dialogue.lpstrFile = szFile;
     file_dialogue.nMaxFile = sizeof(szFile);
     file_dialogue.lpstrFilter = ("Engine Project File\0*.DPRJ");
@@ -602,7 +605,6 @@ bool Editor::ProjectSelector::createProject()
     file_dialogue.lpstrFileTitle = szTitle;
     file_dialogue.lpstrTitle = "Select A Valid Project File (.dprj)";
     file_dialogue.nMaxFileTitle = sizeof(szTitle);
-    //file_dialogue.lpstrInitialDir = "C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\Projects";
     file_dialogue.lpstrInitialDir = Global::default_project_directory_path.c_str();
     file_dialogue.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
@@ -632,7 +634,6 @@ bool Editor::ProjectSelector::createProject()
         std::filesystem::create_directories(current_project_path + "\\Textures");
 
         // Generate Copies of Code Files
-        //std::string script_template_path = "C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\ProjectCodeTemplates";
         std::string script_template_path = "../Resources/ProjectCodeTemplates";
         copyFileContents(script_template_path + "\\Main.cpp", current_project_path + "\\Code\\Main.cpp");
         copyFileContents(script_template_path + "\\ScriptHandler.cpp", current_project_path + "\\Code\\ScriptHandler.cpp");
@@ -651,11 +652,12 @@ bool Editor::ProjectSelector::createProject()
         copyFileContents(script_template_path + "\\ScriptCounts.lst", current_project_path + "\\Code\\Scripts\\ScriptCounts.lst");
 
         // Generate the CmakeLists File 
+        Global::project_name = current_project_name;
         copyFileContents(script_template_path + "\\CMakeLists.txt", current_project_path + "\\Code\\CMakeLists.txt");
+        script_wizard->genCMakeList();
 
         // Build the Initial Project
-        //std::string cmd_path = "start "" /b CALL \"C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Core\\EngineLibs\\ProjectBuilder\\ProjectBuilder.bat\" \"" + current_project_path + "\\Build\"";
-        std::string cmd_path = "start "" /b CALL \"" + Global::engine_path + "\\Core\\EngineLibs\\ProjectBuilder\\ProjectBuilder.bat\" \"" + current_project_path + "\\Build\"";
+        std::string cmd_path = "start "" /b CALL \"" + Global::engine_path + "\\Core\\EngineLibs\\ProjectBuilder\\" + CONFIG_DIR + "\\ProjectBuilder.bat\" \"" + current_project_path + "\\Build\"";
         system(cmd_path.c_str());
 
         // Generate and Write to the Project File
@@ -695,16 +697,11 @@ bool Editor::ProjectSelector::createProject()
 
 bool Editor::ProjectSelector::addProject(ProjectInstance* instances, int& instance_count)
 {
-    // Documentation for OPENFILENAME
-    //https://docs.microsoft.com/en-us/windows/win32/api/commdlg/ns-commdlg-openfilenamea
-
     // Generate Open File Dialogue
     OPENFILENAME file_dialogue = { 0 };
     TCHAR szFile[260] = { 0 };
     TCHAR szTitle[260] = { 0 };
-    // Initialize remaining fields of OPENFILENAME structure
     file_dialogue.lStructSize = sizeof(OPENFILENAME);
-    //file_dialogue.hwndOwner = hWnd;
     file_dialogue.lpstrFile = szFile;
     file_dialogue.nMaxFile = sizeof(szFile);
     file_dialogue.lpstrFilter = ("Engine Project File\0*.DPRJ");
@@ -712,7 +709,6 @@ bool Editor::ProjectSelector::addProject(ProjectInstance* instances, int& instan
     file_dialogue.lpstrFileTitle = szTitle;
     file_dialogue.lpstrTitle = "Select A Valid Project File (.dprj)";
     file_dialogue.nMaxFileTitle = sizeof(szTitle);
-    //file_dialogue.lpstrInitialDir = "C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\Projects";
     file_dialogue.lpstrInitialDir = Global::default_project_directory_path.c_str();
     file_dialogue.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
@@ -732,6 +728,7 @@ bool Editor::ProjectSelector::addProject(ProjectInstance* instances, int& instan
                 // Store Current Project Path
                 current_project_name = instances[i].name;
                 current_project_path = instances[i].path;
+                Global::project_name = current_project_name;
 
                 // Store Index of Project
                 current_project_index = i;
@@ -757,6 +754,7 @@ bool Editor::ProjectSelector::addProject(ProjectInstance* instances, int& instan
         current_project_name.resize(temp_string_size);
         for (int i = 0; i < temp_string_size; i++)
             current_project_name[i] = temp_name[i];
+        Global::project_name = current_project_name;
 
         // Generate Project Instance From Project
         ProjectInstance instance;
@@ -863,7 +861,6 @@ void Editor::ProjectSelector::initializeProjectSelector()
 
     // Open Project File
     std::ifstream project_list_file;
-    //project_list_file.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\Data\\EngineData\\projects.dat");
     project_list_file.open("../Resources/Data/projects.dat");
 
     // Read Enable Startup Boolean
@@ -1056,7 +1053,7 @@ void Editor::ProjectSelector::select_project()
                 Global::LeftClick = false;
                 if (createProject())
                 {
-                    looping = false;
+                    looping = !project_initialized;
                 }
             }
 
@@ -1066,7 +1063,7 @@ void Editor::ProjectSelector::select_project()
                 Global::LeftClick = false;
                 if (addProject(instances, instance_count))
                 {
-                    looping = false;
+                    looping = !project_initialized;
                 }
             }
 
@@ -1084,7 +1081,7 @@ void Editor::ProjectSelector::select_project()
                     current_project_path = instances[current_project_index].path;
                     loadProject();
                     recompileProject();
-                    looping = false;
+                    looping = !project_initialized;
                 }
 
                 // Test Mouse Collisions on Open Project Directory Box

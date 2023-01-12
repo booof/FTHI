@@ -26,4 +26,25 @@
 // Macro for Accessing the Debugger Singleton
 #define debugger Editor::Debugger::get()
 
+// Macro that Determines How to Build and Where to Get Project Dlls
+#ifdef _DEBUG
+#define CONFIG_DIR "Debug"
+#else
+#define CONFIG_DIR "Release"
+#endif
+
+// Macro to Disable Console Output
+//#define DISABLE_OUTPUT
+#ifdef DISABLE_OUTPUT
+#define std::cout //
+#endif
+
+// Macro to Disable the Console Entirely
+#define SHOW_CONSOLE
+#ifdef SHOW_CONSOLE
+#pragma comment(linker, "/SUBSYSTEM:console /ENTRY:mainCRTStartup")
+#else
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+#endif
+
 #endif

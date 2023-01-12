@@ -1014,24 +1014,49 @@ void Editor::ScriptWizard::genCMakeList()
     std::ifstream cmake_read;
     std::ofstream cmake_write;
 
-    //cmake_read.open("C:\\Users\\ellio\\OneDrive\\Documents\\Visual Studio 2019 - Copy\\projects\\Game Engine\\FTHI\\Resources\\ProjectCodeTemplates\\CMakeLists.txt");
+    // Open Files
     cmake_read.open("../Resources/ProjectCodeTemplates/CMakeLists.txt");
     cmake_write.open(Global::project_scripts_path + "\\..\\CMakeLists.txt");
     std::string line = "";
-    for (int i = 0; i < 6; i++)
-    {
-        std::getline(cmake_read, line);
-        cmake_write << line << "\n";
-    }
+
+    // Lambda for Direct, Unmodified Copying of Data Between Files
+    auto copy = [&](int n)->void {
+        for (; n > 0; n--) {
+            std::getline(cmake_read, line);
+            cmake_write << line << "\n";
+        }
+    };
+
+    // Write CMake Version and Declare Project
+    copy(2);
+
+    // Store Project Name Determined from Project Selector
+    cmake_write << Global::project_name << "\n";
+    
+    // Close Project, Write C++ Specifications, DLL Specifications, and Declare Project DLL
+    copy(5);
+
+    // Copy Source Files
     for (int i = 0; i < files_size; i++)
-    {
         cmake_write << "\"" << backToForwardShash(files[i].path) << files[i].name << "\"\n";
-    }
-    for (int i = 0; i < 10; i++)
-    {
-        std::getline(cmake_read, line);
-        cmake_write << line << "\n";
-    }
+
+    // Close Project DLL, Declare Precompiled Headers
+    copy(2);
+
+    // Write Absolute Path to the DLLHeader File
+    cmake_write << "\"" << backToForwardShash(Global::engine_path) << "/Core/EngineLibs/Header/DLLHeader.h\"\n";
+
+    // Copy Rest of the Precompiled Headers, Declare the Engine Library
+    copy(4);
+
+    // Write the Generators for the Debug/Release Build of the Library
+    cmake_write << "\"$<$<CONFIG:Release>:" << backToForwardShash(Global::engine_path) << "/Core/EngineLibs/Code/Build/Release/enginecode.lib>\"\n";
+    cmake_write << "\"$<$<CONFIG:Debug>:" << backToForwardShash(Global::engine_path) << "/Core/EngineLibs/Code/Build/Debug/enginecode.lib>\"\n";
+
+    // Copy the Rest of the CMake File
+    copy(6);
+
+    // Close the Files
     cmake_write.close();
     cmake_read.close();
 }

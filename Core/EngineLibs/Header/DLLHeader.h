@@ -19,8 +19,8 @@
 #include <Windows.h>
 
 // GLM
-#include "../../../Com/GLM/glm.hpp"
-#include "../../../Com/GLFW/glfw3.h"
+#include "../../../Modules/GLM/GLM/glm/glm.hpp"
+#include "../../../Modules/GLFW/GLFW/include/GLFW/glfw3.h"
 
 // Camera
 #include "../../Source/Class/Render/Camera/Camera.h"
