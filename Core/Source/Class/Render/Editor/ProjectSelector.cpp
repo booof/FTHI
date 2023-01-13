@@ -306,7 +306,7 @@ void Editor::ProjectSelector::loadProject()
 
     // If The Paths Don't Match, Rebuild the Project
     if (line != Global::project_file_path)
-        rebuildProject();
+        rebuildProject(line);
 
     // Tell Level to Reload All
     if (project_initialized)
@@ -316,7 +316,7 @@ void Editor::ProjectSelector::loadProject()
     project_initialized = true;
 }
 
-void Editor::ProjectSelector::rebuildProject()
+void Editor::ProjectSelector::rebuildProject(std::string original_path)
 {
     std::cout << "The Project has Detected it has Been Moved to a New Directory. Rebuilding Project\n";
 
@@ -328,8 +328,13 @@ void Editor::ProjectSelector::rebuildProject()
     std::filesystem::remove(current_project_path + "\\Code\\compilation complete");
     while (std::filesystem::exists(std::filesystem::path(current_project_path + "\\Code\\compilation complete"))) {}
 
+    // Replace Any Old Project Path Locations in the File List With the New Path to Fix Some Source Files
+    original_path = original_path.substr(0, original_path.size() - current_project_name.size() - 5);
+    replaceOriginalPaths(original_path, current_project_path + "\\Code\\Maps\\FileList.lst");
+
     // Recreate the CMakeLists File
     std::filesystem::create_directories(current_project_path + "\\Build");
+    script_wizard->loadScriptData();
     script_wizard->genCMakeList();
 
     // Rebuild the Project
@@ -352,6 +357,39 @@ void Editor::ProjectSelector::rebuildProject()
 
     // Wait for Project to Finish Building
     while (!std::filesystem::exists(std::filesystem::path(current_project_path + "\\Code\\compilation complete"))) {}
+}
+
+void Editor::ProjectSelector::replaceOriginalPaths(std::string original_path, std::string file_path)
+{
+    // Read the File into a Buffer
+    std::stringstream stream;
+    std::ifstream in_file;
+    in_file.open(file_path);
+    stream << in_file.rdbuf();
+    in_file.close();
+
+    // Open the File for Writing
+    std::ofstream out_file;
+    out_file.open(file_path);
+
+    // Every Other Line is the Path to a Source File. Iterate Through Those Lines
+    std::string line = "";
+    while (std::getline(stream, line))
+    {
+        out_file << line << "\n";
+        std::getline(stream, line);
+        
+        // If the First Section of the Line Matches the Original Path, Replace With New Path
+        if (original_path == line.substr(0, original_path.size()))
+            out_file << current_project_path << "\\" << line.substr(original_path.size(), line.size() - original_path.size()) << "\n";
+
+        // Else, Write Without Modification
+        else
+            out_file << line << "\n";
+    }
+
+    // Close the File
+    out_file.close();
 }
 
 void Editor::ProjectSelector::copyFileContents(std::string read_path, std::string write_path)

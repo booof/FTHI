@@ -129,7 +129,10 @@ namespace Editor
 		void loadProject();
 
 		// Rebuild Project
-		void rebuildProject();
+		void rebuildProject(std::string original_path);
+
+		// Function to Replace Original Paths to New Paths in a File
+		void replaceOriginalPaths(std::string original_path, std::string file_path);
 
 		// Function to Copy File Contents to Another File
 		void copyFileContents(std::string read_path, std::string write_path);
