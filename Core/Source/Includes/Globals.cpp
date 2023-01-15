@@ -40,6 +40,7 @@ namespace Global
 	std::string project_scripts_path = "";
 	std::string script_folder_path = "";
 	std::string project_solution_path = "";
+	std::string project_symbols_path = "";
 	std::string project_name = "";
 
 	// RNG
@@ -123,6 +124,9 @@ namespace Global
 
 	// Determine is Currently in Editing Mode
 	bool editing = true;
+
+	// Determine if Currently in Debugging Mode
+	bool debugging = false;
 
 	// The Connection Point to Dot Net
 	HINSTANCE framework_handle = NULL;

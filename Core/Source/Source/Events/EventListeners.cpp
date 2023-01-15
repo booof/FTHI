@@ -214,7 +214,24 @@ void Source::Listeners::KeyCallback(GLFWwindow* window, int key, int scancode, i
 				// Switch Between Gameplay and Editor
 				if (key == GLFW_KEY_F1)
 				{
+					// Disable Debugging if Was Previously Enabled
+					if (!Global::editing && Global::debugging)
+					{
+						typedef void(__stdcall* removeProssess)(std::string);
+						(removeProssess(GetProcAddress(Global::framework_handle, "removeProcess")))(Global::project_solution_path);
+						Global::debugging = false;
+					}
+
+					// Toggle Editing Mode
 					project_selector->toggleEngineMode();
+
+					// Enable Debugging if Shift is Held
+					if (!Global::editing && (Global::Keys[GLFW_KEY_LEFT_SHIFT] || Global::Keys[GLFW_KEY_RIGHT_SHIFT]))
+					{
+						typedef void(__stdcall* attachProssess)(std::string, std::string, int);
+						(attachProssess(GetProcAddress(Global::framework_handle, "attachProcess")))(Global::project_solution_path, Global::project_symbols_path, GetCurrentProcessId());
+						Global::debugging = true;
+					}
 				}
 
 				// Editor Functions

@@ -2,7 +2,6 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
-using EnvDTE;
 using System.Linq;
 
 namespace DebugVS
@@ -14,6 +13,34 @@ namespace DebugVS
         public void echo()
         {
             Console.WriteLine(".NET Connection Active");
+        }
+
+        public void attachProcess(string solution, string symbols, int coreID)
+        {
+            visual_studio_instance = loadSolution(solution);
+
+            visual_studio_instance.MainWindow.Activate();
+            visual_studio_instance.MainWindow.Visible = true;
+            visual_studio_instance.UserControl = true;
+
+            EnvDTE.Processes list = visual_studio_instance.Debugger.LocalProcesses;
+            foreach (EnvDTE90.Process3 proc in list)
+            {
+                if (proc.ProcessID == coreID)
+                {
+                    Console.WriteLine("Attaching To:  " + proc.ProcessID + "  " + proc.Name);
+                    proc.Attach2("native");
+                }
+            }
+        }
+
+        public void removeProcess(string solution)
+        {
+            visual_studio_instance = loadSolution(solution);
+
+            visual_studio_instance.Debugger.DetachAll();
+
+            Console.WriteLine("Successfully Detached Debugger");
         }
 
         public void openVisualStudioFile(string solution, string file)
@@ -80,7 +107,7 @@ namespace DebugVS
                     {
                         object obj;
                         rot.GetObject(moniker[0], out obj);
-                        var dte = obj as DTE;
+                        var dte = obj as EnvDTE.DTE;
                         yield return dte;
                     }
                 }

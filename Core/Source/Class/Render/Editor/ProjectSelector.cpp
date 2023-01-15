@@ -291,6 +291,7 @@ void Editor::ProjectSelector::loadProject()
     Global::project_scripts_path = current_project_path + "\\Code\\Scripts\\";
     Global::script_folder_path = current_project_path + "\\Scripts";
     Global::project_solution_path = current_project_path + "\\Build\\" + current_project_name + ".sln";
+    Global::project_symbols_path = current_project_path + "\\Build\\Debug\\project_lib.pdb";
     Global::project_name = current_project_name;
 
     // Read Script Files
