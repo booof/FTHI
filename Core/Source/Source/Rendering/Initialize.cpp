@@ -20,6 +20,8 @@ void why_do_i_have_to_mak_a_function_to_call_this()
 	change_controller->initializeChangeController();
 }
 
+void ErrorExit(LPTSTR lpszFunction);
+
 void Source::Render::Initialize::initialize()
 {
 	//////////////////////////////////
@@ -682,6 +684,9 @@ void Source::Render::Initialize::initialize()
 #ifdef EDITOR
 
 	// Editor Specific Initialization
+
+	// Bridge the Connection to Dot Net
+	Global::framework_handle = LoadLibrary("..\\x64\\Debug\\NetFrameworkWrangler.dll");
 
 	// Generate Editor Options GUI
 	Global::editor_options = new EditorOptions();

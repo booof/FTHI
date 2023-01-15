@@ -124,6 +124,9 @@ namespace Global
 	// Determine is Currently in Editing Mode
 	bool editing = true;
 
+	// The Connection Point to Dot Net
+	HINSTANCE framework_handle = NULL;
+
 	// Editor Options
 	Editor::EditorOptions* editor_options;
 

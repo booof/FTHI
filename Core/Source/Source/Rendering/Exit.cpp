@@ -26,6 +26,9 @@ inline void anoying_function2()
 
 void Source::Render::Exit::exitProgram()
 {
+	// Break the Connection to Dot Net
+	FreeLibrary(Global::framework_handle);
+
 	// Delete Notification
 	notification_->deleteNotification();
 

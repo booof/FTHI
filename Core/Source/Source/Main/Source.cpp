@@ -8,6 +8,11 @@
 #include <DRLIB/DRLIB/dr_wav.h>
 //#include <dr_mp3.h>
 
+// To Do:
+// Make Alternate Function Keys for Shift
+// Ex: F1 will build in debug mode with the .pdb file loaded, calls DebugVisualStudio
+// Ex: F5 will regenerate project instead of simply recompiling it
+
 int main()
 {
 	// Initialize Program

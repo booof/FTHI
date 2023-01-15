@@ -318,6 +318,9 @@
     <ProjectReference Include="..\Modules\SOIL2\SOIL2.vcxproj">
       <Project>{0e48927b-13a0-43ef-8bc9-e6b3b9fd3451}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\NetFrameworkWrangler\NetFrameworkWrangler.vcxproj">
+      <Project>{4bad4fc8-c3b1-4510-9c9a-f3e0846e2ab2}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
