@@ -290,7 +290,7 @@ void Editor::ProjectSelector::loadProject()
     Global::project_map_path = current_project_path + "\\Code\\Maps\\";
     Global::project_scripts_path = current_project_path + "\\Code\\Scripts\\";
     Global::script_folder_path = current_project_path + "\\Scripts";
-    Global::project_solution_path = current_project_path + "\\Build\\Project.sln";
+    Global::project_solution_path = current_project_path + "\\Build\\" + current_project_name + ".sln";
     Global::project_name = current_project_name;
 
     // Read Script Files

@@ -21,3 +21,6 @@ Resources/Data/projects.dat
 # Ignore the Engine Build
 Core/EngineLibs/Code/Build
 Core/EngineLibs/Code/out
+
+# Ignore NuGet Packages
+Packages

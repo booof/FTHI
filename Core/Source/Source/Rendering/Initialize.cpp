@@ -687,6 +687,7 @@ void Source::Render::Initialize::initialize()
 
 	// Bridge the Connection to Dot Net
 	Global::framework_handle = LoadLibrary("..\\x64\\Debug\\NetFrameworkWrangler.dll");
+	GetProcAddress(Global::framework_handle, "echo")();
 
 	// Generate Editor Options GUI
 	Global::editor_options = new EditorOptions();

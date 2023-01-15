@@ -1,32 +1,133 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+using EnvDTE;
+using System.Linq;
 
 namespace DebugVS
 {
     public class Program
     {
-        private static void Main(string[] args)
+        static EnvDTE.DTE visual_studio_instance;
+
+        public void echo()
         {
-            /*            Console.WriteLine("Loading File: " + args[1] + " In Solution: " + args[0]);
-
-                        if (!accessSolution(args))
-                        {
-                            Console.WriteLine("Solution Not Currently Loaded. Loading Solution");
-
-                            System.Type type = Type.GetTypeFromProgID("VisualStudio.DTE");
-                            EnvDTE.DTE instance = (EnvDTE.DTE)System.Activator.CreateInstance(type);
-                            instance.Solution.Open(args[0]);
-
-                            performSolutionAction(instance, args);
-                        }*/
+            Console.WriteLine(".NET Connection Active");
         }
 
-        public void test()
+        public void openVisualStudioFile(string solution, string file)
         {
-            System.Console.WriteLine("ah");
+            Console.WriteLine("Loading File: " + file + " In Solution: " + solution);
+
+            visual_studio_instance = loadSolution(solution);
+
+            visual_studio_instance.MainWindow.Activate();
+            visual_studio_instance.MainWindow.Visible = true;
+            visual_studio_instance.UserControl = true;
+
+            openFile(visual_studio_instance, file);
+        }
+
+        public void openVisualStudioFileAtPoint(string solution, string file, int row, int column)
+        {
+            openVisualStudioFile(solution, file);
+
+            setTextCursorPosition(row, column);
+        }
+
+        private EnvDTE.DTE loadSolution(string solution)
+        {
+            List<EnvDTE.DTE> visual_studio_instances = GetInstances().ToList();
+            for (int i = 0; i < visual_studio_instances.Count; i++)
+            {
+                Console.WriteLine(visual_studio_instances[i].Solution.FullName);
+                if (solution == visual_studio_instances[i].Solution.FullName)
+                {
+                    Console.WriteLine("Solution Currently Loaded. Opening File in Solution");
+                    return visual_studio_instances[i];
+                }
+            }
+
+            Console.WriteLine("Solution Not Currently Loaded. Loading Solution");
+
+            System.Type type = Type.GetTypeFromProgID("VisualStudio.DTE");
+            EnvDTE.DTE instance = (EnvDTE.DTE)System.Activator.CreateInstance(type);
+            instance.Solution.Open(solution);
+            return instance;
+        }
+
+        static IEnumerable<EnvDTE.DTE> GetInstances()
+        {
+            IRunningObjectTable rot;
+            IEnumMoniker enumMoniker;
+            int retVal = GetRunningObjectTable(0, out rot);
+
+            if (retVal == 0)
+            {
+                rot.EnumRunning(out enumMoniker);
+
+                uint fetched = uint.MinValue;
+                IMoniker[] moniker = new IMoniker[1];
+                while (enumMoniker.Next(1, moniker, (IntPtr)fetched) == 0)
+                {
+                    IBindCtx bindCtx;
+                    CreateBindCtx(0, out bindCtx);
+                    string displayName;
+                    moniker[0].GetDisplayName(bindCtx, null, out displayName);
+                    bool isVisualStudio = displayName.StartsWith("!VisualStudio");
+                    if (isVisualStudio)
+                    {
+                        object obj;
+                        rot.GetObject(moniker[0], out obj);
+                        var dte = obj as DTE;
+                        yield return dte;
+                    }
+                }
+            }
+        }
+
+        [DllImport("ole32.dll")]
+        private static extern void CreateBindCtx(int reserved, out IBindCtx ppbc);
+
+        [DllImport("ole32.dll")]
+        private static extern int GetRunningObjectTable(int reserved, out IRunningObjectTable prot);
+
+        private static void openFile(EnvDTE.DTE instance, string path)
+        {
+            bool complete = false;
+            while (!complete)
+            {
+                try
+                {
+                    instance.ItemOperations.OpenFile(path);
+                    complete = true;
+                }
+
+                catch (System.Runtime.InteropServices.COMException)
+                {
+                    continue;
+                }
+            }
+        }
+
+        private static void setTextCursorPosition(int line, int column)
+        {
+            bool complete = false;
+            while (!complete)
+            {
+                try
+                {
+                    ((EnvDTE.TextDocument)(visual_studio_instance.ActiveDocument.Object())).Selection.MoveToLineAndOffset(line, column);
+                    complete = true;
+                }
+
+                catch (System.Runtime.InteropServices.COMException)
+                {
+                    continue;
+                }
+            }
         }
     }
 }
+

@@ -508,11 +508,8 @@ void Editor::Debugger::updateWindow()
 				// If Double Click, Open File
 				if (temp_selected_row != -1 && temp_selected_row == selected_row)
 				{
-					// Get Command to Open File in Default Program
-					std::string command = Global::engine_path + "\\OpenVS\\OpenVisualStudio \"" + Global::project_solution_path + "\" \"" + errors[selected_row].file_path + "\" " + std::to_string(errors[selected_row].line) + " " + std::to_string(errors[selected_row].column);
-
-					// Run Command
-					system(command.c_str());
+					typedef void(__stdcall* openVisualStudioFileAt1)(std::string, std::string, int, int);
+					(openVisualStudioFileAt1(GetProcAddress(Global::framework_handle, "openVisualStudioFileAtPoint")))(Global::project_solution_path, errors[selected_row].file_path, errors[selected_row].line, errors[selected_row].column);
 				}
 
 				// Store Selected Row
@@ -529,11 +526,8 @@ void Editor::Debugger::updateWindow()
 				// Disable Left Click
 				Global::LeftClick = false;
 
-				// Get Command to Open File in Default Program
-				std::string command = Global::engine_path + "\\OpenVS\\OpenVisualStudio \"" + Global::project_solution_path + "\" \"" + errors[selected_row].file_path + "\" " + std::to_string(errors[selected_row].line) + " " + std::to_string(errors[selected_row].column);
-
-				// Run Command
-				system(command.c_str());
+				typedef void(__stdcall* openVisualStudioFileAt2)(std::string, std::string, int, int);
+				(openVisualStudioFileAt2(GetProcAddress(Global::framework_handle, "openVisualStudioFileAtPoint")))(Global::project_solution_path, errors[selected_row].file_path, errors[selected_row].line, errors[selected_row].column);
 			}
 
 			// Test Recompile Box
