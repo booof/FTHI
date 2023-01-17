@@ -111,16 +111,26 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 	glm::vec2 object_level_position;
 	updateLevelPos(selector->getObjectPosition(), object_level_position);
 
-	// Get Unsaved Level
-	UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
+	// This Section of Code will be Deprecated as the Idea is to Move The
+	// Deletion of Objects Occour Upon Selection Instead of When a Change
+	// is Finished. If a Change is Canceled, Simply Undo All Changes Currently
+	// Made in the Change List
+	// /////
+	// Get Unsave Level of Where Object Used to be
+	//UnsavedLevel* temp_unsaved_level1 = nullptr;
+	//if (selector->originated_from_level)
+	//{
+	//	temp_unsaved_level1 = selector->level_of_origin;
+	//	temp_unsaved_level1->generateChangeList();
+	//}
 
-	// Store Data of Object in Corrisponding Unsaved Level
-	uint8_t test = temp_unsaved_level->createInstanceAppend(selector);
-	current_instance->stack_indicies[temp_unsaved_level->unsaved_level_index] = test;
+	// Get Unsaved Level of Where Object is Now
+	UnsavedLevel* temp_unsaved_level2 = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
+	temp_unsaved_level2->generateChangeList();
 
-	// If Object Originated from Another Unsaved Level, Remove Version of Object From Unsaved Level
-	if (selector->originated_from_level && temp_unsaved_level->unsaved_level_index != selector->level_of_origin->unsaved_level_index)
-		current_instance->stack_indicies[selector->level_of_origin->unsaved_level_index] = selector->level_of_origin->createInstancePop(selector->object_index, selector->object_identifier);
+	// Finalize Changes
+	for (UnsavedLevel* level : unsaved_levels)
+		level->finalizeChangeList();
 
 	// Increment Stack Instances
 	incrementStackInstances(*current_instance);
@@ -143,12 +153,15 @@ void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* s
 	// Store Camera Position in Current Instance
 	current_instance->camera_pos = selector->getObjectPosition();
 
+	// As Deletion Change Has Already Been Made when Selecting, Simply Finalize the Changes
+
+
 	// Get Position of Object in Terms of Level
 	glm::vec2 object_level_position;
 	updateLevelPos(selector->getObjectPosition(), object_level_position);
 
 	// Delete Object
-	current_instance->stack_indicies[selector->level_of_origin->unsaved_level_index] = selector->level_of_origin->createInstancePop(selector->object_index, selector->object_identifier);
+	current_instance->stack_indicies[selector->level_of_origin->unsaved_level_index] = selector->level_of_origin->createInstanceRemove(selector->object_index, selector->object_identifier);
 
 	// Increment Stack Instances
 	incrementStackInstances(*current_instance);

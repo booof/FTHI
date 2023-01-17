@@ -64,9 +64,115 @@ Object::Object* DataClass::Data_Object::generateObject()
 	return new_object;
 }
 
-uint8_t* DataClass::Data_Object::get_object_identifier()
+
+uint8_t* DataClass::Data_Object::getObjectIdentifier()
 {
 	return object_identifier;
+}
+
+uint32_t DataClass::Data_Object::getObjectIndex()
+{
+	return object_index;
+}
+
+DataClass::EditorData& DataClass::Data_Object::getEditorData()
+{
+	return editor_data;
+}
+
+std::string& DataClass::Data_Object::getName()
+{
+	return name;
+}
+
+Object::ObjectData& DataClass::Data_SubObject::getObjectData()
+{
+	return data;
+}
+
+int& DataClass::Data_SubObject::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_SubObject::getPosition()
+{
+	return data.position;
+}
+
+Object::Mask::HorizontalLineData& DataClass::Data_HorizontalLine::getHorizontalLineData()
+{
+	return data;
+}
+
+int& DataClass::Data_HorizontalLine::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_HorizontalLine::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_HorizontalLine::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.width = size;
+	data.script = 0;
+	data.material = 0;
+}
+
+Object::Mask::SlantData& DataClass::Data_Slant::getSlantData()
+{
+	return data;
+}
+
+int& DataClass::Data_Slant::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_Slant::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_Slant::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.position2 = position + glm::vec2(size, 0.0f);
+	data.script = 0;
+	data.material = 0;
+}
+
+Object::Mask::SlopeData& DataClass::Data_Slope::getSlopeData()
+{
+	return data;
+}
+
+int& DataClass::Data_Slope::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_Slope::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_Slope::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.width = size * 2.0f;
+	data.height = size;
+	data.script = 0;
+	data.material = 0;
+}
+
+bool& DataClass::Data_Floor::getPlatform()
+{
+	return platform;
 }
 
 Object::Object* DataClass::Data_FloorMaskHorizontalLine::genObject()
@@ -213,6 +319,53 @@ DataClass::Data_CeilingMaskSlope::Data_CeilingMaskSlope()
 	object_identifier[2] = Object::Mask::HORIZONTAL_SLOPE;
 }
 
+Object::Mask::VerticalLineData& DataClass::Data_VerticalLine::getVerticalLineData()
+{
+	return data;
+}
+
+int& DataClass::Data_VerticalLine::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_VerticalLine::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_VerticalLine::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.height = size;
+	data.script = 0;
+	data.material = 0;
+}
+
+Object::Mask::CurveData& DataClass::Data_Curve::getCurveData()
+{
+	return data;
+}
+
+int& DataClass::Data_Curve::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_Curve::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_Curve::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.width = size;
+	data.height = size;
+	data.script = 0;
+	data.material = 0;
+}
+
 Object::Object* DataClass::Data_LeftMaskVerticalLine::genObject()
 {
 	return new Object::Mask::Left::LeftMaskLine(data);
@@ -328,6 +481,30 @@ DataClass::Data_TriggerMask::Data_TriggerMask()
 	object_identifier[2] = 0;
 }
 
+Object::Mask::Trigger::TriggerData& DataClass::Data_TriggerMask::getTriggerData()
+{
+	return data;
+}
+
+int& DataClass::Data_TriggerMask::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_TriggerMask::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_TriggerMask::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.width = size * 2.0f;
+	data.height = size;
+	data.check_type = Object::Mask::Trigger::CHECK_TYPE::NONE;
+	data.script = 0;
+}
+
 Object::Object* DataClass::Data_Terrain::genObject()
 {
 	switch (object_identifier[1])
@@ -373,6 +550,46 @@ DataClass::Data_Terrain::Data_Terrain(uint8_t layer_identifier, uint8_t shape_id
 	object_identifier[2] = shape_identifier;
 }
 
+Shape::Shape* DataClass::Data_Terrain::getShape()
+{
+	return shape;
+}
+
+void DataClass::Data_Terrain::generateInitialValues(glm::vec2& position, glm::vec4 color, Shape::Shape* new_shape)
+{
+	data.position = position;
+	data.zpos = -1.0f;
+	data.colors = color;
+	data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
+	data.texture_name = 0;
+	data.script = 0;
+	data.material_name = 0;
+	shape = new_shape;
+}
+
+Object::Light::LightData& DataClass::Data_Light::getLightData()
+{
+	return light_data;
+}
+
+int& DataClass::Data_Light::getScript()
+{
+	return light_data.script;
+}
+
+glm::vec2& DataClass::Data_Light::getPosition()
+{
+	return light_data.position;
+}
+
+void DataClass::Data_Light::generateInitialLightValues(glm::vec2& new_position)
+{
+	light_data.ambient = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	light_data.diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	light_data.specular = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	light_data.intensity = 1.0f;
+}
+
 Object::Object* DataClass::Data_Directional::genObject()
 {
 	return new Object::Light::Directional::Directional(directional, light_data);
@@ -396,6 +613,17 @@ DataClass::Data_Directional::Data_Directional()
 	object_identifier[0] = Object::LIGHT;
 	object_identifier[1] = Object::Light::DIRECTIONAL;
 	object_identifier[2] = 0;
+}
+
+Object::Light::Directional::DirectionalData& DataClass::Data_Directional::getDirectionalData()
+{
+	return directional;
+}
+
+void DataClass::Data_Directional::generateInitialValues(glm::vec2& position, float& size)
+{
+	generateInitialLightValues(position);
+	directional.position2 = position + glm::vec2(size, 0.0f);
 }
 
 Object::Object* DataClass::Data_Point::genObject()
@@ -423,6 +651,18 @@ DataClass::Data_Point::Data_Point()
 	object_identifier[2] = 0;
 }
 
+Object::Light::Point::PointData& DataClass::Data_Point::getPointData()
+{
+	return point;
+}
+
+void DataClass::Data_Point::generateInitialValues(glm::vec2& position)
+{
+	generateInitialLightValues(position);
+	point.linear = DEFAULT_LINEAR;
+	point.quadratic = DEFAULT_QUADRATIC;
+}
+
 Object::Object* DataClass::Data_Spot::genObject()
 {
 	return new Object::Light::Spot::Spot(spot, light_data);
@@ -448,6 +688,21 @@ DataClass::Data_Spot::Data_Spot()
 	object_identifier[2] = 0;
 }
 
+Object::Light::Spot::SpotData& DataClass::Data_Spot::getSpotData()
+{
+	return spot;
+}
+
+void DataClass::Data_Spot::generateInitialValues(glm::vec2& position)
+{
+	generateInitialLightValues(position);
+	spot.direction = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	spot.angle1 = 0.2f;
+	spot.angle2 = 0.5f;
+	spot.linear = DEFAULT_LINEAR;
+	spot.quadratic = DEFAULT_QUADRATIC;
+}
+
 Object::Object* DataClass::Data_Beam::genObject()
 {
 	return new Object::Light::Beam::Beam(beam, light_data);
@@ -471,6 +726,29 @@ DataClass::Data_Beam::Data_Beam()
 	object_identifier[0] = Object::LIGHT;
 	object_identifier[1] = Object::Light::BEAM;
 	object_identifier[2] = 0;
+}
+
+Object::Light::Beam::BeamData& DataClass::Data_Beam::getBeamData()
+{
+	return beam;
+}
+
+void DataClass::Data_Beam::generateInitialValues(glm::vec2& position, float& size)
+{
+	generateInitialLightValues(position);
+	beam.position2 = position + glm::vec2(size, 0.0f);
+	beam.linear = DEFAULT_LINEAR;
+	beam.quadratic = DEFAULT_QUADRATIC;
+}
+
+uint32_t& DataClass::Data_UUID::getUUID()
+{
+	return uuid;
+}
+
+void DataClass::Data_UUID::generateUUID(uint32_t& new_uuid)
+{
+	uuid = new_uuid;
 }
 
 Object::Object* DataClass::Data_RigidBody::genObject()
@@ -509,6 +787,39 @@ DataClass::Data_RigidBody::Data_RigidBody(uint8_t shape_identifier)
 	object_identifier[2] = shape_identifier;
 }
 
+Shape::Shape* DataClass::Data_RigidBody::getShape()
+{
+	return shape;
+}
+
+Object::Physics::Rigid::RigidBodyData& DataClass::Data_RigidBody::getRigidData()
+{
+	return rigid;
+}
+
+void DataClass::Data_RigidBody::generateInitialValues(glm::vec2& position, Shape::Shape* new_shape, uint32_t& new_uuid)
+{
+	// Generate Object Data
+	generateUUID(new_uuid);
+	data.position = position;
+	data.zpos = -1.0f;
+	data.colors = glm::vec4(1.0f, 0.5f, 0.0f, 1.0f);
+	data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
+	data.texture_name = 0;
+	data.script = 0;
+	data.material_name = 0;
+
+	// Generate Rigid Body Data
+	rigid.mass = 1.0f;
+	rigid.max_health = 10.0f;
+	rigid.center_of_gravity = glm::vec2(0.0f, 0.0f);
+	rigid.initial_rotation = 0.0f;
+	rigid.fluid = false;
+
+	// Store Shape
+	shape = new_shape;
+}
+
 Object::Object* DataClass::Data_SpringMass::genObject()
 {
 	return new Object::Physics::Soft::SpringMass(uuid, data, file_name);
@@ -541,6 +852,24 @@ DataClass::Data_SpringMass::Data_SpringMass()
 	object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
 }
 
+std::string& DataClass::Data_SpringMass::getFile()
+{
+	return file_name;
+}
+
+void DataClass::Data_SpringMass::generateInitialValues(glm::vec2& position, uint32_t& new_uuid)
+{
+	generateUUID(new_uuid);
+	data.position = position;
+	data.zpos = -1.0f;
+	data.colors = glm::vec4(1.0f, 0.5f, 0.0f, 1.0f);
+	data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
+	data.texture_name = 0;
+	data.script = 0;
+	data.material_name = 0;
+	file_name = "NULL";
+}
+
 Object::Object* DataClass::Data_Wire::genObject()
 {
 	return new Object::Physics::Soft::Wire(uuid, data, wire);
@@ -568,6 +897,27 @@ DataClass::Data_Wire::Data_Wire()
 	object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::WIRE;
 }
 
+void DataClass::Data_Wire::generateInitialValues(glm::vec2& position, float& size, uint32_t& new_uuid)
+{
+	generateUUID(new_uuid);
+	data.position = position;
+	data.zpos = -1.0f;
+	data.colors = glm::vec4(1.0f, 0.5f, 0.0f, 1.0f);
+	data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
+	data.texture_name = 0;
+	data.script = 0;
+	data.material_name = 0;
+	wire.position2 = position + glm::vec2(size, 0.0f);
+	wire.Mass = 1.0f;
+	wire.Health = 10.0f;
+	wire.Radius = 0.2f;
+	wire.node_instances = 5;
+	wire.total_rest_length = size;
+	wire.break_distance = size * 2.0f;
+	wire.Stiffness = 1.0f;
+	wire.Dampening = 1.0f;
+}
+
 Object::Object* DataClass::Data_Anchor::genObject()
 {
 	return new Object::Physics::Hinge::Anchor(uuid, data);
@@ -591,6 +941,23 @@ DataClass::Data_Anchor::Data_Anchor()
 	object_identifier[0] = Object::PHYSICS;
 	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::HINGE_BASE;
 	object_identifier[2] = (uint8_t)Object::Physics::HINGES::ANCHOR;
+}
+
+int& DataClass::Data_Anchor::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_Anchor::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_Anchor::generateInitialValues(glm::vec2& position, uint32_t& new_uuid)
+{
+	generateUUID(new_uuid);
+	data.position = position;
+	data.script = 0;
 }
 
 Object::Object* DataClass::Data_Hinge::genObject()
@@ -623,6 +990,40 @@ DataClass::Data_Hinge::Data_Hinge()
 	object_identifier[0] = Object::PHYSICS;
 	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::HINGE_BASE;
 	object_identifier[2] = (uint8_t)Object::Physics::HINGES::HINGE;
+}
+
+int& DataClass::Data_Hinge::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_Hinge::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_Hinge::generateInitialValues(glm::vec2& position, uint32_t& new_uuid)
+{
+	generateUUID(new_uuid);
+	data.position = position;
+	data.script = 0;
+	file_name = "NULL";
+}
+
+Object::Entity::EntityData& DataClass::Data_Entity::getEntityData()
+{
+	return entity;
+}
+
+void DataClass::Data_Entity::generateInitialData(glm::vec2& position, uint32_t& new_uuid)
+{
+	generateUUID(new_uuid);
+	data.position = position;
+	entity.half_width = 2.0f;
+	entity.half_height = 2.0f;
+	entity.half_collision_width = 2.0f;
+	entity.half_collision_height = 2.0f;
+	data.script = 0;
 }
 
 Object::Object* DataClass::Data_NPC::genObject()

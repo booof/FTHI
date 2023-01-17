@@ -40,6 +40,10 @@
 #include "Object/Entity/Interactables.h"
 #include "Object/Entity/Dynamics.h"
 
+
+// Data Classes
+#include "Render/Struct/DataClasses.h"
+
 // Externals
 #include "ExternalLibs.h"
 #include "Macros.h"
@@ -310,23 +314,23 @@ namespace Editor
 
 		// Rectangle Boxes
 		// Boxes = 2, Text = 2
-		void genBoxesRectangle(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesRectangle(uint8_t& box_offset, uint8_t& text_offset, float height_offset, Shape::Shape* shape);
 
 		// Trapezoid Boxes
 		// Boxes = 4, Text = 4
-		void genBoxesTrapezoid(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesTrapezoid(uint8_t& box_offset, uint8_t& text_offset, float height_offset, Shape::Shape* shape);
 
 		// Triangle Boxes
 		// Boxes = 4, Text = 4
-		void genBoxesTriangle(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesTriangle(uint8_t& box_offset, uint8_t& text_offset, float height_offset, Shape::Shape* shape);
 
 		// Circle Boxes
 		// Boxes = 2, Text = 2
-		void genBoxesCircle(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesCircle(uint8_t& box_offset, uint8_t& text_offset, float height_offset, Shape::Shape* shape);
 
 		// Polygon Boxes
 		// Boxes = 4, Text = 4
-		void genBoxesPolygon(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesPolygon(uint8_t& box_offset, uint8_t& text_offset, float height_offset, Shape::Shape* shape);
 
 		// Light Boxes
 		// Boxes = 13, Text = 16
@@ -423,7 +427,7 @@ namespace Editor
 		void generateNewObject();
 
 		// Generate a Shape for New Objects
-		void generateNewShape(float new_size);
+		Shape::Shape* generateNewShape(float new_size);
 
 		// Update Editor Mode
 		void updateEditorMode();
@@ -448,41 +452,46 @@ namespace Editor
 		// Determines if Window is Active
 		bool active_window = false;
 
+		// Object Identifier of New Object
+		uint8_t new_object_identifier[3] = { 0 };
+
 		// Object Identifier
-		unsigned char object_identifier[3];
+		//unsigned char object_identifier[3];
 
 		// Lists of Object Values
-		EditorSpecificData                            editor_data;
-		Object::ObjectData                            object_data;
-		Shape::Rectangle                              rectangle_data;
-		Shape::Trapezoid                              trapezoid_data;
-		Shape::Triangle                               triangle_data;
-		Shape::Circle                                 circle_data;
-		Shape::Polygon                                polygon_data;
-		Object::Mask::HorizontalLineData              horizontal_line_data;
-		Object::Mask::SlantData                       slant_data;
-		Object::Mask::SlopeData                       slope_data;
-		Object::Mask::VerticalLineData                vertical_line_data;
-		Object::Mask::CurveData                       curve_data;
-		Object::Mask::Trigger::TriggerData            trigger_data;
-		Object::Light::LightData                      light_data;
-		Object::Light::Directional::DirectionalData   directional_data;
-		Object::Light::Point::PointData               point_data;
-		Object::Light::Spot::SpotData                 spot_data;
-		Object::Light::Beam::BeamData                 beam_data;
-		Object::Physics::Rigid::RigidBodyData         rigid_body_data;
-		Object::Physics::Soft::WireData				  wire_data;
-		Object::Physics::Hinge::AnchorData            anchor_data;
-		Object::Physics::Hinge::HingeData             hinge_data;
-		Object::Entity::EntityData                    entity_data;
-		Object::Entity::InteractableData              interactable_data;
-		Object::Entity::DynamicData                   dynamic_data;
+		//EditorSpecificData                            editor_data;
+		//Object::ObjectData                            object_data;
+		//Shape::Rectangle                              rectangle_data;
+		//Shape::Trapezoid                              trapezoid_data;
+		//Shape::Triangle                               triangle_data;
+		//Shape::Circle                                 circle_data;
+		//Shape::Polygon                                polygon_data;
+		//Object::Mask::HorizontalLineData              horizontal_line_data;
+		//Object::Mask::SlantData                       slant_data;
+		//Object::Mask::SlopeData                       slope_data;
+		//Object::Mask::VerticalLineData                vertical_line_data;
+		//Object::Mask::CurveData                       curve_data;
+		//Object::Mask::Trigger::TriggerData            trigger_data;
+		//Object::Light::LightData                      light_data;
+		//Object::Light::Directional::DirectionalData   directional_data;
+		//Object::Light::Point::PointData               point_data;
+		//Object::Light::Spot::SpotData                 spot_data;
+		//Object::Light::Beam::BeamData                 beam_data;
+		//Object::Physics::Rigid::RigidBodyData         rigid_body_data;
+		//Object::Physics::Soft::WireData				  wire_data;
+		//Object::Physics::Hinge::AnchorData            anchor_data;
+		//Object::Physics::Hinge::HingeData             hinge_data;
+		//Object::Entity::EntityData                    entity_data;
+		//Object::Entity::InteractableData              interactable_data;
+		//Object::Entity::DynamicData                   dynamic_data;
 		Object::Physics::Soft::NodeData               node_data;
 		Object::Physics::Soft::Spring                 spring_data;
-		bool                                          floor_mask_platform;
-		uint16_t                                      npc_ai;
-		std::string                                   file_name;
-		uint32_t                                      uuid;
+		//bool                                          floor_mask_platform;
+		//uint16_t                                      npc_ai;
+		//std::string                                   file_name;
+		//uint32_t                                      uuid;
+
+		DataClass::Data_Object* data_object = nullptr;
 
 		// Single Texture for Textured Objects
 		Struct::SingleTexture texture;

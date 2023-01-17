@@ -474,7 +474,7 @@ void Editor::EditorWindow::genBoxesCommon(uint8_t& box_offset, uint8_t& text_off
 	temp_box_data.button_text = "";
 	temp_box_data.mode = GUI::TOGGLE_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&editor_data.clamp);
+	boxes[box_offset]->setDataPointer(&data_object->getEditorData().clamp);
 	box_offset++;
 
 	// Clamp Text
@@ -486,7 +486,7 @@ void Editor::EditorWindow::genBoxesCommon(uint8_t& box_offset, uint8_t& text_off
 	// Lock Box
 	temp_box_data.position = glm::vec2(32.0f * scale, windowTop - 9.0f);
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&editor_data.lock);
+	boxes[box_offset]->setDataPointer(&data_object->getEditorData().lock);
 	box_offset++;
 
 	// Lock Text
@@ -528,10 +528,10 @@ void Editor::EditorWindow::genBoxesCommon(uint8_t& box_offset, uint8_t& text_off
 	temp_box_data.width = 70.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-2.0f * scale, windowTop - 46.0f);
-	temp_box_data.button_text = editor_data.name;
+	temp_box_data.button_text = data_object->getName();
 	temp_box_data.mode = GUI::ALPHABETICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&editor_data.name);
+	boxes[box_offset]->setDataPointer(&data_object->getName());
 	box_offset++;
 
 	// Name Text
@@ -558,14 +558,17 @@ void Editor::EditorWindow::genBoxesCommon(uint8_t& box_offset, uint8_t& text_off
 
 void Editor::EditorWindow::genBoxesHorizontalLine(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Horizontal Line
+	DataClass::Data_HorizontalLine& data_horizontal_line = *static_cast<DataClass::Data_HorizontalLine*>(data_object);
+
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(horizontal_line_data.width));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_horizontal_line.getHorizontalLineData().width));
 	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&horizontal_line_data.width);
+	boxes[box_offset]->setDataPointer(&data_horizontal_line.getHorizontalLineData().width);
 	box_offset++;
 
 	// Width Text
@@ -577,14 +580,17 @@ void Editor::EditorWindow::genBoxesHorizontalLine(uint8_t& box_offset, uint8_t& 
 
 void Editor::EditorWindow::genBoxesSlant(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Horizontal Slant
+	DataClass::Data_Slant& data_slant = *static_cast<DataClass::Data_Slant*>(data_object);
+
 	// X-Pos Box
 	temp_box_data.width = 45.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(slant_data.position2.x));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_slant.getSlantData().position2.x));
 	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&slant_data.position2.x);
+	boxes[box_offset]->setDataPointer(&data_slant.getSlantData().position2.x);
 	box_offset++;
 
 	// X-Pos Text
@@ -595,9 +601,9 @@ void Editor::EditorWindow::genBoxesSlant(uint8_t& box_offset, uint8_t& text_offs
 
 	// Y-Pos Box
 	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset - 7.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(slant_data.position2.y));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_slant.getSlantData().position2.y));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&slant_data.position2.y);
+	boxes[box_offset]->setDataPointer(&data_slant.getSlantData().position2.y);
 	box_offset++;
 
 	// Y-Pos Text
@@ -609,14 +615,17 @@ void Editor::EditorWindow::genBoxesSlant(uint8_t& box_offset, uint8_t& text_offs
 
 void Editor::EditorWindow::genBoxesSlope(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Horizontal Slope
+	DataClass::Data_Slope& data_slope = *static_cast<DataClass::Data_Slope*>(data_object);
+
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(slope_data.width));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_slope.getSlopeData().width));
 	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&slope_data.width);
+	boxes[box_offset]->setDataPointer(&data_slope.getSlopeData().width);
 	box_offset++;
 
 	// Width Text
@@ -627,9 +636,9 @@ void Editor::EditorWindow::genBoxesSlope(uint8_t& box_offset, uint8_t& text_offs
 
 	// Height Box
 	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset - 7.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(slope_data.height));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_slope.getSlopeData().height));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&slope_data.height);
+	boxes[box_offset]->setDataPointer(&data_slope.getSlopeData().height);
 	box_offset++;
 
 	// Width Text
@@ -641,6 +650,15 @@ void Editor::EditorWindow::genBoxesSlope(uint8_t& box_offset, uint8_t& text_offs
 
 void Editor::EditorWindow::genBoxesPlatform(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Get Platform from Correct Data Class
+	bool* floor_mask_platform;
+	switch (data_object->getObjectIdentifier()[2])
+	{
+	case Object::Mask::HORIZONTAL_SLANT: floor_mask_platform = &static_cast<DataClass::Data_FloorMaskSlant*>(data_object)->getPlatform(); break;
+	case Object::Mask::HORIZONTAL_SLOPE: floor_mask_platform = &static_cast<DataClass::Data_FloorMaskSlope*>(data_object)->getPlatform(); break;
+	default: floor_mask_platform = &static_cast<DataClass::Data_FloorMaskHorizontalLine*>(data_object)->getPlatform();
+	}
+
 	// Platform Box
 	temp_box_data.width = 20.0f * scale;
 	temp_box_data.height = 5.0f;
@@ -648,20 +666,23 @@ void Editor::EditorWindow::genBoxesPlatform(uint8_t& box_offset, uint8_t& text_o
 	temp_box_data.button_text = "Platform?";
 	temp_box_data.mode = GUI::TOGGLE_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&floor_mask_platform);
+	boxes[box_offset]->setDataPointer(floor_mask_platform);
 	box_offset++;
 }
 
 void Editor::EditorWindow::genBoxesVerticalLine(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Vertical Line
+	DataClass::Data_VerticalLine& data_vertical_line = *static_cast<DataClass::Data_VerticalLine*>(data_object);
+
 	// Height Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(vertical_line_data.height));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_vertical_line.getVerticalLineData().height));
 	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&vertical_line_data.height);
+	boxes[box_offset]->setDataPointer(&data_vertical_line.getVerticalLineData().height);
 	box_offset++;
 
 	// Height Text
@@ -673,14 +694,17 @@ void Editor::EditorWindow::genBoxesVerticalLine(uint8_t& box_offset, uint8_t& te
 
 void Editor::EditorWindow::genBoxesCurve(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Vertical Curve
+	DataClass::Data_Curve& data_curve = *static_cast<DataClass::Data_Curve*>(data_object);
+
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(curve_data.width));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_curve.getCurveData().width));
 	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&curve_data.width);
+	boxes[box_offset]->setDataPointer(&data_curve.getCurveData().width);
 	box_offset++;
 
 	// Width Text
@@ -691,9 +715,9 @@ void Editor::EditorWindow::genBoxesCurve(uint8_t& box_offset, uint8_t& text_offs
 
 	// Height Box
 	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset - 7.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(curve_data.height));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_curve.getCurveData().height));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&curve_data.height);
+	boxes[box_offset]->setDataPointer(&data_curve.getCurveData().height);
 	box_offset++;
 
 	// Width Text
@@ -723,14 +747,17 @@ void Editor::EditorWindow::genBoxesMaterial(uint8_t& box_offset, uint8_t& text_o
 
 void Editor::EditorWindow::genBoxesTrigger(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Trigger Mask
+	DataClass::Data_TriggerMask& data_trigger = *static_cast<DataClass::Data_TriggerMask*>(data_object);
+
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(trigger_data.width));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_trigger.getTriggerData().width));
 	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&trigger_data.width);
+	boxes[box_offset]->setDataPointer(&data_trigger.getTriggerData().width);
 	box_offset++;
 
 	// Width Text
@@ -741,9 +768,9 @@ void Editor::EditorWindow::genBoxesTrigger(uint8_t& box_offset, uint8_t& text_of
 
 	// Height Box
 	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(trigger_data.height));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_trigger.getTriggerData().height));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&trigger_data.height);
+	boxes[box_offset]->setDataPointer(&data_trigger.getTriggerData().height);
 	box_offset++;
 
 	// Width Text
@@ -755,6 +782,9 @@ void Editor::EditorWindow::genBoxesTrigger(uint8_t& box_offset, uint8_t& text_of
 
 void Editor::EditorWindow::genBoxesObject(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Trigger Mask
+	Object::ObjectData& object_data = (static_cast<DataClass::Data_SubObject*>(data_object))->getObjectData();
+
 	// Enable Color Wheel
 	wheel_active = true;
 
@@ -863,8 +893,11 @@ void Editor::EditorWindow::genBoxesObject(uint8_t& box_offset, uint8_t& text_off
 	box_offset++;
 }
 
-void Editor::EditorWindow::genBoxesRectangle(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesRectangle(uint8_t& box_offset, uint8_t& text_offset, float height_offset, Shape::Shape* shape)
 {
+	// Get Rectangle Shape
+	Shape::Rectangle& rectangle_data = *static_cast<Shape::Rectangle*>(shape);
+
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
@@ -895,8 +928,11 @@ void Editor::EditorWindow::genBoxesRectangle(uint8_t& box_offset, uint8_t& text_
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesTrapezoid(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesTrapezoid(uint8_t& box_offset, uint8_t& text_offset, float height_offset, Shape::Shape* shape)
 {
+	// Get Trapezoid Shape
+	Shape::Trapezoid& trapezoid_data = *static_cast<Shape::Trapezoid*>(shape);
+
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
@@ -954,8 +990,11 @@ void Editor::EditorWindow::genBoxesTrapezoid(uint8_t& box_offset, uint8_t& text_
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesTriangle(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesTriangle(uint8_t& box_offset, uint8_t& text_offset, float height_offset, Shape::Shape* shape)
 {
+	// Get Triangle Shape
+	Shape::Triangle& triangle_data = *static_cast<Shape::Triangle*>(shape);
+
 	// xPos 2 Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
@@ -1012,8 +1051,11 @@ void Editor::EditorWindow::genBoxesTriangle(uint8_t& box_offset, uint8_t& text_o
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesCircle(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesCircle(uint8_t& box_offset, uint8_t& text_offset, float height_offset, Shape::Shape* shape)
 {
+	// Get Circle Shape
+	Shape::Circle& circle_data = *static_cast<Shape::Circle*>(shape);
+
 	// Radius Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
@@ -1031,8 +1073,11 @@ void Editor::EditorWindow::genBoxesCircle(uint8_t& box_offset, uint8_t& text_off
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesPolygon(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesPolygon(uint8_t& box_offset, uint8_t& text_offset, float height_offset, Shape::Shape* shape)
 {
+	// Get Polygon Shape
+	Shape::Polygon& polygon_data = *static_cast<Shape::Polygon*>(shape);
+
 	// Radius Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
@@ -1084,6 +1129,9 @@ void Editor::EditorWindow::genBoxesPolygon(uint8_t& box_offset, uint8_t& text_of
 
 void Editor::EditorWindow::genBoxesLight(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Get Light Data
+	Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
+
 	// Enable Light Wheels
 	light_active = true;
 
@@ -1151,6 +1199,9 @@ void Editor::EditorWindow::genBoxesLight(uint8_t& box_offset, uint8_t& text_offs
 
 void Editor::EditorWindow::genBoxesDirectional(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Directional Light
+	DataClass::Data_Directional& data_directional = *static_cast<DataClass::Data_Directional*>(data_object);
+
 	// X-Pos Text
 	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "xPos2:";
@@ -1161,10 +1212,10 @@ void Editor::EditorWindow::genBoxesDirectional(uint8_t& box_offset, uint8_t& tex
 	temp_box_data.width = 45.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(directional_data.position2.x));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_directional.getDirectionalData().position2.x));
 	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&directional_data.position2.x);
+	boxes[box_offset]->setDataPointer(&data_directional.getDirectionalData().position2.x);
 	box_offset++;
 
 	// Y-Pos Text
@@ -1175,14 +1226,17 @@ void Editor::EditorWindow::genBoxesDirectional(uint8_t& box_offset, uint8_t& tex
 
 	// Y-Pos Box
 	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset - 7.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(directional_data.position2.y));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_directional.getDirectionalData().position2.y));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&directional_data.position2.y);
+	boxes[box_offset]->setDataPointer(&data_directional.getDirectionalData().position2.y);
 	box_offset++;
 }
 
 void Editor::EditorWindow::genBoxesPoint(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Point Light
+	DataClass::Data_Point& data_point = *static_cast<DataClass::Data_Point*>(data_object);
+
 	// Linear Text
 	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Linear:";
@@ -1193,10 +1247,10 @@ void Editor::EditorWindow::genBoxesPoint(uint8_t& box_offset, uint8_t& text_offs
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(point_data.linear));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_point.getPointData().linear));
 	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&point_data.linear);
+	boxes[box_offset]->setDataPointer(&data_point.getPointData().linear);
 	box_offset++;
 
 	// Quadratic Text
@@ -1207,14 +1261,17 @@ void Editor::EditorWindow::genBoxesPoint(uint8_t& box_offset, uint8_t& text_offs
 
 	// Quadratic Box
 	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset - 7.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(point_data.quadratic));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_point.getPointData().quadratic));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&point_data.quadratic);
+	boxes[box_offset]->setDataPointer(&data_point.getPointData().quadratic);
 	box_offset++;
 }
 
 void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Directional Light
+	DataClass::Data_Spot& data_spot = *static_cast<DataClass::Data_Spot*>(data_object);
+
 	// Linear Text
 	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Linear:";
@@ -1225,10 +1282,10 @@ void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offse
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spot_data.linear));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().linear));
 	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&spot_data.linear);
+	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().linear);
 	box_offset++;
 
 	// Quadratic Text
@@ -1239,11 +1296,10 @@ void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offse
 
 	// Quadratic Box
 	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset - 7.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spot_data.quadratic));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().quadratic));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&spot_data.quadratic);
+	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().quadratic);
 	box_offset++;
-
 
 	// Direction Text
 	temp_text_data.position = glm::vec2(-50.0f * scale, height_offset - 14.0f);
@@ -1261,10 +1317,10 @@ void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offse
 	temp_box_data.width = 20.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-35.0f * scale, height_offset - 19.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spot_data.direction.x));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().direction.x));
 	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&spot_data.direction.x);
+	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().direction.x);
 	box_offset++;
 
 	// Direction Y Text
@@ -1275,9 +1331,9 @@ void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offse
 
 	// Direction Y Box
 	temp_box_data.position.x = -8.0f * scale;
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spot_data.direction.y));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().direction.y));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&spot_data.direction.y);
+	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().direction.y);
 	box_offset++;
 
 	// Direction Z Text
@@ -1288,11 +1344,10 @@ void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offse
 
 	// Direction Z Box
 	temp_box_data.position.x = 19.0f * scale;
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spot_data.direction.z));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().direction.z));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&spot_data.direction.z);
+	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().direction.z);
 	box_offset++;
-
 	
 	// Angle1 Text
 	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 28.0f);
@@ -1304,10 +1359,10 @@ void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offse
 	temp_box_data.width = 45.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset - 27.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spot_data.angle1));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().angle1));
 	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&spot_data.angle1);
+	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().angle1);
 	box_offset++;
 
 	// Angle2 Text
@@ -1318,14 +1373,17 @@ void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offse
 
 	// Angle2 Box
 	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset - 34.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spot_data.angle2));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().angle2));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&spot_data.angle2);
+	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().angle2);
 	box_offset++;
 }
 
 void Editor::EditorWindow::genBoxesBeam(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Directional Light
+	DataClass::Data_Beam& data_beam = *static_cast<DataClass::Data_Beam*>(data_object);
+
 	// X-Pos Text
 	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "xPos2:";
@@ -1336,10 +1394,10 @@ void Editor::EditorWindow::genBoxesBeam(uint8_t& box_offset, uint8_t& text_offse
 	temp_box_data.width = 45.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(beam_data.position2.x));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_beam.getBeamData().position2.x));
 	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&beam_data.position2.x);
+	boxes[box_offset]->setDataPointer(&data_beam.getBeamData().position2.x);
 	box_offset++;
 
 	// Y-Pos Text
@@ -1350,9 +1408,9 @@ void Editor::EditorWindow::genBoxesBeam(uint8_t& box_offset, uint8_t& text_offse
 
 	// Y-Pos Box
 	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset - 7.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(beam_data.position2.y));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_beam.getBeamData().position2.y));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&beam_data.position2.y);
+	boxes[box_offset]->setDataPointer(&data_beam.getBeamData().position2.y);
 	box_offset++;
 
 	// Linear Text
@@ -1365,10 +1423,10 @@ void Editor::EditorWindow::genBoxesBeam(uint8_t& box_offset, uint8_t& text_offse
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset - 14.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(point_data.linear));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_beam.getBeamData().linear));
 	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&point_data.linear);
+	boxes[box_offset]->setDataPointer(&data_beam.getBeamData().linear);
 	box_offset++;
 
 	// Quadratic Text
@@ -1379,22 +1437,25 @@ void Editor::EditorWindow::genBoxesBeam(uint8_t& box_offset, uint8_t& text_offse
 
 	// Quadratic Box
 	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset - 21.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(point_data.quadratic));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_beam.getBeamData().quadratic));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&point_data.quadratic);
+	boxes[box_offset]->setDataPointer(&data_beam.getBeamData().quadratic);
 	box_offset++;
 }
 
 void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Rigid Body
+	DataClass::Data_RigidBody& data_rigid_body = *static_cast<DataClass::Data_RigidBody*>(data_object);
+
 	// Mass Box
 	temp_box_data.width = 25.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-26.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(rigid_body_data.mass));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_rigid_body.getRigidData().mass));
 	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&rigid_body_data.mass);
+	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().mass);
 	box_offset++;
 
 	// Mass Text
@@ -1405,9 +1466,9 @@ void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_
 
 	// Health Box
 	temp_box_data.position = glm::vec2(16.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(rigid_body_data.max_health));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_rigid_body.getRigidData().max_health));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&rigid_body_data.max_health);
+	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().max_health);
 	box_offset++;
 
 	// Health Text
@@ -1424,10 +1485,10 @@ void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_
 
 	// Center of Gravity X Box
 	temp_box_data.position = glm::vec2(-26.0f * scale, height_offset - 13.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(rigid_body_data.center_of_gravity.x));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_rigid_body.getRigidData().center_of_gravity.x));
 	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&rigid_body_data.center_of_gravity.x);
+	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().center_of_gravity.x);
 	box_offset++;
 
 	// Center of Gravity X Text
@@ -1438,10 +1499,10 @@ void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_
 
 	// Center of Gravity Y Box
 	temp_box_data.position = glm::vec2(16.0f * scale, height_offset - 13.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(rigid_body_data.center_of_gravity.y));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_rigid_body.getRigidData().center_of_gravity.y));
 	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&rigid_body_data.center_of_gravity.y);
+	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().center_of_gravity.y);
 	box_offset++;
 
 	// Center of Gravity Y Text
@@ -1452,9 +1513,9 @@ void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_
 
 	// Offset Box
 	temp_box_data.position = glm::vec2(-26.0f * scale, height_offset - 20.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(rigid_body_data.initial_rotation));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_rigid_body.getRigidData().initial_rotation));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&rigid_body_data.initial_rotation);
+	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().initial_rotation);
 	box_offset++;
 
 	// Offset Text
@@ -1469,7 +1530,7 @@ void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_
 	temp_box_data.button_text = "";
 	temp_box_data.mode = GUI::TOGGLE_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&rigid_body_data.fluid);
+	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().fluid);
 	box_offset++;
 
 	// Fluid Text
@@ -1496,6 +1557,9 @@ void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_
 
 void Editor::EditorWindow::genBoxesSpringMass(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Spring Mass
+	DataClass::Data_SpringMass& data_spring_mass = *static_cast<DataClass::Data_SpringMass*>(data_object);
+
 	// Generate File Path Text
 	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "File:";
@@ -1506,10 +1570,10 @@ void Editor::EditorWindow::genBoxesSpringMass(uint8_t& box_offset, uint8_t& text
 	temp_box_data.width = 70.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset);
-	temp_box_data.button_text = file_name;
+	temp_box_data.button_text = data_spring_mass.getFile();
 	temp_box_data.mode = GUI::GENERAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&file_name);
+	boxes[box_offset]->setDataPointer(&data_spring_mass.getFile());
 	update_script = box_offset;
 	box_offset++;
 
@@ -1567,7 +1631,7 @@ void Editor::EditorWindow::genBoxesSpringMassNode(uint8_t& box_offset, uint8_t& 
 
 	// File Text
 	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 54.0f);
-	temp_text_data.text = "File:         " + file_name;
+	temp_text_data.text = "File:         " + static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
 	texts[text_offset] = new GUI::TextObject(temp_text_data);
 	text_offset++;
 
@@ -1709,6 +1773,9 @@ void Editor::EditorWindow::genBoxesHinge(uint8_t& box_offset, uint8_t& text_offs
 
 void Editor::EditorWindow::genBoxesEntity(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
+	// Convert Data to Entity
+	DataClass::Data_Entity& data_entity = *static_cast<DataClass::Data_Entity*>(data_object);
+
 	// Half Width Text
 	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Half Visual Width:";
@@ -1719,10 +1786,10 @@ void Editor::EditorWindow::genBoxesEntity(uint8_t& box_offset, uint8_t& text_off
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(entity_data.half_width));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_entity.getEntityData().half_width));
 	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&entity_data.half_width);
+	boxes[box_offset]->setDataPointer(&data_entity.getEntityData().half_width);
 	box_offset++;
 
 	// Half Height Text
@@ -1733,9 +1800,9 @@ void Editor::EditorWindow::genBoxesEntity(uint8_t& box_offset, uint8_t& text_off
 
 	// Half Height Box
 	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset - 7.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(entity_data.half_height));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_entity.getEntityData().half_height));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&entity_data.half_height);
+	boxes[box_offset]->setDataPointer(&data_entity.getEntityData().half_height);
 	box_offset++;
 
 	// Half Collision Width Text
@@ -1746,9 +1813,9 @@ void Editor::EditorWindow::genBoxesEntity(uint8_t& box_offset, uint8_t& text_off
 
 	// Half Collision Width Box
 	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset - 14.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(entity_data.half_collision_width));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_entity.getEntityData().half_collision_width));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&entity_data.half_collision_width);
+	boxes[box_offset]->setDataPointer(&data_entity.getEntityData().half_collision_width);
 	box_offset++;
 
 	// Half Collision Height Text
@@ -1759,9 +1826,9 @@ void Editor::EditorWindow::genBoxesEntity(uint8_t& box_offset, uint8_t& text_off
 
 	// Half Collision Height Box
 	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset - 21.0f);
-	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(entity_data.half_collision_height));
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_entity.getEntityData().half_collision_height));
 	boxes[box_offset] = new GUI::Box(temp_box_data);
-	boxes[box_offset]->setDataPointer(&entity_data.half_collision_height);
+	boxes[box_offset]->setDataPointer(&data_entity.getEntityData().half_collision_height);
 	box_offset++;
 }
 
@@ -1885,7 +1952,7 @@ void Editor::EditorWindow::displayText()
 	case 1:
 	{
 		// Parse Primary Object Types
-		switch (object_identifier[0])
+		switch (new_object_identifier[0])
 		{
 			
 		// Collision Masks
@@ -2032,14 +2099,14 @@ void Editor::EditorWindow::displayText()
 	case 2:
 	{
 		// Parse Primary Object Types
-		switch (object_identifier[0])
+		switch (new_object_identifier[0])
 		{
 
 		// Collision Masks
 		case Object::MASK:
 		{
 			// Parse Mask Type
-			switch (object_identifier[1])
+			switch (new_object_identifier[1])
 			{
 			
 			// Floor Masks
@@ -2123,28 +2190,28 @@ void Editor::EditorWindow::displayText()
 			const std::string layer_map[6] = { "Foreground", "Formerground", "Background 1", "Background 2", "Background 3", "Backdrop" };
 
 			// Draw Rectangle Label
-			Source::Fonts::renderText(layer_map[object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[object_identifier[1]], true);
-			Source::Fonts::renderText("Rectangle", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[object_identifier[1]], true);
+			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText("Rectangle", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
 			initial_height -= change_in_height;
 
 			// Draw Trapezoid Label
-			Source::Fonts::renderText(layer_map[object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[object_identifier[1]], true);
-			Source::Fonts::renderText("Trapezoid", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[object_identifier[1]], true);
+			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText("Trapezoid", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
 			initial_height -= change_in_height;
 
 			// Draw Triangle Label
-			Source::Fonts::renderText(layer_map[object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[object_identifier[1]], true);
-			Source::Fonts::renderText("Triangle", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[object_identifier[1]], true);
+			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText("Triangle", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
 			initial_height -= change_in_height;
 
 			// Draw Circle Label
-			Source::Fonts::renderText(layer_map[object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[object_identifier[1]], true);
-			Source::Fonts::renderText("Circle", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[object_identifier[1]], true);
+			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText("Circle", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
 			initial_height -= change_in_height;
 
 			// Draw Polygon Label
-			Source::Fonts::renderText(layer_map[object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[object_identifier[1]], true);
-			Source::Fonts::renderText("Polygon", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[object_identifier[1]], true);
+			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText("Polygon", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
 
 			break;
 		}
@@ -2153,7 +2220,7 @@ void Editor::EditorWindow::displayText()
 		case Object::PHYSICS:
 		{
 			// Parse Physics Type
-			switch (object_identifier[1])
+			switch (new_object_identifier[1])
 			{
 
 			// Rigid Body
@@ -2480,7 +2547,7 @@ void Editor::EditorWindow::updateNewObject()
 				// Update Generalized New Object
 				if (editing_mode == EDITING_MODES::NEW_OBJECT)
 				{
-					object_identifier[object_identifier_index] = index - 1;
+					new_object_identifier[object_identifier_index] = index - 1;
 					object_identifier_index++;
 					changeNewObject();
 				}
@@ -2576,7 +2643,7 @@ void Editor::EditorWindow::changeNewObject()
 	case 1:
 	{
 		// Parse Initial Object Identifier Type
-		switch (object_identifier[0])
+		switch (new_object_identifier[0])
 		{
 
 		// Mask Selections
@@ -2803,13 +2870,13 @@ void Editor::EditorWindow::changeNewObject()
 	case 2:
 	{
 		// Parse Initial Object Type
-		switch (object_identifier[0])
+		switch (new_object_identifier[0])
 		{
 
 		// Mask Selections
 		case Object::MASK:
 		{
-			switch (object_identifier[1])
+			switch (new_object_identifier[1])
 			{
 	
 			// Floor Mask Selections
@@ -2859,7 +2926,7 @@ void Editor::EditorWindow::changeNewObject()
 		// Terrain Selections
 		case Object::TERRAIN:
 		{
-			genNewObjectShapes(terrain_layer_colors[object_identifier[1]], distance, offset);
+			genNewObjectShapes(terrain_layer_colors[new_object_identifier[1]], distance, offset);
 			break;
 		}
 
@@ -2873,7 +2940,7 @@ void Editor::EditorWindow::changeNewObject()
 		// Physics Selections
 		case Object::PHYSICS:
 		{
-			switch (object_identifier[1])
+			switch (new_object_identifier[1])
 			{
 
 			// Rigid Bodies
@@ -3248,30 +3315,28 @@ void Editor::EditorWindow::generateNewObject()
 	float new_size = 10.0f;
 
 	// Parse Object Identifier
-	switch (object_identifier[0])
+	switch (new_object_identifier[0])
 	{
 
 	// Masks
 	case Object::MASK:
 	{
-		switch (object_identifier[1])
+		switch (new_object_identifier[1])
 		{
 
 		// Horizontal Masks
 		case Object::Mask::FLOOR:
 		case Object::Mask::CEILING:
 		{
-			switch (object_identifier[2])
+			switch (new_object_identifier[2])
 			{
 
 			// Horizontal Line
 			case Object::Mask::HORIZONTAL_LINE:
 			{
-				horizontal_line_data.position = new_position;
-				horizontal_line_data.width = new_size;
-				horizontal_line_data.script = 0;
-				horizontal_line_data.material = 0;
-				floor_mask_platform = false;
+				DataClass::Data_HorizontalLine* new_horizontal_line = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_HorizontalLine*>(new DataClass::Data_FloorMaskHorizontalLine()) : static_cast<DataClass::Data_HorizontalLine*>(new DataClass::Data_CeilingMaskHorizontalLine());
+				new_horizontal_line->generateInitialValues(new_position, new_size);
+				data_object = new_horizontal_line;
 
 				break;
 			}
@@ -3279,11 +3344,9 @@ void Editor::EditorWindow::generateNewObject()
 			// Slant
 			case Object::Mask::HORIZONTAL_SLANT:
 			{
-				slant_data.position = new_position;
-				slant_data.position2 = new_position + glm::vec2(new_size, 0.0f);
-				slant_data.script = 0;
-				slant_data.material = 0;
-				floor_mask_platform = false;
+				DataClass::Data_Slant* new_slant = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_Slant*>(new DataClass::Data_FloorMaskSlant()) : static_cast<DataClass::Data_Slant*>(new DataClass::Data_CeilingMaskSlant());
+				new_slant->generateInitialValues(new_position, new_size);
+				data_object = new_slant;
 
 				break;
 			}
@@ -3291,12 +3354,9 @@ void Editor::EditorWindow::generateNewObject()
 			// Slope
 			case Object::Mask::HORIZONTAL_SLOPE:
 			{
-				slope_data.position = new_position;
-				slope_data.width = new_size * 2.0f;
-				slope_data.height = new_size;
-				slope_data.script = 0;
-				slope_data.material = 0;
-				floor_mask_platform = false;
+				DataClass::Data_Slope* new_slope = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_Slope*>(new DataClass::Data_FloorMaskSlope()) : static_cast<DataClass::Data_Slope*>(new DataClass::Data_CeilingMaskSlope());
+				new_slope->generateInitialValues(new_position, new_size);
+				data_object = new_slope;
 
 				break;
 			}
@@ -3308,16 +3368,15 @@ void Editor::EditorWindow::generateNewObject()
 		case Object::Mask::LEFT_WALL:
 		case Object::Mask::RIGHT_WALL:
 		{
-			switch (object_identifier[2])
+			switch (new_object_identifier[2])
 			{
 
 			// Vertical Line
 			case Object::Mask::VERTICAL_LINE:
 			{
-				vertical_line_data.position = new_position;
-				vertical_line_data.height = new_size;
-				vertical_line_data.script = 0;
-				vertical_line_data.material = 0;
+				DataClass::Data_VerticalLine* new_vertical_line = (new_object_identifier[1] == 1) ? static_cast<DataClass::Data_VerticalLine*>(new DataClass::Data_LeftMaskVerticalLine()) : static_cast<DataClass::Data_VerticalLine*>(new DataClass::Data_RightMaskVerticalLine());
+				new_vertical_line->generateInitialValues(new_position, new_size);
+				data_object = new_vertical_line;
 
 				break;
 			}
@@ -3325,11 +3384,9 @@ void Editor::EditorWindow::generateNewObject()
 			// Curve
 			case Object::Mask::VERTICAL_CURVE:
 			{
-				curve_data.position = new_position;
-				curve_data.width = new_size;
-				curve_data.height = new_size;
-				curve_data.script = 0;
-				curve_data.material = 0;
+				DataClass::Data_Curve* new_curve = (new_object_identifier[1] == 1) ? static_cast<DataClass::Data_Curve*>(new DataClass::Data_LeftMaskCurve()) : static_cast<DataClass::Data_Curve*>(new DataClass::Data_RightMaskCurve());
+				new_curve->generateInitialValues(new_position, new_size);
+				data_object = new_curve;
 
 				break;
 			}
@@ -3342,11 +3399,9 @@ void Editor::EditorWindow::generateNewObject()
 		// Trigger Masks
 		case Object::Mask::TRIGGER:
 		{
-			trigger_data.position = new_position;
-			trigger_data.width = new_size * 2.0f;
-			trigger_data.height = new_size;
-			trigger_data.check_type = Object::Mask::Trigger::CHECK_TYPE::NONE;
-			trigger_data.script = 0;
+			DataClass::Data_TriggerMask* new_trigger = new DataClass::Data_TriggerMask();
+			new_trigger->generateInitialValues(new_position, new_size);
+			data_object = new_trigger;
 
 			break;
 		}
@@ -3361,61 +3416,12 @@ void Editor::EditorWindow::generateNewObject()
 	{
 		// Determine Actual Terrain Layer
 		const uint8_t layer_map[6] = { 4, 5, 3, 2, 1, 0 };
-		object_identifier[1] = layer_map[object_identifier[1]];
-
-		// Initialize Shape
-		generateNewShape(new_size);
+		new_object_identifier[1] = layer_map[new_object_identifier[1]];
 
 		// Generate Object Data
-		object_data.position = new_position;
-		object_data.zpos = -1.0f;
-		object_data.colors = terrain_layer_colors[object_identifier[1]];
-		object_data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
-		object_data.texture_name = 0;
-		object_data.script = 0;
-		object_data.material_name = 0;
-
-		switch (object_identifier[1])
-		{
-			
-		// Foreground
-		case Object::Terrain::FOREGROUND:
-		{
-			break;
-		}
-
-		// Formergound
-		case Object::Terrain::FORMERGROUND:
-		{
-			break;
-		}
-
-		// Background 1
-		case Object::Terrain::BACKGROUND_1:
-		{
-			
-			break;
-		}
-
-		// Background 2
-		case Object::Terrain::BACKGROUND_2:
-		{
-			break;
-		}
-
-		// Background 3
-		case Object::Terrain::BACKGROUND_3:
-		{
-			break;
-		}
-
-		// Backdrop
-		case Object::Terrain::BACKDROP:
-		{
-			break;
-		}
-
-		}
+		DataClass::Data_Terrain* new_terrain = new DataClass::Data_Terrain(new_object_identifier[1], new_object_identifier[2]);
+		new_terrain->generateInitialValues(new_position, terrain_layer_colors[new_object_identifier[1]], generateNewShape(new_size));
+		data_object = new_terrain;
 
 		break;
 	}
@@ -3423,22 +3429,15 @@ void Editor::EditorWindow::generateNewObject()
 	// Lights
 	case Object::LIGHT:
 	{
-		const float DEFAULT_LINEAR = 1.0f;
-		const float DEFAULT_QUADRATIC = 1.0f;
-
-		// Set Basic Light Values
-		light_data.ambient = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		light_data.diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		light_data.specular = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		light_data.intensity = 1.0f;
-
-		switch (object_identifier[1])
+		switch (new_object_identifier[1])
 		{
 			
 		// Directional Lights
 		case Object::Light::DIRECTIONAL:
 		{
-			directional_data.position2 = new_position + glm::vec2(new_size, 0.0f);
+			DataClass::Data_Directional* new_directional = new DataClass::Data_Directional();
+			new_directional->generateInitialValues(new_position, new_size);
+			data_object = new_directional;
 
 			break;
 		}
@@ -3446,8 +3445,9 @@ void Editor::EditorWindow::generateNewObject()
 		// Point Lights
 		case Object::Light::POINT:
 		{
-			point_data.linear = DEFAULT_LINEAR;
-			point_data.quadratic = DEFAULT_QUADRATIC;
+			DataClass::Data_Point* new_point = new DataClass::Data_Point();
+			new_point->generateInitialValues(new_position);
+			data_object = new_point;
 
 			break;
 		}
@@ -3455,11 +3455,9 @@ void Editor::EditorWindow::generateNewObject()
 		// Spot Lights
 		case Object::Light::SPOT:
 		{
-			spot_data.direction = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-			spot_data.angle1 = 0.2f;
-			spot_data.angle2 = 0.5f;
-			spot_data.linear = DEFAULT_LINEAR;
-			spot_data.quadratic = DEFAULT_QUADRATIC;
+			DataClass::Data_Spot* new_spot = new DataClass::Data_Spot();
+			new_spot->generateInitialValues(new_position);
+			data_object = new_spot;
 
 			break;
 		}
@@ -3467,9 +3465,9 @@ void Editor::EditorWindow::generateNewObject()
 		// Beam Lights
 		case Object::Light::BEAM:
 		{
-			beam_data.position2 = new_position + glm::vec2(new_size, 0.0f);
-			beam_data.linear = DEFAULT_LINEAR;
-			beam_data.quadratic = DEFAULT_QUADRATIC;
+			DataClass::Data_Beam* new_beam = new DataClass::Data_Beam();
+			new_beam->generateInitialValues(new_position, new_size);
+			data_object = new_beam;
 
 			break;
 		}
@@ -3482,32 +3480,17 @@ void Editor::EditorWindow::generateNewObject()
 	// Physics
 	case Object::PHYSICS:
 	{
-		uuid = genNewUUID();
+		uint32_t uuid = genNewUUID();
 
-		switch (object_identifier[1])
+		switch (new_object_identifier[1])
 		{
 
 		// Rigid Body
 		case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
 		{
-			// Initialize Shape
-			generateNewShape(new_size);
-
-			// Generate Object Data
-			object_data.position = new_position;
-			object_data.zpos = -1.0f;
-			object_data.colors = glm::vec4(1.0f, 0.5f, 0.0f, 1.0f);
-			object_data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
-			object_data.texture_name = 0;
-			object_data.script = 0;
-			object_data.material_name = 0;
-			
-			// Generate Rigid Body Data
-			rigid_body_data.mass = 1.0f;
-			rigid_body_data.max_health = 10.0f;
-			rigid_body_data.center_of_gravity = glm::vec2(0.0f, 0.0f);
-			rigid_body_data.initial_rotation = 0.0f;
-			rigid_body_data.fluid = false;
+			DataClass::Data_RigidBody* new_rigid = new DataClass::Data_RigidBody(new_object_identifier[2]);
+			new_rigid->generateInitialValues(new_position, generateNewShape(new_size), uuid);
+			data_object = new_rigid;
 
 			break;
 		}
@@ -3516,20 +3499,16 @@ void Editor::EditorWindow::generateNewObject()
 		case (int)Object::Physics::PHYSICS_BASES::SOFT_BODY:
 		{
 			// Generate Object Data
-			object_data.position = new_position;
-			object_data.zpos = -1.0f;
-			object_data.colors = glm::vec4(1.0f, 0.5f, 0.0f, 1.0f);
-			object_data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
-			object_data.texture_name = 0;
-			object_data.script = 0;
-			object_data.material_name = 0;
 
-			switch (object_identifier[2])
+
+			switch (new_object_identifier[2])
 			{
 			// SpringMass
 			case (int)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS:
 			{
-				file_name = "NULL";
+				DataClass::Data_SpringMass* new_springmass = new DataClass::Data_SpringMass();
+				new_springmass->generateInitialValues(new_position, uuid);
+				data_object = new_springmass;
 
 				break;
 			}
@@ -3537,15 +3516,9 @@ void Editor::EditorWindow::generateNewObject()
 			// Wire
 			case (int)Object::Physics::SOFT_BODY_TYPES::WIRE:
 			{
-				wire_data.position2 = new_position + glm::vec2(new_size, 0.0f);
-				wire_data.Mass = 1.0f;
-				wire_data.Health = 10.0f;
-				wire_data.Radius = 0.2f;
-				wire_data.node_instances = 5;
-				wire_data.total_rest_length = new_size;
-				wire_data.break_distance = new_size * 2.0f;
-				wire_data.Stiffness = 1.0f;
-				wire_data.Dampening = 1.0f;
+				DataClass::Data_Wire* new_wire = new DataClass::Data_Wire();
+				new_wire->generateInitialValues(new_position, new_size, uuid);
+				data_object = new_wire;
 
 				break;
 			}
@@ -3557,13 +3530,14 @@ void Editor::EditorWindow::generateNewObject()
 		// Hinge
 		case (int)Object::Physics::PHYSICS_BASES::HINGE_BASE:
 		{
-			switch (object_identifier[2])
+			switch (new_object_identifier[2])
 			{
 			// Anchor
 			case (int)Object::Physics::HINGES::ANCHOR:
 			{
-				anchor_data.position = new_position;
-				anchor_data.script = 0;
+				DataClass::Data_Anchor* new_anchor = new DataClass::Data_Anchor();
+				new_anchor->generateInitialValues(new_position, uuid);
+				data_object = new_anchor;
 
 				break;
 			}
@@ -3571,9 +3545,9 @@ void Editor::EditorWindow::generateNewObject()
 			// Hinge
 			case (int)Object::Physics::HINGES::HINGE:
 			{
-				anchor_data.position = new_position;
-				anchor_data.script = 0;
-				file_name = "NULL";
+				DataClass::Data_Hinge* new_hinge = new DataClass::Data_Hinge();
+				new_hinge->generateInitialValues(new_position, uuid);
+				data_object = new_hinge;
 
 				break;
 			}
@@ -3589,21 +3563,17 @@ void Editor::EditorWindow::generateNewObject()
 	// Entity
 	case Object::ENTITY:
 	{
-		uuid = genNewUUID();
+		uint32_t uuid = genNewUUID();
 
-		switch (object_identifier[1])
+		switch (new_object_identifier[1])
 		{
 			
 		// NPC
 		case Object::Entity::ENTITY_NPC:
 		{
-			object_data.position = new_position;
-			entity_data.half_width = 2.0f;
-			entity_data.half_height = 2.0f;
-			entity_data.half_collision_width = 2.0f;
-			entity_data.half_collision_height = 2.0f;
-			npc_ai = 0;
-			object_data.script = 0;
+			DataClass::Data_NPC* new_npc = new DataClass::Data_NPC();
+			new_npc->generateInitialData(position, uuid);
+			data_object = new_npc;
 
 			break;
 		}
@@ -3611,12 +3581,9 @@ void Editor::EditorWindow::generateNewObject()
 		// Contollable Entity
 		case Object::Entity::ENTITY_CONTROLLABLE:
 		{
-			object_data.position = new_position;
-			entity_data.half_width = 2.0f;
-			entity_data.half_height = 2.0f;
-			entity_data.half_collision_width = 2.0f;
-			entity_data.half_collision_height = 2.0f;
-			object_data.script = 0;
+			DataClass::Data_Controllable* new_controllable = new DataClass::Data_Controllable();
+			new_controllable->generateInitialData(position, uuid);
+			data_object = new_controllable;
 
 			break;
 		}
@@ -3624,12 +3591,9 @@ void Editor::EditorWindow::generateNewObject()
 		// Interactable Entity
 		case Object::Entity::ENTITY_INTERACTABLE:
 		{
-			object_data.position = new_position;
-			entity_data.half_width = 2.0f;
-			entity_data.half_height = 2.0f;
-			entity_data.half_collision_width = 2.0f;
-			entity_data.half_collision_height = 2.0f;
-			object_data.script = 0;
+			DataClass::Data_Interactable* new_interactable = new DataClass::Data_Interactable();
+			new_interactable->generateInitialData(position, uuid);
+			data_object = new_interactable;
 
 			break;
 		}
@@ -3637,12 +3601,9 @@ void Editor::EditorWindow::generateNewObject()
 		// Dynamic Entity
 		case Object::Entity::ENTITY_DYNAMIC:
 		{
-			object_data.position = new_position;
-			entity_data.half_width = 2.0f;
-			entity_data.half_height = 2.0f;
-			entity_data.half_collision_width = 2.0f;
-			entity_data.half_collision_height = 2.0f;
-			object_data.script = 0;
+			DataClass::Data_Dynamic* new_dynamic = new DataClass::Data_Dynamic();
+			new_dynamic->generateInitialData(position, uuid);
+			data_object = new_dynamic;
 
 			break;
 		}
@@ -3661,46 +3622,41 @@ void Editor::EditorWindow::generateNewObject()
 	}
 }
 
-void Editor::EditorWindow::generateNewShape(float new_size)
+Shape::Shape* Editor::EditorWindow::generateNewShape(float new_size)
 {
 	// Parse Shape Types
-	switch (object_identifier[2])
+	switch (new_object_identifier[2])
 	{
 
 	// Rectangle
 	case Shape::RECTANGLE:
 	{
-		rectangle_data = Shape::Rectangle(new_size * 2.0f, new_size);
-		break;
+		return new Shape::Rectangle(new_size * 2.0f, new_size);
 	}
 
 	// Trapezoid
 	case Shape::TRAPEZOID:
 	{
-		trapezoid_data = Shape::Trapezoid(new_size * 2.0f, new_size, 0.0f, 0.0f);
-		break;
+		return new Shape::Trapezoid(new_size * 2.0f, new_size, 0.0f, 0.0f);
 	}
 
 	// Triangle
 	case Shape::TRIANGLE:
 	{
 		glm::vec2 origin = glm::vec2(Global::camera_pointer->Position.x, Global::camera_pointer->Position.y);
-		triangle_data = Shape::Triangle(origin + glm::vec2(new_size, 0.0f), origin + glm::vec2(0.0f, new_size));
-		break;
+		return new Shape::Triangle(origin + glm::vec2(new_size, 0.0f), origin + glm::vec2(0.0f, new_size));
 	}
 
 	// Circle
 	case Shape::CIRCLE:
 	{
-		circle_data = Shape::Circle(new_size, 0.0f);
-		break;
+		return new Shape::Circle(new_size, 0.0f);
 	}
 
 	// Polygon
 	case Shape::POLYGON:
 	{
-		polygon_data = Shape::Polygon(new_size, 0.0f, 5, 0.0f);
-		break;
+		return new Shape::Polygon(new_size, 0.0f, 5, 0.0f);
 	}
 
 	}
@@ -3782,6 +3738,7 @@ void Editor::EditorWindow::updateEditorMode()
 	// If Main Color Wheel is Active, Compute Color Wheel Collisions and Button Text
 	if (wheel_active)
 	{
+		Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
 		if (update_wheel && !boxes[update_wheel]->texting) {
 			updateColorWheels(wheel, object_data.colors, wheel_color, mouseStaticX, mouseStaticY, 1, true);
 			update_wheel = 0;
@@ -3792,6 +3749,8 @@ void Editor::EditorWindow::updateEditorMode()
 	// Same but for Light Wheels
 	if (light_active)
 	{
+		Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
+
 		// Update Ambient Wheel
 		if (update_ambient && !boxes[update_ambient]->texting) {
 			updateColorWheels(wheelAmbient, light_data.ambient, ambient_color, mouseStaticX, mouseStaticY, 1, true);
@@ -3961,6 +3920,9 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	temp_text_data.static_ = true;
 
 	// Parse Object Identifier
+	uint8_t* object_identifier = data_object->getObjectIdentifier();
+	int& script = data_object->getScript();
+	glm::vec2& position = data_object->getPosition();
 
 	// Collision Masks
 	if (object_identifier[0] == 0)
@@ -3972,8 +3934,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			if (object_identifier[2] == 0)
 			{
 				resetBoxes(9, 8);
-				getStringFromStringMap(STRING_MAPS::SCRIPT, horizontal_line_data.script);
-				genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 				genBoxesHorizontalLine(box_offset, text_offset, windowTop - 61.0f);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 68.0f);
 				genBoxesPlatform(box_offset, text_offset, windowTop - 83.0f);
@@ -3984,8 +3946,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			else if (object_identifier[2] == 1)
 			{
 				resetBoxes(10, 9);
-				getStringFromStringMap(STRING_MAPS::SCRIPT, slant_data.script);
-				genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 				genBoxesSlant(box_offset, text_offset, windowTop - 61.0f);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
 				genBoxesPlatform(box_offset, text_offset, windowTop - 90.0f);
@@ -3996,8 +3958,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			else if (object_identifier[2] == 2)
 			{
 				resetBoxes(10, 9);
-				getStringFromStringMap(STRING_MAPS::SCRIPT, slope_data.script);
-				genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 				genBoxesSlope(box_offset, text_offset, windowTop - 61.0f);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
 				genBoxesPlatform(box_offset, text_offset, windowTop - 90.0f);
@@ -4012,8 +3974,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			if (object_identifier[2] == 0)
 			{
 				resetBoxes(8, 8);
-				getStringFromStringMap(STRING_MAPS::SCRIPT, vertical_line_data.script);
-				genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 				genBoxesVerticalLine(box_offset, text_offset, windowTop - 61.0f);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 68.0f);
 				editorHeightFull = 81;
@@ -4023,8 +3985,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			else if (object_identifier[2] == 1)
 			{
 				resetBoxes(9, 9);
-				getStringFromStringMap(STRING_MAPS::SCRIPT, curve_data.script);
-				genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 				genBoxesCurve(box_offset, text_offset, windowTop - 61.0f);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
 				editorHeightFull = 88;
@@ -4038,8 +4000,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			if (object_identifier[2] == 0)
 			{
 				resetBoxes(8, 8);
-				getStringFromStringMap(STRING_MAPS::SCRIPT, vertical_line_data.script);
-				genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 				genBoxesVerticalLine(box_offset, text_offset, windowTop - 61.0f);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 68.0f);
 				editorHeightFull = 81;
@@ -4049,8 +4011,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			else if (object_identifier[2] == 1)
 			{
 				resetBoxes(9, 9);
-				getStringFromStringMap(STRING_MAPS::SCRIPT, curve_data.script);
-				genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 				genBoxesCurve(box_offset, text_offset, windowTop - 61.0f);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
 				editorHeightFull = 88;
@@ -4064,8 +4026,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			if (object_identifier[2] == 0)
 			{
 				resetBoxes(8, 8);
-				getStringFromStringMap(STRING_MAPS::SCRIPT, horizontal_line_data.script);
-				genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 				genBoxesHorizontalLine(box_offset, text_offset, windowTop - 61.0f);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 68.0f);
 				editorHeightFull = 81;
@@ -4075,8 +4037,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			else if (object_identifier[2] == 1)
 			{
 				resetBoxes(9, 9);
-				getStringFromStringMap(STRING_MAPS::SCRIPT, slant_data.script);
-				genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 				genBoxesSlant(box_offset, text_offset, windowTop - 61.0f);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
 				editorHeightFull = 88;
@@ -4086,8 +4048,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			else if (object_identifier[2] == 2)
 			{
 				resetBoxes(9, 9);
-				getStringFromStringMap(STRING_MAPS::SCRIPT, slope_data.script);
-				genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 				genBoxesSlope(box_offset, text_offset, windowTop - 61.0f);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
 				editorHeightFull = 88;
@@ -4106,47 +4068,48 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	{
 		// Allocate Memory
 		resetBoxes(16 + shape_box_adders[object_identifier[2]], 17 + shape_text_adders[object_identifier[2]]);
-		getStringFromStringMap(STRING_MAPS::SCRIPT, object_data.script);
+		getStringFromStringMap(STRING_MAPS::SCRIPT, script);
 
 		// Create Common Boxes
-		genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+		genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 
 		// Generate Shape Boxes
 		float object_data_offset = 0.0f;
+		Shape::Shape* shape = static_cast<DataClass::Data_Terrain*>(data_object)->getShape();
 		switch (object_identifier[2])
 		{
 		// Rectangle
 		case Shape::RECTANGLE:
 		{
-			genBoxesRectangle(box_offset, text_offset, windowTop - 60.0f);
+			genBoxesRectangle(box_offset, text_offset, windowTop - 60.0f, shape);
 			object_data_offset = 14.0f;
 			break;
 		}
 		// Trapezoid
 		case Shape::TRAPEZOID:
 		{
-			genBoxesTrapezoid(box_offset, text_offset, windowTop - 60.0f);
+			genBoxesTrapezoid(box_offset, text_offset, windowTop - 60.0f, shape);
 			object_data_offset = 28.0f;
 			break;
 		}
 		// Triangle
 		case Shape::TRIANGLE:
 		{
-			genBoxesTriangle(box_offset, text_offset, windowTop - 60.0f);
+			genBoxesTriangle(box_offset, text_offset, windowTop - 60.0f, shape);
 			object_data_offset = 28.0f;
 			break;
 		}
 		// Circle
 		case Shape::CIRCLE:
 		{
-			genBoxesCircle(box_offset, text_offset, windowTop - 60.0f);
+			genBoxesCircle(box_offset, text_offset, windowTop - 60.0f, shape);
 			object_data_offset = 7.0f;
 			break;
 		}
 		// Polygon
 		case Shape::POLYGON:
 		{
-			genBoxesPolygon(box_offset, text_offset, windowTop - 60.0f);
+			genBoxesPolygon(box_offset, text_offset, windowTop - 60.0f, shape);
 			object_data_offset = 21.0f;
 			break;
 		}
@@ -4161,7 +4124,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	// Lighting Object
 	else if (object_identifier[0] == 2)
 	{
-		getStringFromStringMap(STRING_MAPS::SCRIPT, light_data.script);
+		getStringFromStringMap(STRING_MAPS::SCRIPT, script);
 
 		// Directional
 		if (object_identifier[1] == 0)
@@ -4170,7 +4133,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			resetBoxes(21, 24);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &light_data.position.x, &light_data.position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 
 			// Create Point Boxes
 			genBoxesDirectional(box_offset, text_offset, windowTop - 61.0f);
@@ -4188,7 +4151,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			resetBoxes(21, 24);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &light_data.position.x, &light_data.position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 
 			// Create Directional Boxes
 			genBoxesPoint(box_offset, text_offset, windowTop - 61.0f);
@@ -4206,7 +4169,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			resetBoxes(26, 30);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &light_data.position.x, &light_data.position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 
 			// Create Spot Boxes
 			genBoxesSpot(box_offset, text_offset, windowTop - 61.0f);
@@ -4224,7 +4187,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			resetBoxes(23, 26);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &light_data.position.x, &light_data.position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 
 			// Create Beam Boxes
 			genBoxesBeam(box_offset, text_offset, windowTop - 61.0f);
@@ -4244,47 +4207,48 @@ void Editor::EditorWindow::genObjectEditorWindow()
 		{
 			// Allocate Memory
 			resetBoxes(23 + shape_box_adders[object_identifier[2]], 25 + shape_text_adders[object_identifier[2]]);
-			getStringFromStringMap(STRING_MAPS::SCRIPT, object_data.script);
+			getStringFromStringMap(STRING_MAPS::SCRIPT, script);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 
 			// Generate Shape Boxes
 			float object_data_offset = 0.0f;
+			Shape::Shape* shape = static_cast<DataClass::Data_RigidBody*>(data_object)->getShape();
 			switch (object_identifier[2])
 			{
 				// Rectangle
 			case Shape::RECTANGLE:
 			{
-				genBoxesRectangle(box_offset, text_offset, windowTop - 60.0f);
+				genBoxesRectangle(box_offset, text_offset, windowTop - 60.0f, shape);
 				object_data_offset = 14.0f;
 				break;
 			}
 			// Trapezoid
 			case Shape::TRAPEZOID:
 			{
-				genBoxesTrapezoid(box_offset, text_offset, windowTop - 60.0f);
+				genBoxesTrapezoid(box_offset, text_offset, windowTop - 60.0f, shape);
 				object_data_offset = 28.0f;
 				break;
 			}
 			// Triangle
 			case Shape::TRIANGLE:
 			{
-				genBoxesTriangle(box_offset, text_offset, windowTop - 60.0f);
+				genBoxesTriangle(box_offset, text_offset, windowTop - 60.0f, shape);
 				object_data_offset = 28.0f;
 				break;
 			}
 			// Circle
 			case Shape::CIRCLE:
 			{
-				genBoxesCircle(box_offset, text_offset, windowTop - 60.0f);
+				genBoxesCircle(box_offset, text_offset, windowTop - 60.0f, shape);
 				object_data_offset = 7.0f;
 				break;
 			}
 			// Polygon
 			case Shape::POLYGON:
 			{
-				genBoxesPolygon(box_offset, text_offset, windowTop - 60.0f);
+				genBoxesPolygon(box_offset, text_offset, windowTop - 60.0f, shape);
 				object_data_offset = 21.0f;
 				break;
 			}
@@ -4335,7 +4299,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 					resetBoxes(8, 7);
 
 					// Generate Common Boxes
-					genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+					genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 
 					// Generate SpringMass Data
 					genBoxesSpringMass(box_offset, text_offset, windowTop - 61.0f);
@@ -4367,7 +4331,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	// Entity Object
 	else if (object_identifier[0] == 4)
 	{
-		getStringFromStringMap(STRING_MAPS::SCRIPT, object_data.script);
+		getStringFromStringMap(STRING_MAPS::SCRIPT, script);
 
 		switch (object_identifier[1])
 		{
@@ -4385,7 +4349,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			resetBoxes(20, 21);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &object_data.position.x, &object_data.position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
 
 			// Generate Entity Data
 			genBoxesEntity(box_offset, text_offset, windowTop - 60.0f);
@@ -4591,7 +4555,8 @@ void Editor::EditorWindow::drawWindow()
 		}
 
 		// Switch Shader to Texture Shader to Draw Selected Object if it Has a Texture
-		if (object_data.texture_name != 0)
+		//if (object_data.texture_name != 0)
+		if (false)
 		{
 			// Activate Texture
 			Global::texShader.Use();
@@ -4601,14 +4566,14 @@ void Editor::EditorWindow::drawWindow()
 			glUniform1i(Global::staticLocTexture, 1);
 
 			// Bind Texture
-			glBindTexture(GL_TEXTURE_2D, object_data.texture_name);
+			//glBindTexture(GL_TEXTURE_2D, object_data.texture_name);
 		}
 
 		// Only Send New Model Matrix if it is Colored
 		else
 		{
 			glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(selected_model));
-			glUniform4f(Global::brightnessLoc, 0.0f, 0.0f, 0.0f, object_data.colors.w);
+			//glUniform4f(Global::brightnessLoc, 0.0f, 0.0f, 0.0f, object_data.colors.w);
 			glUniform1i(Global::staticLocColor, false);
 		}
 

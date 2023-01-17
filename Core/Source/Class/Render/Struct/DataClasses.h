@@ -109,7 +109,22 @@ namespace DataClass
 		Object::Object* generateObject();
 
 		// Get the Object Identifier
-		uint8_t* get_object_identifier();
+		uint8_t* getObjectIdentifier();
+
+		// Get the Object Index
+		uint32_t getObjectIndex();
+
+		// Get Editor Data
+		EditorData& getEditorData();
+
+		// Get the Name of the Object
+		std::string& getName();
+
+		// Get the Script of an Object
+		virtual int& getScript() = 0;
+
+		// Get the Position of an Object
+		virtual glm::vec2& getPosition() = 0;
 	};
 
 	// Sub Object Data Class
@@ -120,43 +135,85 @@ namespace DataClass
 
 		// Object Data
 		Object::ObjectData data;
+
+	public:
+
+		Object::ObjectData& getObjectData();
+
+		int& getScript();
+
+		glm::vec2& getPosition();
 	};
 
 	// Horizontal Line
-	class Data_HorizontalLine
+	class Data_HorizontalLine : public Data_Object
 	{
 
 	protected:
 
 		Object::Mask::HorizontalLineData data;
+		
+	public:
+
+		Object::Mask::HorizontalLineData& getHorizontalLineData();
+
+		int& getScript();
+
+		glm::vec2& getPosition();
+
+		void generateInitialValues(glm::vec2& position, float& size);
 	};
 
 	// Slant
-	class Data_Slant
+	class Data_Slant : public Data_Object
 	{
 
 	protected:
 
 		Object::Mask::SlantData data;
+
+	public:
+
+		Object::Mask::SlantData& getSlantData();
+
+		int& getScript();
+
+		glm::vec2& getPosition();
+
+		void generateInitialValues(glm::vec2& position, float& size);
 	};
 
 	// Slope
-	class Data_Slope
+	class Data_Slope : public Data_Object
 	{
 
 	protected:
 
 		Object::Mask::SlopeData data;
+
+	public:
+
+		Object::Mask::SlopeData& getSlopeData();
+
+		int& getScript();
+
+		glm::vec2& getPosition();
+
+		void generateInitialValues(glm::vec2& position, float& size);
 	};
 
 	// Floor Mask
-	class Data_Floor : public Data_Object
+	class Data_Floor
 	{
 
 	protected:
 
 		// Determines if the Mask is a Platform
-		bool platform;
+		bool platform = false;
+
+	public:
+
+		bool& getPlatform();
 	};
 
 	// Floor Mask Hoizontal Line
@@ -214,7 +271,7 @@ namespace DataClass
 	};
 
 	// Ceiling Mask Horizontal Line
-	class Data_CeilingMaskHorizontalLine : public Data_Object, public Data_HorizontalLine
+	class Data_CeilingMaskHorizontalLine : public Data_HorizontalLine
 	{
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
@@ -232,7 +289,7 @@ namespace DataClass
 	};
 
 	// Ceiling Mask Slant
-	class Data_CeilingMaskSlant : public Data_Object, public Data_Slant
+	class Data_CeilingMaskSlant : public Data_Slant
 	{
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
@@ -250,7 +307,7 @@ namespace DataClass
 	};
 
 	// Ceiling Mask Slope
-	class Data_CeilingMaskSlope : public Data_Object, public Data_Slope
+	class Data_CeilingMaskSlope : public Data_Slope
 	{
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
@@ -268,25 +325,45 @@ namespace DataClass
 	};
 
 	// Vertical Line
-	class Data_VerticalLine
+	class Data_VerticalLine : public Data_Object
 	{
 
 	protected:
 
 		Object::Mask::VerticalLineData data;
+
+	public:
+
+		Object::Mask::VerticalLineData& getVerticalLineData();
+
+		int& getScript();
+
+		glm::vec2& getPosition();
+
+		void generateInitialValues(glm::vec2& position, float& size);
 	};
 
 	// Curve
-	class Data_Curve
+	class Data_Curve : public Data_Object
 	{
 
 	protected:
 
 		Object::Mask::CurveData data;
+
+	public:
+
+		Object::Mask::CurveData& getCurveData();
+
+		int& getScript();
+
+		glm::vec2& getPosition();
+
+		void generateInitialValues(glm::vec2& position, float& size);
 	};
 
 	// Left Mask Vertical Line
-	class Data_LeftMaskVerticalLine : public Data_Object, Data_VerticalLine
+	class Data_LeftMaskVerticalLine : public Data_VerticalLine
 	{
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
@@ -304,7 +381,7 @@ namespace DataClass
 	};
 
 	// Left Mask Curve
-	class Data_LeftMaskCurve : public Data_Object, Data_Curve
+	class Data_LeftMaskCurve : public Data_Curve
 	{
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
@@ -322,7 +399,7 @@ namespace DataClass
 	};
 
 	// Right Mask Vertical Line
-	class Data_RightMaskVerticalLine : public Data_Object, public Data_VerticalLine
+	class Data_RightMaskVerticalLine : public Data_VerticalLine
 	{
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
@@ -340,7 +417,7 @@ namespace DataClass
 	};
 
 	// Right Mask Curve
-	class Data_RightMaskCurve : public Data_Object, public Data_Curve
+	class Data_RightMaskCurve : public Data_Curve
 	{
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
@@ -375,6 +452,14 @@ namespace DataClass
 
 		// Trigger Mask Data
 		Data_TriggerMask();
+
+		Object::Mask::Trigger::TriggerData& getTriggerData();
+
+		int& getScript();
+
+		glm::vec2& getPosition();
+
+		void generateInitialValues(glm::vec2& position, float& size);
 	};
 	
 	// Terrain Object
@@ -402,6 +487,10 @@ namespace DataClass
 
 		// Terrain Data
 		Data_Terrain(uint8_t layer_identifier, uint8_t shape_identifier);
+
+		Shape::Shape* getShape();
+
+		void generateInitialValues(glm::vec2& position, glm::vec4 color, Shape::Shape* new_shape);
 	};
 
 	// Light Object
@@ -412,6 +501,19 @@ namespace DataClass
 
 		// Light Data
 		Object::Light::LightData light_data;
+
+		const float DEFAULT_LINEAR = 1.0f;
+		const float DEFAULT_QUADRATIC = 1.0f;
+
+	public:
+
+		Object::Light::LightData& getLightData();
+
+		int& getScript();
+
+		glm::vec2& getPosition();
+
+		void generateInitialLightValues(glm::vec2& new_position);
 	};
 
 	// Directional Light
@@ -433,6 +535,10 @@ namespace DataClass
 
 		// Directional Light Data
 		Data_Directional();
+
+		Object::Light::Directional::DirectionalData& getDirectionalData();
+
+		void generateInitialValues(glm::vec2& position, float& size);
 	};
 
 	// Point Light
@@ -454,6 +560,10 @@ namespace DataClass
 
 		// Point Light Data
 		Data_Point();
+
+		Object::Light::Point::PointData& getPointData();
+
+		void generateInitialValues(glm::vec2& position);
 	};
 
 	// Spot Light
@@ -475,6 +585,10 @@ namespace DataClass
 
 		// Spot Light Data
 		Data_Spot();
+
+		Object::Light::Spot::SpotData& getSpotData();
+
+		void generateInitialValues(glm::vec2& position);
 	};
 
 	// Beam Light
@@ -496,16 +610,33 @@ namespace DataClass
 
 		// Beam Light Data
 		Data_Beam();
+
+		Object::Light::Beam::BeamData& getBeamData();
+
+		void generateInitialValues(glm::vec2& position, float& size);
 	};
 
-	// Rigid Body Physics Object
-	class Data_RigidBody : public Data_SubObject
+	// Object with a UUID
+	class Data_UUID
 	{
-		// Pointer to Shape
-		Shape::Shape* shape;
+
+	protected:
 
 		// UUID
 		uint32_t uuid;
+
+	public:
+
+		uint32_t& getUUID();
+
+		void generateUUID(uint32_t& new_uuid);
+	};
+
+	// Rigid Body Physics Object
+	class Data_RigidBody : public Data_SubObject, public Data_UUID
+	{
+		// Pointer to Shape
+		Shape::Shape* shape;
 
 		// Rigid Body Data
 		Object::Physics::Rigid::RigidBodyData rigid;
@@ -523,16 +654,19 @@ namespace DataClass
 
 		// Rigid Body Data
 		Data_RigidBody(uint8_t shape_identifier);
+
+		Shape::Shape* getShape();
+
+		Object::Physics::Rigid::RigidBodyData& getRigidData();
+
+		void generateInitialValues(glm::vec2& position, Shape::Shape* new_shape, uint32_t& new_uuid);
 	};
 
 	// SpringMass Physics Object
-	class Data_SpringMass : public Data_SubObject
+	class Data_SpringMass : public Data_SubObject, public Data_UUID
 	{
 		// File Name
 		std::string file_name;
-
-		// UUID
-		uint32_t uuid;
 
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
@@ -547,16 +681,17 @@ namespace DataClass
 
 		// SpringMass Data
 		Data_SpringMass();
+
+		std::string& getFile();
+
+		void generateInitialValues(glm::vec2& position, uint32_t& new_uuid);
 	};
 
 	// Wire Physics Object
-	class Data_Wire : public Data_SubObject
+	class Data_Wire : public Data_SubObject, public Data_UUID
 	{
 		// Wire Data
 		Object::Physics::Soft::WireData wire;
-
-		// UUID
-		uint32_t uuid;
 
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
@@ -571,16 +706,15 @@ namespace DataClass
 
 		// Wire Data
 		Data_Wire();
+
+		void generateInitialValues(glm::vec2& position, float& size, uint32_t& new_uuid);
 	};
 
 	// Anchor Physics Object
-	class Data_Anchor : public Data_Object
+	class Data_Anchor : public Data_Object, public Data_UUID
 	{
 		// Anchor Data
 		Object::Physics::Hinge::AnchorData data;
-
-		// UUID
-		uint32_t uuid;
 
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
@@ -595,16 +729,19 @@ namespace DataClass
 
 		// Anchor Data
 		Data_Anchor();
+
+		int& getScript();
+
+		glm::vec2& getPosition();
+
+		void generateInitialValues(glm::vec2& position, uint32_t& new_uuid);
 	};
 
 	// Hinge Physics Object
-	class Data_Hinge : public Data_Object
+	class Data_Hinge : public Data_Object, public Data_UUID
 	{
 		// File Name
 		std::string file_name;
-
-		// UUID
-		uint32_t uuid;
 
 		// Hinge Data
 		Object::Physics::Hinge::HingeData data;
@@ -622,10 +759,16 @@ namespace DataClass
 
 		// Hinge Data
 		Data_Hinge();
+
+		int& getScript();
+
+		glm::vec2& getPosition();
+
+		void generateInitialValues(glm::vec2& position, uint32_t& new_uuid);
 	};
 
 	// Entity Object
-	class Data_Entity : public Data_SubObject
+	class Data_Entity : public Data_SubObject, public Data_UUID
 	{
 
 	protected:
@@ -633,15 +776,18 @@ namespace DataClass
 		// Entity Data
 		Object::Entity::EntityData entity;
 
-		// UUID
-		uint32_t uuid;
+	public:
+
+		Object::Entity::EntityData& getEntityData();
+
+		void generateInitialData(glm::vec2& position, uint32_t& new_uuid);
 	};
 
 	// NPC Entities
 	class Data_NPC : public Data_Entity
 	{
 		// AI
-		uint16_t ai;
+		uint16_t ai = 0;
 
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
