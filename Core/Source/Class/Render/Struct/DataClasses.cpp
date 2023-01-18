@@ -505,6 +505,11 @@ void DataClass::Data_TriggerMask::generateInitialValues(glm::vec2& position, flo
 	data.script = 0;
 }
 
+Shape::Shape* DataClass::Data_Shape::getShape()
+{
+	return shape;
+}
+
 Object::Object* DataClass::Data_Terrain::genObject()
 {
 	switch (object_identifier[1])
@@ -548,11 +553,6 @@ DataClass::Data_Terrain::Data_Terrain(uint8_t layer_identifier, uint8_t shape_id
 	object_identifier[0] = Object::TERRAIN;
 	object_identifier[1] = layer_identifier;
 	object_identifier[2] = shape_identifier;
-}
-
-Shape::Shape* DataClass::Data_Terrain::getShape()
-{
-	return shape;
 }
 
 void DataClass::Data_Terrain::generateInitialValues(glm::vec2& position, glm::vec4 color, Shape::Shape* new_shape)
@@ -787,11 +787,6 @@ DataClass::Data_RigidBody::Data_RigidBody(uint8_t shape_identifier)
 	object_identifier[2] = shape_identifier;
 }
 
-Shape::Shape* DataClass::Data_RigidBody::getShape()
-{
-	return shape;
-}
-
 Object::Physics::Rigid::RigidBodyData& DataClass::Data_RigidBody::getRigidData()
 {
 	return rigid;
@@ -918,6 +913,11 @@ void DataClass::Data_Wire::generateInitialValues(glm::vec2& position, float& siz
 	wire.Dampening = 1.0f;
 }
 
+Object::Physics::Soft::WireData& DataClass::Data_Wire::getWireData()
+{
+	return wire;
+}
+
 Object::Object* DataClass::Data_Anchor::genObject()
 {
 	return new Object::Physics::Hinge::Anchor(uuid, data);
@@ -958,6 +958,11 @@ void DataClass::Data_Anchor::generateInitialValues(glm::vec2& position, uint32_t
 	generateUUID(new_uuid);
 	data.position = position;
 	data.script = 0;
+}
+
+Object::Physics::Hinge::AnchorData& DataClass::Data_Anchor::getAnchorData()
+{
+	return data;
 }
 
 Object::Object* DataClass::Data_Hinge::genObject()
@@ -1008,6 +1013,16 @@ void DataClass::Data_Hinge::generateInitialValues(glm::vec2& position, uint32_t&
 	data.position = position;
 	data.script = 0;
 	file_name = "NULL";
+}
+
+Object::Physics::Hinge::HingeData& DataClass::Data_Hinge::getHingeData()
+{
+	return data;
+}
+
+std::string& DataClass::Data_Hinge::getFile()
+{
+	return file_name;
 }
 
 Object::Entity::EntityData& DataClass::Data_Entity::getEntityData()

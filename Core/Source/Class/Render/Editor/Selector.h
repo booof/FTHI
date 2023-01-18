@@ -63,6 +63,91 @@ namespace Editor
 	// Selector Class
 	class Selector : public EditorWindow
 	{
+		class Selected_Object
+		{
+
+		public:
+
+			// Pointer to Data Object
+			DataClass::Data_Object* data_object;
+
+			// Position of the Object
+			float* object_x;
+			float* object_y;
+		};
+
+		class Selected_Rectangle : public Selected_Object
+		{
+
+		public:
+
+			// Size of the Object
+			float* object_width;
+			float* object_height;
+
+			// Determines if Rectangle can Resize
+			bool enable_resize = true;
+		};
+
+		class Selected_Trapezoid : public Selected_Rectangle
+		{
+
+		public:
+
+			// Size Offset of the Object
+			float* object_width_modifier;
+			float* object_height_modifier;
+		};
+
+		class Selected_Triangle : public Selected_Object
+		{
+			
+		public:
+
+			// The Coordinates of the Object
+			glm::vec2 coords1;
+			glm::vec2 coords2;
+			glm::vec2 coords3;
+		};
+
+		class Selected_Circle : public Selected_Object
+		{
+
+		public:
+
+			// Radius of the Circle
+			float* object_radius;
+			float* object_inner_radius;
+		};
+
+		class Selected_Horizontal_Line : public Selected_Object
+		{
+
+		public:
+
+			// Width of the Object
+			float* object_width;
+		};
+
+		class Selected_Vertical_Line : public Selected_Object
+		{
+		
+		public:
+
+			// Height of the Object
+			float* object_height;
+		};
+
+		class Selected_Line : public Selected_Object
+		{
+		
+		public:
+
+			// Opposite Point of Line
+			float* object_opposite_x;
+			float* object_opposite_y;
+		};
+
 		// Determines if Object is in Resize Mode
 		bool resizing = false;
 
@@ -116,29 +201,35 @@ namespace Editor
 		// Determines if Selected Object is a Lighting Object
 		bool lighting_object = false;
 
+		// Selector Data of Object
+		Selected_Object* selected_object;
+
+		// Data Class for Currently Highlighted Object
+		DataClass::Data_Object* data_object_highlighted;
+
 		// Offsets of Mouse to Object
 		float offset_x;
 		float offset_y;
 
-		// Position Values of Object
-		float* object_x;
-		float* object_y;
+		//// Position Values of Object
+		//float* object_x;
+		//float* object_y;
 
-		// Size Values of Object
-		float* object_width;
-		float* object_height;
+		//// Size Values of Object
+		//float* object_width;
+		//float* object_height;
 
-		// Size Modifiers of Object
-		float* object_width_modifier;
-		float* object_height_modifier;
+		//// Size Modifiers of Object
+		//float* object_width_modifier;
+		//float* object_height_modifier;
 
-		// Radius Values of Object
-		float* object_radius;
-		float* object_inner_radius;
+		//// Radius Values of Object
+		//float* object_radius;
+		//float* object_inner_radius;
 
-		// Opposite Position Value for Lines
-		float* object_opposite_x;
-		float* object_opposite_y;
+		//// Opposite Position Value for Lines
+		//float* object_opposite_x;
+		//float* object_opposite_y;
 
 		// Resize Horizontal Condition
 		int8_t change_horizontal;
@@ -149,10 +240,22 @@ namespace Editor
 		// Determines if Object is Activly Being Moved or Resized
 		bool moving = false;
 
+		// Temporary Triangle
+		Shape::Triangle triangle_data;
+
+		// Temp Position
+		glm::vec2 temp_position;
+
+		// Temp File Name
+		std::string file_name;
+
+		// Temp UUID
+		uint32_t uuid;
+
 		// Triangle Collision Values
-		glm::vec2 coords1 = glm::vec2(0.0f);
-		glm::vec2 coords2 = glm::vec2(0.0f);
-		glm::vec2 coords3 = glm::vec2(0.0f);
+		//glm::vec2 coords1 = glm::vec2(0.0f);
+		//glm::vec2 coords2 = glm::vec2(0.0f);
+		//glm::vec2 coords3 = glm::vec2(0.0f);
 		int8_t selected_vertex = 0;
 		bool should_sort = false;
 
@@ -185,91 +288,91 @@ namespace Editor
 
 
 		// Allocate Memory for Vertices
-		void allocateSelectorVertices();
+		void allocateSelectorVertices(DataClass::Data_Object* data_object);
 
 		// Generate Vertices
-		void genSelectorVertices();
+		void genSelectorVertices(DataClass::Data_Object* data_object);
 
 		// Store Selector Data
-		void storeSelectorData();
+		void storeSelectorData(DataClass::Data_Object* data_object);
 
 		// Allocate Memory for Horizontal Mask Vertices
-		void allocateSelectorVerticesHorizontalMasks();
+		void allocateSelectorVerticesHorizontalMasks(DataClass::Data_Object* data_object);
 
 		// Generate Selector Vertices for Horizontal Masks
-		void genSelectorVerticesHorizontalMasks();
+		void genSelectorVerticesHorizontalMasks(DataClass::Data_Object* data_object);
 
 		// Store Data for Horizontal Masks
-		void storeSelectorDataHorizontalMasks();
+		void storeSelectorDataHorizontalMasks(DataClass::Data_Object* data_object);
 
 		// Allocate Memory for Vertical Mask Vertices
-		void allocateSelectorVerticesVerticalMasks();
+		void allocateSelectorVerticesVerticalMasks(DataClass::Data_Object* data_object);
 
 		// Generate Selector Vertices for Vertical Masks
-		void genSelectorVerticesVerticalMasks();
+		void genSelectorVerticesVerticalMasks(DataClass::Data_Object* data_object);
 
 		// Store Data for Vertical Masks
-		void storeSelectorDataVerticalMasks();
+		void storeSelectorDataVerticalMasks(DataClass::Data_Object* data_object);
 
 		// Allocate Memory for Trigger Mask Vertices
-		void allocateSelectorVerticesTriggerMasks();
+		void allocateSelectorVerticesTriggerMasks(DataClass::Data_Object* data_object);
 
 		// Generate Selector Vertices for Trigger Masks
-		void genSelectorVerticesTriggerMasks();
+		void genSelectorVerticesTriggerMasks(DataClass::Data_Object* data_object);
 
 		// Store Data for Trigger Masks
-		void storeSelectorDataTriggerMasks();
+		void storeSelectorDataTriggerMasks(DataClass::Data_Object* data_object);
 
 		// Allocate Memory for General Shape Vertices
-		void allocateSelectorVerticesShapes(int index);
+		void allocateSelectorVerticesShapes(int index, DataClass::Data_Object* data_object);
 
 		// Generate Selector Vertices for General Shapes
-		void genSelectorVerticesShapes(int index);
+		void genSelectorVerticesShapes(int index, DataClass::Data_Object* data_object);
 
 		// Store Data for General Shapes
-		void storeSelectorDataShapes(int index);
+		void storeSelectorDataShapes(int index, DataClass::Data_Object* data_object);
 
 		// Allocate Memory for Light Object Vertices
-		void allocateSelectorVerticesLights();
+		void allocateSelectorVerticesLights(DataClass::Data_Object* data_object);
 
 		// Generate Selector Vertices for Light Objects
-		void genSelectorVerticesLights();
+		void genSelectorVerticesLights(DataClass::Data_Object* data_object);
 
 		// Store Data for Light Objects
-		void storeSelectorDataLights();
+		void storeSelectorDataLights(DataClass::Data_Object* data_object);
 
 		// Store Shader Data of Light
-		void storeSelectorShaderDataLights();
+		void storeSelectorShaderDataLights(DataClass::Data_Object* data_object);
 
 		// Allocate Memory for Soft Bodies
-		void allocateSelectorVerticesSoftBody();
+		void allocateSelectorVerticesSoftBody(DataClass::Data_Object* data_object);
 
 		// Generate Selector Vertices for Soft Bodies
-		void genSelectorVerticesSoftBody();
+		void genSelectorVerticesSoftBody(DataClass::Data_Object* data_object);
 
 		// Store Data for Soft Bodies
-		void storeSelectorDataSoftBody();
+		void storeSelectorDataSoftBody(DataClass::Data_Object* data_object);
 
 		// Allocate Memory for Hinges
-		void allocateSelectorVerticesHinge();
+		void allocateSelectorVerticesHinge(DataClass::Data_Object* data_object);
 
 		// Generate Selector Vertices for Hinges
-		void genSelectorVerticesHinge();
+		void genSelectorVerticesHinge(DataClass::Data_Object* data_object);
 
 		// Store Data for Hinges
-		void storeSelectorDataHinge();
+		void storeSelectorDataHinge(DataClass::Data_Object* data_object);
 
 		// Allocate Memory for Entity Vertices
-		void alocateSelectorVerticesEntity();
+		void alocateSelectorVerticesEntity(DataClass::Data_Object* data_object);
 
 		// Generate Selector Vertices for Entities
-		void genSelectorVerticesEntity();
+		void genSelectorVerticesEntity(DataClass::Data_Object* data_object);
 
 		// Store Data for Entities
-		void storeSelectorDataEntity();
+		void storeSelectorDataEntity(DataClass::Data_Object* data_object);
 
 		// Object Info for Shapes
-		void getShapeInfo(Shape::Shape* shape);
+		void getShapeInfo(Shape::Shape* shape, DataClass::Data_Object* data_object);
 
 		
 		// End of Storing Data Functions
@@ -297,46 +400,46 @@ namespace Editor
 		void editObject();
 
 		// Test Resize of Rectangle
-		void testResizeRectangle(bool enable_horizontal, bool enable_vertical);
+		void testResizeRectangle(bool enable_horizontal, bool enable_vertical, float* object_x, float* object_y, float* object_width, float* object_height);
 
 		// Move Rectangle
-		void moveRectangle(bool enable_negative);
+		void moveRectangle(bool enable_negative, float* object_x, float* object_y, float* object_width, float* object_height);
 
 		// Update Rectangle
 		void updateRectangle();
 
 		// Test Resize of Trapezoid
-		void testResizeTrapezoid();
+		void testResizeTrapezoid(Selected_Trapezoid& selected_trapezoid);
 
 		// Move Trapezoid
-		void moveTrapezoid();
+		void moveTrapezoid(Selected_Trapezoid& selected_trapezoid);
 
 		// Update Trapezoid
 		void updateTrapezoid();
 
 		// Test Resize of Triangle
-		void testResizeTriangle();
+		void testResizeTriangle(Selected_Triangle& selected_triangle);
 
 		// Move Triangle
-		void moveTriangle();
+		void moveTriangle(Selected_Triangle& selected_triangle);
 
 		// Update Triangle
 		void updateTriangle();
 
 		// Test Resize of Circle
-		void testResizeCircle(float& distance, float& delta_w, float& delta_h);
+		void testResizeCircle(float& distance, float& delta_w, float& delta_h, float* object_radius);
 
 		// Move Circle
-		void moveCircle();
+		void moveCircle(float* object_x, float* object_y, float* object_radius);
 
 		// Update Circle
 		void updateCircle();
 
 		// Test Resize of Line
-		void testResizeLine();
+		void testResizeLine(Selected_Line& selected_line);
 
 		// Move Line
-		void moveLine();
+		void moveLine(Selected_Line& selected_line);
 
 		// Update Line
 		void updateLine();

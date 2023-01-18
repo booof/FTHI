@@ -437,7 +437,7 @@ void Editor::Selector::readSpringMassFile()
 		if (temp_byte == 0)
 		{
 			temp_file.read((char*)&temp_node_data, sizeof(Object::Physics::Soft::NodeData));
-			temp_node_data.position += object_data.position;
+			temp_node_data.position += temp_position;
 			node_list[node_count] = temp_node_data;
 			node_count++;
 		}
@@ -467,13 +467,13 @@ void Editor::Selector::moveWithCamera(Render::Camera::Camera& camera, uint8_t di
 	float distance = Constant::SPEED * Global::deltaTime;
 
 	// Process Movements
-	if (direction == NORTH) { *object_y += distance * camera.accelerationY; }
-	if (direction == SOUTH) { *object_y -= distance * camera.accelerationY; }
-	if (direction == EAST) { *object_x -= distance * camera.accelerationL; }
-	if (direction == WEST) { *object_x += distance * camera.accelerationR; }
+	if (direction == NORTH) { *selected_object->object_y += distance * camera.accelerationY; }
+	if (direction == SOUTH) { *selected_object->object_y -= distance * camera.accelerationY; }
+	if (direction == EAST) { *selected_object->object_x -= distance * camera.accelerationL; }
+	if (direction == WEST) { *selected_object->object_x += distance * camera.accelerationR; }
 
 	// Update Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_object->object_x, *selected_object->object_y, 0.0f));
 }
 
 void Editor::Selector::moveWithArrowKeys(uint8_t direction)
@@ -490,13 +490,13 @@ void Editor::Selector::moveWithArrowKeys(uint8_t direction)
 	float distance = Global::editor_options->option_shift_speed * Global::deltaTime;
 
 	// Process Movements
-	if (direction == NORTH) { *object_y += distance; }
-	if (direction == SOUTH) { *object_y -= distance; }
-	if (direction == EAST) { *object_x += distance; }
-	if (direction == WEST) { *object_x -= distance; }
+	if (direction == NORTH) { *selected_object->object_y += distance; }
+	if (direction == SOUTH) { *selected_object->object_y -= distance; }
+	if (direction == EAST) { *selected_object->object_x += distance; }
+	if (direction == WEST) { *selected_object->object_x -= distance; }
 
 	// Update Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_object->object_x, *selected_object->object_y, 0.0f));
 }
 
 void Editor::Selector::stopResizing()
@@ -527,7 +527,7 @@ void Editor::Selector::clear()
 
 glm::vec2 Editor::Selector::getObjectPosition()
 {
-	return glm::vec2(*object_x, *object_y);
+	return glm::vec2(*selected_object->object_x, *selected_object->object_y);
 }
 
 void Editor::Selector::storeLimbPointers(int index, Object::Physics::Soft::Spring* limbs, int limbs_size)
@@ -640,13 +640,14 @@ void Editor::Selector::initializeSelector()
 	editing = true;
 }
 
-void Editor::Selector::allocateSelectorVertices()
+void Editor::Selector::allocateSelectorVertices(DataClass::Data_Object* data_object)
 {
 	// Bind Vertex Array Object
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
 
 	// Parse Object
+	uint8_t* object_identifier = data_object->getObjectIdentifier();
 	switch (object_identifier[0])
 	{
 
@@ -658,19 +659,19 @@ void Editor::Selector::allocateSelectorVertices()
 		// Horizontal Mask
 		if (object_identifier[1] == Object::Mask::FLOOR || object_identifier[1] == Object::Mask::CEILING)
 		{
-			allocateSelectorVerticesHorizontalMasks();
+			allocateSelectorVerticesHorizontalMasks(data_object);
 		}
 
 		// Vertical Mask
 		else if (object_identifier[1] == Object::Mask::LEFT_WALL || object_identifier[1] == Object::Mask::RIGHT_WALL)
 		{
-			allocateSelectorVerticesVerticalMasks();
+			allocateSelectorVerticesVerticalMasks(data_object);
 		}
 
 		// Trigger Object
 		else if (object_identifier[1] == Object::Mask::TRIGGER)
 		{
-			allocateSelectorVerticesTriggerMasks();
+			allocateSelectorVerticesTriggerMasks(data_object);
 		}
 
 		break;
@@ -679,14 +680,14 @@ void Editor::Selector::allocateSelectorVertices()
 	// Terrain
 	case Object::TERRAIN:
 	{
-		allocateSelectorVerticesShapes(object_identifier[2]);
+		allocateSelectorVerticesShapes(object_identifier[2], data_object);
 		break;
 	}
 
 	// Lights
 	case Object::LIGHT:
 	{
-		allocateSelectorVerticesLights();
+		allocateSelectorVerticesLights(data_object);
 		break;
 	}
 
@@ -701,21 +702,21 @@ void Editor::Selector::allocateSelectorVertices()
 			// Rigid Body
 		case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
 		{
-			allocateSelectorVerticesShapes(object_identifier[2]);
+			allocateSelectorVerticesShapes(object_identifier[2], data_object);
 			break;
 		}
 
 		// Soft Body
 		case (int)Object::Physics::PHYSICS_BASES::SOFT_BODY:
 		{
-			allocateSelectorVerticesSoftBody();
+			allocateSelectorVerticesSoftBody(data_object);
 			break;
 		}
 
 		// Hinge Base
 		case (int)Object::Physics::PHYSICS_BASES::HINGE_BASE:
 		{
-			allocateSelectorVerticesHinge();
+			allocateSelectorVerticesHinge(data_object);
 			break;
 		}
 
@@ -727,7 +728,7 @@ void Editor::Selector::allocateSelectorVertices()
 	// Entity
 	case Object::ENTITY:
 	{
-		alocateSelectorVerticesEntity();
+		alocateSelectorVerticesEntity(data_object);
 		break;
 	}
 
@@ -744,13 +745,14 @@ void Editor::Selector::allocateSelectorVertices()
 	glBindVertexArray(0);
 }
 
-void Editor::Selector::genSelectorVertices()
+void Editor::Selector::genSelectorVertices(DataClass::Data_Object* data_object)
 {
 	// Bind Vertex Array Object
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
 
 	// Parse Object
+	uint8_t* object_identifier = data_object->getObjectIdentifier();
 	switch (object_identifier[0])
 	{
 
@@ -762,19 +764,19 @@ void Editor::Selector::genSelectorVertices()
 		// Horizontal Mask
 		if (object_identifier[1] == Object::Mask::FLOOR || object_identifier[1] == Object::Mask::CEILING)
 		{
-			genSelectorVerticesHorizontalMasks();
+			genSelectorVerticesHorizontalMasks(data_object);
 		}
 
 		// Vertical Mask
 		else if (object_identifier[1] == Object::Mask::LEFT_WALL || object_identifier[1] == Object::Mask::RIGHT_WALL)
 		{
-			genSelectorVerticesVerticalMasks();
+			genSelectorVerticesVerticalMasks(data_object);
 		}
 
 		// Trigger Object
 		else if (object_identifier[1] == Object::Mask::TRIGGER)
 		{
-			genSelectorVerticesTriggerMasks();
+			genSelectorVerticesTriggerMasks(data_object);
 		}
 
 		break;
@@ -783,14 +785,14 @@ void Editor::Selector::genSelectorVertices()
 	// Terrain
 	case Object::TERRAIN:
 	{
-		genSelectorVerticesShapes(object_identifier[2]);
+		genSelectorVerticesShapes(object_identifier[2], data_object);
 		break;
 	}
 
 	// Lights
 	case Object::LIGHT:
 	{
-		genSelectorVerticesLights();
+		genSelectorVerticesLights(data_object);
 		break;
 	}
 
@@ -805,21 +807,21 @@ void Editor::Selector::genSelectorVertices()
 		// Rigid Body
 		case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
 		{
-			genSelectorVerticesShapes(object_identifier[2]);
+			genSelectorVerticesShapes(object_identifier[2], data_object);
 			break;
 		}
 
 		// Soft Body
 		case (int)Object::Physics::PHYSICS_BASES::SOFT_BODY:
 		{
-			genSelectorVerticesSoftBody();
+			genSelectorVerticesSoftBody(data_object);
 			break;
 		}
 
 		// Hinge Base
 		case (int)Object::Physics::PHYSICS_BASES::HINGE_BASE:
 		{
-			genSelectorVerticesHinge();
+			genSelectorVerticesHinge(data_object);
 			break;
 		}
 
@@ -831,7 +833,7 @@ void Editor::Selector::genSelectorVertices()
 	// Entity
 	case Object::ENTITY:
 	{
-		genSelectorVerticesEntity();
+		genSelectorVerticesEntity(data_object);
 		break;
 	}
 
@@ -848,9 +850,10 @@ void Editor::Selector::genSelectorVertices()
 	glBindVertexArray(0);
 }
 
-void Editor::Selector::storeSelectorData()
+void Editor::Selector::storeSelectorData(DataClass::Data_Object* data_object)
 {
 	// Parse Object
+	uint8_t* object_identifier = data_object->getObjectIdentifier();
 	switch (object_identifier[0])
 	{
 
@@ -862,19 +865,19 @@ void Editor::Selector::storeSelectorData()
 		// Horizontal Mask
 		if (object_identifier[1] == Object::Mask::FLOOR || object_identifier[1] == Object::Mask::CEILING)
 		{
-			storeSelectorDataHorizontalMasks();
+			storeSelectorDataHorizontalMasks(data_object);
 		}
 
 		// Vertical Mask
 		else if (object_identifier[1] == Object::Mask::LEFT_WALL || object_identifier[1] == Object::Mask::RIGHT_WALL)
 		{
-			storeSelectorDataVerticalMasks();
+			storeSelectorDataVerticalMasks(data_object);
 		}
 
 		// Trigger Object
 		else if (object_identifier[1] == Object::Mask::TRIGGER)
 		{
-			storeSelectorDataTriggerMasks();
+			storeSelectorDataTriggerMasks(data_object);
 		}
 
 		break;
@@ -883,14 +886,14 @@ void Editor::Selector::storeSelectorData()
 	// Terrain
 	case Object::TERRAIN:
 	{
-		storeSelectorDataShapes(object_identifier[2]);
+		storeSelectorDataShapes(object_identifier[2], data_object);
 		break;
 	}
 
 	// Lights
 	case Object::LIGHT:
 	{
-		storeSelectorDataLights();
+		storeSelectorDataLights(data_object);
 		break;
 	}
 
@@ -905,21 +908,21 @@ void Editor::Selector::storeSelectorData()
 		// Rigid Body
 		case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
 		{
-			storeSelectorDataShapes(object_identifier[2]);
+			storeSelectorDataShapes(object_identifier[2], data_object);
 			break;
 		}
 
 		// Soft Body
 		case (int)Object::Physics::PHYSICS_BASES::SOFT_BODY:
 		{
-			storeSelectorDataSoftBody();
+			storeSelectorDataSoftBody(data_object);
 			break;
 		}
 
 		// Hinge Base
 		case (int)Object::Physics::PHYSICS_BASES::HINGE_BASE:
 		{
-			storeSelectorDataHinge();
+			storeSelectorDataHinge(data_object);
 			break;
 		}
 
@@ -931,7 +934,7 @@ void Editor::Selector::storeSelectorData()
 	// Entity
 	case Object::ENTITY:
 	{
-		storeSelectorDataEntity();
+		storeSelectorDataEntity(data_object);
 		break;
 	}
 
@@ -944,14 +947,14 @@ void Editor::Selector::storeSelectorData()
 	}
 }
 
-void Editor::Selector::allocateSelectorVerticesHorizontalMasks()
+void Editor::Selector::allocateSelectorVerticesHorizontalMasks(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
 
 	// Parse Horizontal Mask Shapes
-	switch (object_identifier[2])
+	switch (data_object->getObjectIdentifier()[2])
 	{
 
 	// Horizontal Line
@@ -1024,19 +1027,23 @@ void Editor::Selector::allocateSelectorVerticesHorizontalMasks()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesHorizontalMasks()
+void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
 
 	// Parse Horizontal Mask Shapes
+	uint8_t* object_identifier = data_object->getObjectIdentifier();
 	switch (object_identifier[2])
 	{
 
 	// Horizontal Line
 	case Object::Mask::HORIZONTAL_LINE:
 	{
+		// Get the Horizontal Line Data of the Data Class
+		Object::Mask::HorizontalLineData& horizontal_line_data = static_cast<DataClass::Data_HorizontalLine*>(data_object)->getHorizontalLineData();
+
 		// Generate and Store Object Vertices
 		glm::vec3 temp_color = object_identifier[1] == Object::Mask::FLOOR ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(1.0f, 0.0f, 1.0f);
 		float half_width = horizontal_line_data.width * 0.5f;
@@ -1063,6 +1070,9 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks()
 	// Horizontal Slant
 	case Object::Mask::HORIZONTAL_SLANT:
 	{
+		// Get the Horizontal Slant Data of the Data Class
+		Object::Mask::SlantData& slant_data = static_cast<DataClass::Data_Slant*>(data_object)->getSlantData();
+
 		// Generate and Store Object Vertices
 		glm::vec3 temp_color = object_identifier[1] == Object::Mask::FLOOR ? glm::vec3(0.0f, 1.0f, 1.0f) : glm::vec3(0.28f, 0.0f, 0.34f);
 		float object_vertices[] = {
@@ -1092,6 +1102,9 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks()
 	// Horizontal Slope
 	case Object::Mask::HORIZONTAL_SLOPE:
 	{
+		// Get the Horizontal Slant Data of the Data Class
+		Object::Mask::SlopeData& slope_data = static_cast<DataClass::Data_Slope*>(data_object)->getSlopeData();
+
 		// Generate and Store Object Vertices
 		float object_vertices[154];
 		Vertices::Line::genLineSimplifiedCurve1(0.0f, 0.0f, -1.0f, slope_data.height, slope_data.width, object_identifier[1] == Object::Mask::FLOOR ? glm::vec4(0.04f, 0.24f, 1.0f, 1.0f) : glm::vec4(0.0f, 0.0f, 0.45f, 1.0f), 11, object_vertices);
@@ -1120,28 +1133,36 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataHorizontalMasks()
+void Editor::Selector::storeSelectorDataHorizontalMasks(DataClass::Data_Object* data_object)
 {
 	// Parse Horizontal Mask Shapes
+	uint8_t* object_identifier = data_object->getObjectIdentifier();
 	switch (object_identifier[2])
 	{
 
 	// Horizontal Line
 	case Object::Mask::HORIZONTAL_LINE:
 	{
+		// Transform Data Class into Horizontal Line and Get Horizontal Line Data
+		DataClass::Data_HorizontalLine& data_horizontal_line = *static_cast<DataClass::Data_HorizontalLine*>(data_object);
+		Object::Mask::HorizontalLineData& horizontal_line_data = data_horizontal_line.getHorizontalLineData();
+
 		// Shape is a Horizontal Line
+		selected_object = new Selected_Horizontal_Line();
+		Selected_Horizontal_Line& new_selected_horizontal_line = *static_cast<Selected_Horizontal_Line*>(selected_object);
 		editing_shape = HORIZONTAL_LINE;
 
 		// Store Pointers to Data
-		object_x = &horizontal_line_data.position.x;
-		object_y = &horizontal_line_data.position.y;
-		object_width = &horizontal_line_data.width;
+		new_selected_horizontal_line.object_x = &horizontal_line_data.position.x;
+		new_selected_horizontal_line.object_y = &horizontal_line_data.position.y;
+		new_selected_horizontal_line.object_width = &horizontal_line_data.width;
+		new_selected_horizontal_line.data_object = data_object;
 
 		// Get Object Info
 		if (object_identifier[1] == Object::Mask::FLOOR)
-			Object::Mask::Floor::FloorMaskLine::info(*info, editor_data.name, horizontal_line_data, floor_mask_platform);
+			Object::Mask::Floor::FloorMaskLine::info(*info, data_horizontal_line.getName(), horizontal_line_data, static_cast<DataClass::Data_FloorMaskHorizontalLine*>(data_object)->getPlatform());
 		else
-			Object::Mask::Ceiling::CeilingMaskLine::info(*info, editor_data.name, horizontal_line_data);
+			Object::Mask::Ceiling::CeilingMaskLine::info(*info, data_horizontal_line.getName(), horizontal_line_data);
 
 		break;
 	}
@@ -1149,20 +1170,27 @@ void Editor::Selector::storeSelectorDataHorizontalMasks()
 	// Horizontal Slant
 	case Object::Mask::HORIZONTAL_SLANT:
 	{
+		// Transform Data Class into Horizontal Slant and Get Horizontal Slant Data
+		DataClass::Data_Slant& data_slant = *static_cast<DataClass::Data_Slant*>(data_object);
+		Object::Mask::SlantData& slant_data = data_slant.getSlantData();
+
 		// Shape is a Line
+		selected_object = new Selected_Line();
+		Selected_Line& new_selected_line = *static_cast<Selected_Line*>(selected_object);
 		editing_shape = LINE;
 
 		// Store Pointers to Data
-		object_x = &slant_data.position.x;
-		object_y = &slant_data.position.y;
-		object_opposite_x = &slant_data.position2.x;
-		object_opposite_y = &slant_data.position2.y;
+		new_selected_line.object_x = &slant_data.position.x;
+		new_selected_line.object_y = &slant_data.position.y;
+		new_selected_line.object_opposite_x = &slant_data.position2.x;
+		new_selected_line.object_opposite_y = &slant_data.position2.y;
+		new_selected_line.data_object = data_object;
 
 		// Get Object Info
 		if (object_identifier[1] == Object::Mask::FLOOR)
-			Object::Mask::Floor::FloorMaskSlant::info(*info, editor_data.name, slant_data, floor_mask_platform);
+			Object::Mask::Floor::FloorMaskSlant::info(*info, data_slant.getName(), slant_data, static_cast<DataClass::Data_FloorMaskSlant*>(data_object)->getPlatform());
 		else
-			Object::Mask::Ceiling::CeilingMaskSlant::info(*info, editor_data.name, slant_data);
+			Object::Mask::Ceiling::CeilingMaskSlant::info(*info, data_slant.getName(), slant_data);
 
 		break;
 	}
@@ -1170,20 +1198,27 @@ void Editor::Selector::storeSelectorDataHorizontalMasks()
 	// Horizontal Slope
 	case Object::Mask::HORIZONTAL_SLOPE:
 	{
+		// Transform Data Class into Horizontal Slope and Get Horizontal Slope Data
+		DataClass::Data_Slope& data_slope = *static_cast<DataClass::Data_Slope*>(data_object);
+		Object::Mask::SlopeData& slope_data = data_slope.getSlopeData();
+
 		// Shape is a Rectangle
+		selected_object = new Selected_Rectangle();
+		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
 		editing_shape = RECTANGLE;
 
 		// Store Pointers to Data
-		object_x = &slope_data.position.x;
-		object_y = &slope_data.position.y;
-		object_width = &slope_data.width;
-		object_height = &slope_data.height;
+		new_selected_rectangle.object_x = &slope_data.position.x;
+		new_selected_rectangle.object_y = &slope_data.position.y;
+		new_selected_rectangle.object_width = &slope_data.width;
+		new_selected_rectangle.object_height = &slope_data.height;
+		new_selected_rectangle.data_object = data_object;
 
 		// Get Object Info
 		if (object_identifier[1] == Object::Mask::FLOOR)
-			Object::Mask::Floor::FloorMaskSlope::info(*info, editor_data.name, slope_data, floor_mask_platform);
+			Object::Mask::Floor::FloorMaskSlope::info(*info, data_slope.getName(), slope_data, static_cast<DataClass::Data_FloorMaskSlope*>(data_object)->getPlatform());
 		else
-			Object::Mask::Ceiling::CeilingMaskSlope::info(*info, editor_data.name, slope_data);
+			Object::Mask::Ceiling::CeilingMaskSlope::info(*info, data_slope.getName(), slope_data);
 
 		break;
 	}
@@ -1194,14 +1229,14 @@ void Editor::Selector::storeSelectorDataHorizontalMasks()
 	enable_resize = true;
 }
 
-void Editor::Selector::allocateSelectorVerticesVerticalMasks()
+void Editor::Selector::allocateSelectorVerticesVerticalMasks(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
 
 	// Parse Vertical Mask Shapes
-	switch (object_identifier[2])
+	switch (data_object->getObjectIdentifier()[2])
 	{
 
 	// Vertical Line
@@ -1256,19 +1291,23 @@ void Editor::Selector::allocateSelectorVerticesVerticalMasks()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesVerticalMasks()
+void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
 
 	// Parse Vertical Mask Shapes
+	uint8_t* object_identifier = data_object->getObjectIdentifier();
 	switch (object_identifier[2])
 	{
 
 	// Vertical Line
 	case Object::Mask::VERTICAL_LINE:
 	{
+		// Get the Vertical Line Data of the Data Class
+		Object::Mask::VerticalLineData& vertical_line_data = static_cast<DataClass::Data_VerticalLine*>(data_object)->getVerticalLineData();
+
 		// Generate and Store Object Vertices
 		glm::vec3 temp_color = object_identifier[1] == Object::Mask::LEFT_WALL ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(0.0f, 0.0f, 1.0f);
 		float half_height = vertical_line_data.height * 0.5f;
@@ -1295,9 +1334,8 @@ void Editor::Selector::genSelectorVerticesVerticalMasks()
 	// Vertical Curve
 	case Object::Mask::VERTICAL_CURVE:
 	{
-		// Bind Object VAO
-		glBindVertexArray(objectVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+		// Get the Vertical Curve Data of the Data Class
+		Object::Mask::CurveData& curve_data = static_cast<DataClass::Data_Curve*>(data_object)->getCurveData();
 
 		// Generate and Store Object Vertices
 		float slope = curve_data.height / 6.0f;
@@ -1330,28 +1368,36 @@ void Editor::Selector::genSelectorVerticesVerticalMasks()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataVerticalMasks()
+void Editor::Selector::storeSelectorDataVerticalMasks(DataClass::Data_Object* data_object)
 {
 	// Parse Vertical Mask Shapes
+	uint8_t* object_identifier = data_object->getObjectIdentifier();
 	switch (object_identifier[2])
 	{
 
 	// Vertical Line
 	case Object::Mask::VERTICAL_LINE:
 	{
+		// Transform Data Class into Vertical Line and Get Vertical Line Data
+		DataClass::Data_VerticalLine& data_vertical_line = *static_cast<DataClass::Data_VerticalLine*>(data_object);
+		Object::Mask::VerticalLineData& vertical_line_data = data_vertical_line.getVerticalLineData();
+
 		// Shape is a Vertical Line
+		selected_object = new Selected_Vertical_Line();
+		Selected_Vertical_Line& new_selected_vertical_line = *static_cast<Selected_Vertical_Line*>(selected_object);
 		editing_shape = VERTICAL_LINE;
 
 		// Store Pointers to Data
-		object_x = &vertical_line_data.position.x;
-		object_y = &vertical_line_data.position.y;
-		object_height = &vertical_line_data.height;
+		new_selected_vertical_line.object_x = &vertical_line_data.position.x;
+		new_selected_vertical_line.object_y = &vertical_line_data.position.y;
+		new_selected_vertical_line.object_height = &vertical_line_data.height;
+		new_selected_vertical_line.data_object = data_object;
 
 		// Get Object Info
 		if (object_identifier[1] == Object::Mask::LEFT_WALL)
-			Object::Mask::Left::LeftMaskLine::info(*info, editor_data.name, vertical_line_data);
+			Object::Mask::Left::LeftMaskLine::info(*info, data_vertical_line.getName(), vertical_line_data);
 		else
-			Object::Mask::Right::RightMaskLine::info(*info, editor_data.name, vertical_line_data);
+			Object::Mask::Right::RightMaskLine::info(*info, data_vertical_line.getName(), vertical_line_data);
 
 		break;
 	}
@@ -1359,20 +1405,27 @@ void Editor::Selector::storeSelectorDataVerticalMasks()
 	// Vertical Curve
 	case Object::Mask::VERTICAL_CURVE:
 	{
+		// Transform Data Class into Vertical Curve and Get Vertical Curve Data
+		DataClass::Data_Curve& data_curve = *static_cast<DataClass::Data_Curve*>(data_object);
+		Object::Mask::CurveData& curve_data = data_curve.getCurveData();
+
 		// Shape is a Rectangle
+		selected_object = new Selected_Rectangle();
+		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
 		editing_shape = RECTANGLE;
 
 		// Store Pointers to Data
-		object_x = &curve_data.position.x;
-		object_y = &curve_data.position.y;
-		object_width = &curve_data.width;
-		object_height = &curve_data.height;
+		new_selected_rectangle.object_x = &curve_data.position.x;
+		new_selected_rectangle.object_y = &curve_data.position.y;
+		new_selected_rectangle.object_width = &curve_data.width;
+		new_selected_rectangle.object_height = &curve_data.height;
+		new_selected_rectangle.data_object = data_object;
 
 		// Get Object Info
 		if (object_identifier[1] == Object::Mask::LEFT_WALL)
-			Object::Mask::Left::LeftMaskCurve::info(*info, editor_data.name, curve_data);
+			Object::Mask::Left::LeftMaskCurve::info(*info, data_curve.getName(), curve_data);
 		else
-			Object::Mask::Right::RightMaskCurve::info(*info, editor_data.name, curve_data);
+			Object::Mask::Right::RightMaskCurve::info(*info, data_curve.getName(), curve_data);
 
 		break;
 	}
@@ -1383,7 +1436,7 @@ void Editor::Selector::storeSelectorDataVerticalMasks()
 	enable_resize = true;
 }
 
-void Editor::Selector::allocateSelectorVerticesTriggerMasks()
+void Editor::Selector::allocateSelectorVerticesTriggerMasks(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
@@ -1415,8 +1468,11 @@ void Editor::Selector::allocateSelectorVerticesTriggerMasks()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesTriggerMasks()
+void Editor::Selector::genSelectorVerticesTriggerMasks(DataClass::Data_Object* data_object)
 {
+	// Get the Trigger Line Data of the Data Class
+	Object::Mask::Trigger::TriggerData& trigger_data = static_cast<DataClass::Data_TriggerMask*>(data_object)->getTriggerData();
+
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
@@ -1436,63 +1492,33 @@ void Editor::Selector::genSelectorVerticesTriggerMasks()
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 	// Set Initial Position Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(trigger_data.position.x, trigger_data.position.y, 0.0f));
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	/*
-	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
-
-	// Generate and Store Object Vertices
-	float object_vertices[42];
-	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, trigger_data.width, trigger_data.height, glm::vec4(0.4f, 0.0f, 0.0f, 0.5f), object_vertices);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(object_vertices), object_vertices, GL_STATIC_DRAW);
-	object_vertex_count = 6;
-
-	// Bind Outline VAO
-	glBindVertexArray(outlineVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
-
-	// Generate and Store Outline Vertices
-	float outline_vertices[56];
-	Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, trigger_data.width, trigger_data.height, outline_vertices);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(outline_vertices), outline_vertices, GL_STATIC_DRAW);
-	outline_vertex_count = 8;
-
-	// Object Does Not Consist of Color and Texture
-	visualize_object = false;
-
-	// Object is Compose of Triangles
-	visualize_lines = false;
-
-	// Object Only Has Color
-	visualize_texture = false;
-
-	// Set Initial Position Model Matrix
-	object_x = &trigger_data.position.x;
-	object_y = &trigger_data.position.y;
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
-	*/
 }
 
-void Editor::Selector::storeSelectorDataTriggerMasks()
+void Editor::Selector::storeSelectorDataTriggerMasks(DataClass::Data_Object* data_object)
 {
+	// Transform Data Class into Trigger Mask and Get Trigger Data
+	DataClass::Data_TriggerMask& data_trigger = *static_cast<DataClass::Data_TriggerMask*>(data_object);
+	Object::Mask::Trigger::TriggerData& trigger_data = data_trigger.getTriggerData();
+
 	// Shape is a Rectangle
+	selected_object = new Selected_Rectangle();
+	Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
 	editing_shape = RECTANGLE;
 
 	// Store Object Data
-	object_x = &trigger_data.position.x;
-	object_y = &trigger_data.position.y;
+	new_selected_rectangle.object_x = &trigger_data.position.x;
+	new_selected_rectangle.object_y = &trigger_data.position.y;
 
 	// Get Object Info
-	Object::Mask::Trigger::TriggerMask::info(*info, editor_data.name, trigger_data);
+	Object::Mask::Trigger::TriggerMask::info(*info, data_trigger.getName(), trigger_data);
 }
 
-void Editor::Selector::allocateSelectorVerticesShapes(int index)
+void Editor::Selector::allocateSelectorVerticesShapes(int index, DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
@@ -1578,7 +1604,7 @@ void Editor::Selector::allocateSelectorVerticesShapes(int index)
 	case Shape::POLYGON:
 	{
 		// Allocate Memory for Object Vertices
-		unsigned char number_of_sides = *polygon_data.pointerToNumberOfSides();
+		unsigned char number_of_sides = *static_cast<Shape::Polygon*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape())->pointerToNumberOfSides();
 		glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)144 * number_of_sides, NULL, GL_DYNAMIC_DRAW);
 		object_vertex_count = number_of_sides * 3;
 
@@ -1609,11 +1635,14 @@ void Editor::Selector::allocateSelectorVerticesShapes(int index)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesShapes(int index)
+void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+
+	// Get the Object Data
+	Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
 
 	// Parse Shape
 	switch (index)
@@ -1622,6 +1651,9 @@ void Editor::Selector::genSelectorVerticesShapes(int index)
 	// Rectangle
 	case Shape::RECTANGLE:
 	{
+		// Get the Rectangle Shape
+		Shape::Rectangle& rectangle_data = *static_cast<Shape::Rectangle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Generate and Store Object Vertices
 		float object_vertices[72];
 		Vertices::Rectangle::genRectObjectFull(glm::vec2(0.0f), -1.0f, *rectangle_data.pointerToWidth(), *rectangle_data.pointerToHeight(), object_data.colors, object_data.normals, object_vertices);
@@ -1642,6 +1674,9 @@ void Editor::Selector::genSelectorVerticesShapes(int index)
 	// Trapezoid
 	case Shape::TRAPEZOID:
 	{
+		// Get the Trapezoid Shape
+		Shape::Trapezoid& trapezoid_data = *static_cast<Shape::Trapezoid*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Generate and Store Object Vertices
 		float object_vertices[72];
 		Vertices::Trapezoid::genTrapObjectFull(glm::vec2(0.0f), -1.0f, *trapezoid_data.pointerToWidth(), *trapezoid_data.pointerToHeight(), *trapezoid_data.pointerToWidthOffset(), *trapezoid_data.pointerToHeightOffset(), object_data.colors, object_data.normals, object_vertices);
@@ -1662,6 +1697,9 @@ void Editor::Selector::genSelectorVerticesShapes(int index)
 	// Triangle
 	case Shape::TRIANGLE:
 	{
+		// Get the Triangle Shape
+		Shape::Triangle& triangle_data = *static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Store Object Data
 		glm::vec2 temp_coords1 = object_data.position;
 		glm::vec2 temp_coords2 = *triangle_data.pointerToSecondPosition();
@@ -1687,6 +1725,9 @@ void Editor::Selector::genSelectorVerticesShapes(int index)
 	// Circle
 	case Shape::CIRCLE:
 	{
+		// Get the Circle Shape
+		Shape::Circle& circle_data = *static_cast<Shape::Circle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Generate and Store Object Vertices
 		float object_vertices[720];
 		Vertices::Circle::genCircleObjectFull(glm::vec2(0.0f), -1.0f, *circle_data.pointerToRadius(), 20, object_data.colors, object_data.normals, object_vertices);
@@ -1707,6 +1748,9 @@ void Editor::Selector::genSelectorVerticesShapes(int index)
 	// Polygon
 	case Shape::POLYGON:
 	{
+		// Get the Polygon Shape
+		Shape::Polygon& polygon_data = *static_cast<Shape::Polygon*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Generate and Store Object Vertices
 		unsigned char number_of_sides = *polygon_data.pointerToNumberOfSides();
 		float* object_vertices = new float[(int)number_of_sides * 36];
@@ -1737,7 +1781,7 @@ void Editor::Selector::genSelectorVerticesShapes(int index)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataShapes(int index)
+void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object* data_object)
 {
 	// Parse Shape
 	switch (index)
@@ -1746,15 +1790,21 @@ void Editor::Selector::storeSelectorDataShapes(int index)
 	// Rectangle
 	case Shape::RECTANGLE:
 	{
+		// Get the Rectangle Shape
+		Shape::Rectangle& rectangle_data = *static_cast<Shape::Rectangle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Shape is a Rectangle
+		selected_object = new Selected_Rectangle();
+		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
 		editing_shape = RECTANGLE;
 
 		// Store Object Data
-		object_width = rectangle_data.pointerToWidth();
-		object_height = rectangle_data.pointerToHeight();
+		new_selected_rectangle.object_width = rectangle_data.pointerToWidth();
+		new_selected_rectangle.object_height = rectangle_data.pointerToHeight();
+		new_selected_rectangle.data_object = data_object;
 
 		// Get Object Info
-		getShapeInfo(&rectangle_data);
+		getShapeInfo(&rectangle_data, data_object);
 
 		break;
 	}
@@ -1762,17 +1812,23 @@ void Editor::Selector::storeSelectorDataShapes(int index)
 	// Trapezoid
 	case Shape::TRAPEZOID:
 	{
+		// Get the Trapezoid Shape
+		Shape::Trapezoid& trapezoid_data = *static_cast<Shape::Trapezoid*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Shape is a Trapezoid
+		selected_object = new Selected_Trapezoid();
+		Selected_Trapezoid& new_selected_trapezoid = *static_cast<Selected_Trapezoid*>(selected_object);
 		editing_shape = TRAPEZOID;
 
 		// Store Object Data
-		object_width = trapezoid_data.pointerToWidth();
-		object_height = trapezoid_data.pointerToHeight();
-		object_width_modifier = trapezoid_data.pointerToWidthOffset();
-		object_height_modifier = trapezoid_data.pointerToHeightOffset();
+		new_selected_trapezoid.object_width = trapezoid_data.pointerToWidth();
+		new_selected_trapezoid.object_height = trapezoid_data.pointerToHeight();
+		new_selected_trapezoid.object_width_modifier = trapezoid_data.pointerToWidthOffset();
+		new_selected_trapezoid.object_height_modifier = trapezoid_data.pointerToHeightOffset();
+		new_selected_trapezoid.data_object = data_object;
 
 		// Get Object Info
-		getShapeInfo(&trapezoid_data);
+		getShapeInfo(&trapezoid_data, data_object);
 
 		break;
 	}
@@ -1780,16 +1836,22 @@ void Editor::Selector::storeSelectorDataShapes(int index)
 	// Triangle
 	case Shape::TRIANGLE:
 	{
+		// Get the Triangle Shape
+		Shape::Triangle& triangle_data = *static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Shape is a Triangle
+		selected_object = new Selected_Triangle();
+		Selected_Triangle& new_selected_triangle = *static_cast<Selected_Triangle*>(selected_object);
 		editing_shape = TRIANGLE;
 
 		// Store Object Data
-		coords1 = object_data.position;
-		coords2 = *triangle_data.pointerToSecondPosition();
-		coords3 = *triangle_data.pointerToThirdPosition();
+		new_selected_triangle.coords1 = data_object->getPosition();
+		new_selected_triangle.coords2 = *triangle_data.pointerToSecondPosition();
+		new_selected_triangle.coords3 = *triangle_data.pointerToThirdPosition();
+		new_selected_triangle.data_object = data_object;
 
 		// Get Object Info
-		getShapeInfo(&triangle_data);
+		getShapeInfo(&triangle_data, data_object);
 
 		break;
 	}
@@ -1797,15 +1859,21 @@ void Editor::Selector::storeSelectorDataShapes(int index)
 	// Circle
 	case Shape::CIRCLE:
 	{
+		// Get the Circle Shape
+		Shape::Circle& circle_data = *static_cast<Shape::Circle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Shape is a Circle
+		selected_object = new Selected_Circle();
+		Selected_Circle& new_selected_circle = *static_cast<Selected_Circle*>(selected_object);
 		editing_shape = CIRCLE;
 
 		// Store Object Data
-		object_radius = circle_data.pointerToRadius();
-		object_inner_radius = circle_data.pointerToRadiusInner();
+		new_selected_circle.object_radius = circle_data.pointerToRadius();
+		new_selected_circle.object_inner_radius = circle_data.pointerToRadiusInner();
+		new_selected_circle.data_object = data_object;
 
 		// Get Object Info
-		getShapeInfo(&circle_data);
+		getShapeInfo(&circle_data, data_object);
 
 		break;
 	}
@@ -1813,15 +1881,21 @@ void Editor::Selector::storeSelectorDataShapes(int index)
 	// Polygon
 	case Shape::POLYGON:
 	{
+		// Get the Polygon Shape
+		Shape::Polygon& polygon_data = *static_cast<Shape::Polygon*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Shape is a Circle
+		selected_object = new Selected_Circle();
+		Selected_Circle& new_selected_circle = *static_cast<Selected_Circle*>(selected_object);
 		editing_shape = CIRCLE;
 
 		// Store Object Data
-		object_radius = polygon_data.pointerToRadius();
-		object_inner_radius = polygon_data.pointerToRaidusInner();
+		new_selected_circle.object_radius = polygon_data.pointerToRadius();
+		new_selected_circle.object_inner_radius = polygon_data.pointerToRaidusInner();
+		new_selected_circle.data_object = data_object;
 
 		// Get Object Info
-		getShapeInfo(&polygon_data);
+		getShapeInfo(&polygon_data, data_object);
 
 		break;
 	}
@@ -1829,21 +1903,21 @@ void Editor::Selector::storeSelectorDataShapes(int index)
 	}
 
 	// Store Initial Position Data
-	object_x = &object_data.position.x;
-	object_y = &object_data.position.y;
+	selected_object->object_x = &data_object->getPosition().x;
+	selected_object->object_y = &data_object->getPosition().y;
 
 	// Enable Resize
 	enable_resize = true;
 }
 
-void Editor::Selector::allocateSelectorVerticesLights()
+void Editor::Selector::allocateSelectorVerticesLights(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
 
 	// Parse Light Types
-	switch (object_identifier[1])
+	switch (data_object->getObjectIdentifier()[1])
 	{
 
 	// Directional Light
@@ -1934,19 +2008,25 @@ void Editor::Selector::allocateSelectorVerticesLights()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesLights()
+void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
 
+	// Get Light Data
+	Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
+
 	// Parse Light Types
-	switch (object_identifier[1])
+	switch (data_object->getObjectIdentifier()[1])
 	{
 
 	// Directional Light
 	case Object::Light::DIRECTIONAL:
 	{
+		// Get Directional Data
+		Object::Light::Directional::DirectionalData& directional_data = static_cast<DataClass::Data_Directional*>(data_object)->getDirectionalData();
+
 		// Generate and Store Object Vertices
 		float object_vertices[30];
 		Vertices::Line::genLineTexture(0.0f, directional_data.position2.x - light_data.position.x, 0.0f, directional_data.position2.y - light_data.position.y, -0.9f, 0.4f, object_vertices);
@@ -2011,6 +2091,9 @@ void Editor::Selector::genSelectorVerticesLights()
 	// Beam Light
 	case Object::Light::BEAM:
 	{
+		// Get Directional Data
+		Object::Light::Beam::BeamData& beam_data = static_cast<DataClass::Data_Beam*>(data_object)->getBeamData();
+
 		// Generate and Store Object Vertices
 		float object_vertices[30];
 		Vertices::Line::genLineTexture(0.0f, beam_data.position2.x - light_data.position.x, 0.0f, beam_data.position2.y - light_data.position.y, -0.9f, 0.4f, object_vertices);
@@ -2042,24 +2125,35 @@ void Editor::Selector::genSelectorVerticesLights()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataLights()
+void Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_object)
 {
-	static float temp_width;
-	static float temp_height;
+	// Constant, Unchanging Values for the Width and Height of Point Lights and Spot Lights
+	static float temp_width = 5.0f;
+	static float temp_height = 5.0f;
+
+	// Get Light Data
+	Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
 
 	// Parse Light Types
-	switch (object_identifier[1])
+	switch (data_object->getObjectIdentifier()[1])
 	{
 
 	// Directional Light
 	case Object::Light::DIRECTIONAL:
 	{
+		// Transform Data Class into Directional Light and Get Directional Light Data
+		DataClass::Data_Directional& data_directional = *static_cast<DataClass::Data_Directional*>(data_object);
+		Object::Light::Directional::DirectionalData& directional_data = data_directional.getDirectionalData();
+
 		// Shape is a Line
+		selected_object = new Selected_Line();
+		Selected_Line& new_selected_line = *static_cast<Selected_Line*>(selected_object);
 		editing_shape = LINE;
 
 		// Store Pointers to Opposite Position Data
-		object_opposite_x = &directional_data.position2.x;
-		object_opposite_y = &directional_data.position2.y;
+		new_selected_line.object_opposite_x = &directional_data.position2.x;
+		new_selected_line.object_opposite_y = &directional_data.position2.y;
+		new_selected_line.data_object = data_object;
 
 		// Store Texture
 		texture = Global::Visual_Textures.find("DirectionalLight.png")->second;
@@ -2100,7 +2194,7 @@ void Editor::Selector::storeSelectorDataLights()
 		enable_resize = true;
 
 		// Get Object Info
-		Object::Light::Directional::Directional::info(*info, editor_data.name, light_data, directional_data);
+		Object::Light::Directional::Directional::info(*info, data_directional.getName(), light_data, directional_data);
 
 		break;
 	}
@@ -2108,15 +2202,20 @@ void Editor::Selector::storeSelectorDataLights()
 	// Point Light
 	case Object::Light::POINT:
 	{
+		// Transform Data Class into Point Light and Get Point Light Data
+		DataClass::Data_Point& data_point = *static_cast<DataClass::Data_Point*>(data_object);
+		Object::Light::Point::PointData& point_data = data_point.getPointData();
+
 		// Shape is a Rectangle
+		selected_object = new Selected_Rectangle();
+		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
 		editing_shape = RECTANGLE;
 
 		// Store Static Sizes
-		temp_width = 5.0f;
-		temp_height = 5.0f;
-		object_width = &temp_width;
-		object_height = &temp_height;
-		enable_resize = false;
+		new_selected_rectangle.object_width = &temp_width;
+		new_selected_rectangle.object_height = &temp_height;
+		new_selected_rectangle.enable_resize = false;
+		new_selected_rectangle.data_object = data_object;
 
 		// Store Texture
 		texture = Global::Visual_Textures.find("PointLight.png")->second;
@@ -2157,7 +2256,7 @@ void Editor::Selector::storeSelectorDataLights()
 		enable_resize = false;
 
 		// Get Object Info
-		Object::Light::Point::Point::info(*info, editor_data.name, light_data, point_data);
+		Object::Light::Point::Point::info(*info, data_point.getName(), light_data, point_data);
 
 		break;
 	}
@@ -2165,15 +2264,20 @@ void Editor::Selector::storeSelectorDataLights()
 	// Spot Light
 	case Object::Light::SPOT:
 	{
+		// Transform Data Class into Spot Light and Get Spot Light Data
+		DataClass::Data_Spot& data_spot = *static_cast<DataClass::Data_Spot*>(data_object);
+		Object::Light::Spot::SpotData& spot_data = data_spot.getSpotData();
+
 		// Shape is a Rectangle
+		selected_object = new Selected_Rectangle();
+		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
 		editing_shape = RECTANGLE;
 
 		// Store Static Sizes
-		temp_width = 5.0f;
-		temp_height = 5.0f;
-		object_width = &temp_width;
-		object_height = &temp_height;
-		enable_resize = false;
+		new_selected_rectangle.object_width = &temp_width;
+		new_selected_rectangle.object_height = &temp_height;
+		new_selected_rectangle.enable_resize = false;
+		new_selected_rectangle.data_object = data_object;
 
 		// Store Texture
 		texture = Global::Visual_Textures.find("SpotLight.png")->second;
@@ -2214,7 +2318,7 @@ void Editor::Selector::storeSelectorDataLights()
 		enable_resize = false;
 
 		// Get Object Info
-		Object::Light::Spot::Spot::info(*info, editor_data.name, light_data, spot_data);
+		Object::Light::Spot::Spot::info(*info, data_spot.getName(), light_data, spot_data);
 
 		break;
 	}
@@ -2222,12 +2326,19 @@ void Editor::Selector::storeSelectorDataLights()
 	// Beam Light
 	case Object::Light::BEAM:
 	{
+		// Transform Data Class into Directional Light and Get Directional Light Data
+		DataClass::Data_Beam& data_beam = *static_cast<DataClass::Data_Beam*>(data_object);
+		Object::Light::Beam::BeamData& beam_data = data_beam.getBeamData();
+
 		// Shape is a Line
+		selected_object = new Selected_Line();
+		Selected_Line& new_selected_line = *static_cast<Selected_Line*>(selected_object);
 		editing_shape = LINE;
 
 		// Store Pointers to Opposite Position Data
-		object_opposite_x = &beam_data.position2.x;
-		object_opposite_y = &beam_data.position2.y;
+		new_selected_line.object_opposite_x = &beam_data.position2.x;
+		new_selected_line.object_opposite_y = &beam_data.position2.y;
+		new_selected_line.data_object = data_object;
 
 		// Store Texture
 		texture = Global::Visual_Textures.find("BeamLight.png")->second;
@@ -2268,7 +2379,7 @@ void Editor::Selector::storeSelectorDataLights()
 		enable_resize = true;
 
 		// Get Object Info
-		Object::Light::Beam::Beam::info(*info, editor_data.name, light_data, beam_data);
+		Object::Light::Beam::Beam::info(*info, data_beam.getName(), light_data, beam_data);
 
 		break;
 	}
@@ -2276,25 +2387,31 @@ void Editor::Selector::storeSelectorDataLights()
 	}
 
 	// Set Object Position
-	object_x = &light_data.position.x;
-	object_y = &light_data.position.y;
+	selected_object->object_x = &light_data.position.x;
+	selected_object->object_y = &light_data.position.y;
 
 	// Object is a Light
 	lighting_object = true;
 
 	// Store Shader Data
-	storeSelectorShaderDataLights();
+	storeSelectorShaderDataLights(data_object);
 }
 
-void Editor::Selector::storeSelectorShaderDataLights()
+void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* data_object)
 {
+	// Get Light Data
+	Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
+
 	// Parse Light Types
-	switch (object_identifier[1])
+	switch (data_object->getObjectIdentifier()[1])
 	{
 
 	// Directional Light
 	case Object::Light::DIRECTIONAL:
 	{
+		// Get Directional Data
+		Object::Light::Directional::DirectionalData& directional_data = static_cast<DataClass::Data_Directional*>(data_object)->getDirectionalData();
+
 		// Bind Directional Light Buffer
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::DirectionalBuffer);
 
@@ -2330,6 +2447,9 @@ void Editor::Selector::storeSelectorShaderDataLights()
 	// Point Light
 	case Object::Light::POINT:
 	{
+		// Get Point Data
+		Object::Light::Point::PointData& point_data = static_cast<DataClass::Data_Point*>(data_object)->getPointData();
+
 		// Bind Point Light Buffer
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::PointBuffer);
 
@@ -2354,6 +2474,9 @@ void Editor::Selector::storeSelectorShaderDataLights()
 	// Spot Light
 	case Object::Light::SPOT:
 	{
+		// Get Spot Data
+		Object::Light::Spot::SpotData& spot_data = static_cast<DataClass::Data_Spot*>(data_object)->getSpotData();
+
 		// Bind Spot Light Buffer
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::SpotBuffer);
 
@@ -2385,6 +2508,9 @@ void Editor::Selector::storeSelectorShaderDataLights()
 	// Beam Light
 	case Object::Light::BEAM:
 	{
+		// Get Beam Data
+		Object::Light::Beam::BeamData& beam_data = static_cast<DataClass::Data_Beam*>(data_object)->getBeamData();
+
 		// Bind Beam Light Buffer
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::BeamBuffer);
 
@@ -2419,14 +2545,14 @@ void Editor::Selector::storeSelectorShaderDataLights()
 	}
 }
 
-void Editor::Selector::allocateSelectorVerticesSoftBody()
+void Editor::Selector::allocateSelectorVerticesSoftBody(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
 
 	// Parse Soft Body Types
-	switch (object_identifier[2])
+	switch (data_object->getObjectIdentifier()[2])
 	{
 
 	// SpringMass
@@ -2484,14 +2610,14 @@ void Editor::Selector::allocateSelectorVerticesSoftBody()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesSoftBody()
+void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
 
 	// Parse Soft Body Types
-	switch (object_identifier[2])
+	switch (data_object->getObjectIdentifier()[2])
 	{
 
 	// Spring Mass
@@ -2544,6 +2670,9 @@ void Editor::Selector::genSelectorVerticesSoftBody()
 		// Edit Core
 		else
 		{
+			// Get Object Data
+			Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
+
 			// Generate and Store Object Vertices
 			float object_vertices[42];
 			Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, 2.0f, 2.0f, object_data.colors, object_vertices);
@@ -2568,6 +2697,10 @@ void Editor::Selector::genSelectorVerticesSoftBody()
 	// Wire
 	case (int)Object::Physics::SOFT_BODY_TYPES::WIRE:
 	{
+		// Get Wire and Object Data
+		Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
+		Object::Physics::Soft::WireData& wire_data = static_cast<DataClass::Data_Wire*>(data_object)->getWireData();
+
 		// Generate and Store Object Vertices
 		float object_vertices[] = {
 			0.0f,                                           0.0f,				                          	-1.0f,  0.0f, 1.0f, 1.0f, 1.0f,
@@ -2600,10 +2733,10 @@ void Editor::Selector::genSelectorVerticesSoftBody()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataSoftBody()
+void Editor::Selector::storeSelectorDataSoftBody(DataClass::Data_Object* data_object)
 {
 	// Parse Soft Body Types
-	switch (object_identifier[2])
+	switch (data_object->getObjectIdentifier()[2])
 	{
 
 	// SpringMass
@@ -2616,8 +2749,8 @@ void Editor::Selector::storeSelectorDataSoftBody()
 			editing_shape = SPRINGMASS_NODE;
 
 			// Set Object Position
-			object_x = &node_data.position.x;
-			object_y = &node_data.position.y;
+			//object_x = &node_data.position.x;
+			//object_y = &node_data.position.y;
 
 			// Get Object Info
 			info->clearAll();
@@ -2649,11 +2782,11 @@ void Editor::Selector::storeSelectorDataSoftBody()
 			editing_shape = SPRINGMASS_OBJECT;
 
 			// Set Object Position
-			object_x = &object_data.position.x;
-			object_y = &object_data.position.y;
+			//object_x = &object_data.position.x;
+			//object_y = &object_data.position.y;
 
 			// Get Object Info
-			Object::Physics::Soft::SpringMass::info(*info, editor_data.name, object_data, file_name);
+			//Object::Physics::Soft::SpringMass::info(*info, editor_data.name, object_data, file_name);
 		}
 
 		break;
@@ -2662,19 +2795,26 @@ void Editor::Selector::storeSelectorDataSoftBody()
 	// Wire
 	case (int)Object::Physics::SOFT_BODY_TYPES::WIRE:
 	{
+		// Transform Data Class into Wire and Get Wire Data
+		DataClass::Data_Wire& data_wire = *static_cast<DataClass::Data_Wire*>(data_object);
+		Object::Physics::Soft::WireData& wire_data = data_wire.getWireData();
+
 		// Shape is a Line
+		selected_object = new Selected_Line();
+		Selected_Line& new_selected_line = *static_cast<Selected_Line*>(selected_object);
 		editing_shape = LINE;
 
 		// Store Pointers to Data
-		object_opposite_x = &slant_data.position2.x;
-		object_opposite_y = &slant_data.position2.y;
+		new_selected_line.object_opposite_x = &wire_data.position2.x;
+		new_selected_line.object_opposite_y = &wire_data.position2.y;
+		new_selected_line.data_object = data_object;
 
 		// Set Object Position
-		object_x = &object_data.position.x;
-		object_y = &object_data.position.y;
+		new_selected_line.object_x = &data_object->getPosition().x;
+		new_selected_line.object_y = &data_object->getPosition().y;
 
 		// Get Object Info
-		Object::Physics::Soft::Wire::info(*info, editor_data.name, object_data, wire_data);
+		//Object::Physics::Soft::Wire::info(*info, data_wire.getName(), wire_data, wire_data);
 
 		break;
 	}
@@ -2685,7 +2825,7 @@ void Editor::Selector::storeSelectorDataSoftBody()
 	enable_resize = false;
 }
 
-void Editor::Selector::allocateSelectorVerticesHinge()
+void Editor::Selector::allocateSelectorVerticesHinge(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
@@ -2717,19 +2857,22 @@ void Editor::Selector::allocateSelectorVerticesHinge()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesHinge()
+void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
 
 	// Parse Hinge Types
-	switch (object_identifier[2])
+	switch (data_object->getObjectIdentifier()[2])
 	{
 
 	// Anchor
 	case (int)Object::Physics::HINGES::ANCHOR:
 	{
+		// Get Anchor Data
+		Object::Physics::Hinge::AnchorData& anchor_data = static_cast<DataClass::Data_Anchor*>(data_object)->getAnchorData();
+
 		// Generate and Store Object Vertices
 		float object_vertices[42];
 		Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, 1.0f, 1.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), object_vertices);
@@ -2753,6 +2896,9 @@ void Editor::Selector::genSelectorVerticesHinge()
 	// Hinge
 	case (int)Object::Physics::HINGES::HINGE:
 	{
+		// Get Hinge Data
+		Object::Physics::Hinge::HingeData& hinge_data = static_cast<DataClass::Data_Hinge*>(data_object)->getHingeData();
+
 		// Generate and Store Object Vertices
 		float object_vertices[42];
 		Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, 1.0f, 1.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), object_vertices);
@@ -2780,24 +2926,32 @@ void Editor::Selector::genSelectorVerticesHinge()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataHinge()
+void Editor::Selector::storeSelectorDataHinge(DataClass::Data_Object* data_object)
 {
-	static float temp_width;
-	static float temp_height;
+	static float temp_width = 2.0f;
+	static float temp_height = 2.0f;
+
+	// Object is a Rectangle
+	selected_object = new Selected_Rectangle();
+	Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+	editing_shape = RECTANGLE;
 
 	// Parse Hinge Types
-	switch (object_identifier[2])
+	switch (data_object->getObjectIdentifier()[2])
 	{
 
 	// Anchor
 	case (int)Object::Physics::HINGES::ANCHOR:
 	{
+		// Get Anchor Data
+		Object::Physics::Hinge::AnchorData& anchor_data = static_cast<DataClass::Data_Anchor*>(data_object)->getAnchorData();
+
 		// Set Object Position
-		object_x = &anchor_data.position.x;
-		object_y = &anchor_data.position.y;
+		new_selected_rectangle.object_x = &anchor_data.position.x;
+		new_selected_rectangle.object_y = &anchor_data.position.y;
 
 		// Get Object Info
-		Object::Physics::Hinge::Anchor::info(*info, editor_data.name, anchor_data);
+		Object::Physics::Hinge::Anchor::info(*info, data_object->getName(), anchor_data);
 
 		break;
 	}
@@ -2805,32 +2959,31 @@ void Editor::Selector::storeSelectorDataHinge()
 	// Hinge
 	case (int)Object::Physics::HINGES::HINGE:
 	{
+		// Get Hinge Data
+		Object::Physics::Hinge::HingeData& hinge_data = static_cast<DataClass::Data_Hinge*>(data_object)->getHingeData();
+
 		// Set Object Position
-		object_x = &hinge_data.position.x;
-		object_y = &anchor_data.position.y;
+		new_selected_rectangle.object_x = &hinge_data.position.x;
+		new_selected_rectangle.object_y = &hinge_data.position.y;
 
 		// Get Object Info
-		Object::Physics::Hinge::Hinge::info(*info, editor_data.name, hinge_data, file_name);
+		Object::Physics::Hinge::Hinge::info(*info, data_object->getName(), hinge_data, static_cast<DataClass::Data_Hinge*>(data_object)->getFile());
 
 		break;
 	}
 
 	}
 
-	// Object is a Rectangle
-	editing_shape = RECTANGLE;
-
 	// Store Pointers to Data
-	temp_width = 2.0f;
-	temp_height = 2.0f;
-	object_width = &temp_width;
-	object_height = &temp_height;
+	new_selected_rectangle.object_width = &temp_width;
+	new_selected_rectangle.object_height = &temp_height;
+	new_selected_rectangle.data_object = data_object;
 
 	// Disable Resize
 	enable_resize = false;
 }
 
-void Editor::Selector::alocateSelectorVerticesEntity()
+void Editor::Selector::alocateSelectorVerticesEntity(DataClass::Data_Object* data_object)
 {
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
@@ -2862,8 +3015,12 @@ void Editor::Selector::alocateSelectorVerticesEntity()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesEntity()
+void Editor::Selector::genSelectorVerticesEntity(DataClass::Data_Object* data_object)
 {
+	// Get Object and Entity Data
+	Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
+	Object::Entity::EntityData& entity_data = static_cast<DataClass::Data_Entity*>(data_object)->getEntityData();
+
 	// Bind Object VAO
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
@@ -2891,39 +3048,49 @@ void Editor::Selector::genSelectorVerticesEntity()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataEntity()
+void Editor::Selector::storeSelectorDataEntity(DataClass::Data_Object* data_object)
 {
 	static float full_width, full_height;
 
+	// Get Object and Entity Data
+	Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
+	Object::Entity::EntityData& entity_data = static_cast<DataClass::Data_Entity*>(data_object)->getEntityData();
+
 	// Shape is a Rectangle
+	selected_object = new Selected_Rectangle();
+	Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
 	editing_shape = RECTANGLE;
 
 	// Store Object Data
 	full_width = entity_data.half_collision_width * 2.0f;
 	full_height = entity_data.half_collision_height * 2.0f;
-	object_width = &full_width;
-	object_height = &full_height;
+	new_selected_rectangle.object_width = &full_width;
+	new_selected_rectangle.object_height = &full_height;
+	new_selected_rectangle.data_object = data_object;
 
 	// Store Initial Position Data
-	object_x = &object_data.position.x;
-	object_y = &object_data.position.y;
+	new_selected_rectangle.object_x = &object_data.position.x;
+	new_selected_rectangle.object_y = &object_data.position.y;
 
 	// Get Object Info
-	Object::Entity::NPC::info(*info, editor_data.name, object_data);
+	Object::Entity::NPC::info(*info, data_object->getName(), object_data);
 
 	// Disable Resize
 	enable_resize = false;
 }
 
-void Editor::Selector::getShapeInfo(Shape::Shape* shape)
+void Editor::Selector::getShapeInfo(Shape::Shape* shape, DataClass::Data_Object* data_object)
 {
+	// Get Object Data
+	Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
+
 	// Selected Object is Terrain
-	if (object_identifier[0] == Object::TERRAIN)
-		Object::Terrain::TerrainBase::info(*info, editor_data.name, object_data, shape);
+	if (data_object->getObjectIdentifier()[0] == Object::TERRAIN)
+		Object::Terrain::TerrainBase::info(*info, data_object->getName(), object_data, shape);
 
 	// Selected Object is Rigid Body
 	else
-		Object::Physics::Rigid::RigidBody::info(*info, editor_data.name, object_data, shape);
+		Object::Physics::Rigid::RigidBody::info(*info, data_object->getName(), object_data, shape);
 }
 
 void Editor::Selector::uninitializeSelector()
@@ -3033,10 +3200,10 @@ void Editor::Selector::editObject()
 
 	// If Object is a Lighting Object, Update Shader Data
 	if (lighting_object)
-		storeSelectorShaderDataLights();
+		storeSelectorShaderDataLights(data_object);
 }
 
-void Editor::Selector::testResizeRectangle(bool enable_horizontal, bool enable_vertical)
+void Editor::Selector::testResizeRectangle(bool enable_horizontal, bool enable_vertical, float* object_x, float* object_y, float* object_width, float* object_height)
 {
 	// Test if Resizing Should be Considered
 	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
@@ -3093,30 +3260,11 @@ void Editor::Selector::testResizeRectangle(bool enable_horizontal, bool enable_v
 	}
 }
 
-void Editor::Selector::moveRectangle(bool enable_negative)
+void Editor::Selector::moveRectangle(bool enable_negative, float* object_x, float* object_y, float* object_width, float* object_height)
 {
 	// Stop Moving if LeftClick is no Longer Being Held
 	if (!Global::LeftClick)
-	{
 		moving = false;
-
-		//// If Selected Object is a File, Change Values
-		//if (enable_file_visualizer)
-		//{
-		//	file_visualizer->Initial_Position.x = xPos;
-		//	file_visualizer->Initial_Position.y = yPos;
-		//	if (type_minor == 6)
-		//	{
-		//		Object_SpringMass* temp = static_cast<Object_SpringMass*>(file_visualizer);
-		//		//temp->Read();
-		//	}
-		//	else if (type_minor == 9)
-		//	{
-		//		Object_Hinge* temp = static_cast<Object_Hinge*>(file_visualizer);
-		//		temp->Read();
-		//	}
-		//}
-	}
 
 	else
 	{
@@ -3184,15 +3332,18 @@ void Editor::Selector::moveRectangle(bool enable_negative)
 		// Else Update Vertices and Buffer Objects
 		else
 		{
-			genSelectorVertices();
+			genSelectorVertices(selected_object->data_object);
 		}
 	}
 }
 
 void Editor::Selector::updateRectangle()
 {
+	// Get Selected Rectangle Data
+	Selected_Rectangle& selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+
 	// Test if Mouse is Inside Object
-	if ((*object_x - (*object_width * 0.5f) < Global::mouseRelativeX) && (*object_x + (*object_width * 0.5f) > Global::mouseRelativeX) && (*object_y - (*object_height * 0.5f) < Global::mouseRelativeY) && (*object_y + (*object_height * 0.5f) > Global::mouseRelativeY))
+	if ((*selected_rectangle.object_x - (*selected_rectangle.object_width * 0.5f) < Global::mouseRelativeX) && (*selected_rectangle.object_x + (*selected_rectangle.object_width * 0.5f) > Global::mouseRelativeX) && (*selected_rectangle.object_y - (*selected_rectangle.object_height * 0.5f) < Global::mouseRelativeY) && (*selected_rectangle.object_y + (*selected_rectangle.object_height * 0.5f) > Global::mouseRelativeY))
 	{
 		// If Object is Currently Not Being Moved, Test If It Should
 		if (!moving)
@@ -3203,7 +3354,7 @@ void Editor::Selector::updateRectangle()
 			Global::Selected_Cursor = Global::CURSORS::HAND;
 
 			// Test if Rectangle Should Resize
-			testResizeRectangle(true, true);
+			testResizeRectangle(true, true, selected_rectangle.object_x, selected_rectangle.object_y, selected_rectangle.object_width, selected_rectangle.object_height);
 
 			// Test if Color of Outline Should Change to Moving
 			if (!mouse_intersects_object || (resizing && !(change_vertical || change_horizontal)))
@@ -3213,8 +3364,8 @@ void Editor::Selector::updateRectangle()
 			if (Global::LeftClick)
 			{
 				moving = true;
-				offset_x = *object_x - Global::mouseRelativeX;
-				offset_y = *object_y - Global::mouseRelativeY;
+				offset_x = *selected_rectangle.object_x - Global::mouseRelativeX;
+				offset_y = *selected_rectangle.object_y - Global::mouseRelativeY;
 			}
 		}
 	}
@@ -3234,10 +3385,10 @@ void Editor::Selector::updateRectangle()
 	}
 
 	// If Currently Moving, Move Rectangle
-	moveRectangle(true);
+	moveRectangle(true, selected_rectangle.object_x, selected_rectangle.object_y, selected_rectangle.object_width, selected_rectangle.object_height);
 }
 
-void Editor::Selector::testResizeTrapezoid()
+void Editor::Selector::testResizeTrapezoid(Selected_Trapezoid& selected_trapezoid)
 {
 	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
 	{
@@ -3245,14 +3396,14 @@ void Editor::Selector::testResizeTrapezoid()
 		float resize_width = 1.5f * Global::zoom_scale;
 
 		// Calculate Half Values
-		float half_width = *object_width * 0.5f;
-		float half_height = *object_height * 0.5f;
+		float half_width = *selected_trapezoid.object_width * 0.5f;
+		float half_height = *selected_trapezoid.object_height * 0.5f;
 
 		// Values of Corners
-		glm::vec2 bottom_left = glm::vec2(*object_x - half_width, *object_y - half_height);
-		glm::vec2 bottom_right = glm::vec2(*object_x + half_width, *object_y - half_height + *object_height_modifier);
-		glm::vec2 top_right = glm::vec2(*object_x + half_width + *object_width_modifier, *object_y + half_height + *object_height_modifier);
-		glm::vec2 top_left = glm::vec2(*object_x - half_width + *object_width_modifier, *object_y + half_height);
+		glm::vec2 bottom_left = glm::vec2(*selected_trapezoid.object_x - half_width, *selected_trapezoid.object_y - half_height);
+		glm::vec2 bottom_right = glm::vec2(*selected_trapezoid.object_x + half_width, *selected_trapezoid.object_y - half_height + *selected_trapezoid.object_height_modifier);
+		glm::vec2 top_right = glm::vec2(*selected_trapezoid.object_x + half_width + *selected_trapezoid.object_width_modifier, *selected_trapezoid.object_y + half_height + *selected_trapezoid.object_height_modifier);
+		glm::vec2 top_left = glm::vec2(*selected_trapezoid.object_x - half_width + *selected_trapezoid.object_width_modifier, *selected_trapezoid.object_y + half_height);
 
 		// Test if Bottom Shoud Resize
 		if (Global::mouseRelativeX > bottom_left.x && Global::mouseRelativeX < bottom_right.x)
@@ -3267,8 +3418,8 @@ void Editor::Selector::testResizeTrapezoid()
 				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
 
 				// Calculate Offsets
-				offset_x = *object_x - Global::mouseRelativeX;
-				offset_y = *object_height_modifier * ((Global::mouseRelativeX - bottom_left.x) / (bottom_right.x - bottom_left.x));
+				offset_x = *selected_trapezoid.object_x - Global::mouseRelativeX;
+				offset_y = *selected_trapezoid.object_height_modifier * ((Global::mouseRelativeX - bottom_left.x) / (bottom_right.x - bottom_left.x));
 			}
 		}
 
@@ -3285,8 +3436,8 @@ void Editor::Selector::testResizeTrapezoid()
 				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
 
 				// Calculate Offsets
-				offset_x = *object_width_modifier * ((Global::mouseRelativeY - bottom_right.y) / (top_right.y - bottom_right.y));
-				offset_y = (*object_y + *object_height_modifier) - Global::mouseRelativeY;
+				offset_x = *selected_trapezoid.object_width_modifier * ((Global::mouseRelativeY - bottom_right.y) / (top_right.y - bottom_right.y));
+				offset_y = (*selected_trapezoid.object_y + *selected_trapezoid.object_height_modifier) - Global::mouseRelativeY;
 			}
 		}
 
@@ -3303,8 +3454,8 @@ void Editor::Selector::testResizeTrapezoid()
 				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
 
 				// Calculate Offsets
-				offset_x = (*object_x + *object_width_modifier) - Global::mouseRelativeX;
-				offset_y = *object_height_modifier * ((Global::mouseRelativeX - top_left.x) / (top_right.x - bottom_left.x));
+				offset_x = (*selected_trapezoid.object_x + *selected_trapezoid.object_width_modifier) - Global::mouseRelativeX;
+				offset_y = *selected_trapezoid.object_height_modifier * ((Global::mouseRelativeX - top_left.x) / (top_right.x - bottom_left.x));
 			}
 		}
 
@@ -3321,8 +3472,8 @@ void Editor::Selector::testResizeTrapezoid()
 				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
 
 				// Calculate Offsets
-				offset_x = *object_width_modifier * ((Global::mouseRelativeY - bottom_left.y) / (top_left.y - bottom_left.y));
-				offset_y = *object_y - Global::mouseRelativeY;
+				offset_x = *selected_trapezoid.object_width_modifier * ((Global::mouseRelativeY - bottom_left.y) / (top_left.y - bottom_left.y));
+				offset_y = *selected_trapezoid.object_y - Global::mouseRelativeY;
 			}
 		}
 
@@ -3332,7 +3483,7 @@ void Editor::Selector::testResizeTrapezoid()
 	}
 }
 
-void Editor::Selector::moveTrapezoid()
+void Editor::Selector::moveTrapezoid(Selected_Trapezoid& selected_trapezoid)
 {
 	// Stop Moving if LeftClick is no Longer Being Held
 	if (!Global::LeftClick)
@@ -3349,22 +3500,22 @@ void Editor::Selector::moveTrapezoid()
 			if (change_horizontal == 1)
 			{
 				// Calculate Change in X Values
-				float change = (*object_x - Global::mouseRelativeX - offset_x) * 0.5f;
+				float change = (*selected_trapezoid.object_x - Global::mouseRelativeX - offset_x) * 0.5f;
 
 				// Calculate Y Changes
-				float temp_yPos = (Global::mouseRelativeY - offset_y + (*object_y - ((*object_height * 0.5f) * -1))) * 0.5f;
+				float temp_yPos = (Global::mouseRelativeY - offset_y + (*selected_trapezoid.object_y - ((*selected_trapezoid.object_height * 0.5f) * -1))) * 0.5f;
 				float temp_Size2 = 2 * (Global::mouseRelativeY - offset_y - temp_yPos) * -1;
 
 				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
 				if (!Global::editor_options->option_disable_pass_through || temp_Size2 > 0.1f)
 				{
 					// Apply Change
-					*object_x -= change;
-					*object_width_modifier += change;
+					*selected_trapezoid.object_x -= change;
+					*selected_trapezoid.object_width_modifier += change;
 
 					// Apply Calculated Size Change
-					*object_y = temp_yPos;
-					*object_height = temp_Size2;
+					*selected_trapezoid.object_y = temp_yPos;
+					*selected_trapezoid.object_height = temp_Size2;
 				}
 			}
 
@@ -3372,26 +3523,26 @@ void Editor::Selector::moveTrapezoid()
 			else if (change_horizontal == 2)
 			{
 				// Set Object X Offset
-				float temp_SizeOffset1 = (Global::mouseRelativeX + offset_x) - *object_x;
+				float temp_SizeOffset1 = (Global::mouseRelativeX + offset_x) - *selected_trapezoid.object_x;
 
 				// Calculate Y Changes
-				float temp_yPos = (Global::mouseRelativeY - offset_y + (*object_y - (*object_height * 0.5f))) * 0.5f;
+				float temp_yPos = (Global::mouseRelativeY - offset_y + (*selected_trapezoid.object_y - (*selected_trapezoid.object_height * 0.5f))) * 0.5f;
 				float temp_Size2 = 2 * (Global::mouseRelativeY - offset_y - temp_yPos);
 
 				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
 				if (!Global::editor_options->option_disable_pass_through || temp_Size2 > 0.1f)
 				{
 					// Apply Calculated Size Change
-					*object_width_modifier = temp_SizeOffset1;
-					*object_y = temp_yPos;
-					*object_height = temp_Size2;
+					*selected_trapezoid.object_width_modifier = temp_SizeOffset1;
+					*selected_trapezoid.object_y = temp_yPos;
+					*selected_trapezoid.object_height = temp_Size2;
 				}
 			}
 
 			// Prevent Size from Going Negative
-			if (*object_height <= 0.1f)
+			if (*selected_trapezoid.object_height <= 0.1f)
 			{
-				*object_height = 0.1f;
+				*selected_trapezoid.object_height = 0.1f;
 			}
 		}
 
@@ -3402,19 +3553,19 @@ void Editor::Selector::moveTrapezoid()
 			if (change_vertical == 1)
 			{
 				// Set Object Y Offset
-				float temp_SizeOffset2 = (Global::mouseRelativeY + offset_y) - *object_y;
+				float temp_SizeOffset2 = (Global::mouseRelativeY + offset_y) - *selected_trapezoid.object_y;
 
 				// Calculate X Changes
-				float temp_xPos = (Global::mouseRelativeX - offset_x + (*object_x - (*object_width * 0.5f))) * 0.5f;
+				float temp_xPos = (Global::mouseRelativeX - offset_x + (*selected_trapezoid.object_x - (*selected_trapezoid.object_width * 0.5f))) * 0.5f;
 				float temp_Size1 = 2 * (Global::mouseRelativeX - offset_x - temp_xPos);
 
 				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
 				if (!Global::editor_options->option_disable_pass_through || temp_Size1 > 0.1f)
 				{
 					// Apply Calculated Size Change
-					*object_height_modifier = temp_SizeOffset2;
-					*object_x = temp_xPos;
-					*object_width = temp_Size1;
+					*selected_trapezoid.object_height_modifier = temp_SizeOffset2;
+					*selected_trapezoid.object_x = temp_xPos;
+					*selected_trapezoid.object_width = temp_Size1;
 				}
 			}
 
@@ -3422,52 +3573,55 @@ void Editor::Selector::moveTrapezoid()
 			else if (change_vertical == 2)
 			{
 				// Calculate Change in Y Values
-				float change = (*object_y - Global::mouseRelativeY - offset_y) * 0.5f;
+				float change = (*selected_trapezoid.object_y - Global::mouseRelativeY - offset_y) * 0.5f;
 
 				// Calculate X Changes
-				float temp_xPos = (Global::mouseRelativeX - offset_x + (*object_x - ((*object_width * 0.5f) * -1))) * 0.5f;
+				float temp_xPos = (Global::mouseRelativeX - offset_x + (*selected_trapezoid.object_x - ((*selected_trapezoid.object_width * 0.5f) * -1))) * 0.5f;
 				float temp_Size1 = 2 * (Global::mouseRelativeX - offset_x - temp_xPos) * -1;
 
 				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
 				if (!Global::editor_options->option_disable_pass_through || temp_Size1 > 0.1f)
 				{
 					// Apply Change
-					*object_y -= change;
-					*object_height_modifier += change;
+					*selected_trapezoid.object_y -= change;
+					*selected_trapezoid.object_height_modifier += change;
 
 					// Apply Calculated Size Change
-					*object_x = temp_xPos;
-					*object_width = temp_Size1;
+					*selected_trapezoid.object_x = temp_xPos;
+					*selected_trapezoid.object_width = temp_Size1;
 				}
 			}
 
 			// Prevent Size from Going Negative
-			if (*object_width <= 0.1f)
+			if (*selected_trapezoid.object_width <= 0.1f)
 			{
-				*object_width = 0.1f;
+				*selected_trapezoid.object_width = 0.1f;
 			}
 		}
 
 		// Move if Size Doesn't Change
 		if (!(change_vertical || change_horizontal))
 		{
-			*object_x = (float)(Global::mouseRelativeX + offset_x);
-			*object_y = (float)(Global::mouseRelativeY + offset_y);
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+			*selected_trapezoid.object_x = (float)(Global::mouseRelativeX + offset_x);
+			*selected_trapezoid.object_y = (float)(Global::mouseRelativeY + offset_y);
+			model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_trapezoid.object_x, *selected_trapezoid.object_y, 0.0f));
 		}
 
 		// Else Update Vertices and Buffer Objects
 		else
 		{
-			genSelectorVertices();
+			genSelectorVertices(selected_trapezoid.data_object);
 		}
 	}
 }
 
 void Editor::Selector::updateTrapezoid()
 {
+	// Get Selected Trapezoid
+	Selected_Trapezoid& selected_trapezoid = *static_cast<Selected_Trapezoid*>(selected_object);
+
 	// Test if Mouse is Inside Object
-	if (Source::Collisions::Point::testTrapCollisions(*object_x, *object_y, *object_width, *object_height, *object_width_modifier, *object_height_modifier))
+	if (Source::Collisions::Point::testTrapCollisions(*selected_trapezoid.object_x, *selected_trapezoid.object_y, *selected_trapezoid.object_width, *selected_trapezoid.object_height, *selected_trapezoid.object_width_modifier, *selected_trapezoid.object_height_modifier))
 	{
 		// If Object is Currently Not Being Moved, Test If It Should
 		if (!moving)
@@ -3478,7 +3632,7 @@ void Editor::Selector::updateTrapezoid()
 			Global::Selected_Cursor = Global::CURSORS::HAND;
 
 			// Test if Rectangle Should Resize
-			testResizeTrapezoid();
+			testResizeTrapezoid(selected_trapezoid);
 
 			// Test if Color of Outline Should Change to Moving
 			if (!mouse_intersects_object || (resizing && !(change_vertical || change_horizontal)))
@@ -3492,8 +3646,8 @@ void Editor::Selector::updateTrapezoid()
 				// Only Use Offset if Not Resizing (Offset is Already Defined for Resize)
 				if (!(change_vertical || change_horizontal))
 				{
-					offset_x = *object_x - Global::mouseRelativeX;
-					offset_y = *object_y - Global::mouseRelativeY;
+					offset_x = *selected_trapezoid.object_x - Global::mouseRelativeX;
+					offset_y = *selected_trapezoid.object_y - Global::mouseRelativeY;
 				}
 			}
 		}
@@ -3522,28 +3676,28 @@ void Editor::Selector::updateTrapezoid()
 	else
 	{
 		// If Currently Moving, Move Trapezoid
-		moveTrapezoid();
+		moveTrapezoid(selected_trapezoid);
 	}
 }
 
-void Editor::Selector::testResizeTriangle()
+void Editor::Selector::testResizeTriangle(Selected_Triangle& selected_triangle)
 {
 	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
 	{
 		// Test if the First Vector Should Move
-		if ((Global::mouseRelativeX >= coords1.x - 2 && Global::mouseRelativeX <= coords1.x + 2) && (Global::mouseRelativeY >= coords1.y - 2 && Global::mouseRelativeY <= coords1.y + 2))
+		if ((Global::mouseRelativeX >= selected_triangle.coords1.x - 2 && Global::mouseRelativeX <= selected_triangle.coords1.x + 2) && (Global::mouseRelativeY >= selected_triangle.coords1.y - 2 && Global::mouseRelativeY <= selected_triangle.coords1.y + 2))
 		{
 			selected_vertex = 1;
 		}
 
 		// Test if the Second Vector Should Move
-		else if ((Global::mouseRelativeX >= coords2.x - 2 && Global::mouseRelativeX <= coords2.x + 2) && (Global::mouseRelativeY >= coords2.y - 2 && Global::mouseRelativeY <= coords2.y + 2))
+		else if ((Global::mouseRelativeX >= selected_triangle.coords2.x - 2 && Global::mouseRelativeX <= selected_triangle.coords2.x + 2) && (Global::mouseRelativeY >= selected_triangle.coords2.y - 2 && Global::mouseRelativeY <= selected_triangle.coords2.y + 2))
 		{
 			selected_vertex = 2;
 		}
 
 		// Test if the Third Vector Should Move
-		else if ((Global::mouseRelativeX >= coords3.x - 2 && Global::mouseRelativeX <= coords3.x + 2) && (Global::mouseRelativeY >= coords3.y - 2 && Global::mouseRelativeY <= coords3.y + 2))
+		else if ((Global::mouseRelativeX >= selected_triangle.coords3.x - 2 && Global::mouseRelativeX <= selected_triangle.coords3.x + 2) && (Global::mouseRelativeY >= selected_triangle.coords3.y - 2 && Global::mouseRelativeY <= selected_triangle.coords3.y + 2))
 		{
 			selected_vertex = 3;
 		}
@@ -3554,7 +3708,7 @@ void Editor::Selector::testResizeTriangle()
 	}
 }
 
-void Editor::Selector::moveTriangle()
+void Editor::Selector::moveTriangle(Selected_Triangle& selected_triangle)
 {
 	// Stop Moving if LeftClick is no Longer Being Held
 	if (!Global::LeftClick)
@@ -3570,27 +3724,27 @@ void Editor::Selector::moveTriangle()
 			// Move Highest Vertex
 			if (selected_vertex == 1)
 			{
-				coords1.x = Global::mouseRelativeX;
-				coords1.y = Global::mouseRelativeY;
+				selected_triangle.coords1.x = Global::mouseRelativeX;
+				selected_triangle.coords1.y = Global::mouseRelativeY;
 			}
 
 			// Move Second Highest Vertex
 			else if (selected_vertex == 2)
 			{
-				coords2.x = Global::mouseRelativeX;
-				coords2.y = Global::mouseRelativeY;
+				selected_triangle.coords2.x = Global::mouseRelativeX;
+				selected_triangle.coords2.y = Global::mouseRelativeY;
 			}
 
 			// Move Lowest Vertex
 			else
 			{
-				coords3.x = Global::mouseRelativeX;
-				coords3.y = Global::mouseRelativeY;
+				selected_triangle.coords3.x = Global::mouseRelativeX;
+				selected_triangle.coords3.y = Global::mouseRelativeY;
 			}
 
 			// Store Vertices in Object Data
-			object_data.position = coords1;
-			triangle_data = Shape::Triangle(coords2, coords3);
+			temp_position = selected_triangle.coords1;
+			triangle_data = Shape::Triangle(selected_triangle.coords2, selected_triangle.coords3);
 			should_sort = true;
 		}
 
@@ -3598,36 +3752,39 @@ void Editor::Selector::moveTriangle()
 		if (!selected_vertex)
 		{
 			// Calclate New Coordinates
-			glm::vec2 delta_coords2 = coords2 - coords1;
-			glm::vec2 delta_coords3 = coords3 - coords1;
-			coords1.x = (float)(Global::mouseRelativeX + offset_x);
-			coords1.y = (float)(Global::mouseRelativeY + offset_y);
-			coords2 = delta_coords2 + coords1;
-			coords3 = delta_coords3 + coords1;
+			glm::vec2 delta_coords2 = selected_triangle.coords2 - selected_triangle.coords1;
+			glm::vec2 delta_coords3 = selected_triangle.coords3 - selected_triangle.coords1;
+			selected_triangle.coords1.x = (float)(Global::mouseRelativeX + offset_x);
+			selected_triangle.coords1.y = (float)(Global::mouseRelativeY + offset_y);
+			selected_triangle.coords2 = delta_coords2 + selected_triangle.coords1;
+			selected_triangle.coords3 = delta_coords3 + selected_triangle.coords1;
 
 			// Store New Position Data
-			object_data.position = coords1;
-			object_x = &object_data.position.x;
-			object_y = &object_data.position.y;
-			triangle_data = Shape::Triangle(coords2, coords3);
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+			temp_position = selected_triangle.coords1;
+			selected_triangle.object_x = &temp_position.x;
+			selected_triangle.object_y = &temp_position.y;
+			triangle_data = Shape::Triangle(selected_triangle.coords2, selected_triangle.coords3);
+			model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_triangle.object_x, *selected_triangle.object_y, 0.0f));
 		}
 
 		// Else Update Vertices and Buffer Objects
 		else
 		{
-			genSelectorVertices();
+			genSelectorVertices(selected_triangle.data_object);
 		}
 	}
 }
 
 void Editor::Selector::updateTriangle()
 {
-	Vertices::Visualizer::visualizePoint(coords1, 0.3f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	Vertices::Visualizer::visualizePoint(coords2, 0.3f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
-	Vertices::Visualizer::visualizePoint(coords3, 0.3f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+	// Get Selected Triangle Data
+	Selected_Triangle& selected_triangle = *static_cast<Selected_Triangle*>(selected_object);
 
-	if (Source::Collisions::Point::testTriCollisions(coords1, coords2, coords3))
+	Vertices::Visualizer::visualizePoint(selected_triangle.coords1, 0.3f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	Vertices::Visualizer::visualizePoint(selected_triangle.coords2, 0.3f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+	Vertices::Visualizer::visualizePoint(selected_triangle.coords3, 0.3f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+
+	if (Source::Collisions::Point::testTriCollisions(selected_triangle.coords1, selected_triangle.coords2, selected_triangle.coords3))
 	{
 		// If Object is Currently Not Being Moved, Test If It Should
 		if (!moving)
@@ -3637,7 +3794,7 @@ void Editor::Selector::updateTriangle()
 			Global::Selected_Cursor = Global::CURSORS::HAND;
 
 			// Test if Rectangle Should Resize
-			testResizeTriangle();
+			testResizeTriangle(selected_triangle);
 
 			// Test if Color of Outline Should Change to Moving
 			if (!mouse_intersects_object || (resizing && !selected_vertex))
@@ -3647,8 +3804,8 @@ void Editor::Selector::updateTriangle()
 			if (Global::LeftClick)
 			{
 				moving = true;
-				offset_x = coords1.x - Global::mouseRelativeX;
-				offset_y = coords1.y - Global::mouseRelativeY;
+				offset_x = selected_triangle.coords1.x - Global::mouseRelativeX;
+				offset_y = selected_triangle.coords1.y - Global::mouseRelativeY;
 			}
 		}
 	}
@@ -3676,11 +3833,11 @@ void Editor::Selector::updateTriangle()
 	else
 	{
 		// If Currently Moving, Move Rectangle
-		moveTriangle();
+		moveTriangle(selected_triangle);
 	}
 }
 
-void Editor::Selector::testResizeCircle(float& distance, float& delta_w, float& delta_h)
+void Editor::Selector::testResizeCircle(float& distance, float& delta_w, float& delta_h, float* object_radius)
 {
 	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
 	{
@@ -3708,7 +3865,7 @@ void Editor::Selector::testResizeCircle(float& distance, float& delta_w, float& 
 	}
 }
 
-void Editor::Selector::moveCircle()
+void Editor::Selector::moveCircle(float* object_x, float* object_y, float* object_radius)
 {
 	// Stop Moving if LeftClick is no Longer Being Held
 	if (!Global::LeftClick)
@@ -3736,20 +3893,23 @@ void Editor::Selector::moveCircle()
 		// Else Update Vertices and Buffer Objects
 		else
 		{
-			genSelectorVertices();
+			genSelectorVertices(selected_object->data_object);
 		}
 	}
 }
 
 void Editor::Selector::updateCircle()
 {
+	// Get Selected Circle Data
+	Selected_Circle& selected_circle = *static_cast<Selected_Circle*>(selected_object);
+
 	// Get Distance Between Mouse and Center of Circle
-	float delta_w = Global::mouseRelativeX - *object_x;
-	float delta_h = Global::mouseRelativeY - *object_y;
+	float delta_w = Global::mouseRelativeX - *selected_circle.object_x;
+	float delta_h = Global::mouseRelativeY - *selected_circle.object_y;
 	float distance = glm::distance(glm::vec2(delta_w, delta_h), glm::vec2(0.0f, 0.0f));
 
 	// Test if Mouse is Inside Circle Object
-	if (distance < *object_radius)
+	if (distance < *selected_circle.object_radius)
 	{
 		// If Object is Currently Not Being Moved, Test If It Should
 		if (!moving)
@@ -3760,7 +3920,7 @@ void Editor::Selector::updateCircle()
 			Global::Selected_Cursor = Global::CURSORS::HAND;
 
 			// Test if Rectangle Should Resize
-			testResizeCircle(distance, delta_w, delta_h);
+			testResizeCircle(distance, delta_w, delta_h, selected_circle.object_radius);
 
 			// Test if Color of Outline Should Change to Moving
 			if (!mouse_intersects_object || (resizing && !selected_vertex))
@@ -3770,8 +3930,8 @@ void Editor::Selector::updateCircle()
 			if (Global::LeftClick)
 			{
 				moving = true;
-				offset_x = *object_x - Global::mouseRelativeX;
-				offset_y = *object_y - Global::mouseRelativeY;
+				offset_x = *selected_circle.object_x - Global::mouseRelativeX;
+				offset_y = *selected_circle.object_y - Global::mouseRelativeY;
 			}
 		}
 	}
@@ -3791,10 +3951,10 @@ void Editor::Selector::updateCircle()
 	}
 
 	// If Currently Moving, Move Rectangle
-	moveCircle();
+	moveCircle(selected_circle.object_x, selected_circle.object_y, selected_circle.object_radius);
 }
 
-void Editor::Selector::testResizeLine()
+void Editor::Selector::testResizeLine(Selected_Line& selected_line)
 {
 	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
 	{
@@ -3802,7 +3962,7 @@ void Editor::Selector::testResizeLine()
 		float resize_width = 1.5f * Global::zoom_scale;
 
 		// Test if Mouse is Close to Origin Vertex
-		if (glm::distance(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), glm::vec2(*object_x, *object_y)) < resize_width)
+		if (glm::distance(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), glm::vec2(*selected_line.object_x, *selected_line.object_y)) < resize_width)
 		{
 			// Set Vertex to First Vertex
 			selected_vertex = 1;
@@ -3812,7 +3972,7 @@ void Editor::Selector::testResizeLine()
 		}
 
 		// Test if Mouse is Close to Opposite Vertex
-		else if (glm::distance(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), glm::vec2(*object_opposite_x, *object_opposite_y)) < resize_width)
+		else if (glm::distance(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), glm::vec2(*selected_line.object_opposite_x, *selected_line.object_opposite_y)) < resize_width)
 		{
 			// Set Vertex to Second Vertex
 			selected_vertex = 2;
@@ -3827,7 +3987,7 @@ void Editor::Selector::testResizeLine()
 	}
 }
 
-void Editor::Selector::moveLine()
+void Editor::Selector::moveLine(Selected_Line& selected_line)
 {
 	// Stop Moving if LeftClick is no Longer Being Held
 	if (!Global::LeftClick)
@@ -3841,53 +4001,55 @@ void Editor::Selector::moveLine()
 		if (selected_vertex == 1)
 		{
 			// Move Object Position
-			*object_x = Global::mouseRelativeX;
-			*object_y = Global::mouseRelativeY;
+			*selected_line.object_x = Global::mouseRelativeX;
+			*selected_line.object_y = Global::mouseRelativeY;
 		}
 		
 		// Test if Object Opposite Vertex is Being Moved
 		else if (selected_vertex == 2)
 		{
 			// Move Object Opposite Position
-			*object_opposite_x = Global::mouseRelativeX;
-			*object_opposite_y = Global::mouseRelativeY;
+			*selected_line.object_opposite_x = Global::mouseRelativeX;
+			*selected_line.object_opposite_y = Global::mouseRelativeY;
 		}
 
 		// Move if Size Doesn't Change
 		if (!selected_vertex)
 		{
 			// Find Distance Between Positions
-			glm::vec2 delta_pos = glm::vec2(*object_opposite_x, *object_opposite_y) - glm::vec2(*object_x, *object_y);
+			glm::vec2 delta_pos = glm::vec2(*selected_line.object_opposite_x, *selected_line.object_opposite_y) - glm::vec2(*selected_line.object_x, *selected_line.object_y);
 
 			// Get New Origin Position
-			*object_x = (float)(Global::mouseRelativeX + offset_x);
-			*object_y = (float)(Global::mouseRelativeY + offset_y);
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+			*selected_line.object_x = (float)(Global::mouseRelativeX + offset_x);
+			*selected_line.object_y = (float)(Global::mouseRelativeY + offset_y);
+			model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_line.object_x, *selected_line.object_y, 0.0f));
 
 			// Generate Line Data
 			//intercept = slant_data.position.y - (slope * slant_data.position.x);
-			intercept = *object_y - (slope * *object_x);
+			intercept = *selected_line.object_y - (slope * *selected_line.object_x);
 
 			// Find New Opposite Position
-			*object_opposite_x = *object_x + delta_pos.x;
-			*object_opposite_y = *object_y + delta_pos.y;
+			*selected_line.object_opposite_x = *selected_line.object_x + delta_pos.x;
+			*selected_line.object_opposite_y = *selected_line.object_y + delta_pos.y;
 		}
 
 		// Else Update Vertices and Buffer Objects
 		else
 		{
-			genSelectorVertices();
+			genSelectorVertices(selected_line.data_object);
 		}
 	}
 }
 
 void Editor::Selector::updateLine()
 {
+	Selected_Line& selected_line = *static_cast<Selected_Line*>(selected_object);
+
 	// Localized Y Value at MouseX
 	float LocalY = slope * Global::mouseRelativeX + intercept;
 
 	// Test if Mouse Intersects Lines
-	if (((*object_x < Global::mouseRelativeX && *object_opposite_x > Global::mouseRelativeX) || (*object_opposite_x < Global::mouseRelativeX && *object_x > Global::mouseRelativeX)) && LocalY < Global::mouseRelativeY + 1 && LocalY > Global::mouseRelativeY - 1)
+	if (((*selected_line.object_x < Global::mouseRelativeX && *selected_line.object_opposite_x > Global::mouseRelativeX) || (*selected_line.object_opposite_x < Global::mouseRelativeX && *selected_line.object_x > Global::mouseRelativeX)) && LocalY < Global::mouseRelativeY + 1 && LocalY > Global::mouseRelativeY - 1)
 	{
 		// If Object is Currently Not Being Moved, Test If It Should
 		if (!moving)
@@ -3897,7 +4059,7 @@ void Editor::Selector::updateLine()
 			Global::Selected_Cursor = Global::CURSORS::HAND;
 
 			// Test if Line Should Resize
-			testResizeLine();
+			testResizeLine(selected_line);
 
 			// Test if Color of Outline Should Change to Moving
 			if (!mouse_intersects_object || (resizing && !selected_vertex))
@@ -3907,8 +4069,8 @@ void Editor::Selector::updateLine()
 			if (Global::LeftClick)
 			{
 				moving = true;
-				offset_x = *object_x - Global::mouseRelativeX;
-				offset_y = *object_y - Global::mouseRelativeY;
+				offset_x = *selected_line.object_x - Global::mouseRelativeX;
+				offset_y = *selected_line.object_y - Global::mouseRelativeY;
 			}
 		}
 	}
@@ -3928,13 +4090,16 @@ void Editor::Selector::updateLine()
 	}
 
 	// If Currently Moving, Move Line
-	moveLine();
+	moveLine(selected_line);
 }
 
 void Editor::Selector::updateHorizontalLine()
 {
+	// Get Selected Horizontal Line Data
+	Selected_Horizontal_Line& selected_horizontal_line = *static_cast<Selected_Horizontal_Line*>(selected_object);
+
 	// Test if Mouse is Inside Object
-	if ((*object_x - (*object_width * 0.5f) < Global::mouseRelativeX) && (*object_x + (*object_width * 0.5f) > Global::mouseRelativeX) && (*object_y - 0.5f < Global::mouseRelativeY) && (*object_y + 0.5f > Global::mouseRelativeY))
+	if ((*selected_horizontal_line.object_x - (*selected_horizontal_line.object_width * 0.5f) < Global::mouseRelativeX) && (*selected_horizontal_line.object_x + (*selected_horizontal_line.object_width * 0.5f) > Global::mouseRelativeX) && (*selected_horizontal_line.object_y - 0.5f < Global::mouseRelativeY) && (*selected_horizontal_line.object_y + 0.5f > Global::mouseRelativeY))
 	{
 		// If Object is Currently Not Being Moved, Test If It Should
 		if (!moving)
@@ -3944,7 +4109,7 @@ void Editor::Selector::updateHorizontalLine()
 			Global::Selected_Cursor = Global::CURSORS::HAND;
 
 			// Test if Rectangle Should Resize
-			testResizeRectangle(true, false);
+			testResizeRectangle(true, false, selected_horizontal_line.object_x, selected_horizontal_line.object_y, selected_horizontal_line.object_width, nullptr);
 
 			// Test if Color of Outline Should Change to Moving
 			if (!mouse_intersects_object || (resizing && !change_horizontal))
@@ -3954,8 +4119,8 @@ void Editor::Selector::updateHorizontalLine()
 			if (Global::LeftClick)
 			{
 				moving = true;
-				offset_x = *object_x - Global::mouseRelativeX;
-				offset_y = *object_y - Global::mouseRelativeY;
+				offset_x = *selected_horizontal_line.object_x - Global::mouseRelativeX;
+				offset_y = *selected_horizontal_line.object_y - Global::mouseRelativeY;
 			}
 		}
 	}
@@ -3975,13 +4140,16 @@ void Editor::Selector::updateHorizontalLine()
 	}
 
 	// If Currently Moving, Move Rectangle
-	moveRectangle(true);
+	moveRectangle(true, selected_horizontal_line.object_x, selected_horizontal_line.object_y, selected_horizontal_line.object_width, nullptr);
 }
 
 void Editor::Selector::updateVerticalLine()
 {
+	// Get Selected Vertical Line Data
+	Selected_Vertical_Line& selected_vertical_line = *static_cast<Selected_Vertical_Line*>(selected_object);
+
 	// Test if Mouse is Inside Object
-	if ((*object_x - 0.5f < Global::mouseRelativeX) && (*object_y + 0.5f > Global::mouseRelativeX) && (*object_y - (*object_height / 2) < Global::mouseRelativeY) && (*object_y + (*object_height / 2) > Global::mouseRelativeY))
+	if ((*selected_vertical_line.object_x - 0.5f < Global::mouseRelativeX) && (*selected_vertical_line.object_y + 0.5f > Global::mouseRelativeX) && (*selected_vertical_line.object_y - (*selected_vertical_line.object_height / 2) < Global::mouseRelativeY) && (*selected_vertical_line.object_y + (*selected_vertical_line.object_height / 2) > Global::mouseRelativeY))
 	{
 		// If Object is Currently Not Being Moved, Test If It Should
 		if (!moving)
@@ -3991,7 +4159,7 @@ void Editor::Selector::updateVerticalLine()
 			Global::Selected_Cursor = Global::CURSORS::HAND;
 
 			// Test if Rectangle Should Resize
-			testResizeRectangle(false, true);
+			testResizeRectangle(false, true, selected_vertical_line.object_x, selected_vertical_line.object_y, nullptr, selected_vertical_line.object_height);
 
 			// Test if Color of Outline Should Change to Moving
 			if (!mouse_intersects_object || (resizing && !change_vertical))
@@ -4001,8 +4169,8 @@ void Editor::Selector::updateVerticalLine()
 			if (Global::LeftClick)
 			{
 				moving = true;
-				offset_x = *object_x - Global::mouseRelativeX;
-				offset_y = *object_y - Global::mouseRelativeY;
+				offset_x = *selected_vertical_line.object_x - Global::mouseRelativeX;
+				offset_y = *selected_vertical_line.object_y - Global::mouseRelativeY;
 			}
 		}
 	}
@@ -4022,13 +4190,16 @@ void Editor::Selector::updateVerticalLine()
 	}
 
 	// If Currently Moving, Move Rectangle
-	moveRectangle(true);
+	moveRectangle(true, selected_vertical_line.object_x, selected_vertical_line.object_y, nullptr, selected_vertical_line.object_height);
 }
 
 void Editor::Selector::updateSpringMassObject()
 {
+	// Get Selected Rectangle Data
+	Selected_Rectangle& selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+
 	// Test if Mouse is Inside Object
-	if (Global::mouseRelativeX > *object_x - 0.5f && Global::mouseRelativeX < *object_x + 0.5f && Global::mouseRelativeY > *object_y - 0.5f && Global::mouseRelativeY < *object_y + 0.5f)
+	if (Global::mouseRelativeX > *selected_rectangle.object_x - 0.5f && Global::mouseRelativeX < *selected_rectangle.object_x + 0.5f && Global::mouseRelativeY > *selected_rectangle.object_y - 0.5f && Global::mouseRelativeY < *selected_rectangle.object_y + 0.5f)
 	{
 		Global::Selected_Cursor = Global::CURSORS::HAND;
 		outlineForMove();
@@ -4037,8 +4208,8 @@ void Editor::Selector::updateSpringMassObject()
 		if (Global::LeftClick)
 		{
 			moving = true;
-			offset_x = *object_x - Global::mouseRelativeX;
-			offset_y = *object_y - Global::mouseRelativeY;
+			offset_x = *selected_rectangle.object_x - Global::mouseRelativeX;
+			offset_y = *selected_rectangle.object_y - Global::mouseRelativeY;
 		}
 	}
 
@@ -4067,9 +4238,9 @@ void Editor::Selector::updateSpringMassObject()
 		else
 		{
 			Global::Selected_Cursor = Global::CURSORS::HAND;
-			*object_x = (float)(Global::mouseRelativeX + offset_x);
-			*object_y = (float)(Global::mouseRelativeY + offset_y);
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+			*selected_rectangle.object_x = (float)(Global::mouseRelativeX + offset_x);
+			*selected_rectangle.object_y = (float)(Global::mouseRelativeY + offset_y);
+			model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_rectangle.object_x, *selected_rectangle.object_y, 0.0f));
 		}
 	}
 }
@@ -4093,8 +4264,8 @@ void Editor::Selector::updateSpringMassNode()
 			if (Global::LeftClick)
 			{
 				moving = true;
-				offset_x = *object_x - Global::mouseRelativeX;
-				offset_y = *object_y - Global::mouseRelativeY;
+				offset_x = *selected_object->object_x - Global::mouseRelativeX;
+				offset_y = *selected_object->object_y - Global::mouseRelativeY;
 			}
 		}
 	}
@@ -4109,7 +4280,7 @@ void Editor::Selector::updateSpringMassNode()
 		// If Left Click is Pressed, Deselect Object
 		if (Global::LeftClick)
 		{
-			node_data.position -= object_data.position;
+			//node_data.position -= object_data.position;
 			deselectNode();
 			level->reloadAll();
 			return;
@@ -4125,9 +4296,9 @@ void Editor::Selector::updateSpringMassNode()
 
 		// Move Node
 		Global::Selected_Cursor = Global::CURSORS::HAND;
-		*object_x = (float)(Global::mouseRelativeX + offset_x);
-		*object_y = (float)(Global::mouseRelativeY + offset_y);
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+		*selected_object->object_x = (float)(Global::mouseRelativeX + offset_x);
+		*selected_object->object_y = (float)(Global::mouseRelativeY + offset_y);
+		model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_object->object_x, *selected_object->object_y, 0.0f));
 	}
 
 	// Update Node in Origin Object
@@ -4283,7 +4454,7 @@ void Editor::Selector::updateSpringMassSpring()
 				spring_data.MaxLength = 2 * spring_data.RestLength;
 
 				// Change Vertices
-				genSelectorVerticesSoftBody();
+				genSelectorVerticesSoftBody(selected_object->data_object);
 			}
 		}
 	}
@@ -4298,12 +4469,15 @@ void Editor::Selector::sortVertices(bool enable_rotation)
 	// Rectangle
 	if (editing_shape == RECTANGLE)
 	{
+		// Get Selected Rectangle Data
+		Selected_Rectangle& selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+
 		// Transform Data into Vertices
-		float half_width = *object_width * 0.5f;
-		float half_height = *object_height * 0.5f;
+		float half_width = *selected_rectangle.object_width * 0.5f;
+		float half_height = *selected_rectangle.object_height * 0.5f;
 		float vertices[8] = {
-			*object_x - half_width, *object_y - half_height, *object_x + half_width, *object_height - half_height,
-			*object_x + half_width, *object_y + half_height, *object_x - half_width, *object_height + half_height
+			*selected_rectangle.object_x - half_width, * selected_rectangle.object_y - half_height, * selected_rectangle.object_x + half_width, * selected_rectangle.object_height - half_height,
+			* selected_rectangle.object_x + half_width, * selected_rectangle.object_y + half_height, * selected_rectangle.object_x - half_width, * selected_rectangle.object_height + half_height
 		};
 
 		// Sort Vertices
@@ -4341,25 +4515,28 @@ void Editor::Selector::sortVertices(bool enable_rotation)
 		}
 
 		// Finsish Endpoints
-		*object_x = (vertices[0] + vertices[2] + vertices[4] + vertices[6]) / 4;
-		*object_y = (vertices[1] + vertices[3] + vertices[5] + vertices[7]) / 4;
-		*object_width = abs(vertices[2] - vertices[0]);
-		if (*object_width < 0.1f) { *object_width = 0.2f; }
-		*object_height = abs(vertices[5] - vertices[3]);
-		if (*object_height < 0.1f) { *object_height = 0.2f; }
+		*selected_rectangle.object_x = (vertices[0] + vertices[2] + vertices[4] + vertices[6]) / 4;
+		*selected_rectangle.object_y = (vertices[1] + vertices[3] + vertices[5] + vertices[7]) / 4;
+		*selected_rectangle.object_width = abs(vertices[2] - vertices[0]);
+		if (*selected_rectangle.object_width < 0.1f) { *selected_rectangle.object_width = 0.2f; }
+		*selected_rectangle.object_height = abs(vertices[5] - vertices[3]);
+		if (*selected_rectangle.object_height < 0.1f) { *selected_rectangle.object_height = 0.2f; }
 	}
 
 	// Trapezoid
 	else if (editing_shape == TRAPEZOID)
 	{
+		// Get Selected Trapezoid Data
+		Selected_Trapezoid& selected_trapezoid = *static_cast<Selected_Trapezoid*>(selected_object);
+
 		// Transform Data into Vertices
-		float half_width = *object_width * 0.5f;
-		float half_height = *object_height * 0.5f;
+		float half_width = *selected_trapezoid.object_width * 0.5f;
+		float half_height = *selected_trapezoid.object_height * 0.5f;
 		float vertices[8] = {
-			*object_x - half_width,                          *object_y - half_height,
-			*object_x + half_width,                          *object_y - half_height + *object_height_modifier,
-			*object_x + half_width + *object_width_modifier, *object_y + half_height + *object_height_modifier,
-			*object_x - half_width + *object_width_modifier, *object_y + half_height
+			*selected_trapezoid.object_x - half_width,                          *selected_trapezoid.object_y - half_height,
+			*selected_trapezoid.object_x + half_width,                          *selected_trapezoid.object_y - half_height + *selected_trapezoid.object_height_modifier,
+			*selected_trapezoid.object_x + half_width + *selected_trapezoid.object_width_modifier, * selected_trapezoid.object_y + half_height + *selected_trapezoid.object_height_modifier,
+			*selected_trapezoid.object_x - half_width + *selected_trapezoid.object_width_modifier, * selected_trapezoid.object_y + half_height
 		};
 
 		// Rotate Object if Enabled
@@ -4454,24 +4631,27 @@ void Editor::Selector::sortVertices(bool enable_rotation)
 		}
 
 		// Finsish Endpoints
-		*object_width = abs(vertices[2] - vertices[0]);
-		if (*object_width < 0.1f) { *object_width = 0.2f; }
-		*object_height = abs(vertices[7] - vertices[1]);
-		if (*object_height < 0.1f) { *object_height = 0.2f; }
-		*object_width_modifier = vertices[4] - vertices[2];
-		*object_height_modifier = vertices[5] - vertices[7];
-		*object_x = (vertices[2] + vertices[0]) / 2;
-		*object_y = (vertices[7] + vertices[1]) / 2;
+		*selected_trapezoid.object_width = abs(vertices[2] - vertices[0]);
+		if (*selected_trapezoid.object_width < 0.1f) { *selected_trapezoid.object_width = 0.2f; }
+		*selected_trapezoid.object_height = abs(vertices[7] - vertices[1]);
+		if (*selected_trapezoid.object_height < 0.1f) { *selected_trapezoid.object_height = 0.2f; }
+		*selected_trapezoid.object_width_modifier = vertices[4] - vertices[2];
+		*selected_trapezoid.object_height_modifier = vertices[5] - vertices[7];
+		*selected_trapezoid.object_x = (vertices[2] + vertices[0]) / 2;
+		*selected_trapezoid.object_y = (vertices[7] + vertices[1]) / 2;
 	}
 
 	// Triangle
 	else if (editing_shape == TRIANGLE)
 	{
+		// Get Selected Triangle Data
+		Selected_Triangle& selected_triangle = *static_cast<Selected_Triangle*>(selected_object);
+
 		// Transform Data into Vertices
 		float vertices[6] = {
-			coords1.x, coords1.y,
-			coords2.x, coords2.y,
-			coords3.x, coords3.y
+			selected_triangle.coords1.x, selected_triangle.coords1.y,
+			selected_triangle.coords2.x, selected_triangle.coords2.y,
+			selected_triangle.coords3.x, selected_triangle.coords3.y
 			//*object_x + *object_width * cos(*object_width_modifier), *object_y + *object_width * sin(*object_width_modifier),
 			//*object_x + *object_height * cos(*object_height_modifier), *object_y + *object_height * sin(*object_height_modifier),
 		};
@@ -4480,9 +4660,9 @@ void Editor::Selector::sortVertices(bool enable_rotation)
 		if (enable_rotation)
 		{
 			// Calculate Rotation Matrix
-			glm::mat4 rotation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+			glm::mat4 rotation_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_triangle.object_x, *selected_triangle.object_y, 0.0f));
 			rotation_matrix = glm::rotate(rotation_matrix, -Global::deltaMouse.x * Constant::ROTATION_CONSTANT, glm::vec3(0.0f, 0.0f, 1.0f));
-			rotation_matrix = glm::translate(rotation_matrix, glm::vec3(-*object_x, -*object_y, 0.0f));
+			rotation_matrix = glm::translate(rotation_matrix, glm::vec3(-*selected_triangle.object_x, -*selected_triangle.object_y, 0.0f));
 
 			// Rotate Each Individual Vertex
 			for (int i = 0; i < 3; i++)
@@ -4516,21 +4696,21 @@ void Editor::Selector::sortVertices(bool enable_rotation)
 		}
 
 		// Sort Vertices
-		coords1 = glm::vec2(vertices[0], vertices[1]);
-		coords2 = glm::vec2(vertices[2], vertices[3]);
-		coords3 = glm::vec2(vertices[4], vertices[5]);
-		Source::Collisions::Point::arrangeTriVertices(coords1, coords2, coords3);
+		selected_triangle.coords1 = glm::vec2(vertices[0], vertices[1]);
+		selected_triangle.coords2 = glm::vec2(vertices[2], vertices[3]);
+		selected_triangle.coords3 = glm::vec2(vertices[4], vertices[5]);
+		Source::Collisions::Point::arrangeTriVertices(selected_triangle.coords1, selected_triangle.coords2, selected_triangle.coords3);
 
 		// Store Vertices in Object Data
-		object_data.position = coords1;
-		triangle_data = Shape::Triangle(coords2, coords3);
+		temp_position = selected_triangle.coords1;
+		triangle_data = Shape::Triangle(selected_triangle.coords2, selected_triangle.coords3);
 		should_sort = true;
 	}
 
 	// Update VAO and VBO
 	if (enable_rotation)
 	{
-		genSelectorVertices();
+		genSelectorVertices(selected_object->data_object);
 	}
 }
 
@@ -4721,7 +4901,7 @@ void Editor::Selector::addSpringMassSpring()
 				if (temp_byte == 0)
 				{
 					temp_file.read((char*)&temp_node_data, sizeof(Object::Physics::Soft::NodeData));
-					temp_node_data.position += object_data.position;
+					temp_node_data.position += temp_position;
 					node_list[node_count] = temp_node_data;
 					node_count++;
 				}
@@ -4757,8 +4937,12 @@ void Editor::Selector::addHingeObject()
 
 void Editor::Selector::clampBase()
 {
+	// Get Object Identifier and Clamp Flag
+	uint8_t* object_identifier = data_object->getObjectIdentifier();
+	bool& clamp = data_object->getEditorData().clamp;
+
 	// Clamp Object, if Enabled
-	if (editor_data.clamp)
+	if (clamp)
 	{
 		// Clamp Collision Masks
 		if (object_identifier[0] == Object::MASK)
@@ -4778,20 +4962,23 @@ void Editor::Selector::clampBase()
 				// Horizontal Line
 				case Object::Mask::HORIZONTAL_LINE:
 				{
+					// Get Selected Horizontal Line Data
+					Selected_Horizontal_Line& selected_horizontal_line = *static_cast<Selected_Horizontal_Line*>(selected_object);
+
 					// Determine Endpoints of Object
-					float half_width = *object_width * 0.5f;
-					float endpoints[8] = { *object_x - half_width, *object_y, *object_x + half_width, *object_y };
+					float half_width = *selected_horizontal_line.object_width * 0.5f;
+					float endpoints[8] = { *selected_horizontal_line.object_x - half_width, *selected_horizontal_line.object_y, *selected_horizontal_line.object_x + half_width, *selected_horizontal_line.object_y };
 
 					// Clamp Object
 					if (object_identifier[1] == Object::Mask::FLOOR)
-						clampObjects(editor_data.clamp, endpoints, 0, 2, NULL, c_floor);
+						clampObjects(clamp, endpoints, 0, 2, NULL, c_floor);
 					else
-						clampObjects(editor_data.clamp, endpoints, 0, 2, NULL, c_ceiling);
+						clampObjects(clamp, endpoints, 0, 2, NULL, c_ceiling);
 
 					// Unpack Endpoints
-					*object_width = abs(endpoints[2] - endpoints[0]);
-					*object_x = (endpoints[0] + endpoints[2]) * 0.5f;
-					*object_y = (endpoints[1] + endpoints[3]) * 0.5f;
+					*selected_horizontal_line.object_width = abs(endpoints[2] - endpoints[0]);
+					*selected_horizontal_line.object_x = (endpoints[0] + endpoints[2]) * 0.5f;
+					*selected_horizontal_line.object_y = (endpoints[1] + endpoints[3]) * 0.5f;
 
 					break;
 				}
@@ -4799,20 +4986,23 @@ void Editor::Selector::clampBase()
 				// Slant
 				case Object::Mask::HORIZONTAL_SLANT:
 				{
+					// Get Selected Line Data
+					Selected_Line& selected_line = *static_cast<Selected_Line*>(selected_object);
+
 					// Determine Endpoints of Object
-					float endpoints[8] = { *object_x, *object_y, *object_opposite_x, *object_opposite_y };
+					float endpoints[8] = { *selected_line.object_x, *selected_line.object_y, *selected_line.object_opposite_x, *selected_line.object_opposite_y };
 
 					// Clamp Object
 					if (object_identifier[1] == Object::Mask::FLOOR)
-						clampObjects(editor_data.clamp, endpoints, 1, 2, NULL, c_floor);
+						clampObjects(clamp, endpoints, 1, 2, NULL, c_floor);
 					else
-						clampObjects(editor_data.clamp, endpoints, 1, 2, NULL, c_ceiling);
+						clampObjects(clamp, endpoints, 1, 2, NULL, c_ceiling);
 
 					// Unpack Endpoints
-					*object_x = endpoints[0];
-					*object_y = endpoints[1];
-					*object_opposite_x = endpoints[2];
-					*object_opposite_y = endpoints[3];
+					*selected_line.object_x = endpoints[0];
+					*selected_line.object_y = endpoints[1];
+					*selected_line.object_opposite_x = endpoints[2];
+					*selected_line.object_opposite_y = endpoints[3];
 
 					break;
 				}
@@ -4820,22 +5010,25 @@ void Editor::Selector::clampBase()
 				// Slope
 				case Object::Mask::HORIZONTAL_SLOPE:
 				{
+					// Get Selected Rectangle Data
+					Selected_Rectangle& selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+
 					// Determine Endpoints of Object
-					float half_width = *object_width * 0.5f;
-					float half_height = *object_height * 0.5f;
-					float endpoints[8] = { *object_x - half_width, *object_y - half_height, *object_x + half_width, *object_y + half_height };
+					float half_width = *selected_rectangle.object_width * 0.5f;
+					float half_height = *selected_rectangle.object_height * 0.5f;
+					float endpoints[8] = { *selected_rectangle.object_x - half_width, *selected_rectangle.object_y - half_height, *selected_rectangle.object_x + half_width, *selected_rectangle.object_y + half_height };
 
 					// Clamp Object
 					if (object_identifier[1] == Object::Mask::FLOOR)
-						clampObjects(editor_data.clamp, endpoints, 2, 2, NULL, c_floor);
+						clampObjects(clamp, endpoints, 2, 2, NULL, c_floor);
 					else
-						clampObjects(editor_data.clamp, endpoints, 2, 2, NULL, c_ceiling);
+						clampObjects(clamp, endpoints, 2, 2, NULL, c_ceiling);
 
 					// Unpack Endpoints
-					*object_width = (endpoints[2] - endpoints[0]);
-					*object_height = (endpoints[3] - endpoints[1]);
-					*object_x = (endpoints[0] + endpoints[2]) * 0.5f;
-					*object_y = (endpoints[1] + endpoints[3]) * 0.5f;
+					*selected_rectangle.object_width = (endpoints[2] - endpoints[0]);
+					*selected_rectangle.object_height = (endpoints[3] - endpoints[1]);
+					*selected_rectangle.object_x = (endpoints[0] + endpoints[2]) * 0.5f;
+					*selected_rectangle.object_y = (endpoints[1] + endpoints[3]) * 0.5f;
 
 					break;
 				}
@@ -4856,20 +5049,23 @@ void Editor::Selector::clampBase()
 				// Vertical Line
 				case Object::Mask::VERTICAL_LINE:
 				{
+					// Get Selected Vertical Line Data
+					Selected_Vertical_Line& selected_vertical_line = *static_cast<Selected_Vertical_Line*>(selected_object);
+
 					// Determine Endpoints of Object
-					float half_height = *object_height * 0.5f;
-					float endpoints[8] = { *object_x, *object_y - half_height, *object_x, *object_y + half_height };
+					float half_height = *selected_vertical_line.object_height * 0.5f;
+					float endpoints[8] = { *selected_vertical_line.object_x, *selected_vertical_line.object_y - half_height, *selected_vertical_line.object_x, *selected_vertical_line.object_y + half_height };
 
 					// Clamp Object
 					if (object_identifier[1] == Object::Mask::LEFT_WALL)
-						clampObjects(editor_data.clamp, endpoints, object_identifier[1], 2, NULL, c_left);
+						clampObjects(clamp, endpoints, object_identifier[1], 2, NULL, c_left);
 					else
-						clampObjects(editor_data.clamp, endpoints, object_identifier[1], 2, NULL, c_right);
+						clampObjects(clamp, endpoints, object_identifier[1], 2, NULL, c_right);
 
 					// Unpack Endpoints
-					*object_height = endpoints[3] - endpoints[1];
-					*object_x = (endpoints[0] + endpoints[2]) * 0.5f;
-					*object_y = (endpoints[1] + endpoints[3]) * 0.5f;
+					*selected_vertical_line.object_height = endpoints[3] - endpoints[1];
+					*selected_vertical_line.object_x = (endpoints[0] + endpoints[2]) * 0.5f;
+					*selected_vertical_line.object_y = (endpoints[1] + endpoints[3]) * 0.5f;
 
 					break;
 				}
@@ -4877,23 +5073,26 @@ void Editor::Selector::clampBase()
 				// Curve
 				case Object::Mask::VERTICAL_CURVE:
 				{
+					// Get Selected Rectangle Data
+					Selected_Rectangle& selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+
 					// Determine Endpoints of Object
 					int curve_direction = -1 + 2 * (object_identifier[1] == Object::Mask::RIGHT_WALL);
-					float half_width = *object_width * 0.5f;
-					float half_height = *object_height * 0.5f;
-					float endpoints[8] = { *object_x + half_width * curve_direction, *object_y + half_height, *object_x - half_width * curve_direction, *object_y - half_height };
+					float half_width = *selected_rectangle.object_width * 0.5f;
+					float half_height = *selected_rectangle.object_height * 0.5f;
+					float endpoints[8] = { *selected_rectangle.object_x + half_width * curve_direction, *selected_rectangle.object_y + half_height, *selected_rectangle.object_x - half_width * curve_direction, *selected_rectangle.object_y - half_height };
 
 					// Clamp Object
 					if (object_identifier[1] == Object::Mask::LEFT_WALL)
-						clampObjects(editor_data.clamp, endpoints, object_identifier[1] + 2, 2, Algorithms::Math::getSign(*object_height), c_left);
+						clampObjects(clamp, endpoints, object_identifier[1] + 2, 2, Algorithms::Math::getSign(*selected_rectangle.object_height), c_left);
 					else
-						clampObjects(editor_data.clamp, endpoints, object_identifier[1] + 2, 2, Algorithms::Math::getSign(*object_height), c_right);
+						clampObjects(clamp, endpoints, object_identifier[1] + 2, 2, Algorithms::Math::getSign(*selected_rectangle.object_height), c_right);
 
 					// Unpack Endpoints
-					*object_width = abs(endpoints[0] - endpoints[2]);
-					*object_height = endpoints[1] - endpoints[3];
-					*object_x = (endpoints[0] + endpoints[2]) * 0.5f;
-					*object_y = (endpoints[1] + endpoints[3]) * 0.5f;
+					*selected_rectangle.object_width = abs(endpoints[0] - endpoints[2]);
+					*selected_rectangle.object_height = endpoints[1] - endpoints[3];
+					*selected_rectangle.object_x = (endpoints[0] + endpoints[2]) * 0.5f;
+					*selected_rectangle.object_y = (endpoints[1] + endpoints[3]) * 0.5f;
 
 					break;
 				}
@@ -4960,7 +5159,7 @@ void Editor::Selector::clampFloorMasks(float(&endpoints)[8], Render::Objects::Un
 	// Return the Collision Mask Floor Objects From Level
 	Object::Mask::Floor::FloorMask** floor_masks = nullptr;
 	int floor_masks_size = 0;
-	unsaved_level->returnFloorMasks(&floor_masks, floor_masks_size, object_index);
+	//unsaved_level->returnFloorMasks(&floor_masks, floor_masks_size, object_index);
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < floor_masks_size; j++)
@@ -5037,7 +5236,7 @@ void Editor::Selector::clampWallMasksLeft(float(&endpoints)[8], Render::Objects:
 	// Return the Collision Mask Left Wall Objects From Level
 	Object::Mask::Left::LeftMask** left_masks = nullptr;
 	int left_masks_size = 0;
-	unsaved_level->returnLeftMasks(&left_masks, left_masks_size, object_index);
+	//unsaved_level->returnLeftMasks(&left_masks, left_masks_size, object_index);
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < left_masks_size; j++)
@@ -5110,7 +5309,7 @@ void Editor::Selector::clampWallMasksRight(float(&endpoints)[8], Render::Objects
 	// Return the Collision Mask Left Wall Objects From Level
 	Object::Mask::Right::RightMask** right_masks = nullptr;
 	int right_masks_size = 0;
-	unsaved_level->returnRightMasks(&right_masks, right_masks_size, object_index);
+	//unsaved_level->returnRightMasks(&right_masks, right_masks_size, object_index);
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < right_masks_size; j++)
@@ -5177,7 +5376,7 @@ void Editor::Selector::clampCeilingMasks(float(&endpoints)[8], Render::Objects::
 	// Return the Collision Mask Floor Objects From Level
 	Object::Mask::Ceiling::CeilingMask** ceiling_masks = nullptr;
 	int ceiling_masks_size = 0;
-	unsaved_level->returnCeilingMasks(&ceiling_masks, ceiling_masks_size, object_index);
+	//unsaved_level->returnCeilingMasks(&ceiling_masks, ceiling_masks_size, object_index);
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < ceiling_masks_size; j++)
@@ -5242,22 +5441,25 @@ void Editor::Selector::clampTerrain(int Shape, int Object)
 	// Rectangle
 	case Shape::RECTANGLE:
 	{
+		// Get Selected Rectangle Data
+		Selected_Rectangle& selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+
 		// Create Endpoints
-		float half_width = *object_width * 0.5f;
-		float half_height = *object_height * 0.5f;
+		float half_width = *selected_rectangle.object_width * 0.5f;
+		float half_height = *selected_rectangle.object_height * 0.5f;
 		float endpoints[8] = {
-			*object_x - half_width, *object_y - half_height, *object_x + half_width, *object_y - half_height,
-			*object_x + half_width, *object_y + half_height, *object_x - half_width, *object_y + half_height
+			*selected_rectangle.object_x - half_width, *selected_rectangle.object_y - half_height, *selected_rectangle.object_x + half_width, *selected_rectangle.object_y - half_height,
+			*selected_rectangle.object_x + half_width, *selected_rectangle.object_y + half_height, *selected_rectangle.object_x - half_width, *selected_rectangle.object_y + half_height
 		};
 
 		// Clamp
-		clampObjects(editor_data.clamp, endpoints, Shape, 4, Object, c_terrain);
+		clampObjects(selected_object->data_object->getEditorData().clamp, endpoints, Shape, 4, Object, c_terrain);
 
 		// Finsish Endpoints
-		*object_x = (endpoints[0] + endpoints[2] + endpoints[4] + endpoints[6]) * 0.25f;
-		*object_y = (endpoints[1] + endpoints[3] + endpoints[5] + endpoints[7]) * 0.25f;
-		*object_width = abs(endpoints[2] - endpoints[0]);
-		*object_height = abs(endpoints[5] - endpoints[3]);
+		*selected_rectangle.object_x = (endpoints[0] + endpoints[2] + endpoints[4] + endpoints[6]) * 0.25f;
+		*selected_rectangle.object_y = (endpoints[1] + endpoints[3] + endpoints[5] + endpoints[7]) * 0.25f;
+		*selected_rectangle.object_width = abs(endpoints[2] - endpoints[0]);
+		*selected_rectangle.object_height = abs(endpoints[5] - endpoints[3]);
 
 		break;
 	}
@@ -5265,26 +5467,29 @@ void Editor::Selector::clampTerrain(int Shape, int Object)
 	// Trapezoid
 	case Shape::TRAPEZOID:
 	{
+		// Get Selected Trapezoid Data
+		Selected_Trapezoid& selected_trapezoid = *static_cast<Selected_Trapezoid*>(selected_object);
+
 		// Create Endpoints
-		float half_width = *object_width * 0.5f;
-		float half_height = *object_height * 0.5f;
+		float half_width = *selected_trapezoid.object_width * 0.5f;
+		float half_height = *selected_trapezoid.object_height * 0.5f;
 		float endpoints[8] = {
-			*object_x - half_width,                          *object_y - half_height,
-			*object_x + half_width,                          *object_y - half_height + *object_height_modifier,
-			*object_x + half_width + *object_width_modifier, *object_y + half_height + *object_height_modifier,
-			*object_x - half_width + *object_width_modifier, *object_y + half_height
+			*selected_trapezoid.object_x - half_width,                          *selected_trapezoid.object_y - half_height,
+			*selected_trapezoid.object_x + half_width,                          *selected_trapezoid.object_y - half_height + *selected_trapezoid.object_height_modifier,
+			*selected_trapezoid.object_x + half_width + *selected_trapezoid.object_width_modifier, *selected_trapezoid.object_y + half_height + *selected_trapezoid.object_height_modifier,
+			*selected_trapezoid.object_x - half_width + *selected_trapezoid.object_width_modifier, *selected_trapezoid.object_y + half_height
 		};
 
 		// Clamp
-		clampObjects(editor_data.clamp, endpoints, Shape, 4, Object, c_terrain);
+		clampObjects(selected_object->data_object->getEditorData().clamp, endpoints, Shape, 4, Object, c_terrain);
 
 		// Finsish Endpoints
-		*object_width = abs(endpoints[2] - endpoints[0]);
-		*object_height = abs(endpoints[7] - endpoints[1]);
-		*object_width_modifier = endpoints[4] - endpoints[2];
-		*object_height_modifier = endpoints[5] - endpoints[7];
-		*object_x = (endpoints[2] + endpoints[0]) * 0.5f;
-		*object_y = (endpoints[7] + endpoints[1]) * 0.5f;
+		*selected_trapezoid.object_width = abs(endpoints[2] - endpoints[0]);
+		*selected_trapezoid.object_height = abs(endpoints[7] - endpoints[1]);
+		*selected_trapezoid.object_width_modifier = endpoints[4] - endpoints[2];
+		*selected_trapezoid.object_height_modifier = endpoints[5] - endpoints[7];
+		*selected_trapezoid.object_x = (endpoints[2] + endpoints[0]) * 0.5f;
+		*selected_trapezoid.object_y = (endpoints[7] + endpoints[1]) * 0.5f;
 
 		break;
 	}
@@ -5292,22 +5497,25 @@ void Editor::Selector::clampTerrain(int Shape, int Object)
 	// Triangle
 	case Shape::TRIANGLE:
 	{
+		// Get Selected Triangle Data
+		Selected_Triangle& selected_triangle = *static_cast<Selected_Triangle*>(selected_object);
+
 		// Create Endpoints
 		float endpoints[8] = {
-			coords1.x, coords1.y,
-			coords2.x, coords2.y,
-			coords3.x, coords3.y,
+			selected_triangle.coords1.x, selected_triangle.coords1.y,
+			selected_triangle.coords2.x, selected_triangle.coords2.y,
+			selected_triangle.coords3.x, selected_triangle.coords3.y,
 			0.0f, 0.0f
 		};
 
 		// Clamp
-		clampObjects(editor_data.clamp, endpoints, Shape, 3, Object, c_terrain);
+		clampObjects(selected_object->data_object->getEditorData().clamp, endpoints, Shape, 3, Object, c_terrain);
 
 		// Sort Endpoints
-		coords1 = glm::vec2(endpoints[0], endpoints[1]);
-		coords2 = glm::vec2(endpoints[2], endpoints[3]);
-		coords3 = glm::vec2(endpoints[4], endpoints[5]);
-		Source::Collisions::Point::arrangeTriVertices(coords1, coords2, coords3);
+		selected_triangle.coords1 = glm::vec2(endpoints[0], endpoints[1]);
+		selected_triangle.coords2 = glm::vec2(endpoints[2], endpoints[3]);
+		selected_triangle.coords3 = glm::vec2(endpoints[4], endpoints[5]);
+		Source::Collisions::Point::arrangeTriVertices(selected_triangle.coords1, selected_triangle.coords2, selected_triangle.coords3);
 
 		break;
 	}
@@ -5334,7 +5542,7 @@ void Editor::Selector::clampTerrainHelper(float(&endpoints)[8], Render::Objects:
 	// Get the Terrain Objects to Compare to Based on Layer
 	Object::Terrain::TerrainBase** terrain_objects;
 	int terrain_objects_size = 0;
-	unsaved_level->returnTerrainObjects(&terrain_objects, terrain_objects_size, object_identifier[1], object_index);
+	//unsaved_level->returnTerrainObjects(&terrain_objects, terrain_objects_size, object_identifier[1], object_index);
 
 	// Perform Actual Clamping
 	abstractedClampTerrain(endpoints, midpoints, Type, i, terrain_objects_size, terrain_objects);

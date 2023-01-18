@@ -461,13 +461,24 @@ namespace DataClass
 
 		void generateInitialValues(glm::vec2& position, float& size);
 	};
-	
-	// Terrain Object
-	class Data_Terrain : public Data_SubObject
+
+	// Shape
+	class Data_Shape : public Data_SubObject
 	{
+
+	protected:
+
 		// Pointer to Shape
 		Shape::Shape* shape;
 
+	public:
+
+		Shape::Shape* getShape();
+	};
+	
+	// Terrain Object
+	class Data_Terrain : public Data_Shape
+	{
 		// Layer
 		uint8_t layer;
 
@@ -488,7 +499,7 @@ namespace DataClass
 		// Terrain Data
 		Data_Terrain(uint8_t layer_identifier, uint8_t shape_identifier);
 
-		Shape::Shape* getShape();
+
 
 		void generateInitialValues(glm::vec2& position, glm::vec4 color, Shape::Shape* new_shape);
 	};
@@ -633,11 +644,8 @@ namespace DataClass
 	};
 
 	// Rigid Body Physics Object
-	class Data_RigidBody : public Data_SubObject, public Data_UUID
+	class Data_RigidBody : public Data_Shape, public Data_UUID
 	{
-		// Pointer to Shape
-		Shape::Shape* shape;
-
 		// Rigid Body Data
 		Object::Physics::Rigid::RigidBodyData rigid;
 
@@ -654,8 +662,6 @@ namespace DataClass
 
 		// Rigid Body Data
 		Data_RigidBody(uint8_t shape_identifier);
-
-		Shape::Shape* getShape();
 
 		Object::Physics::Rigid::RigidBodyData& getRigidData();
 
@@ -708,6 +714,8 @@ namespace DataClass
 		Data_Wire();
 
 		void generateInitialValues(glm::vec2& position, float& size, uint32_t& new_uuid);
+
+		Object::Physics::Soft::WireData& getWireData();
 	};
 
 	// Anchor Physics Object
@@ -735,6 +743,8 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, uint32_t& new_uuid);
+
+		Object::Physics::Hinge::AnchorData& getAnchorData();
 	};
 
 	// Hinge Physics Object
@@ -765,6 +775,10 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, uint32_t& new_uuid);
+
+		Object::Physics::Hinge::HingeData& getHingeData();
+
+		std::string& getFile();
 	};
 
 	// Entity Object
