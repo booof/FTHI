@@ -1,6 +1,7 @@
 #include "Macros.h"
 #ifdef EDITOR
 
+#pragma once
 #ifndef UNSAVED_LEVEL_H
 #define UNSAVED_LEVEL_H
 

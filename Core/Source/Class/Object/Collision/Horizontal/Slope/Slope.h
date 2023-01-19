@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SLOPE_H
 #define SLOPE_H
 

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef TRAPEZOID_VERTICES_H
 #define TRAPEZOID_VERTICES_H
 

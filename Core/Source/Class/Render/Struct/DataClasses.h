@@ -1,3 +1,4 @@
+#pragma once
 #ifndef DATA_CLASSES_H
 #define DATA_CLASSES_H
 
@@ -125,6 +126,9 @@ namespace DataClass
 
 		// Get the Position of an Object
 		virtual glm::vec2& getPosition() = 0;
+
+		// Create a Copy of the Object
+		virtual Data_Object* makeCopy() = 0;
 	};
 
 	// Sub Object Data Class

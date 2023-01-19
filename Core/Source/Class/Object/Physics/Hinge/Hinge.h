@@ -1,3 +1,4 @@
+#pragma once
 #ifndef HINGE_H
 #define HINGE_H
 

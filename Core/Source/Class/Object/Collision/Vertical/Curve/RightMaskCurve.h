@@ -1,3 +1,4 @@
+#pragma once
 #ifndef RIGHT_MASK_CURVE_H
 #define RIGHT_MASK_CURVE_H
 

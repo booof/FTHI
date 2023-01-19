@@ -25,24 +25,11 @@ void Object::Mask::Left::LeftMaskCurve::write(std::ofstream& object_file, std::o
 
 void Object::Mask::Left::LeftMaskCurve::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	// Store Object Identifier
-	selector.object_identifier[0] = MASK;
-	selector.object_identifier[1] = LEFT_WALL;
-	selector.object_identifier[2] = VERTICAL_CURVE;
-
-	// Store Editing Values
-	selector.curve_data = data;
-	selector.object_index = object_index;
-	selector.editor_data.name_size = (uint8_t)name.size();
-	selector.editor_data.clamp = clamp;
-	selector.editor_data.lock = lock;
-	selector.editor_data.name = name;
-
 	// Store Object Information
 	info(object_info, name, data);
 
-	// Set Selector to Active Highlight
-	selector.activateHighlighter();
+	// Selector Helper
+	select2(selector);
 }
 
 glm::vec2 Object::Mask::Left::LeftMaskCurve::returnPosition()

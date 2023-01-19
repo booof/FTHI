@@ -1,3 +1,4 @@
+#pragma once
 #ifndef PRE_RENDER_H
 #define PRE_RENDER_H
 

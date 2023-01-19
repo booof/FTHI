@@ -1,3 +1,4 @@
+#pragma once
 #ifndef ANCHOR_H
 #define ANCHOR_H
 

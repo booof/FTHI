@@ -1,3 +1,4 @@
+#pragma once
 #ifndef HORIZONTAL_SCROLL_BAR_H
 #define HORIZONTAL_SCROLL_BAR_H
 

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef VERTICAL_LINE_H
 #define VERTICAL_LINE_H
 

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef HORIZONTAL_LINE_H
 #define HORIZONTAL_LINE_H
 

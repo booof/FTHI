@@ -95,6 +95,8 @@ Render::Objects::UnsavedLevel* Render::Objects::ChangeController::generateUnsave
 
 void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* selector)
 {
+	// Note: For Now, This Operation will Result in a Finalization of Changes. Will Change Later
+
 	// If This Return Occoured Further Back in the Undo Chain, Remove all Future Undos from the Stack
 	master_stack->deleteFromIndexToHead();
 
@@ -126,7 +128,7 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 
 	// Get Unsaved Level of Where Object is Now
 	UnsavedLevel* temp_unsaved_level2 = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
-	temp_unsaved_level2->generateChangeList();
+	temp_unsaved_level2->createChangeAppend(selector);
 
 	// Finalize Changes
 	for (UnsavedLevel* level : unsaved_levels)
@@ -141,6 +143,8 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 
 void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* selector)
 {
+	// This Operation will ALLWAYS Result in a Finalization of Changes
+
 	// If This Return Occoured Further Back in the Undo Chain, Remove all Future Undos from the Stack
 	master_stack->deleteFromIndexToHead();
 
@@ -160,8 +164,8 @@ void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* s
 	glm::vec2 object_level_position;
 	updateLevelPos(selector->getObjectPosition(), object_level_position);
 
-	// Delete Object
-	current_instance->stack_indicies[selector->level_of_origin->unsaved_level_index] = selector->level_of_origin->createInstanceRemove(selector->object_index, selector->object_identifier);
+	// Delete Object (Already Been Deleted)
+	//current_instance->stack_indicies[selector->level_of_origin->unsaved_level_index] = selector->level_of_origin->createInstanceRemove(selector->object_index, selector->object_identifier);
 
 	// Increment Stack Instances
 	incrementStackInstances(*current_instance);

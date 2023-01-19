@@ -1,3 +1,4 @@
+#pragma once
 #ifndef TRAPEZOID_H
 #define TRAPEZOID_H
 
@@ -30,9 +31,6 @@ class Shape::Trapezoid : public Shape
 
 	// Write Shape to File
 	void writeShape(std::ofstream& object_file);
-
-	// Select Shape Data
-	void selectShape(Editor::Selector& selector);
 
 	// Select Shape Info
 	void selectInfo(Editor::ObjectInfo& object_info);

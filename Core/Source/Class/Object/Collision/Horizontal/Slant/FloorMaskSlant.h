@@ -1,3 +1,4 @@
+#pragma once
 #ifndef FLOOR_MASK_SLANT_H
 #define FLOOR_MASK_SLANT_H
 

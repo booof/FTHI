@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SCRIPT_WIZARD_H
 #define SCRIPT_WIZARD_H
 

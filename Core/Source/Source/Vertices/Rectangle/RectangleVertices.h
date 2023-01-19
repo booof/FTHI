@@ -1,3 +1,4 @@
+#pragma once
 #ifndef RECTANGLE_VERTICES_H
 #define RECTANGLE_VERTICES_H
 

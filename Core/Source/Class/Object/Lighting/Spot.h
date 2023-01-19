@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SPOT_H
 #define SPOT_H
 

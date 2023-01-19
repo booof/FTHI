@@ -200,6 +200,10 @@ void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects,
 	Object::Object** active_array = *active_objects;
 	uint16_t active_index = 0;
 
+	std::cout << "lulw\n";
+	std::cout << instance.data_objects.size() << " " << level_x << " " << level_y << "\n";
+	std::cout << "num objects: " << instance.header.number_of_loaded_objects << " \n";
+
 	// Generate Objects
 	for (DataClass::Data_Object* data_object : instance.data_objects)
 	{
@@ -221,6 +225,7 @@ void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects,
 		// Generate Normal, Stationary Object
 		default:
 		{
+			std::cout << "creating normal object\n";
 			objects[index] = data_object->generateObject();
 			index++;
 		}
@@ -298,37 +303,38 @@ Render::Objects::UnsavedLevel::LevelInstance* Render::Objects::UnsavedLevel::mak
 
 Shape::Shape* Render::Objects::UnsavedLevel::getShapePointer(Editor::Selector* selector)
 {
-	switch (selector->object_identifier[2])
+	Shape::Shape* old_shape = static_cast<DataClass::Data_Shape*>(selector->data_object)->getShape();
+	switch (selector->data_object->getObjectIdentifier()[2])
 	{
 
 	// Rectangle
 	case Shape::RECTANGLE:
 	{
-		return static_cast<Shape::Shape*>(new Shape::Rectangle(selector->rectangle_data));
+		return static_cast<Shape::Shape*>(new Shape::Rectangle(*static_cast<Shape::Rectangle*>(old_shape)));
 	}
 
 	// Trapezoid
 	case Shape::TRAPEZOID:
 	{
-		return static_cast<Shape::Shape*>(new Shape::Trapezoid(selector->trapezoid_data));
+		return static_cast<Shape::Shape*>(new Shape::Trapezoid(*static_cast<Shape::Trapezoid*>(old_shape)));
 	}
 
 	// Triangle Data
 	case Shape::TRIANGLE:
 	{
-		return static_cast<Shape::Shape*>(new Shape::Triangle(selector->triangle_data));
+		return static_cast<Shape::Shape*>(new Shape::Triangle(*static_cast<Shape::Triangle*>(old_shape)));
 	}
 
 	// Circle Data
 	case Shape::CIRCLE:
 	{
-		return static_cast<Shape::Shape*>(new Shape::Circle(selector->circle_data));
+		return static_cast<Shape::Shape*>(new Shape::Circle(*static_cast<Shape::Circle*>(old_shape)));
 	}
 
 	// Polygon Data
 	case Shape::POLYGON:
 	{
-		return static_cast<Shape::Shape*>(new Shape::Polygon(selector->polygon_data));
+		return static_cast<Shape::Shape*>(new Shape::Polygon(*static_cast<Shape::Polygon*>(old_shape)));
 	}
 
 	}
@@ -422,10 +428,10 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y
 void Render::Objects::UnsavedLevel::buildObjects(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities)
 {
 	// Get Instance From Stack
-	LevelInstance* instance = slave_stack.returnInstance();
+	//LevelInstance* instance = slave_stack.returnInstance();
 
 	// Construct Objects
-	buildObjectsHelper(objects, index, physics, entities, *instance);
+	buildObjectsHelper(objects, index, physics, entities, instance_with_changes);
 }
 
 void Render::Objects::UnsavedLevel::changeToModified()
@@ -489,7 +495,51 @@ void Render::Objects::UnsavedLevel::decrementStackApperance(uint8_t index)
 
 Render::Objects::LevelHeader Render::Objects::UnsavedLevel::returnObjectHeader()
 {
-	return slave_stack.returnInstance()->header;
+	// Temp Code to Set Header
+	instance_with_changes.header = { 0 };
+	instance_with_changes.header.number_of_loaded_objects = instance_with_changes.data_objects.size();
+	for (DataClass::Data_Object* dobject : instance_with_changes.data_objects)
+	{
+		uint8_t* id = dobject->getObjectIdentifier();
+		if (id[0] == Object::MASK)
+		{
+			if (id[1] == Object::Mask::FLOOR)
+				instance_with_changes.header.floor_count++;
+
+			else if (id[1] == Object::Mask::LEFT_WALL)
+				instance_with_changes.header.left_count++;
+
+			else if (id[1] == Object::Mask::RIGHT_WALL)
+				instance_with_changes.header.right_count++;
+
+			else if (id[1] == Object::Mask::CEILING)
+				instance_with_changes.header.ceiling_count++;
+
+			else if (id[1] == Object::Mask::TRIGGER)
+				instance_with_changes.header.trigger_count++;
+		}
+
+		else if (id[0] == Object::TERRAIN)
+			instance_with_changes.header.terrain_count++;
+
+		else if (id[0] == Object::LIGHT)
+		{
+			if (id[1] == Object::Light::DIRECTIONAL)
+				instance_with_changes.header.directional_count++;
+
+			else if (id[1] == Object::Light::POINT)
+				instance_with_changes.header.point_count++;
+
+			else if (id[1] == Object::Light::SPOT)
+				instance_with_changes.header.spot_count++;
+
+			else if (id[1] == Object::Light::BEAM)
+				instance_with_changes.header.beam_count++;
+		}
+	}
+
+	//return slave_stack.returnInstance()->header;
+	return instance_with_changes.header;
 }
 
 void Render::Objects::UnsavedLevel::drawVisualizer()
@@ -571,16 +621,16 @@ void Render::Objects::UnsavedLevel::createChangeAppend(Editor::Selector* selecto
 	Change* change = new Change;
 	change->change_type = CHANGE_TYPES::ADD;
 
-	// Generate a Data Object Based on the Object Identifier of the Selector
-	DataClass::Data_Object* data_object = lambdaDataObject(selector->object_identifier);
-
-	// Retrieve Data from Selector and Store in New Data Object
-	data_object->genFromObject();
+	// Retrieve the Data Object from the Selector
+	DataClass::Data_Object* data_object = selector->data_object;
 
 	// Store Data Object in Change
 	change->data = data_object;
 
 	// Execute Change
+	instance_with_changes.data_objects.push_back(data_object);
+	instance_with_changes.header.number_of_loaded_objects++;
+	std::cout << instance_with_changes.data_objects.size() << "   " << level_x << " " << level_y << "  yooo\n";
 
 	// Store Change in Change List
 	current_change_list->changes.push_back(change);
@@ -608,6 +658,7 @@ void Render::Objects::UnsavedLevel::createChangePop(uint32_t object_index)
 	}
 
 	// Execute Change
+	instance_with_changes.header.number_of_loaded_objects--;
 
 	// Store Change in Change List
 	current_change_list->changes.push_back(change);

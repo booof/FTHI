@@ -1,5 +1,4 @@
 #include "Rectangle.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Source/Vertices/Rectangle/RectangleVertices.h"
 
@@ -31,11 +30,6 @@ void Shape::Rectangle::initializeVertices(Object::ObjectData& data, int& offset,
 void Shape::Rectangle::writeShape(std::ofstream& object_file)
 {
 	object_file.write((char*)(this) + 8, sizeof(Rectangle) - 8);
-}
-
-void Shape::Rectangle::selectShape(Editor::Selector& selector)
-{
-	selector.rectangle_data = *this;
 }
 
 void Shape::Rectangle::selectInfo(Editor::ObjectInfo& object_info)

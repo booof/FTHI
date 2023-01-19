@@ -1,3 +1,4 @@
+#pragma once
 #ifndef TERRAIN_BASE_H
 #define TERRAIN_BASE_H
 

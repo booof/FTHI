@@ -1,3 +1,4 @@
+#pragma once
 #ifndef OBJECT_BUFFERS_H
 #define OBJECT_BUFFERS_H
 

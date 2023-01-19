@@ -138,24 +138,11 @@ void Object::Light::Spot::Spot::initializeVisualizer()
 
 void Object::Light::Spot::Spot::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	// Store Object Identifier
-	selector.object_identifier[0] = LIGHT;
-	selector.object_identifier[1] = SPOT;
-
-	// Store Editing Data
-	selector.light_data = data;
-	selector.spot_data = spot;
-	selector.object_index = object_index;
-	selector.editor_data.name_size = (uint8_t)name.size();
-	selector.editor_data.clamp = clamp;
-	selector.editor_data.lock = lock;
-	selector.editor_data.name = name;
-
 	// Store Object Information
 	info(object_info, name, data, spot);
 
-	// Set Selector to Active Highlight
-	selector.activateHighlighter();
+	// Selector Helper
+	select2(selector);
 }
 
 bool Object::Light::Spot::Spot::testMouseCollisions(float x, float y)

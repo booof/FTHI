@@ -1,3 +1,4 @@
+#pragma once
 #ifndef AUDIO_HANDLER_H
 #define AUDIO_HANDLER_H
 

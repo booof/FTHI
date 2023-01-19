@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CHANGE_CONTROLLER_H
 #define CHANGE_CONTROLLER_H
 

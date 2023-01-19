@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CIRCLE_H
 #define CIRCLE_H
 
@@ -23,9 +24,6 @@ class Shape::Circle : public Shape
 
 	// Write Shape to File
 	void writeShape(std::ofstream& object_file);
-
-	// Select Shape Data
-	void selectShape(Editor::Selector& selector);
 
 	// Select Shape Info
 	void selectInfo(Editor::ObjectInfo& object_info);

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef MASTER_ELEMENT_H
 #define MASTER_ELEMENT_H
 

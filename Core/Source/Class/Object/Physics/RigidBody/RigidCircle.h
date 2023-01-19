@@ -1,3 +1,4 @@
+#pragma once
 #ifndef RIGID_CIRCLE_H
 #define RIGID_CIRCLE_H
 

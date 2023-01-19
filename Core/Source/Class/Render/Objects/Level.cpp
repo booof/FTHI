@@ -93,6 +93,8 @@ void Render::Objects::Level::testReload()
 
 void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level_new, bool reload_all)
 {
+	std::cout << "reloading levels\n\n";
+
 	// Empty Object Counts
 	static ObjectCount null_objects;
 
@@ -287,6 +289,13 @@ void Render::Objects::Level::segregateObjects()
 {
 	// Temp Pointer to Object to Segregate
 	Object::Object* object;
+
+	// IDEA: Segregation of Objects Will be Changed to Occour in a Heap Instead of Here All at Once.
+	// This will reduce overall complexity. In addition, All Objects Will Remain in a Single List, But 
+	// Seperated/Segregated by their Object Identifier. First Index in the Object Identifier will be Used
+	// to Sort. If any tie, go to the Second then Third Identifier. Ties Between Unique Objects Have no
+	// Importance. There will be a Data Structure That Contains the Start/End Indicies for Each Important
+	// Object Group i.e. Terrain, Lights, Masks
 
 	// Iterate All Objects Starting at Main Object Index
 	for (int& i = temp_index_holder.total_object_count; i < object_count.total_object_count; i++)
@@ -1302,18 +1311,18 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						Global::Selected_Cursor = Global::CURSORS::HAND;
 
 						// Select Spring
-						selector.object_identifier[0] = Object::PHYSICS;
-						selector.object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
-						selector.object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
+						//selector.object_identifier[0] = Object::PHYSICS;
+						//selector.object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
+						//selector.object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
 						selector.spring_data = object.springs[i];
 						selector.spring_data.Node1 = object.nodes[object.springs[i].Node1].Name;
 						selector.spring_data.Node2 = object.nodes[object.springs[i].Node2].Name;
 						selector.springmass_node_modified = false;
 						selector.springmass_spring_modified = true;
 						selector.object_index = 0;
-						selector.uuid = 0;
-						selector.object_data.position = object.returnPosition();
-						selector.file_name = object.file_name;
+						//selector.uuid = 0;
+						//selector.object_data.position = object.returnPosition();
+						//selector.file_name = object.file_name;
 						selector.connection_pos_left = node_pos_1;
 						selector.connection_pos_right = node_pos_2;
 						selector.activateHighlighter();
@@ -1434,9 +1443,9 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 					Global::Selected_Cursor = Global::CURSORS::HAND;
 
 					// Select Node
-					selector.object_identifier[0] = Object::PHYSICS;
-					selector.object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
-					selector.object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
+					//selector.object_identifier[0] = Object::PHYSICS;
+					//selector.object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
+					//selector.object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
 					selector.node_data.position = object.nodes[i].Position;
 					selector.node_data.mass = object.nodes[i].Mass;
 					selector.node_data.health = object.nodes[i].Health;
@@ -1446,9 +1455,9 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 					selector.springmass_node_modified = true;
 					selector.springmass_spring_modified = false;
 					selector.object_index = 0;
-					selector.uuid = 0;
-					selector.object_data.position = object.returnPosition();
-					selector.file_name = object.file_name;
+					//selector.uuid = 0;
+					//selector.object_data.position = object.returnPosition();
+					//selector.file_name = object.file_name;
 					selector.activateHighlighter();
 					object_info.clearAll();
 					object_info.setObjectType("SpringMass Node", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -1877,6 +1886,9 @@ void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm:
 
 	// Store Pointer of Unsaved Level in Selector
 	selector.level_of_origin = change_controller->getUnsavedLevel((int)coords.x, (int)coords.y, 0);
+
+	// Remove Object from Unsaved Level
+	selector.level_of_origin->createChangePop(selector.data_object->getObjectIndex());
 
 	// Set Originated From Level Flag to True
 	selector.originated_from_level = true;

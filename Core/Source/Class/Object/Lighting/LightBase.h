@@ -1,3 +1,4 @@
+#pragma once
 #ifndef LIGHT_BASE_H
 #define LIGHT_BASE_H
 

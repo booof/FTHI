@@ -1,3 +1,4 @@
+#pragma once
 #ifndef POINT_COLLISIONS_H
 #define POINT_COLLISIONS_H
 

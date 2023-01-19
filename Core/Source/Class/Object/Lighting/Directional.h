@@ -1,3 +1,4 @@
+#pragma once
 #ifndef DIRECTIONAL_H
 #define DIRECTIONAL_H
 

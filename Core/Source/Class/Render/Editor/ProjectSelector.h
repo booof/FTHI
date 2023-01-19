@@ -1,3 +1,4 @@
+#pragma once
 #ifndef PROJECT_SELECTOR_H
 #define PROJECT_SELECTOR_H
 

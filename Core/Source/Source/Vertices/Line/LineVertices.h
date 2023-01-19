@@ -1,3 +1,4 @@
+#pragma once
 #ifndef LINE_VERTICES_H
 #define LINE_VERTICES_H
 

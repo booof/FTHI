@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SHAPE_H
 #define SHAPE_H
 
@@ -8,7 +9,6 @@
 
 namespace Editor
 {
-	class Selector;
 	class ObjectInfo;
 }
 
@@ -47,9 +47,6 @@ namespace Shape
 
 		// Write Shape to File
 		virtual void writeShape(std::ofstream& object_file) = 0;
-
-		// Select Shape Data
-		virtual void selectShape(Editor::Selector& selector) = 0;
 
 		// Select Shape Info
 		virtual void selectInfo(Editor::ObjectInfo& object_info) = 0;

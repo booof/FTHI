@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CONTROLLABLES_H
 #define CONTROLLABLES_H
 

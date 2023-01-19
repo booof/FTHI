@@ -1,5 +1,4 @@
 #include "Circle.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Source/Vertices/Circle/CircleVertices.h"
 
@@ -32,11 +31,6 @@ void Shape::Circle::initializeVertices(Object::ObjectData& data, int& offset, in
 void Shape::Circle::writeShape(std::ofstream& object_file)
 {
 	object_file.write((char*)(this) + 8, sizeof(Circle) - 8);
-}
-
-void Shape::Circle::selectShape(Editor::Selector& selector)
-{
-	selector.circle_data = *this;
 }
 
 void Shape::Circle::selectInfo(Editor::ObjectInfo& object_info)

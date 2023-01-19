@@ -1,3 +1,4 @@
+#pragma once
 #ifndef COLLISION_MASK_H
 #define COLLISION_MASK_H
 

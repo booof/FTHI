@@ -106,10 +106,10 @@ Editor::Selector::Selector()
 void Editor::Selector::activateHighlighter()
 {
 	// Allocate Memory for Selector Vertices
-	allocateSelectorVertices();
+	allocateSelectorVertices(data_object);
 
 	// Generate Selector Vertices
-	genSelectorVertices();
+	genSelectorVertices(data_object);
 
 	// Bind Outline Vertex Objects
 	glBindVertexArray(outlineVAO);
@@ -564,13 +564,13 @@ void Editor::Selector::storeLimbPointers(int index, Object::Physics::Soft::Sprin
 void Editor::Selector::initializeSelector()
 {
 	// Allocate Memory for Selector Vertices
-	allocateSelectorVertices();
+	allocateSelectorVertices(data_object);
 
 	// Generate Selector Vertices
-	genSelectorVertices();
+	genSelectorVertices(data_object);
 
 	// Store Object Data
-	storeSelectorData();
+	storeSelectorData(data_object);
 
 	// Bind Object Vertex Objects
 	glBindVertexArray(objectVAO);
@@ -5540,7 +5540,7 @@ void Editor::Selector::clampTerrainHelper(float(&endpoints)[8], Render::Objects:
 	//Global::activate_elusive_breakpoint = true;
 
 	// Get the Terrain Objects to Compare to Based on Layer
-	Object::Terrain::TerrainBase** terrain_objects;
+	Object::Terrain::TerrainBase** terrain_objects = nullptr;
 	int terrain_objects_size = 0;
 	//unsaved_level->returnTerrainObjects(&terrain_objects, terrain_objects_size, object_identifier[1], object_index);
 

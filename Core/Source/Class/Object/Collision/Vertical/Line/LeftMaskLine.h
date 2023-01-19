@@ -1,3 +1,4 @@
+#pragma once
 #ifndef LEFT_MASK_LINE_H
 #define LEFT_MASK_LINE_H
 

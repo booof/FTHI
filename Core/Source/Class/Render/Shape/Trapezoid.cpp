@@ -1,5 +1,4 @@
 #include "Trapezoid.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Source/Vertices/Trapezoid/TrapezoidVertices.h"
 #include "Source/Collisions/Point Collisions/PointCollisions.h"
@@ -32,11 +31,6 @@ void Shape::Trapezoid::initializeVertices(Object::ObjectData& data, int& offset,
 void Shape::Trapezoid::writeShape(std::ofstream& object_file)
 {
 	object_file.write((char*)(this) + 8, sizeof(Trapezoid) - 8);
-}
-
-void Shape::Trapezoid::selectShape(Editor::Selector& selector)
-{
-	selector.trapezoid_data = *this;
 }
 
 void Shape::Trapezoid::selectInfo(Editor::ObjectInfo& object_info)

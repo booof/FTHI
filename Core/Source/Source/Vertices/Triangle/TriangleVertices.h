@@ -1,3 +1,4 @@
+#pragma once
 #ifndef TRIANGLE_VERTICES_H
 #define TRIANGLE_VERTICES_H
 

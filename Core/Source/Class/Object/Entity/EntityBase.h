@@ -1,3 +1,4 @@
+#pragma once
 #ifndef ENTITY_BASE_H
 #define ENTITY_BASE_H
 

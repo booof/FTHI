@@ -1,3 +1,4 @@
+#pragma once
 #ifndef PHYSICS_BASE_H
 #define PHYSICS_BASE_H
 

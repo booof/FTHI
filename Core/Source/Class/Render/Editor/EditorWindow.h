@@ -1,3 +1,4 @@
+#pragma once
 #ifndef EDITOR_WINDOW_H
 #define EDITOR_WINDOW_H
 

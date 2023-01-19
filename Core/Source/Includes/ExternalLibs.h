@@ -1,3 +1,4 @@
+#pragma once
 #ifndef EXTERNAL_LIBS_H
 #define EXTERNAL_LIBS_H
 

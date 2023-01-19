@@ -1,3 +1,4 @@
+#pragma once
 #ifndef TEXTURE_HANDLER_H
 #define TEXTURE_HANDLER_H
 

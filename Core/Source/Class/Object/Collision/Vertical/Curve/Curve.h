@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CURVE_H
 #define CURVE_H
 

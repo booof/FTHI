@@ -1,5 +1,5 @@
 #include "Triangle.h"
-#include "Class/Render/Editor/Selector.h"
+#include "Class/Object/Object.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Source/Vertices/Triangle/TriangleVertices.h"
 #include "Source/Collisions/Point Collisions/PointCollisions.h"
@@ -33,11 +33,6 @@ void Shape::Triangle::initializeVertices(Object::ObjectData& data, int& offset, 
 void Shape::Triangle::writeShape(std::ofstream& object_file)
 {
 	object_file.write((char*)(this) + 8, sizeof(Triangle) - 8);
-}
-
-void Shape::Triangle::selectShape(Editor::Selector& selector)
-{
-	selector.triangle_data = *this;
 }
 
 void Shape::Triangle::selectInfo(Editor::ObjectInfo& object_info)

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SUB_LEVEL_H
 #define SUB_LEVEL_H
 

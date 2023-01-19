@@ -1,3 +1,4 @@
+#pragma once
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
@@ -25,9 +26,6 @@ class Shape::Triangle : public Shape
 
 	// Write Shape to File
 	void writeShape(std::ofstream& object_file);
-
-	// Select Shape Data
-	void selectShape(Editor::Selector& selector);
 
 	// Select Shape Info
 	void selectInfo(Editor::ObjectInfo& object_info);

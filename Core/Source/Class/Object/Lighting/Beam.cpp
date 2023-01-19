@@ -144,24 +144,11 @@ void Object::Light::Beam::Beam::initializeVisualizer()
 
 void Object::Light::Beam::Beam::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	// Store Object Identifier
-	selector.object_identifier[0] = LIGHT;
-	selector.object_identifier[1] = BEAM;
-
-	// Store Editing Values
-	selector.light_data = data;
-	selector.beam_data = beam;
-	selector.object_index = object_index;
-	selector.editor_data.name_size = (uint8_t)name.size();
-	selector.editor_data.clamp = clamp;
-	selector.editor_data.lock = lock;
-	selector.editor_data.name = name;
-
 	// Store Object Information
 	info(object_info, name, data, beam);
 
-	// Set Selector to Active Highlight
-	selector.activateHighlighter();
+	// Selector Helper
+	select2(selector);
 }
 
 bool Object::Light::Beam::Beam::testMouseCollisions(float x, float y)

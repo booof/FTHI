@@ -1,3 +1,4 @@
+#pragma once
 #ifndef POST_RENDER_H
 #define POST_RENDER_H
 

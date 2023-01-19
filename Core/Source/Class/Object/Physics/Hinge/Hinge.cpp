@@ -621,26 +621,11 @@ void Object::Physics::Hinge::Hinge::write(std::ofstream& object_file, std::ofstr
 
 void Object::Physics::Hinge::Hinge::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	// Store Object Identifier
-	selector.object_identifier[0] = PHYSICS;
-	selector.object_identifier[1] = (uint8_t)PHYSICS_BASES::HINGE_BASE;
-	selector.object_identifier[2] = (uint8_t)HINGES::HINGE;
-
-	// Store Editing Values
-	selector.uuid = uuid;
-	selector.hinge_data = data;
-	selector.file_name = file_name;
-	selector.object_index = object_index;
-	selector.editor_data.name_size = (uint8_t)name.size();
-	selector.editor_data.clamp = clamp;
-	selector.editor_data.lock = lock;
-	selector.editor_data.name = name;
-
 	// Store Object Information
 	info(object_info, name, data, file_name);
 
-	// Set Selector to Active Highlight
-	selector.activateHighlighter();
+	// Selector Helper
+	select2(selector);
 }
 
 bool Object::Physics::Hinge::Hinge::testMouseCollisions(float x, float y)

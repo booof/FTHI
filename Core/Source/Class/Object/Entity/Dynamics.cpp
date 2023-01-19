@@ -34,27 +34,11 @@ void Object::Entity::Dynamics::write(std::ofstream& object_file, std::ofstream& 
 
 void Object::Entity::Dynamics::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	// Store Object Identifier
-	selector.object_identifier[0] = ENTITY;
-	selector.object_identifier[1] = ENTITY_DYNAMIC;
-
-	// Store Editing Values
-	selector.uuid = uuid;
-	selector.entity_data = entity;
-	selector.object_data = data;
-	selector.dynamic_data = dynamic;
-	selector.enable_resize = false;
-	selector.object_index = object_index;
-	selector.editor_data.name_size = (uint8_t)name.size();
-	selector.editor_data.clamp = clamp;
-	selector.editor_data.lock = lock;
-	selector.editor_data.name = name;
-
 	// Store Object Information
 	info(object_info, name, data);
 
-	// Set Selector to Active Highlight
-	selector.activateHighlighter();
+	// Selector Helper
+	select2(selector);
 }
 
 void Object::Entity::Dynamics::info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data)

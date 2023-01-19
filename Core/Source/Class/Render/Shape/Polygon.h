@@ -1,3 +1,4 @@
+#pragma once
 #ifndef POLYGON_H
 #define POLYGON_H
 
@@ -29,9 +30,6 @@ class Shape::Polygon : public Shape
 
 	// Write Shape to File
 	void writeShape(std::ofstream& object_file);
-
-	// Select Shape Data
-	void selectShape(Editor::Selector& selector);
 
 	// Select Shape Info
 	void selectInfo(Editor::ObjectInfo& object_info);

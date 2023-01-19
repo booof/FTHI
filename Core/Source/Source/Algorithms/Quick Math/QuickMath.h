@@ -1,3 +1,4 @@
+#pragma once
 #ifndef QUICK_MATH_H
 #define QUICK_MATH_H
 

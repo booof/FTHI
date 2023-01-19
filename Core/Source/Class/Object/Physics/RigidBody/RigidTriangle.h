@@ -1,3 +1,4 @@
+#pragma once
 #ifndef RIGID_TRIANGLE_H
 #define RIGID_TRIANGLE_H
 

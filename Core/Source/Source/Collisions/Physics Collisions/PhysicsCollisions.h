@@ -1,3 +1,4 @@
+#pragma once
 #ifndef PHYSICS_COLLISIONS_H
 #define PHYSICS_COLLISIONS_H
 

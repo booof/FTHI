@@ -1,3 +1,4 @@
+#pragma once
 #ifndef OBJECT_H
 #define OBJECT_H
 
@@ -10,6 +11,10 @@
 namespace Editor {
 	class Selector;
 	class ObjectInfo;
+}
+
+namespace DataClass {
+	class Data_Object;
 }
 
 namespace Object
@@ -79,6 +84,9 @@ namespace Object
 
 	public:
 
+		// Pointer to the Data Class
+		DataClass::Data_Object* data_object;
+
 		// Editor Data
 		std::string name = "";           // The User Given Name to the Object for Easy Identification
 		bool clamp = false;              // If True, Vertices and Sides of the Object May be Moved to Fit In With Other Objects
@@ -122,6 +130,8 @@ namespace Object
 
 		// Select Object
 		virtual void select(Editor::Selector& selector, Editor::ObjectInfo& object_info) = 0;
+
+		void select2(Editor::Selector& selector);
 
 		// Test if Mouse Intersects Object
 		virtual bool testMouseCollisions(float x, float y) = 0;

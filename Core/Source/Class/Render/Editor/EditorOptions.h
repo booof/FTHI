@@ -1,3 +1,4 @@
+#pragma once
 #ifndef EDITOR_OPTIONS_H
 #define EDITOR_OPTIONS_H
 

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef OBJECT_INFO_H
 #define OBJECT_INFO_H
 

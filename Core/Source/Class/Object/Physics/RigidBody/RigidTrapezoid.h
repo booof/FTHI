@@ -1,3 +1,4 @@
+#pragma once
 #ifndef RIGID_TRAPEZOID_H
 #define RIGID_TRAPEZOID_H
 

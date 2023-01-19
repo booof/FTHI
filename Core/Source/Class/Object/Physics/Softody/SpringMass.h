@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SPRING_MASS_H
 #define SPRING_MASS_H
 

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef COLOR_WHEEL_H
 #define COLOR_WHEEL_H
 

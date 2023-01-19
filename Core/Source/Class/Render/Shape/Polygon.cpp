@@ -1,5 +1,4 @@
 #include "Polygon.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Source/Vertices/Circle/CircleVertices.h"
 
@@ -36,11 +35,6 @@ void Shape::Polygon::initializeVertices(Object::ObjectData& data, int& offset, i
 void Shape::Polygon::writeShape(std::ofstream& object_file)
 {
 	object_file.write((char*)(this) + 8, sizeof(Polygon) - 8);
-}
-
-void Shape::Polygon::selectShape(Editor::Selector& selector)
-{
-	selector.polygon_data = *this;
 }
 
 void Shape::Polygon::selectInfo(Editor::ObjectInfo& object_info)

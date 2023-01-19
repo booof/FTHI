@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CEILING_MASK_SLANT_H
 #define CEILING_MASK_SLANT_H
 

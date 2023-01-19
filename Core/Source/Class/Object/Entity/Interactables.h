@@ -1,3 +1,4 @@
+#pragma once
 #ifndef INTERACTABLES_H
 #define INTERACTABLES_H
 

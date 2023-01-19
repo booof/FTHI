@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CIRCLE_VERTICES_H
 #define CIRCLE_VERTICES_H
 

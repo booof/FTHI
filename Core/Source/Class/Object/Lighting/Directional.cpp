@@ -153,24 +153,11 @@ void Object::Light::Directional::Directional::initializeVisualizer()
 
 void Object::Light::Directional::Directional::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	// Store Object Identifier
-	selector.object_identifier[0] = LIGHT;
-	selector.object_identifier[1] = DIRECTIONAL;
-
-	// Store Editing Values
-	selector.light_data = data;
-	selector.directional_data = directional;
-	selector.object_index = object_index;
-	selector.editor_data.name_size = (uint8_t)name.size();
-	selector.editor_data.clamp = clamp;
-	selector.editor_data.lock = lock;
-	selector.editor_data.name = name;
-
 	// Store Object Information
 	info(object_info, name, data, directional);
 
-	// Set Selector to Active Highlight
-	selector.activateHighlighter();
+	// Selector Helper
+	select2(selector);
 }
 
 bool Object::Light::Directional::Directional::testMouseCollisions(float x, float y)

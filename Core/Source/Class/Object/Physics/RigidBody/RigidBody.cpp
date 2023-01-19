@@ -318,27 +318,11 @@ void Object::Physics::Rigid::RigidBody::write(std::ofstream& object_file, std::o
 
 void Object::Physics::Rigid::RigidBody::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	// Store Object Identifier
-	selector.object_identifier[0] = PHYSICS;
-	selector.object_identifier[1] = (uint8_t)PHYSICS_BASES::RIGID_BODY;
-	selector.object_identifier[2] = shape->shape;
-
-	// Store Editing Values
-	selector.uuid = uuid;
-	shape->selectShape(selector);
-	selector.object_data = data;
-	selector.rigid_body_data = rigid;
-	selector.object_index = object_index;
-	selector.editor_data.name_size = (uint8_t)name.size();
-	selector.editor_data.clamp = clamp;
-	selector.editor_data.lock = lock;
-	selector.editor_data.name = name;
-
 	// Store Object Information
 	info(object_info, name, data, shape);
 
-	// Set Selector to Active Highlight
-	selector.activateHighlighter();
+	// Selector Helper
+	select2(selector);
 }
 
 bool Object::Physics::Rigid::RigidBody::testMouseCollisions(float x, float y)

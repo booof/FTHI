@@ -1,3 +1,4 @@
+#pragma once
 #ifndef RECTANGLE_SHAPE_H
 #define RECTANGLE_SHAPE_H
 
@@ -24,9 +25,6 @@ class Shape::Rectangle : public Shape
 
 	// Write Shape to File
 	void writeShape(std::ofstream& object_file);
-
-	// Select Shape Data
-	void selectShape(Editor::Selector& selector);
 
 	// Select Shape Info
 	void selectInfo(Editor::ObjectInfo& object_info);

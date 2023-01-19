@@ -1,3 +1,4 @@
+#pragma once
 #ifndef EVENT_LISTENERS_H
 #define EVENT_LISTENERS_H
 

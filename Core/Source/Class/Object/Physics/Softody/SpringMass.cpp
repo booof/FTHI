@@ -195,21 +195,6 @@ void Object::Physics::Soft::SpringMass::write(std::ofstream& object_file, std::o
 
 void Object::Physics::Soft::SpringMass::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	// Store Object Identifier
-	selector.object_identifier[0] = PHYSICS;
-	selector.object_identifier[1] = (uint8_t)PHYSICS_BASES::SOFT_BODY;
-	selector.object_identifier[2] = (uint8_t)SOFT_BODY_TYPES::SPRING_MASS;
-
-	// Store Editing Values
-	selector.uuid = uuid;
-	selector.object_data = data;
-	selector.file_name = file_name;
-	selector.object_index = object_index;
-	selector.editor_data.name_size = (uint8_t)name.size();
-	selector.editor_data.clamp = clamp;
-	selector.editor_data.lock = lock;
-	selector.editor_data.name = name;
-
 	// Store Object Information
 	info(object_info, name, data, file_name);
 
@@ -217,8 +202,8 @@ void Object::Physics::Soft::SpringMass::select(Editor::Selector& selector, Edito
 	selector.springmass_node_modified = false;
 	selector.springmass_spring_modified = false;
 
-	// Set Selector to Active Highlight
-	selector.activateHighlighter();
+	// Selector Helper
+	select2(selector);
 }
 
 bool Object::Physics::Soft::SpringMass::testMouseCollisions(float x, float y)

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef TOGGLE_GROUP_H
 #define TOGGLE_GROUP_H
 

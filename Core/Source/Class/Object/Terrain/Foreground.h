@@ -1,3 +1,4 @@
+#pragma once
 #ifndef FOREGROUND_H
 #define FOREGROUND_H
 

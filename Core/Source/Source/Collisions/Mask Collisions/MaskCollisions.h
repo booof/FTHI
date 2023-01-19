@@ -1,3 +1,4 @@
+#pragma once
 #ifndef MASK_COLLISIONS_H
 #define MASK_COLLISIONS_H
 

@@ -512,6 +512,7 @@ Shape::Shape* DataClass::Data_Shape::getShape()
 
 Object::Object* DataClass::Data_Terrain::genObject()
 {
+	std::cout << "generating new object \n\n\n";
 	switch (object_identifier[1])
 	{
 	case Object::Terrain::BACKDROP: return new Object::Terrain::Backdrop(shape, data); break;
@@ -537,7 +538,6 @@ void DataClass::Data_Terrain::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&data, sizeof(Object::ObjectData));
 	if (testIfBackground())
 		object_file.read((char*)&layer, sizeof(uint8_t));
-
 }
 
 bool DataClass::Data_Terrain::testIfBackground()

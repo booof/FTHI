@@ -1,3 +1,4 @@
+#pragma once
 #ifndef TRIGGER_MASK_H
 #define TRIGGER_MASK_H
 

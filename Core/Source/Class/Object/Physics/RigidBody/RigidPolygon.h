@@ -1,3 +1,4 @@
+#pragma once
 #ifndef RIGID_POLYGON_H
 #define RIGID_POLYGON_H
 

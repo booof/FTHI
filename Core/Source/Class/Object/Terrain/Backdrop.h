@@ -1,3 +1,4 @@
+#pragma once
 #ifndef BACKDROP_H
 #define BACKDROP_H
 

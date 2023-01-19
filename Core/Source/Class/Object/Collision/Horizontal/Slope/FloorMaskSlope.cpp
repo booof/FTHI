@@ -27,25 +27,11 @@ void Object::Mask::Floor::FloorMaskSlope::write(std::ofstream& object_file, std:
 
 void Object::Mask::Floor::FloorMaskSlope::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	// Store Object Identifier
-	selector.object_identifier[0] = MASK;
-	selector.object_identifier[1] = FLOOR;
-	selector.object_identifier[2] = HORIZONTAL_SLOPE;
-
-	// Store Editor Values
-	selector.slope_data = data;
-	selector.floor_mask_platform = platform;
-	selector.object_index = object_index;
-	selector.editor_data.name_size = (uint8_t)name.size();
-	selector.editor_data.clamp = clamp;
-	selector.editor_data.lock = lock;
-	selector.editor_data.name = name;
-
 	// Store Object Information
 	info(object_info, name, data, platform);
 
-	// Set Selector to Active Highlight
-	selector.activateHighlighter();
+	// Selector Helper
+	select2(selector);
 }
 
 glm::vec2 Object::Mask::Floor::FloorMaskSlope::returnPosition()

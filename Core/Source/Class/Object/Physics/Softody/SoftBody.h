@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SOFT_BODY_H
 #define SOFT_BODY_H
 
