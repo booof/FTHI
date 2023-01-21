@@ -12,7 +12,7 @@
 namespace Source::Render::Initialize
 {
 	// Initialize Program
-	void initialize();
+	bool initialize();
 
 	// WGL Extension Support Finder
 	bool WGLExtensionSupported(const char* extension_name);

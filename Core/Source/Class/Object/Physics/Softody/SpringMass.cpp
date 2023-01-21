@@ -19,7 +19,7 @@ Object::Physics::Soft::SpringMass::SpringMass(uint32_t& uuid_, ObjectData& data_
 	// Store Data
 	data = data_;
 	file_name = file_name_;
-	path = "../Resources/Models/Soft Bodies/" + file_name;
+	path = Global::project_resources_path + "/Models/SoftBodies/" + file_name;
 	uuid = uuid_;
 
 	// Store Storage Type
@@ -224,7 +224,7 @@ glm::vec2 Object::Physics::Soft::SpringMass::returnPosition()
 	return data.position;
 }
 
-void Object::Physics::Soft::SpringMass::select2(Editor::Selector& selector)
+void Object::Physics::Soft::SpringMass::select3(Editor::Selector& selector)
 {
 	// Update Node Map
 	node_map[selector.node_data.name] = node_count;

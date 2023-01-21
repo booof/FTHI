@@ -135,7 +135,7 @@ void Object::Terrain::TerrainBase::initializeTerrain(int& offset_, int& instance
 	// Assign Vertices
 	shape->initializeVertices(data, offset_, instance_index_);
 
-	data.zpos = -1.0f;
+	//data.zpos = -1.0f;
 
 	// Assign Instance
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, instance, 64, glm::value_ptr(model));

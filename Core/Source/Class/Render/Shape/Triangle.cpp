@@ -78,5 +78,10 @@ void Shape::Triangle::printName()
 	std::cout << "TRIANGLE\n";
 }
 
+Shape::Shape* Shape::Triangle::makeCopy()
+{
+	return new Triangle(*this);
+}
+
 #endif
 

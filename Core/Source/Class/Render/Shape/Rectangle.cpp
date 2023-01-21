@@ -87,5 +87,10 @@ void Shape::Rectangle::printName()
 	std::cout << "RECTANGLE\n";
 }
 
+Shape::Shape* Shape::Rectangle::makeCopy()
+{
+	return new Rectangle(*this);
+}
+
 #endif
 

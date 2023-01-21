@@ -41,7 +41,9 @@ Render::Objects::SubLevel::SubLevel(int x, int y)
 	level_x = x;
 	level_y = y;
 
+#ifdef SHOW_LEVEL_LOADING
 	std::cout << "loading level: " << level_x << " " << level_y << "\n";
+#endif
 
 	// Get Path of Level
 	path = Global::level_data_path;
@@ -347,7 +349,10 @@ void Render::Objects::SubLevel::subtractHeader(ObjectCount& object_count)
 
 Render::Objects::SubLevel::~SubLevel()
 {
+
+#ifdef SHOW_LEVEL_LOADING
 	std::cout << "deleting level: " << level_x << " " << level_y << "\n";
+#endif
 
 	// Deactivate All Static Objects Part of This Level
 	for (int i = 0; i < header.number_of_loaded_objects; i++)

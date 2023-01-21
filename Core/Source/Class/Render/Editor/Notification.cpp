@@ -10,6 +10,9 @@
 
 void Editor::Notification::prepareForMessage(NOTIFICATION_MESSAGES type, Struct::SingleTexture** texture, GUI::TextObject** text, uint8_t& text_size, std::string& message)
 {
+    // Stop Playing the Current Notification Message or Program will Crash
+    alSourceStop(notificationSource);
+
     // Store Texture to be Used
     switch (type)
     {

@@ -236,6 +236,9 @@ namespace DataClass
 
 		// Floor Mask Horizontal Line Data 
 		Data_FloorMaskHorizontalLine();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Floor Mask Slant 
@@ -254,6 +257,9 @@ namespace DataClass
 
 		// Floor Mask Slant Data
 		Data_FloorMaskSlant();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Floor Mask Slope
@@ -272,6 +278,9 @@ namespace DataClass
 
 		// Floor Mask Slope Data
 		Data_FloorMaskSlope();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Ceiling Mask Horizontal Line
@@ -290,6 +299,9 @@ namespace DataClass
 
 		// Ceiling Mask Horizontal Line Data
 		Data_CeilingMaskHorizontalLine();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Ceiling Mask Slant
@@ -308,6 +320,9 @@ namespace DataClass
 
 		// Ceiling Mask Slant Data
 		Data_CeilingMaskSlant();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Ceiling Mask Slope
@@ -326,6 +341,9 @@ namespace DataClass
 
 		// Ceiling Mask Slope Data
 		Data_CeilingMaskSlope();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Vertical Line
@@ -382,6 +400,9 @@ namespace DataClass
 
 		// Left Mask Vertical Line Data
 		Data_LeftMaskVerticalLine();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Left Mask Curve
@@ -400,6 +421,9 @@ namespace DataClass
 
 		// Left Mask Curve Data
 		Data_LeftMaskCurve();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Right Mask Vertical Line
@@ -418,6 +442,9 @@ namespace DataClass
 
 		// Right Mask Vertical Line Data
 		Data_RightMaskVerticalLine();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Right Mask Curve
@@ -436,6 +463,9 @@ namespace DataClass
 
 		// Right Mask Curve Data
 		Data_RightMaskCurve();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Trigger Mask
@@ -456,6 +486,9 @@ namespace DataClass
 
 		// Trigger Mask Data
 		Data_TriggerMask();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 
 		Object::Mask::Trigger::TriggerData& getTriggerData();
 
@@ -503,7 +536,8 @@ namespace DataClass
 		// Terrain Data
 		Data_Terrain(uint8_t layer_identifier, uint8_t shape_identifier);
 
-
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 
 		void generateInitialValues(glm::vec2& position, glm::vec4 color, Shape::Shape* new_shape);
 	};
@@ -551,6 +585,9 @@ namespace DataClass
 		// Directional Light Data
 		Data_Directional();
 
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
 		Object::Light::Directional::DirectionalData& getDirectionalData();
 
 		void generateInitialValues(glm::vec2& position, float& size);
@@ -575,6 +612,9 @@ namespace DataClass
 
 		// Point Light Data
 		Data_Point();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 
 		Object::Light::Point::PointData& getPointData();
 
@@ -601,6 +641,9 @@ namespace DataClass
 		// Spot Light Data
 		Data_Spot();
 
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
 		Object::Light::Spot::SpotData& getSpotData();
 
 		void generateInitialValues(glm::vec2& position);
@@ -625,6 +668,9 @@ namespace DataClass
 
 		// Beam Light Data
 		Data_Beam();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 
 		Object::Light::Beam::BeamData& getBeamData();
 
@@ -667,6 +713,9 @@ namespace DataClass
 		// Rigid Body Data
 		Data_RigidBody(uint8_t shape_identifier);
 
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
 		Object::Physics::Rigid::RigidBodyData& getRigidData();
 
 		void generateInitialValues(glm::vec2& position, Shape::Shape* new_shape, uint32_t& new_uuid);
@@ -691,6 +740,9 @@ namespace DataClass
 
 		// SpringMass Data
 		Data_SpringMass();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 
 		std::string& getFile();
 
@@ -717,6 +769,9 @@ namespace DataClass
 		// Wire Data
 		Data_Wire();
 
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
 		void generateInitialValues(glm::vec2& position, float& size, uint32_t& new_uuid);
 
 		Object::Physics::Soft::WireData& getWireData();
@@ -741,6 +796,9 @@ namespace DataClass
 
 		// Anchor Data
 		Data_Anchor();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 
 		int& getScript();
 
@@ -773,6 +831,9 @@ namespace DataClass
 
 		// Hinge Data
 		Data_Hinge();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 
 		int& getScript();
 
@@ -820,6 +881,9 @@ namespace DataClass
 
 		// NPC Data
 		Data_NPC();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Controllable Entities
@@ -838,6 +902,9 @@ namespace DataClass
 
 		// Controllable Entity Data
 		Data_Controllable();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Interactable Entities
@@ -859,6 +926,9 @@ namespace DataClass
 
 		// Interactable Entity Data
 		Data_Interactable();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 
 	// Dynamic Entities
@@ -880,6 +950,9 @@ namespace DataClass
 
 		// Dynamic Entity Data
 		Data_Dynamic();
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
 	};
 }
 

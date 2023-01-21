@@ -139,7 +139,7 @@ namespace Render::Objects
 			uint8_t stack_index = 0;
 
 			// Array
-			LevelInstance** stack_array = nullptr;
+			Changes** stack_array = nullptr;
 
 		public:
 
@@ -147,34 +147,28 @@ namespace Render::Objects
 			SlaveStack();
 
 			// Add Instance to Stack
-			uint8_t appendInstance(LevelInstance* instance);
+			uint8_t appendInstance(Changes* instance);
 
 			// Get Instance From Stack
-			LevelInstance* returnInstance();
+			Changes* returnInstance();
 
 			// Returns True if Stack is Empty
 			bool isEmpty();
 
-			// Store Unmodified Data in First Index of Array
-			void storeUnmodified(LevelInstance* instance);
-
 			// Delete an Instance
-			void deleteInstance(LevelInstance* instance);
+			void deleteInstance(Changes* instance);
 
 			// Delete Entire Stack
 			void deleteStack();
 
-			// Return Current Index in Stack
-			uint8_t returnCurrentIndex();
+			// Delete the Most Recent Instance
+			void removeRecentInstance();
 
-			// Switch to a Different Instance
-			void switchInstance(uint8_t instance_index);
+			// Move Forward Through Change List
+			void moveForward();
 
-			// Increment Stack Apperences
-			void incrementStackInstances(uint8_t index);
-
-			// Decrement Stack Apperences
-			void decrementStackInstances(uint8_t index);
+			// Move Backward Through Change List
+			void moveBackward();
 		};
 
 		// Slave Stack
@@ -322,6 +316,12 @@ namespace Render::Objects
 		// Change Vertex Colors
 		void changeColors(float* color);
 
+		// Make Changes Moving Forward Though Change List
+		void moveForwardsThroughChanges(Changes* changes);
+
+		// Make Inverse Changes Moving Backwards Through Change List
+		void moveBackwardsThroughChanges(Changes* changes);
+
 	public:
 
 		// Coordinates of Level
@@ -350,9 +350,6 @@ namespace Render::Objects
 		// Build Objects to Main Level
 		void buildObjects(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities);
 
-		// Switch to Another Instance
-		void switchInstance(uint8_t selected_instance);
-
 		// Write Current Instance to File
 		void write(bool& save);
 
@@ -369,16 +366,16 @@ namespace Render::Objects
 		void createChangeAppend(Editor::Selector* selector);
 
 		// Create a New Change by Removing an Object
-		void createChangePop(uint32_t object_index);
+		void createChangePop(DataClass::Data_Object* data_object_to_remove);
 
 		// Reset a Change List in the Event it is Canceled
 		void resetChangeList();
 
-		// Increment Stack Appearances for Instance
-		void incrementStackApperance(uint8_t index);
+		// Traverse through Slave Stack
+		void traverseChangeList(bool backward);
 
-		// Decrement Stack Apperances for Instance
-		void decrementStackApperance(uint8_t index);
+		// Remove Instance in Change List
+		void removeChainListInstance();
 
 		// Return Object Header
 		LevelHeader returnObjectHeader();

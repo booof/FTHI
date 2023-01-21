@@ -886,7 +886,7 @@ void Editor::EditorWindow::genBoxesObject(uint8_t& box_offset, uint8_t& text_off
 	temp_box_data.width = 20.0f;
 	temp_box_data.position = glm::vec2(-35.0f * scale, height_offset - 75.0f);
 	temp_box_data.button_text = std::to_string(object_data.zpos);
-	temp_box_data.mode = GUI::ABSOLUTE_INTEGER_TEXT_BOX;
+	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
 	temp_box_data.text_color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	boxes[box_offset] = new GUI::Box(temp_box_data);
 	boxes[box_offset]->setDataPointer(&object_data.zpos);
@@ -3362,6 +3362,8 @@ void Editor::EditorWindow::generateNewObject()
 			}
 
 			}
+
+			break;
 		}
 
 		// Vertical Masks

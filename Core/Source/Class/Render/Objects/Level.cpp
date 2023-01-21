@@ -27,6 +27,8 @@
 #include "Source/Collisions/Mask Collisions/MaskCollisions.h"
 #include "Source/Collisions/Physics Collisions/PhysicsCollisions.h"
 
+#include "Class/Render/Struct/DataClasses.h"
+
 void Render::Objects::Level::updateLevelPos(glm::vec2 position, glm::vec2& level)
 {
 	level.x = floor(position.x / 128);
@@ -93,8 +95,6 @@ void Render::Objects::Level::testReload()
 
 void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level_new, bool reload_all)
 {
-	std::cout << "reloading levels\n\n";
-
 	// Empty Object Counts
 	static ObjectCount null_objects;
 
@@ -142,6 +142,10 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 		reallocateAll(initialized);
 		initialized = true;
 
+#ifdef SHOW_LEVEL_LOADING
+		std::cout << "reloaded all\n";
+#endif
+
 		return;
 	}
 
@@ -177,7 +181,10 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 			}
 		}
 
+#ifdef SHOW_LEVEL_LOADING
 		std::cout << "moved west\n";
+#endif
+
 	}
 
 	// Move to the Right
@@ -210,7 +217,10 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 			}
 		}
 
+#ifdef SHOW_LEVEL_LOADING
 		std::cout << "moved east\n";
+#endif
+
 	}
 
 	// Move to the North
@@ -243,7 +253,10 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 			}
 		}
 
+#ifdef SHOW_LEVEL_LOADING
 		std::cout << "moved north\n";
+#endif
+
 	}
 
 	// Move to the South
@@ -276,10 +289,15 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 			}
 		}
 
+#ifdef SHOW_LEVEL_LOADING
 		std::cout << "moved south\n";
+#endif
+
 	}
 
+#ifdef SHOW_LEVEL_LOADING
 	std::cout << "\n";
+#endif
 
 	// Reallocate Memory of Pointers
 	reallocatePostReload(object_count_old);
@@ -359,7 +377,7 @@ void Render::Objects::Level::segregateObjects()
 		case Object::POINT_COUNT:
 		{
 			point_lights[temp_index_holder.point_count] = static_cast<Object::Light::Point::Point*>(object);
-			temp_index_holder.point_count;
+			temp_index_holder.point_count++;
 			break;
 		}
 		// Spot Objects
@@ -1346,13 +1364,13 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 							// Copy File Data Into Stream
 							std::stringstream file_stream;
 							std::ifstream in_file;
-							in_file.open("../Resources/Models/Soft Bodies/" + object.file_name, std::ios::binary);
+							in_file.open(Global::project_resources_path + "/Models/SoftBodies/" + object.file_name, std::ios::binary);
 							file_stream << in_file.rdbuf();
 							in_file.close();
 
 							// Open File for Writing
 							std::ofstream out_file;
-							out_file.open("../Resources/Models/Soft Bodies/" + object.file_name, std::ios::binary);
+							out_file.open(Global::project_resources_path + "/Models/SoftBodies/" + object.file_name, std::ios::binary);
 
 							// Copy the Number of Nodes
 							char temp_byte;
@@ -1407,6 +1425,7 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 							// Enable Selector for Editing
 							selector.active = true;
 							selector.editing = false;
+							selector.data_object = object.data_object;
 							selector.readSpringMassFile();
 
 							//return true;
@@ -1474,13 +1493,13 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						// Copy File Data Into Stream
 						std::stringstream file_stream;
 						std::ifstream in_file;
-						in_file.open("../Resources/Models/Soft Bodies/" + object.file_name, std::ios::binary);
+						in_file.open(Global::project_resources_path + "/Models/SoftBodies/" + object.file_name, std::ios::binary);
 						file_stream << in_file.rdbuf();
 						in_file.close();
 
 						// Open File for Writing
 						std::ofstream out_file;
-						out_file.open("../Resources/Models/Soft Bodies/" + object.file_name, std::ios::binary);
+						out_file.open(Global::project_resources_path + "/Models/SoftBodies/" + object.file_name, std::ios::binary);
 
 						// Copy the Number of Nodes Decremented by 1
 						char temp_byte;
@@ -1530,11 +1549,12 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						object.read();
 
 						// Perform Secondary Selection to Link Springs
-						object.select2(selector);
+						object.select3(selector);
 
 						// Enable Selector for Editing
 						selector.active = true;
 						selector.editing = false;
+						selector.data_object = object.data_object;
 					}
 
 					return true;
@@ -1658,6 +1678,9 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Type*** object_list, short&
 			// Reset Object Info
 			object_info.clearAll();
 
+			// Make a Copy of the Data Class
+			selector.data_object = selector.data_object->makeCopy();
+
 			return 2;
 		}
 
@@ -1722,6 +1745,9 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 
 				// Reset Object Info
 				object_info.clearAll();
+
+				// Make a Copy of the Data Class
+				selector.data_object = selector.data_object->makeCopy();
 
 				return true;
 			}
@@ -1888,7 +1914,7 @@ void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm:
 	selector.level_of_origin = change_controller->getUnsavedLevel((int)coords.x, (int)coords.y, 0);
 
 	// Remove Object from Unsaved Level
-	selector.level_of_origin->createChangePop(selector.data_object->getObjectIndex());
+	selector.level_of_origin->createChangePop(selector.data_object);
 
 	// Set Originated From Level Flag to True
 	selector.originated_from_level = true;

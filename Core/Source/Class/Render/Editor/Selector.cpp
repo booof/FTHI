@@ -278,16 +278,19 @@ void Editor::Selector::deselectNode()
 		connected_limbs_count = 0;
 	}
 
+	// Get SpringMass File Name
+	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
+
 	// Copy File Data Into Stream
 	std::stringstream file_stream;
 	std::ifstream in_file;
-	in_file.open("../Resources/Models/Soft Bodies/" + file_name, std::ios::binary);
+	in_file.open(Global::project_resources_path + "/Models/SoftBodies/" + file_name, std::ios::binary);
 	file_stream << in_file.rdbuf();
 	in_file.close();
 
 	// Open File for Writing
 	std::ofstream out_file;
-	out_file.open("../Resources/Models/Soft Bodies/" + file_name, std::ios::binary);
+	out_file.open(Global::project_resources_path + "/Models/SoftBodies/" + file_name, std::ios::binary);
 
 	// Project File is Empty
 	if (file_stream.str().size() < 2)
@@ -347,16 +350,19 @@ void Editor::Selector::deselectNode()
 
 void Editor::Selector::deselectSpring()
 {
+	// Get SpringMass File Name
+	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
+
 	// Copy File Data Into Stream
 	std::stringstream file_stream;
 	std::ifstream in_file;
-	in_file.open("../Resources/Models/Soft Bodies/" + file_name, std::ios::binary);
+	in_file.open(Global::project_resources_path + "/Models/SoftBodies/" + file_name, std::ios::binary);
 	file_stream << in_file.rdbuf();
 	in_file.close();
 
 	// Open File for Writing
 	std::ofstream out_file;
-	out_file.open("../Resources/Models/Soft Bodies/" + file_name, std::ios::binary);
+	out_file.open(Global::project_resources_path + "/Models/SoftBodies/" + file_name, std::ios::binary);
 
 	// Copy the Number of Nodes
 	char temp_byte;
@@ -403,9 +409,12 @@ void Editor::Selector::deselectSpring()
 
 void Editor::Selector::readSpringMassFile()
 {
+	// Get SpringMass File Name
+	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
+
 	// Open File
 	std::ifstream temp_file;
-	temp_file.open("../Resources/Models/Soft Bodies/" + file_name, std::ios::binary);
+	temp_file.open(Global::project_resources_path + "/Models/SoftBodies/" + file_name, std::ios::binary);
 
 	// Determine the Number of Nodes
 	uint8_t temp_byte = 0;
@@ -437,7 +446,7 @@ void Editor::Selector::readSpringMassFile()
 		if (temp_byte == 0)
 		{
 			temp_file.read((char*)&temp_node_data, sizeof(Object::Physics::Soft::NodeData));
-			temp_node_data.position += temp_position;
+			temp_node_data.position += static_cast<DataClass::Data_SpringMass*>(data_object)->getObjectData().position;
 			node_list[node_count] = temp_node_data;
 			node_count++;
 		}
@@ -635,6 +644,10 @@ void Editor::Selector::initializeSelector()
 	// Unbind Vertex Objects
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+	// Reset Some Editing Values
+	change_horizontal = 0;
+	change_vertical = 0;
 
 	// Set Editing Flag to True
 	editing = true;
@@ -2745,12 +2758,33 @@ void Editor::Selector::storeSelectorDataSoftBody(DataClass::Data_Object* data_ob
 		// Edit Node
 		if (springmass_node_modified)
 		{
+			// Constant, Unchanging Values for the Width and Height of a SpringMass Core
+		//	static float temp_width = 5.0f;
+		//	static float temp_height = 5.0f;
+
 			// Shape is a SpringMass Node
-			editing_shape = SPRINGMASS_NODE;
+			//editing_shape = SPRINGMASS_NODE;
 
 			// Set Object Position
 			//object_x = &node_data.position.x;
 			//object_y = &node_data.position.y;
+
+			// Constant, Unchanging Values for the Width and Height of a SpringMass Core
+			static float temp_width = 5.0f;
+			static float temp_height = 5.0f;
+
+			// Shape is a SpringMass Node
+			selected_object = new Selected_Rectangle();
+			Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+			editing_shape = SPRINGMASS_NODE;
+
+			// Set Object Position
+			new_selected_rectangle.object_width = &temp_width;
+			new_selected_rectangle.object_height = &temp_height;
+			new_selected_rectangle.object_x = &node_data.position.x;
+			new_selected_rectangle.object_y = &node_data.position.y;
+			new_selected_rectangle.enable_resize = false;
+			new_selected_rectangle.data_object = data_object;
 
 			// Get Object Info
 			info->clearAll();
@@ -2778,12 +2812,26 @@ void Editor::Selector::storeSelectorDataSoftBody(DataClass::Data_Object* data_ob
 		// Edit Core
 		else
 		{
+			// Constant, Unchanging Values for the Width and Height of a SpringMass Core
+			static float temp_width = 5.0f;
+			static float temp_height = 5.0f;
+
+			// Transform Data Class into SpringMass and Get Object Data
+			DataClass::Data_SpringMass& data_springmass = *static_cast<DataClass::Data_SpringMass*>(data_object);
+			Object::ObjectData& object_data = data_springmass.getObjectData();
+
 			// Shape is a SpringMass Object
+			selected_object = new Selected_Rectangle();
+			Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
 			editing_shape = SPRINGMASS_OBJECT;
 
 			// Set Object Position
-			//object_x = &object_data.position.x;
-			//object_y = &object_data.position.y;
+			new_selected_rectangle.object_width = &temp_width;
+			new_selected_rectangle.object_height = &temp_height;
+			new_selected_rectangle.object_x = &object_data.position.x;
+			new_selected_rectangle.object_y = &object_data.position.y;
+			new_selected_rectangle.enable_resize = false;
+			new_selected_rectangle.data_object = data_object;
 
 			// Get Object Info
 			//Object::Physics::Soft::SpringMass::info(*info, editor_data.name, object_data, file_name);
@@ -3381,6 +3429,7 @@ void Editor::Selector::updateRectangle()
 		if (Global::LeftClick)
 		{
 			deselectObject();
+			return;
 		}
 	}
 
@@ -3664,6 +3713,7 @@ void Editor::Selector::updateTrapezoid()
 		if (Global::LeftClick)
 		{
 			deselectObject();
+			return;
 		}
 	}
 
@@ -3718,6 +3768,9 @@ void Editor::Selector::moveTriangle(Selected_Triangle& selected_triangle)
 
 	else
 	{
+		// Get the Triangle Shape
+		Shape::Triangle& triangle_data = *static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Test if Triangle Should be Resized
 		if (selected_vertex)
 		{
@@ -3745,6 +3798,9 @@ void Editor::Selector::moveTriangle(Selected_Triangle& selected_triangle)
 			// Store Vertices in Object Data
 			temp_position = selected_triangle.coords1;
 			triangle_data = Shape::Triangle(selected_triangle.coords2, selected_triangle.coords3);
+			static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData().position = selected_triangle.coords1;
+			selected_triangle.coords2 = *triangle_data.pointerToSecondPosition();
+			selected_triangle.coords3 = *triangle_data.pointerToThirdPosition();
 			should_sort = true;
 		}
 
@@ -3764,6 +3820,9 @@ void Editor::Selector::moveTriangle(Selected_Triangle& selected_triangle)
 			selected_triangle.object_x = &temp_position.x;
 			selected_triangle.object_y = &temp_position.y;
 			triangle_data = Shape::Triangle(selected_triangle.coords2, selected_triangle.coords3);
+			static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData().position = selected_triangle.coords1;
+			selected_triangle.coords2 = *triangle_data.pointerToSecondPosition();
+			selected_triangle.coords3 = *triangle_data.pointerToThirdPosition();
 			model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_triangle.object_x, *selected_triangle.object_y, 0.0f));
 		}
 
@@ -3821,6 +3880,7 @@ void Editor::Selector::updateTriangle()
 		if (Global::LeftClick)
 		{
 			deselectObject();
+			return;
 		}
 	}
 
@@ -3947,6 +4007,7 @@ void Editor::Selector::updateCircle()
 		if (Global::LeftClick)
 		{
 			deselectObject();
+			return;
 		}
 	}
 
@@ -4086,6 +4147,7 @@ void Editor::Selector::updateLine()
 		if (Global::LeftClick)
 		{
 			deselectObject();
+			return;
 		}
 	}
 
@@ -4136,6 +4198,7 @@ void Editor::Selector::updateHorizontalLine()
 		if (Global::LeftClick)
 		{
 			deselectObject();
+			return;
 		}
 	}
 
@@ -4186,6 +4249,7 @@ void Editor::Selector::updateVerticalLine()
 		if (Global::LeftClick)
 		{
 			deselectObject();
+			return;
 		}
 	}
 
@@ -4224,6 +4288,7 @@ void Editor::Selector::updateSpringMassObject()
 		if (Global::LeftClick)
 		{
 			deselectObject();
+			return;
 		}
 	}
 
@@ -4280,7 +4345,7 @@ void Editor::Selector::updateSpringMassNode()
 		// If Left Click is Pressed, Deselect Object
 		if (Global::LeftClick)
 		{
-			//node_data.position -= object_data.position;
+			node_data.position -= static_cast<DataClass::Data_SpringMass*>(data_object)->getObjectData().position;
 			deselectNode();
 			level->reloadAll();
 			return;
@@ -4396,6 +4461,7 @@ void Editor::Selector::updateSpringMassSpring()
 		{
 			deselectSpring();
 			level->reloadAll();
+			return;
 		}
 	}
 
@@ -4701,9 +4767,15 @@ void Editor::Selector::sortVertices(bool enable_rotation)
 		selected_triangle.coords3 = glm::vec2(vertices[4], vertices[5]);
 		Source::Collisions::Point::arrangeTriVertices(selected_triangle.coords1, selected_triangle.coords2, selected_triangle.coords3);
 
+		// Get the Triangle Shape
+		Shape::Triangle& triangle_data = *static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+
 		// Store Vertices in Object Data
 		temp_position = selected_triangle.coords1;
 		triangle_data = Shape::Triangle(selected_triangle.coords2, selected_triangle.coords3);
+		static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData().position = selected_triangle.coords1;
+		selected_triangle.coords2 = *triangle_data.pointerToSecondPosition();
+		selected_triangle.coords3 = *triangle_data.pointerToThirdPosition();
 		should_sort = true;
 	}
 
@@ -4731,6 +4803,9 @@ void Editor::Selector::addChild()
 
 void Editor::Selector::addSpringMassNode()
 {
+	// Get SpringMass File Name
+	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
+
 	// Temp Node Object
 	node_data.mass = 1.0f;
 	node_data.position = glm::vec2(1.0f, -1.0f);
@@ -4739,7 +4814,7 @@ void Editor::Selector::addSpringMassNode()
 	node_data.radius = 1.0f;
 
 	// Determine if the SpringMass File Exists. If So, Establish First Node
-	std::filesystem::path temp_path = "../Resources/Models/Soft Bodies/" + file_name;
+	std::filesystem::path temp_path = Global::project_resources_path + "/Models/SoftBodies/" + file_name;
 	std::error_code ec;
 	if ((int)std::filesystem::file_size(temp_path, ec) == 0 || ec)
 	{
@@ -4838,8 +4913,11 @@ void Editor::Selector::addSpringMassNode()
 
 void Editor::Selector::addSpringMassSpring()
 {
+	// Get SpringMass File Name
+	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
+
 	// Determine if the SpringMass File Exists. If Not, Throw Error Since There Are No Nodes to Connect To
-	std::filesystem::path temp_path = "../Resources/Models/Soft Bodies/" + file_name;
+	std::filesystem::path temp_path = Global::project_resources_path + "/Models/SoftBodies/" + file_name;
 	std::error_code ec;
 	if ((int)std::filesystem::file_size(temp_path, ec) == 0 || ec)
 	{
@@ -4854,7 +4932,7 @@ void Editor::Selector::addSpringMassSpring()
 	{
 		// Open File
 		std::ifstream temp_file;
-		temp_file.open("../Resources/Models/Soft Bodies/" + file_name, std::ios::binary);
+		temp_file.open(Global::project_resources_path + "/Models/SoftBodies/" + file_name, std::ios::binary);
 
 		// Determine the Number of Nodes
 		uint8_t temp_byte = 0;
@@ -4901,7 +4979,7 @@ void Editor::Selector::addSpringMassSpring()
 				if (temp_byte == 0)
 				{
 					temp_file.read((char*)&temp_node_data, sizeof(Object::Physics::Soft::NodeData));
-					temp_node_data.position += temp_position;
+					temp_node_data.position += static_cast<DataClass::Data_SpringMass*>(data_object)->getObjectData().position;
 					node_list[node_count] = temp_node_data;
 					node_count++;
 				}

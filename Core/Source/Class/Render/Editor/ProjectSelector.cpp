@@ -292,6 +292,7 @@ void Editor::ProjectSelector::loadProject()
     Global::script_folder_path = current_project_path + "\\Scripts";
     Global::project_solution_path = current_project_path + "\\Build\\" + current_project_name + ".sln";
     Global::project_symbols_path = current_project_path + "\\Build\\Debug\\project_lib.pdb";
+    Global::project_resources_path = current_project_path;
     Global::project_name = current_project_name;
 
     // Read Script Files
@@ -668,6 +669,7 @@ bool Editor::ProjectSelector::createProject()
         std::filesystem::create_directories(current_project_path + "\\Fonts");
         std::filesystem::create_directories(current_project_path + "\\Music");
         std::filesystem::create_directories(current_project_path + "\\Models");
+        std::filesystem::create_directories(current_project_path + "\\Models\\SoftBodies");
         std::filesystem::create_directories(current_project_path + "\\Scripts");
         std::filesystem::create_directories(current_project_path + "\\Sound");
         std::filesystem::create_directories(current_project_path + "\\Textures");
@@ -1187,7 +1189,7 @@ void Editor::ProjectSelector::select_project()
 
     // If Not Initialized, Exit Program
     if (!project_initialized)
-        exit(1);
+        return;
 
     // Unstatic Project
     Global::colorShaderStatic.Use();

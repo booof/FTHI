@@ -87,5 +87,10 @@ void Shape::Polygon::printName()
 	std::cout << "POLYGON\n";
 }
 
+Shape::Shape* Shape::Polygon::makeCopy()
+{
+	return new Polygon(*this);
+}
+
 #endif
 

@@ -242,13 +242,13 @@ namespace Editor
 		bool moving = false;
 
 		// Temporary Triangle
-		Shape::Triangle triangle_data;
+		//Shape::Triangle triangle_data;
 
 		// Temp Position
 		glm::vec2 temp_position;
 
 		// Temp File Name
-		std::string file_name;
+		//std::string file_name;
 
 		// Temp UUID
 		uint32_t uuid;

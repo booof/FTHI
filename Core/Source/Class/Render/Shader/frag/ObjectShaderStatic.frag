@@ -262,8 +262,7 @@ vec4 CalculateSpotLight(Spot light, vec4 normal, vec4 fragPos, vec4 viewDirectio
 	// Calculate Cutoff
 	float theta = dot(normalize(normal.xyz - lightDir.xyz), light.direction.xyz);
 	float epsilon = light.InnerCutoff - light.OuterCutoff;
-	float intensity = smoothstep(0.0, 1.0, (theta - light.OuterCutoff) / epsilon);
-	//float intensity = clamp((theta - light.OuterCutoff) / epsilon, 0.0, 1.0);
+	float intensity = smoothstep(0.0, 1.0, (light.OuterCutoff - theta) / epsilon);
 
 	// Calculate Lighting
 	vec4 ambient = color_ambient * light.ambient * attenuation * intensity;

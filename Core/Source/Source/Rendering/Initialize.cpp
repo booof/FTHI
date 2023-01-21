@@ -22,7 +22,7 @@ void why_do_i_have_to_mak_a_function_to_call_this()
 
 void ErrorExit(LPTSTR lpszFunction);
 
-void Source::Render::Initialize::initialize()
+bool Source::Render::Initialize::initialize()
 {
 	//////////////////////////////////
 	// Splash Screen Initialization //
@@ -728,6 +728,9 @@ void Source::Render::Initialize::initialize()
 	// Prompt User to Load a Project
 	//project_selector->readProjectListFile();
 	project_selector->initializeProjectSelector();
+
+	// Returns True if a Project was not Selected
+	return Global::project_file_path.empty();
 }
 
 bool Source::Render::Initialize::WGLExtensionSupported(const char* extension_name)

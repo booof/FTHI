@@ -44,6 +44,7 @@ DataClass::Data_Object::Data_Object()
 
 void DataClass::Data_Object::writeObject(std::ofstream& object_file, std::ofstream& editor_file)
 {
+	object_file.write((char*)object_identifier, 3);
 	writeObjectData(object_file);
 	writeEditorData(editor_file);
 }
@@ -200,6 +201,11 @@ DataClass::Data_FloorMaskHorizontalLine::Data_FloorMaskHorizontalLine()
 	object_identifier[2] = Object::Mask::HORIZONTAL_LINE;
 }
 
+DataClass::Data_Object* DataClass::Data_FloorMaskHorizontalLine::makeCopy()
+{
+	return new DataClass::Data_FloorMaskHorizontalLine(*this);
+}
+
 Object::Object* DataClass::Data_FloorMaskSlant::genObject()
 {
 	return new Object::Mask::Floor::FloorMaskSlant(data, platform);
@@ -223,6 +229,11 @@ DataClass::Data_FloorMaskSlant::Data_FloorMaskSlant()
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::FLOOR;
 	object_identifier[2] = Object::Mask::HORIZONTAL_SLANT;
+}
+
+DataClass::Data_Object* DataClass::Data_FloorMaskSlant::makeCopy()
+{
+	return new DataClass::Data_FloorMaskSlant(*this);
 }
 
 Object::Object* DataClass::Data_FloorMaskSlope::genObject()
@@ -250,6 +261,11 @@ DataClass::Data_FloorMaskSlope::Data_FloorMaskSlope()
 	object_identifier[2] = Object::Mask::HORIZONTAL_SLOPE;
 }
 
+DataClass::Data_Object* DataClass::Data_FloorMaskSlope::makeCopy()
+{
+	return new DataClass::Data_FloorMaskSlope(*this);
+}
+
 Object::Object* DataClass::Data_CeilingMaskHorizontalLine::genObject()
 {
 	return new Object::Mask::Ceiling::CeilingMaskLine(data);
@@ -271,6 +287,11 @@ DataClass::Data_CeilingMaskHorizontalLine::Data_CeilingMaskHorizontalLine()
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::CEILING;
 	object_identifier[2] = Object::Mask::HORIZONTAL_LINE;
+}
+
+DataClass::Data_Object* DataClass::Data_CeilingMaskHorizontalLine::makeCopy()
+{
+	return new DataClass::Data_CeilingMaskHorizontalLine(*this);
 }
 
 Object::Object* DataClass::Data_CeilingMaskSlant::genObject()
@@ -296,6 +317,11 @@ DataClass::Data_CeilingMaskSlant::Data_CeilingMaskSlant()
 	object_identifier[2] = Object::Mask::HORIZONTAL_SLANT;
 }
 
+DataClass::Data_Object* DataClass::Data_CeilingMaskSlant::makeCopy()
+{
+	return new DataClass::Data_CeilingMaskSlant(*this);
+}
+
 Object::Object* DataClass::Data_CeilingMaskSlope::genObject()
 {
 	return new Object::Mask::Ceiling::CeilingMaskSlope(data);
@@ -317,6 +343,11 @@ DataClass::Data_CeilingMaskSlope::Data_CeilingMaskSlope()
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::CEILING;
 	object_identifier[2] = Object::Mask::HORIZONTAL_SLOPE;
+}
+
+DataClass::Data_Object* DataClass::Data_CeilingMaskSlope::makeCopy()
+{
+	return new DataClass::Data_CeilingMaskSlope(*this);
 }
 
 Object::Mask::VerticalLineData& DataClass::Data_VerticalLine::getVerticalLineData()
@@ -389,6 +420,11 @@ DataClass::Data_LeftMaskVerticalLine::Data_LeftMaskVerticalLine()
 	object_identifier[2] = Object::Mask::VERTICAL_LINE;
 }
 
+DataClass::Data_Object* DataClass::Data_LeftMaskVerticalLine::makeCopy()
+{
+	return new DataClass::Data_LeftMaskVerticalLine(*this);
+}
+
 Object::Object* DataClass::Data_LeftMaskCurve::genObject()
 {
 	return new Object::Mask::Left::LeftMaskCurve(data);
@@ -410,6 +446,11 @@ DataClass::Data_LeftMaskCurve::Data_LeftMaskCurve()
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::LEFT_WALL;
 	object_identifier[2] = Object::Mask::VERTICAL_CURVE;
+}
+
+DataClass::Data_Object* DataClass::Data_LeftMaskCurve::makeCopy()
+{
+	return new DataClass::Data_LeftMaskCurve(*this);
 }
 
 Object::Object* DataClass::Data_RightMaskVerticalLine::genObject()
@@ -435,6 +476,11 @@ DataClass::Data_RightMaskVerticalLine::Data_RightMaskVerticalLine()
 	object_identifier[2] = Object::Mask::VERTICAL_LINE;
 }
 
+DataClass::Data_Object* DataClass::Data_RightMaskVerticalLine::makeCopy()
+{
+	return new DataClass::Data_RightMaskVerticalLine(*this);
+}
+
 Object::Object* DataClass::Data_RightMaskCurve::genObject()
 {
 	return new Object::Mask::Right::RightMaskCurve(data);
@@ -458,6 +504,11 @@ DataClass::Data_RightMaskCurve::Data_RightMaskCurve()
 	object_identifier[2] = Object::Mask::VERTICAL_CURVE;
 }
 
+DataClass::Data_Object* DataClass::Data_RightMaskCurve::makeCopy()
+{
+	return new DataClass::Data_RightMaskCurve(*this);
+}
+
 Object::Object* DataClass::Data_TriggerMask::genObject()
 {
 	return new Object::Mask::Trigger::TriggerMask(data);
@@ -479,6 +530,11 @@ DataClass::Data_TriggerMask::Data_TriggerMask()
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::TRIGGER;
 	object_identifier[2] = 0;
+}
+
+DataClass::Data_Object* DataClass::Data_TriggerMask::makeCopy()
+{
+	return new DataClass::Data_TriggerMask(*this);
 }
 
 Object::Mask::Trigger::TriggerData& DataClass::Data_TriggerMask::getTriggerData()
@@ -512,7 +568,6 @@ Shape::Shape* DataClass::Data_Shape::getShape()
 
 Object::Object* DataClass::Data_Terrain::genObject()
 {
-	std::cout << "generating new object \n\n\n";
 	switch (object_identifier[1])
 	{
 	case Object::Terrain::BACKDROP: return new Object::Terrain::Backdrop(shape, data); break;
@@ -555,6 +610,13 @@ DataClass::Data_Terrain::Data_Terrain(uint8_t layer_identifier, uint8_t shape_id
 	object_identifier[2] = shape_identifier;
 }
 
+DataClass::Data_Object* DataClass::Data_Terrain::makeCopy()
+{
+	DataClass::Data_Terrain* new_terrain = new DataClass::Data_Terrain(*this);
+	new_terrain->shape = new_terrain->shape->makeCopy();
+	return new_terrain;
+}
+
 void DataClass::Data_Terrain::generateInitialValues(glm::vec2& position, glm::vec4 color, Shape::Shape* new_shape)
 {
 	data.position = position;
@@ -584,6 +646,7 @@ glm::vec2& DataClass::Data_Light::getPosition()
 
 void DataClass::Data_Light::generateInitialLightValues(glm::vec2& new_position)
 {
+	light_data.position = new_position;
 	light_data.ambient = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	light_data.diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	light_data.specular = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -613,6 +676,11 @@ DataClass::Data_Directional::Data_Directional()
 	object_identifier[0] = Object::LIGHT;
 	object_identifier[1] = Object::Light::DIRECTIONAL;
 	object_identifier[2] = 0;
+}
+
+DataClass::Data_Object* DataClass::Data_Directional::makeCopy()
+{
+	return new DataClass::Data_Directional(*this);
 }
 
 Object::Light::Directional::DirectionalData& DataClass::Data_Directional::getDirectionalData()
@@ -651,6 +719,11 @@ DataClass::Data_Point::Data_Point()
 	object_identifier[2] = 0;
 }
 
+DataClass::Data_Object* DataClass::Data_Point::makeCopy()
+{
+	return new DataClass::Data_Point(*this);
+}
+
 Object::Light::Point::PointData& DataClass::Data_Point::getPointData()
 {
 	return point;
@@ -686,6 +759,11 @@ DataClass::Data_Spot::Data_Spot()
 	object_identifier[0] = Object::LIGHT;
 	object_identifier[1] = Object::Light::SPOT;
 	object_identifier[2] = 0;
+}
+
+DataClass::Data_Object* DataClass::Data_Spot::makeCopy()
+{
+	return new DataClass::Data_Spot(*this);
 }
 
 Object::Light::Spot::SpotData& DataClass::Data_Spot::getSpotData()
@@ -726,6 +804,11 @@ DataClass::Data_Beam::Data_Beam()
 	object_identifier[0] = Object::LIGHT;
 	object_identifier[1] = Object::Light::BEAM;
 	object_identifier[2] = 0;
+}
+
+DataClass::Data_Object* DataClass::Data_Beam::makeCopy()
+{
+	return new DataClass::Data_Beam(*this);
 }
 
 Object::Light::Beam::BeamData& DataClass::Data_Beam::getBeamData()
@@ -785,6 +868,13 @@ DataClass::Data_RigidBody::Data_RigidBody(uint8_t shape_identifier)
 	object_identifier[0] = Object::PHYSICS;
 	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::RIGID_BODY;
 	object_identifier[2] = shape_identifier;
+}
+
+DataClass::Data_Object* DataClass::Data_RigidBody::makeCopy()
+{
+	DataClass::Data_RigidBody* new_rigid_body = new DataClass::Data_RigidBody(*this);
+	new_rigid_body->shape = new_rigid_body->shape->makeCopy();
+	return new_rigid_body;
 }
 
 Object::Physics::Rigid::RigidBodyData& DataClass::Data_RigidBody::getRigidData()
@@ -847,6 +937,11 @@ DataClass::Data_SpringMass::Data_SpringMass()
 	object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
 }
 
+DataClass::Data_Object* DataClass::Data_SpringMass::makeCopy()
+{
+	return new DataClass::Data_SpringMass(*this);
+}
+
 std::string& DataClass::Data_SpringMass::getFile()
 {
 	return file_name;
@@ -890,6 +985,11 @@ DataClass::Data_Wire::Data_Wire()
 	object_identifier[0] = Object::PHYSICS;
 	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
 	object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::WIRE;
+}
+
+DataClass::Data_Object* DataClass::Data_Wire::makeCopy()
+{
+	return new DataClass::Data_Wire(*this);
 }
 
 void DataClass::Data_Wire::generateInitialValues(glm::vec2& position, float& size, uint32_t& new_uuid)
@@ -941,6 +1041,11 @@ DataClass::Data_Anchor::Data_Anchor()
 	object_identifier[0] = Object::PHYSICS;
 	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::HINGE_BASE;
 	object_identifier[2] = (uint8_t)Object::Physics::HINGES::ANCHOR;
+}
+
+DataClass::Data_Object* DataClass::Data_Anchor::makeCopy()
+{
+	return new DataClass::Data_Anchor(*this);
 }
 
 int& DataClass::Data_Anchor::getScript()
@@ -995,6 +1100,11 @@ DataClass::Data_Hinge::Data_Hinge()
 	object_identifier[0] = Object::PHYSICS;
 	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::HINGE_BASE;
 	object_identifier[2] = (uint8_t)Object::Physics::HINGES::HINGE;
+}
+
+DataClass::Data_Object* DataClass::Data_Hinge::makeCopy()
+{
+	return new DataClass::Data_Hinge(*this);
 }
 
 int& DataClass::Data_Hinge::getScript()
@@ -1070,6 +1180,11 @@ DataClass::Data_NPC::Data_NPC()
 	object_identifier[2] = 0;
 }
 
+DataClass::Data_Object* DataClass::Data_NPC::makeCopy()
+{
+	return new DataClass::Data_NPC(*this);
+}
+
 Object::Object* DataClass::Data_Controllable::genObject()
 {
 	return new Object::Entity::Controllables(uuid, entity, data);
@@ -1095,6 +1210,11 @@ DataClass::Data_Controllable::Data_Controllable()
 	object_identifier[0] = Object::ENTITY;
 	object_identifier[1] = Object::Entity::ENTITY_CONTROLLABLE;
 	object_identifier[2] = 0;
+}
+
+DataClass::Data_Object* DataClass::Data_Controllable::makeCopy()
+{
+	return new DataClass::Data_Controllable(*this);
 }
 
 Object::Object* DataClass::Data_Interactable::genObject()
@@ -1126,6 +1246,11 @@ DataClass::Data_Interactable::Data_Interactable()
 	object_identifier[2] = 0;
 }
 
+DataClass::Data_Object* DataClass::Data_Interactable::makeCopy()
+{
+	return new DataClass::Data_Interactable(*this);
+}
+
 Object::Object* DataClass::Data_Dynamic::genObject()
 {
 	return new Object::Entity::Dynamics(uuid, entity, data, dynamic);
@@ -1153,4 +1278,9 @@ DataClass::Data_Dynamic::Data_Dynamic()
 	object_identifier[0] = Object::ENTITY;
 	object_identifier[1] = Object::Entity::ENTITY_DYNAMIC;
 	object_identifier[2] = 0;
+}
+
+DataClass::Data_Object* DataClass::Data_Dynamic::makeCopy()
+{
+	return new DataClass::Data_Dynamic(*this);
 }

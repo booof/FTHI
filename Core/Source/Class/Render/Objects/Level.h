@@ -2,6 +2,8 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
+//#define SHOW_LEVEL_LOADING
+
 #include "Class/Render/Struct/LinkedList.h"
 #include "Class/Render/Struct/List.h"
 

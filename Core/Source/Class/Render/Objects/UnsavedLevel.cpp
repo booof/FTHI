@@ -29,7 +29,7 @@
 DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t object_identifier[3])
 {  
 
-//#define ENABLE_LAG2
+#define ENABLE_LAG2
 
 #ifdef ENABLE_LAG2
 
@@ -72,7 +72,7 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 	};
 
 	auto readMasks = [&object_identifier, &readFloors, &readLeftWalls, &readRightWalls, &readCeilings, &readTriggers]()->DataClass::Data_Object* {
-		std::function<DataClass::Data_Object* ()> masks[5] = { readFloors, readLeftWalls, readRightWalls, readCeilings, readTriggers };
+		std::function<DataClass::Data_Object*()> masks[5] = { readFloors, readLeftWalls, readRightWalls, readCeilings, readTriggers };
 		return masks[object_identifier[1]]();
 	};
 
@@ -111,8 +111,8 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 	};
 
 	auto readPhysics = [&object_identifier, &readRigid, &readSoft, &readHinge]()->DataClass::Data_Object* {
-		std::function<DataClass::Data_Object* ()> physics[3] = { readRigid, readSoft, readHinge };
-		return physics[object_identifier[1]];
+		std::function<DataClass::Data_Object*()> physics[3] = { readRigid, readSoft, readHinge };
+		return physics[object_identifier[1]]();
 	};
 
 	auto readEntities = [&object_identifier]()->DataClass::Data_Object* {
@@ -125,8 +125,8 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		}
 	};
 
-	std::function<void()> objects[5] = { readMasks, readTerrain, readLights, readPhysics, readEntities };
-	return objects(object_identifier[0]);
+	std::function<DataClass::Data_Object*()> objects[5] = {readMasks, readTerrain, readLights, readPhysics, readEntities};
+	return objects[object_identifier[0]]();
 
 #else
 
@@ -173,10 +173,7 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(LevelInstance&
 	object_file.seekg(0, std::ios::beg);
 	editor_file.seekg(0, std::ios::beg);
 
-	// Read Number of Objects in Object File
-
 	// Iterate Through Object File Until All is Read
-	//while (!object_file.eof())
 	Global::object_index_counter++;
 	while (object_file.tellg() < object_size)
 	{
@@ -200,34 +197,37 @@ void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects,
 	Object::Object** active_array = *active_objects;
 	uint16_t active_index = 0;
 
-	std::cout << "lulw\n";
-	std::cout << instance.data_objects.size() << " " << level_x << " " << level_y << "\n";
-	std::cout << "num objects: " << instance.header.number_of_loaded_objects << " \n";
-
 	// Generate Objects
 	for (DataClass::Data_Object* data_object : instance.data_objects)
 	{
+		// Generate Object and Attach Data Object
+		Object::Object* new_object = data_object->generateObject();
+		new_object->data_object = data_object;
+
 		switch (data_object->getObjectIdentifier()[0])
 		{
 
 		// Generate a Physics Objects
 		case (Object::PHYSICS):
 		{
-			physics.appendStatic((Object::Physics::PhysicsBase*)data_object->generateObject());
+			physics.appendStatic((Object::Physics::PhysicsBase*)new_object);
+			break;
 		}
 
 		// Generate an Entity
 		case (Object::ENTITY):
 		{
-			entities.appendStatic((Object::Entity::EntityBase*)data_object->generateObject());
+			entities.appendStatic((Object::Entity::EntityBase*)new_object);
+			break;
 		}
 
 		// Generate Normal, Stationary Object
 		default:
 		{
-			std::cout << "creating normal object\n";
-			objects[index] = data_object->generateObject();
+			objects[index] = new_object;
 			index++;
+			active_array[active_index] = new_object;
+			active_index++;
 		}
 
 		}
@@ -385,11 +385,10 @@ Render::Objects::UnsavedLevel::UnsavedLevel()
 
 Render::Objects::UnsavedLevel::~UnsavedLevel()
 {
+	std::cout << "deleting unsaved level at " << (int)level_x << " " << (int)level_y << "\n";
+
 	// Delete the Stack
 	slave_stack.deleteStack();
-
-	// Delete the Unmodified Data
-	slave_stack.deleteInstance(unmodified_data);
 }
 
 void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y, uint8_t z)
@@ -412,24 +411,12 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y
 	object_path = Global::level_data_path + file_name;
 	editor_path = Global::editor_level_data_path + file_name;
 
-	// Create Memory for Unmodified Data
-	unmodified_data = new LevelInstance();
-
-	// Increment Stack Instance Count
-	unmodified_data->master_stack_instances++;
-
-	// Store Memory in First Index in Stack Array
-	slave_stack.storeUnmodified(unmodified_data);
-
 	// Read Unmodified Data
-	constructUnmodifiedDataHelper(*unmodified_data);
+	constructUnmodifiedDataHelper(instance_with_changes);
 }
 
 void Render::Objects::UnsavedLevel::buildObjects(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities)
 {
-	// Get Instance From Stack
-	//LevelInstance* instance = slave_stack.returnInstance();
-
 	// Construct Objects
 	buildObjectsHelper(objects, index, physics, entities, instance_with_changes);
 }
@@ -452,20 +439,6 @@ void Render::Objects::UnsavedLevel::changeToSaved()
 	changeColors(colors);
 }
 
-void Render::Objects::UnsavedLevel::switchInstance(uint8_t selected_instance)
-{
-	// Set Stack Index
-	slave_stack.switchInstance(selected_instance);
-
-	// Selected Unmodified is Equal to Unmodified Bool in Instance
-	selected_unmodified = false;
-	if (slave_stack.returnInstance()->unmodified)
-	{
-		selected_unmodified = true;
-		changeToUnmodified();
-	}
-}
-
 void Render::Objects::UnsavedLevel::changeColors(float* color)
 {
 	// Bind Vertex Objects
@@ -483,21 +456,54 @@ void Render::Objects::UnsavedLevel::changeColors(float* color)
 	glBindVertexArray(0);
 }
 
-void Render::Objects::UnsavedLevel::incrementStackApperance(uint8_t index)
+void Render::Objects::UnsavedLevel::moveForwardsThroughChanges(Changes* changes)
 {
-	slave_stack.incrementStackInstances(index);
+	for (Change* change : changes->changes)
+	{
+		// If this is an Add Change, Add Change to Current Data Object List
+		if (change->change_type == ADD)
+		{
+			instance_with_changes.data_objects.push_back(change->data);
+		}
+
+		// If this is a Remove Change Remove Change from Current Data Object List
+		else
+		{
+			for (int i = 0; i < instance_with_changes.data_objects.size(); i++)
+			{
+				if (change->data == instance_with_changes.data_objects.at(i))
+					instance_with_changes.data_objects.erase(instance_with_changes.data_objects.begin() + i);
+			}
+		}
+	}
 }
 
-void Render::Objects::UnsavedLevel::decrementStackApperance(uint8_t index)
+void Render::Objects::UnsavedLevel::moveBackwardsThroughChanges(Changes* changes)
 {
-	slave_stack.decrementStackInstances(index);
+	for (Change* change : changes->changes)
+	{
+		// If this is a Remove Change, Add Change to Current Data Object List
+		if (change->change_type == REMOVE)
+		{
+			instance_with_changes.data_objects.push_back(change->data);
+		}
+
+		// If this is an Add Change Remove Change from Current Data Object List
+		else
+		{
+			for (int i = 0; i < instance_with_changes.data_objects.size(); i++)
+			{
+				if (change->data == instance_with_changes.data_objects.at(i))
+					instance_with_changes.data_objects.erase(instance_with_changes.data_objects.begin() + i);
+			}
+		}
+	}
 }
 
 Render::Objects::LevelHeader Render::Objects::UnsavedLevel::returnObjectHeader()
 {
 	// Temp Code to Set Header
 	instance_with_changes.header = { 0 };
-	instance_with_changes.header.number_of_loaded_objects = instance_with_changes.data_objects.size();
 	for (DataClass::Data_Object* dobject : instance_with_changes.data_objects)
 	{
 		uint8_t* id = dobject->getObjectIdentifier();
@@ -536,6 +542,9 @@ Render::Objects::LevelHeader Render::Objects::UnsavedLevel::returnObjectHeader()
 			else if (id[1] == Object::Light::BEAM)
 				instance_with_changes.header.beam_count++;
 		}
+
+		if (id[0] != Object::PHYSICS && id[0] != Object::ENTITY)
+			instance_with_changes.header.number_of_loaded_objects++;
 	}
 
 	//return slave_stack.returnInstance()->header;
@@ -565,12 +574,29 @@ void Render::Objects::UnsavedLevel::write(bool& save)
 	// Else, Write Currently Selected Instance 
 	else 
 	{
+		// Let the Change Controller Know Level was Saved
 		save = true;
-		writeInstance(*slave_stack.returnInstance());
-	}
 
-	// Delete Level
-	delete this;
+		// Open Object Data File
+		std::ofstream object_file;
+		object_file.open(object_path, std::ios::binary);
+
+		// Open Editor Data File
+		std::ofstream editor_file;
+		editor_file.open(editor_path, std::ios::binary);
+
+		// Write All Current Data Objects to Files
+		for (DataClass::Data_Object* data_object : instance_with_changes.data_objects)
+			data_object->writeObject(object_file, editor_file);
+
+		// Close Files
+		object_file.close();
+		editor_file.close();
+
+		// Level Has Been Saved
+		selected_unmodified = true;
+		changeToSaved();
+	}
 }
 
 uint8_t Render::Objects::UnsavedLevel::revertChanges(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities)
@@ -585,7 +611,8 @@ uint8_t Render::Objects::UnsavedLevel::revertChanges(Object::Object** objects, u
 	unmodified_data->master_stack_instances++;
 
 	// Return Index of Unmodified Data in Stack Once it Appended
-	return slave_stack.appendInstance(unmodified_data);
+	//return slave_stack.appendInstance(unmodified_data);
+	return 0;
 }
 
 void Render::Objects::UnsavedLevel::generateChangeList()
@@ -600,9 +627,12 @@ bool Render::Objects::UnsavedLevel::finalizeChangeList()
 {
 	if (making_changes)
 	{
+		// Disabling this Flag Lets the Engine Know That New
+		// Changes Should be Made
 		making_changes = false;
 
 		// Add Code to Store Change List Somewhere
+		slave_stack.appendInstance(current_change_list);
 
 		// Return True to Indicate Unsaved Level Has Been Changed
 		// Causes Unsaved Level to be Added to Master Stack
@@ -630,14 +660,16 @@ void Render::Objects::UnsavedLevel::createChangeAppend(Editor::Selector* selecto
 	// Execute Change
 	instance_with_changes.data_objects.push_back(data_object);
 	instance_with_changes.header.number_of_loaded_objects++;
-	std::cout << instance_with_changes.data_objects.size() << "   " << level_x << " " << level_y << "  yooo\n";
 
 	// Store Change in Change List
 	current_change_list->changes.push_back(change);
-	current_change_list->change_count++;
+
+	// Level Has Been Modified
+	selected_unmodified = false;
+	changeToModified();
 }
 
-void Render::Objects::UnsavedLevel::createChangePop(uint32_t object_index)
+void Render::Objects::UnsavedLevel::createChangePop(DataClass::Data_Object* data_object_to_remove)
 {
 	// Generate Change List if Not Generated Already
 	generateChangeList();
@@ -649,10 +681,10 @@ void Render::Objects::UnsavedLevel::createChangePop(uint32_t object_index)
 	// Find Data Object in the List of Data Objects, Remove it, and Store it in Change
 	for (int i = 0; i < instance_with_changes.data_objects.size(); i++)
 	{
-		if (instance_with_changes.data_objects.at(i)->getObjectIndex() == object_index)
+		if (instance_with_changes.data_objects.at(i) == data_object_to_remove)
 		{
 			change->data = instance_with_changes.data_objects.at(i);
-			instance_with_changes.data_objects.at(i) = nullptr;
+			instance_with_changes.data_objects.erase(instance_with_changes.data_objects.begin() + i);
 			break;
 		}
 	}
@@ -662,7 +694,10 @@ void Render::Objects::UnsavedLevel::createChangePop(uint32_t object_index)
 
 	// Store Change in Change List
 	current_change_list->changes.push_back(change);
-	current_change_list->change_count++;
+
+	// Level Has Been Modified
+	selected_unmodified = false;
+	changeToModified();
 }
 
 void Render::Objects::UnsavedLevel::resetChangeList()
@@ -671,6 +706,7 @@ void Render::Objects::UnsavedLevel::resetChangeList()
 	if (making_changes)
 	{
 		// Undo All Changes in the Current Change List
+		moveBackwardsThroughChanges(current_change_list);
 
 		// Delete the Current Change List
 		delete current_change_list;
@@ -680,17 +716,39 @@ void Render::Objects::UnsavedLevel::resetChangeList()
 	}
 }
 
+void Render::Objects::UnsavedLevel::traverseChangeList(bool backward)
+{
+	// Move Backwards Through Change List
+	if (backward)
+	{
+		moveBackwardsThroughChanges(slave_stack.returnInstance());
+		slave_stack.moveBackward();
+	}
+
+	// Move Forwards Through Change List
+	else
+	{
+		slave_stack.moveForward();
+		moveForwardsThroughChanges(slave_stack.returnInstance());
+	}
+}
+
+void Render::Objects::UnsavedLevel::removeChainListInstance()
+{
+	slave_stack.removeRecentInstance();
+}
+
 Render::Objects::UnsavedLevel::SlaveStack::SlaveStack()
 {
 	// Create Initial Allocation for Stack
-	stack_array = new LevelInstance*[array_size];
+	stack_array = new Changes*[array_size];
 
 	// Increment Size By 1 for Implementation of Unmodified Data
 	stack_size++;
 	head++;
 }
 
-uint8_t Render::Objects::UnsavedLevel::SlaveStack::appendInstance(LevelInstance* instance)
+uint8_t Render::Objects::UnsavedLevel::SlaveStack::appendInstance(Changes* instance)
 {
 	// Increment Stack Index
 	stack_index++;
@@ -701,7 +759,7 @@ uint8_t Render::Objects::UnsavedLevel::SlaveStack::appendInstance(LevelInstance*
 	{
 		// Create New Array With Size 1.5 X Size of Original Array
 		array_size = (int)(array_size * 1.5f);
-		LevelInstance** new_array = new LevelInstance*[array_size];
+		Changes** new_array = new Changes*[array_size];
 
 		// Move Data From Old Array to New Array
 		for (uint8_t i = 0; i < stack_index; i++)
@@ -721,7 +779,7 @@ uint8_t Render::Objects::UnsavedLevel::SlaveStack::appendInstance(LevelInstance*
 	return stack_index;
 }
 
-Render::Objects::UnsavedLevel::LevelInstance* Render::Objects::UnsavedLevel::SlaveStack::returnInstance()
+Render::Objects::UnsavedLevel::Changes* Render::Objects::UnsavedLevel::SlaveStack::returnInstance()
 {
 	return stack_array[stack_index];
 }
@@ -731,17 +789,21 @@ bool Render::Objects::UnsavedLevel::SlaveStack::isEmpty()
 	return (stack_size == 0 || stack_size == 1);
 }
 
-void Render::Objects::UnsavedLevel::SlaveStack::storeUnmodified(LevelInstance* unmodified_data)
+void Render::Objects::UnsavedLevel::SlaveStack::deleteInstance(Changes* instance)
 {
-	stack_array[0] = unmodified_data;
-}
-
-void Render::Objects::UnsavedLevel::SlaveStack::deleteInstance(LevelInstance* instance)
-{
-	// Delete Data Arrays
-	for (DataClass::Data_Object* data_object : instance->data_objects)
+	// Delete Each Change and Respective Data Object in Change Array
+	for (Change* change : instance->changes)
 	{
-		delete  data_object;
+		// Data Classes may Only be Deleted When Deleting an Add Operation. This is because 
+		// A Data Class can Only Appear Twice, Once for Each Operation, and the Add Will
+		// ALLWAYS Happen First. This is Because an Add Operation is Only Completed When an
+		// Object is Created From the Editor Window, or a Copy is Made When Selecting an Object,
+		// Which Triggers the Removal of the Old Object and the Adding of the New Object
+		if (change->change_type == ADD)
+			delete change->data;
+
+		// Every Change is Unique, Safe to Delete at Any Point
+		delete change;
 	}
 
 	// Delete Actual Object
@@ -753,36 +815,24 @@ void Render::Objects::UnsavedLevel::SlaveStack::deleteStack()
 	// Iterate Through Array and Delete Instances
 	for (int i = tail; i < head; i++)
 	{
-		// Don't Delete Unmodified
-		if (stack_array[i]->unmodified)
-			continue;
-
 		// Delete Instance
 		deleteInstance(stack_array[i]);
 	}
 }
 
-uint8_t Render::Objects::UnsavedLevel::SlaveStack::returnCurrentIndex()
+void Render::Objects::UnsavedLevel::SlaveStack::removeRecentInstance()
 {
-	return stack_index;
+	deleteInstance(stack_array[stack_size - 1]);
+	stack_size--;
 }
 
-void Render::Objects::UnsavedLevel::SlaveStack::incrementStackInstances(uint8_t index)
+void Render::Objects::UnsavedLevel::SlaveStack::moveForward()
 {
-	stack_array[index]->master_stack_instances++;
+	stack_index++;
 }
 
-void Render::Objects::UnsavedLevel::SlaveStack::decrementStackInstances(uint8_t index)
+void Render::Objects::UnsavedLevel::SlaveStack::moveBackward()
 {
-	stack_array[index]->master_stack_instances--;
-
-	// If Number of Instances is 0, Delete Instance
-	if (stack_array[index]->master_stack_instances == 0)
-		deleteInstance(stack_array[index]);
-}
-
-void Render::Objects::UnsavedLevel::SlaveStack::switchInstance(uint8_t instance_index)
-{
-	stack_index = instance_index;
+	stack_index--;
 }
 

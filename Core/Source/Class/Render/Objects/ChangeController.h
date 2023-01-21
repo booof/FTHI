@@ -39,7 +39,7 @@ namespace Render::Objects
 		struct ChainMember
 		{
 			// Stack Index of Each Unsaved Level 
-			std::vector<uint8_t> stack_indicies;
+			std::vector<UnsavedLevel*> stack_indicies;
 
 			// Position of Camera to move to
 			glm::vec2 camera_pos;
@@ -72,9 +72,6 @@ namespace Render::Objects
 			// Delete an Instance
 			void deleteInstance(uint8_t index);
 
-			// Decrement All Instances in a Stack
-			void decrementStackInstances(ChainMember& current_instance);
-
 		public:
 
 			// Initialize Stack
@@ -82,9 +79,6 @@ namespace Render::Objects
 
 			// Store Pointer to Unsaved Levels
 			void storePointerToUnsavedLevels(std::vector<UnsavedLevel*>* pointer);
-
-			// Add Unsaved Level to Each Instance
-			void appendNewUnsavedLevel();
 
 			// Traverse Backwards Through Stack (Undo)
 			bool traverseForwards();
@@ -131,9 +125,6 @@ namespace Render::Objects
 
 		// Get Level Coords from World Position
 		void updateLevelPos(glm::vec2 position, glm::vec2& level);
-
-		// Increment All Instances in a Stack
-		void incrementStackInstances(ChainMember& current_instance);
 
 		// Test if Unsaved Level Has Been Saved Prevously
 		bool testIfSaved(SavedIdentifier test_identifier);

@@ -70,5 +70,10 @@ void Shape::Circle::printName()
 	std::cout << "CIRCLE\n";
 }
 
+Shape::Shape* Shape::Circle::makeCopy()
+{
+	return new Circle(*this);
+}
+
 #endif
 

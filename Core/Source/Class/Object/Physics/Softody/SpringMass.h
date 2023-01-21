@@ -52,7 +52,7 @@ namespace Object::Physics::Soft
 		glm::vec2 returnPosition();
 
 		// Secondary Selection Function
-		void select2(Editor::Selector& selector);
+		void select3(Editor::Selector& selector);
 
 		// Select Object Info
 		static void info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, std::string& file_name);

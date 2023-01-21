@@ -3,6 +3,8 @@
 #include "Class/Render/Editor/Selector.h"
 //#include "Class/Render/Objects/ScriptHandler.h"
 
+extern DataClass::Data_Object* lllll;
+
 void Object::Object::initializeScript(int script)
 {
 	//script_handler->bindFunctionPointer(script, this);

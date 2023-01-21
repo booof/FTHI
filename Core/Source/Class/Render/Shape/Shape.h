@@ -57,6 +57,9 @@ namespace Shape
 		// Prints the Object Name
 		virtual void printName() = 0;
 
+		// Make a Copy of the Shape
+		virtual Shape* makeCopy() = 0;
+
 #endif
 
 	};

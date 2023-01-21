@@ -52,6 +52,9 @@ public:
 	// Print Name
 	void printName();
 
+	// Make a Copy of the Shape
+	Shape* makeCopy();
+
 #endif
 
 };

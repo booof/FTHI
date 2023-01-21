@@ -63,6 +63,7 @@ namespace Global
 	extern std::string script_folder_path;
 	extern std::string project_solution_path;
 	extern std::string project_symbols_path;
+	extern std::string project_resources_path;
 	extern std::string project_name;
 
 	// RNG

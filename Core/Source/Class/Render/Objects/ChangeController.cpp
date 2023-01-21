@@ -9,14 +9,6 @@ void Render::Objects::ChangeController::updateLevelPos(glm::vec2 position, glm::
 	level.y = floor(position.y / 64);
 }
 
-void Render::Objects::ChangeController::incrementStackInstances(ChainMember& current_instance)
-{
-	for (int i = 0; i < unsaved_levels.size(); i++)
-	{
-		unsaved_levels[i]->incrementStackApperance(current_instance.stack_indicies[i]);
-	}
-}
-
 bool Render::Objects::ChangeController::testIfSaved(SavedIdentifier test_identifier)
 {
 	// Iterate Through Saved Array
@@ -25,7 +17,6 @@ bool Render::Objects::ChangeController::testIfSaved(SavedIdentifier test_identif
 		if (*it == test_identifier)
 			return true;
 	}
-
 
 	return false;
 }
@@ -86,9 +77,6 @@ Render::Objects::UnsavedLevel* Render::Objects::ChangeController::generateUnsave
 	new_unsaved_level->unsaved_level_index = (uint8_t)unsaved_levels.size();
 	unsaved_levels.push_back(new_unsaved_level);
 
-	// Make Room for New Unsaved Level in Master Stack
-	master_stack->appendNewUnsavedLevel();
-
 	// Return New Unsaved Level
 	return new_unsaved_level;
 }
@@ -113,29 +101,17 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 	glm::vec2 object_level_position;
 	updateLevelPos(selector->getObjectPosition(), object_level_position);
 
-	// This Section of Code will be Deprecated as the Idea is to Move The
-	// Deletion of Objects Occour Upon Selection Instead of When a Change
-	// is Finished. If a Change is Canceled, Simply Undo All Changes Currently
-	// Made in the Change List
-	// /////
-	// Get Unsave Level of Where Object Used to be
-	//UnsavedLevel* temp_unsaved_level1 = nullptr;
-	//if (selector->originated_from_level)
-	//{
-	//	temp_unsaved_level1 = selector->level_of_origin;
-	//	temp_unsaved_level1->generateChangeList();
-	//}
-
 	// Get Unsaved Level of Where Object is Now
 	UnsavedLevel* temp_unsaved_level2 = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
 	temp_unsaved_level2->createChangeAppend(selector);
 
 	// Finalize Changes
-	for (UnsavedLevel* level : unsaved_levels)
-		level->finalizeChangeList();
-
-	// Increment Stack Instances
-	incrementStackInstances(*current_instance);
+	for (int i = 0; i < unsaved_levels.size(); i++)
+	{
+		UnsavedLevel& level = *unsaved_levels.at(i);
+		if (level.finalizeChangeList())
+			current_instance->stack_indicies.push_back(unsaved_levels.at(i));
+	}
 
 	// Reload Objects
 	level->reloadAll();
@@ -159,16 +135,17 @@ void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* s
 
 	// As Deletion Change Has Already Been Made when Selecting, Simply Finalize the Changes
 
-
 	// Get Position of Object in Terms of Level
 	glm::vec2 object_level_position;
 	updateLevelPos(selector->getObjectPosition(), object_level_position);
 
-	// Delete Object (Already Been Deleted)
-	//current_instance->stack_indicies[selector->level_of_origin->unsaved_level_index] = selector->level_of_origin->createInstanceRemove(selector->object_index, selector->object_identifier);
-
-	// Increment Stack Instances
-	incrementStackInstances(*current_instance);
+	// Finalize Changes
+	for (int i = 0; i < unsaved_levels.size(); i++)
+	{
+		UnsavedLevel& level = *unsaved_levels.at(i);
+		if (level.finalizeChangeList())
+			current_instance->stack_indicies.push_back(unsaved_levels.at(i));
+	}
 
 	// Reload Objects
 	level->reloadAll();
@@ -196,7 +173,7 @@ void Render::Objects::ChangeController::reloadObjects()
 	// Switch Instance in Each Unsaved Level
 	for (int i = 0; i < unsaved_levels.size(); i++)
 	{
-		unsaved_levels[i]->switchInstance(current_instance->stack_indicies[i]);
+		//unsaved_levels[i]->switchInstance(current_instance->stack_indicies[i]);
 	}
 
 	// Reload Objects in Level
@@ -267,18 +244,14 @@ void Render::Objects::ChangeController::MasterStack::deleteInstance(uint8_t inde
 	// Get Instance
 	ChainMember& current_instance = stack_array[index];
 
-	// Decrement Stack Instances
-	decrementStackInstances(current_instance);
+	// For Each Unsaved Level in this Instance, Move the Slave Stack Back
+	// By 1 and Delete Any Changes in that Slave Stack Instance
+	for (UnsavedLevel* unsaved_level : current_instance.stack_indicies)
+		unsaved_level->removeChainListInstance();
 
 	// Reset Size of Vector
 	current_instance.stack_indicies.clear();
 	current_instance.stack_indicies.reserve(0);
-}
-
-void Render::Objects::ChangeController::MasterStack::decrementStackInstances(ChainMember& current_instance)
-{
-	for (int i = 0; i < unsaved_level_pointer->size(); i++)
-		unsaved_level_pointer->at(i)->incrementStackApperance(current_instance.stack_indicies[i]);
 }
 
 Render::Objects::ChangeController::MasterStack::MasterStack()
@@ -290,45 +263,6 @@ Render::Objects::ChangeController::MasterStack::MasterStack()
 void Render::Objects::ChangeController::MasterStack::storePointerToUnsavedLevels(std::vector<UnsavedLevel*>* pointer)
 {
 	unsaved_level_pointer = pointer;
-}
-
-void Render::Objects::ChangeController::MasterStack::appendNewUnsavedLevel()
-{
-	// If Head Equals Tail, Do Nothing
-	//if (head == tail)
-	//	return;
-
-	// Get Index of New Unsaved Level
-	uint16_t unsaved_level_index = (uint16_t)unsaved_level_pointer->size() - 1;
-
-	// If Head is Greater Than Tail, Append to Instances Between
-	if (head >= tail)
-	{
-		for (uint16_t i = tail; i <= head; i++)
-		{
-			stack_array[i].stack_indicies.push_back(0);
-			unsaved_level_pointer->at(unsaved_level_index)->incrementStackApperance(0);
-			//throw "ah";
-		}
-	}
-
-	// If Head is Less Than Tail, Append to Instances Not Between
-	else if (head < tail)
-	{
-		// Before Head
-		for (uint16_t i = 0; i <= head; i++)
-		{
-			stack_array[i].stack_indicies.push_back(0);
-			unsaved_level_pointer->at(unsaved_level_index)->incrementStackApperance(0);
-		}
-
-		// After Tail
-		for (uint16_t i = tail; i < max_master_stack_size; i++)
-		{
-			stack_array[i].stack_indicies.push_back(0);
-			unsaved_level_pointer->at(unsaved_level_index)->incrementStackApperance(0);
-		}
-	}
 }
 
 bool Render::Objects::ChangeController::MasterStack::traverseForwards()
@@ -345,6 +279,11 @@ bool Render::Objects::ChangeController::MasterStack::traverseForwards()
 	else
 		stack_index++;
 
+	// Make Changes in the Current Stack Index
+	ChainMember& chain_member = stack_array[stack_index];
+	for (UnsavedLevel* unsaved_level : chain_member.stack_indicies)
+		unsaved_level->traverseChangeList(false);
+
 	return true;
 }
 
@@ -353,6 +292,11 @@ bool Render::Objects::ChangeController::MasterStack::traverseBackwards()
 	// If At Tail of Stack, There is No Where to Traverse To
 	if (stack_index == tail)
 		return false;
+
+	// Make Inverse Changes in Current Stack Index
+	ChainMember& chain_member = stack_array[stack_index];
+	for (UnsavedLevel* unsaved_level : chain_member.stack_indicies)
+		unsaved_level->traverseChangeList(true);
 
 	// If At Beginning of Array, Circle Back to End of Array
 	if (stack_index == 0)
@@ -402,16 +346,6 @@ void Render::Objects::ChangeController::MasterStack::appendInstance()
 	// Store Camera Coords as Origin
 	new_instance.camera_pos = glm::vec2(0.0f, 0.0f);
 
-	// Resize Unsaved Level Vector
-	new_instance.stack_indicies.resize(unsaved_level_pointer->size());
-
-	// Copy Data From Old Stack Vector to New Stack Vector
-	for (int i = 0; i < unsaved_level_pointer->size(); i++)
-	{
-		uint8_t m = current_instance.stack_indicies[i];
-		new_instance.stack_indicies[i] = current_instance.stack_indicies[i];
-	}
-
 	// Set Stack Index to Head
 	stack_index = head;
 }
@@ -431,27 +365,26 @@ void Render::Objects::ChangeController::MasterStack::deleteFromIndexToHead()
 	if (stack_index < head)
 	{
 		// Delete Instances Between Stack Index and Head	
-		for (int i = stack_index + 1; i <= head; i++)
-		{
+		for (int i = head; i > stack_index; i--)
 			 deleteInstance(i);
-		}
 	}
 
 	// Stack Index is Greater Than Head
 	else
 	{
 		// Delete Instances Between Stack Index and End of Array
-		for (int i = stack_index + 1; i < max_master_stack_size; i++)
-		{
+		//for (int i = stack_index + 1; i < max_master_stack_size; i++)
+		for (int i = max_master_stack_size - 1; i > stack_index; i--)
 			deleteInstance(i);
-		}
 
 		// Delete Instances Between Beginning of Array and Head
-		for (int i = 0; i <= head; i++)
-		{
+		//for (int i = 0; i <= head; i++)
+		for (int i = head; i >= 0; i--)
 			deleteInstance(i);
-		}
 	}
+
+	// Set Head Equal to Index
+	head = stack_index;
 }
 
 void Render::Objects::ChangeController::MasterStack::createInitialInstance()
@@ -459,18 +392,8 @@ void Render::Objects::ChangeController::MasterStack::createInitialInstance()
 	// Set Initial Camera to Origin
 	stack_array[0].camera_pos = glm::vec2(0.0f, 0.0f);
 
-	// Resize Vector
-	stack_array[0].stack_indicies.reserve(unsaved_level_pointer->size());
-
-	// Set Unsaved Level Data to 0
-	for (int i = 0; i < unsaved_level_pointer->size(); i++)
-		stack_array[0].stack_indicies[i] = 0;
-
 	// Increment Stack Size
 	stack_size++;
-
-	// Increment Head
-	//head++;
 }
 
 void Render::Objects::ChangeController::MasterStack::reset()

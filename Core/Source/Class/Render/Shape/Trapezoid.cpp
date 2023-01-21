@@ -83,4 +83,9 @@ void Shape::Trapezoid::printName()
 	std::cout << "TRAPEZOID\n";
 }
 
+Shape::Shape* Shape::Trapezoid::makeCopy()
+{
+	return new Trapezoid(*this);
+}
+
 #endif
