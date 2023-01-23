@@ -1,4 +1,5 @@
 #include "HorizotnalLine.h"
+#include "Render/Struct/DataClasses.h"
 
 Object::Mask::HorizontalLine::HorizontalLine(HorizontalLineData& data_)
 {
@@ -53,3 +54,26 @@ void Object::Mask::HorizontalLine::initializeVisualizer(GLuint& VAO, GLuint& VBO
 }
 
 #endif
+
+Object::Mask::HorizontalLineData& DataClass::Data_HorizontalLine::getHorizontalLineData()
+{
+	return data;
+}
+
+int& DataClass::Data_HorizontalLine::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_HorizontalLine::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_HorizontalLine::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.width = size;
+	data.script = 0;
+	data.material = 0;
+}

@@ -64,7 +64,7 @@ void Editor::ObjectInfo::drawInfo()
 		// Determine Size of Text
 		max_width = MAX_TEXT_SIZE * Global::editor_options->option_object_info_max_width_percent;
 		max_height = DEFAULT_TEXT_HEIGHT * Global::editor_options->option_object_info_text_size_percent;
-		max_scale = 0.143 * Global::editor_options->option_object_info_text_size_percent;
+		max_scale = 0.143f * Global::editor_options->option_object_info_text_size_percent;
 
 		// Determine the Scale and Size of the Type Text Object
 		type_scale = 0.25f * Global::editor_options->option_object_info_text_size_percent;

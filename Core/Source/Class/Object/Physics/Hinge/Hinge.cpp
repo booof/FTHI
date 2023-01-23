@@ -1,4 +1,5 @@
 #include "Hinge.h"
+#include "Render/Struct/DataClasses.h"
 
 // Globals
 #include "Globals.h"
@@ -454,12 +455,12 @@ void Object::Physics::Hinge::Hinge::writeFile()
 	file.write((char*)&number_of_children, sizeof(int));
 
 	// Write Physics Objects
-	for (int i = 0; i < number_of_objects; i++)
-		objects[i]->write(file, editor_file);
+	//for (int i = 0; i < number_of_objects; i++)
+	//	objects[i]->write(file, editor_file);
 
 	// Write Hinges
-	for (int i = 0; i < number_of_children; i++)
-		children[i]->write(file, editor_file);
+	//for (int i = 0; i < number_of_children; i++)
+	//	children[i]->write(file, editor_file);
 	
 	// Close Files
 	file.close();
@@ -597,37 +598,6 @@ glm::vec2* Object::Physics::Hinge::Hinge::pointerToPosition()
 	return &data.position;
 }
 
-void Object::Physics::Hinge::Hinge::write(std::ofstream& object_file, std::ofstream& editor_file)
-{
-	// Write Object Identifier
-	object_file.put(PHYSICS);
-	object_file.put((uint8_t)PHYSICS_BASES::HINGE_BASE);
-	object_file.put((uint8_t)HINGES::HINGE);
-
-	// Write Object Data
-	object_file.write((char*)&uuid, sizeof(uint32_t));
-	uint16_t file_name_size = (uint16_t)file_name.size();
-	object_file.write((char*)&file_name_size, sizeof(uint16_t));
-	object_file.write((char*)&data, sizeof(HingeData));
-	object_file.write((char*)&file_name[0], file_name_size);
-
-	// Write Editor Data
-	uint16_t name_size = (uint16_t)name.size();
-	editor_file.write((char*)&name_size, sizeof(uint16_t));
-	editor_file.write((char*)&clamp, sizeof(bool));
-	editor_file.write((char*)&lock, sizeof(bool));
-	editor_file.write((char*)&name[0], name_size);
-}
-
-void Object::Physics::Hinge::Hinge::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
-{
-	// Store Object Information
-	info(object_info, name, data, file_name);
-
-	// Selector Helper
-	select2(selector);
-}
-
 bool Object::Physics::Hinge::Hinge::testMouseCollisions(float x, float y)
 {
 	if (x > data.position.x - 0.5f && x < data.position.x + 0.5f)
@@ -644,16 +614,6 @@ bool Object::Physics::Hinge::Hinge::testMouseCollisions(float x, float y)
 glm::vec2 Object::Physics::Hinge::Hinge::returnPosition()
 {
 	return data.position;
-}
-
-void Object::Physics::Hinge::Hinge::info(Editor::ObjectInfo& object_info, std::string& name, HingeData& data, std::string& file_name)
-{
-	// Store Object Information
-	object_info.clearAll();
-	object_info.setObjectType("Hinge", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
-	object_info.addTextValue("File: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &file_name, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
 }
 
 void Object::Physics::Hinge::Hinge::initializeVisualizer()
@@ -882,4 +842,79 @@ void Object::Physics::Hinge::Hinge::perambulate(glm::vec2& object_position, floa
 	if (relative_axis == glm::vec2(0, 0))
 		rotation_of_axis = rotation;
 	object_position = glm::vec2(Axis_of_Rotation.x + distance * cos(rotation_of_axis), Axis_of_Rotation.y + distance * sin(rotation_of_axis));
+}
+
+Object::Object* DataClass::Data_Hinge::genObject()
+{
+	return new Object::Physics::Hinge::Hinge(uuid, data, file_name);
+}
+
+void DataClass::Data_Hinge::writeObjectData(std::ofstream& object_file)
+{
+	uint16_t file_name_size = file_name.size();
+	object_file.write((char*)&uuid, sizeof(uint32_t));
+	object_file.write((char*)&file_name_size, sizeof(uint16_t));
+	object_file.write((char*)&data, sizeof(Object::Physics::Hinge::HingeData));
+	object_file.write(file_name.c_str(), file_name_size);
+}
+
+void DataClass::Data_Hinge::readObjectData(std::ifstream& object_file)
+{
+	uint16_t file_name_size;
+	object_file.read((char*)&uuid, sizeof(uint32_t));
+	object_file.read((char*)&file_name_size, sizeof(uint16_t));
+	object_file.read((char*)&data, sizeof(Object::Physics::Hinge::HingeData));
+	file_name.resize(file_name_size);
+	object_file.read(&file_name[0], file_name_size);
+}
+
+DataClass::Data_Hinge::Data_Hinge()
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::PHYSICS;
+	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::HINGE_BASE;
+	object_identifier[2] = (uint8_t)Object::Physics::HINGES::HINGE;
+}
+
+void DataClass::Data_Hinge::info(Editor::ObjectInfo& object_info)
+{
+	// Store Object Information
+	object_info.clearAll();
+	object_info.setObjectType("Hinge", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addTextValue("File: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &file_name, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
+}
+
+DataClass::Data_Object* DataClass::Data_Hinge::makeCopy()
+{
+	return new Data_Hinge(*this);
+}
+
+int& DataClass::Data_Hinge::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_Hinge::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_Hinge::generateInitialValues(glm::vec2& position)
+{
+	generateUUID();
+	data.position = position;
+	data.script = 0;
+	file_name = "NULL";
+}
+
+Object::Physics::Hinge::HingeData& DataClass::Data_Hinge::getHingeData()
+{
+	return data;
+}
+
+std::string& DataClass::Data_Hinge::getFile()
+{
+	return file_name;
 }

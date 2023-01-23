@@ -1,4 +1,5 @@
 #include "TriggerMask.h"
+#include "Render/Struct/DataClasses.h"
 
 // Selector
 #include "Class/Render/Editor/Selector.h"
@@ -43,50 +44,14 @@ void Object::Mask::Trigger::TriggerMask::initializeVisualizer()
 	glBindVertexArray(0);
 }
 
-void Object::Mask::Trigger::TriggerMask::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
-{
-	// Store Object Information
-	info(object_info, name, data);
-
-	// Selector Helper
-	select2(selector);
-}
-
 glm::vec2* Object::Mask::Trigger::TriggerMask::pointerToPosition()
 {
 	return &data.position;
 }
 
-void Object::Mask::Trigger::TriggerMask::write(std::ofstream& object_file, std::ofstream& editor_file)
-{
-	// Write Object Identifier
-	object_file.put(MASK);
-	object_file.put(TRIGGER);
-
-	// Write Data
-	object_file.write((char*)&data, sizeof(data));
-
-	// Write Editor Data
-	uint16_t name_size = (uint16_t)name.size();
-	editor_file.write((char*)&name_size, sizeof(uint16_t));
-	editor_file.write((char*)&clamp, sizeof(bool));
-	editor_file.write((char*)&lock, sizeof(bool));
-	editor_file.write((char*)&name[0], name.size());
-}
-
 glm::vec2 Object::Mask::Trigger::TriggerMask::returnPosition()
 {
 	return data.position;
-}
-
-void Object::Mask::Trigger::TriggerMask::info(Editor::ObjectInfo& object_info, std::string& name, TriggerData& data)
-{
-	// Store Object Information
-	object_info.clearAll();
-	object_info.setObjectType("Trigger Mask", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
-	object_info.addDoubleValue("Size: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "W: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " H: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.width, &data.height, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 }
 
 #endif
@@ -145,5 +110,67 @@ Object::Mask::Trigger::TriggerMask::TriggerMask(TriggerData& data_)
 
 	// Script Initializer
 	initializeScript(data.script);
+}
+
+Object::Object* DataClass::Data_TriggerMask::genObject()
+{
+	return new Object::Mask::Trigger::TriggerMask(data);
+}
+
+void DataClass::Data_TriggerMask::writeObjectData(std::ofstream& object_file)
+{
+	object_file.write((char*)&data, sizeof(Object::Mask::Trigger::TriggerData));
+}
+
+void DataClass::Data_TriggerMask::readObjectData(std::ifstream& object_file)
+{
+	object_file.read((char*)&data, sizeof(Object::Mask::Trigger::TriggerData));
+}
+
+DataClass::Data_TriggerMask::Data_TriggerMask()
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::MASK;
+	object_identifier[1] = Object::Mask::TRIGGER;
+	object_identifier[2] = 0;
+}
+
+void DataClass::Data_TriggerMask::info(Editor::ObjectInfo& object_info)
+{
+	// Store Object Information
+	object_info.clearAll();
+	object_info.setObjectType("Trigger Mask", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addDoubleValue("Size: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "W: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " H: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.width, &data.height, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+}
+
+DataClass::Data_Object* DataClass::Data_TriggerMask::makeCopy()
+{
+	return new Data_TriggerMask(*this);
+}
+
+Object::Mask::Trigger::TriggerData& DataClass::Data_TriggerMask::getTriggerData()
+{
+	return data;
+}
+
+int& DataClass::Data_TriggerMask::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_TriggerMask::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_TriggerMask::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.width = size * 2.0f;
+	data.height = size;
+	data.check_type = Object::Mask::Trigger::CHECK_TYPE::NONE;
+	data.script = 0;
 }
 

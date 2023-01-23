@@ -81,6 +81,15 @@ Render::Objects::UnsavedLevel* Render::Objects::ChangeController::generateUnsave
 	return new_unsaved_level;
 }
 
+void Render::Objects::ChangeController::transferObject(DataClass::Data_Object* data_object, int16_t x, int16_t y, int8_t z)
+{
+	// Get Correct Unsaved Level
+	UnsavedLevel* unsaved_level = getUnsavedLevel(x, y, z);
+
+	// Place Object in Unsaved Level
+	unsaved_level->transferObject(data_object);
+}
+
 void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* selector)
 {
 	// Note: For Now, This Operation will Result in a Finalization of Changes. Will Change Later

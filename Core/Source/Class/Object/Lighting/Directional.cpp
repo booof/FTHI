@@ -1,4 +1,5 @@
 #include "Directional.h"
+#include "Render/Struct/DataClasses.h"
 
 // Selector
 #include "Class/Render/Editor/Selector.h"
@@ -151,15 +152,6 @@ void Object::Light::Directional::Directional::initializeVisualizer()
 	glBindVertexArray(0);
 }
 
-void Object::Light::Directional::Directional::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
-{
-	// Store Object Information
-	info(object_info, name, data, directional);
-
-	// Selector Helper
-	select2(selector);
-}
-
 bool Object::Light::Directional::Directional::testMouseCollisions(float x, float y)
 {
 	// Check if Object is Between X-Values
@@ -179,38 +171,61 @@ bool Object::Light::Directional::Directional::testMouseCollisions(float x, float
 	return false;
 }
 
-void Object::Light::Directional::Directional::write(std::ofstream& object_file, std::ofstream& editor_file)
-{
-	// Write Object Identifier
-	object_file.put(LIGHT);
-	object_file.put(DIRECTIONAL);
-
-	// Write Data
-	object_file.write((char*)&directional, sizeof(directional));
-	object_file.write((char*)&data, sizeof(data));
-
-	// Write Editor Data
-	uint16_t name_size = (uint16_t)name.size();
-	editor_file.write((char*)&name_size, sizeof(uint16_t));
-	editor_file.write((char*)&clamp, sizeof(bool));
-	editor_file.write((char*)&lock, sizeof(bool));
-	editor_file.write((char*)&name[0], name.size());
-}
-
 glm::vec2 Object::Light::Directional::Directional::returnPosition()
 {
 	return data.position;
 }
 
-void Object::Light::Directional::Directional::info(Editor::ObjectInfo& object_info, std::string& name, LightData& data, DirectionalData& directional)
+#endif
+
+Object::Object* DataClass::Data_Directional::genObject()
+{
+	return new Object::Light::Directional::Directional(directional, light_data);
+}
+
+void DataClass::Data_Directional::writeObjectData(std::ofstream& object_file)
+{
+	object_file.write((char*)&directional, sizeof(Object::Light::Directional::DirectionalData));
+	object_file.write((char*)&light_data, sizeof(Object::Light::LightData));
+}
+
+void DataClass::Data_Directional::readObjectData(std::ifstream& object_file)
+{
+	object_file.read((char*)&directional, sizeof(Object::Light::Directional::DirectionalData));
+	object_file.read((char*)&light_data, sizeof(Object::Light::LightData));
+}
+
+DataClass::Data_Directional::Data_Directional()
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::LIGHT;
+	object_identifier[1] = Object::Light::DIRECTIONAL;
+	object_identifier[2] = 0;
+}
+
+void DataClass::Data_Directional::info(Editor::ObjectInfo& object_info)
 {
 	// Store Object Information
 	object_info.clearAll();
 	object_info.setObjectType("Directional Light", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos1: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addDoubleValue("Pos1: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &light_data.position.x, &light_data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 	object_info.addDoubleValue("Pos2: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &directional.position2.x, &directional.position2.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 }
 
-#endif
+DataClass::Data_Object* DataClass::Data_Directional::makeCopy()
+{
+	return new Data_Directional(*this);
+}
+
+Object::Light::Directional::DirectionalData& DataClass::Data_Directional::getDirectionalData()
+{
+	return directional;
+}
+
+void DataClass::Data_Directional::generateInitialValues(glm::vec2& position, float& size)
+{
+	generateInitialLightValues(position);
+	directional.position2 = position + glm::vec2(size, 0.0f);
+}
 

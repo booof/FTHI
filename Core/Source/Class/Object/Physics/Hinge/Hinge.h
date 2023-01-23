@@ -155,20 +155,11 @@ namespace Object::Physics::Hinge
 
 #ifdef EDITOR
 
-		// Write Object to File
-		void write(std::ofstream& object_file, std::ofstream& editor_file);
-
-		// Select Object
-		void select(Editor::Selector& selector, Editor::ObjectInfo& object_info);
-
 		// Test if Mouse Intersects Object
 		bool testMouseCollisions(float x, float y);
 
 		// Return Position of Object
 		glm::vec2 returnPosition();
-
-		// Select Object Info
-		static void info(Editor::ObjectInfo& object_info, std::string& name, HingeData& data, std::string& file_name);
 
 #endif
 	};

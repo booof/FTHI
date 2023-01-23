@@ -22,6 +22,7 @@
 #include "Source/Vertices/Visualizer/Visualizer.h"
 
 // Objects
+#include "Object/Object.h"
 #include "Object/Collision/Horizontal/FloorMask.h"
 #include "Object/Collision/Vertical/LeftMask.h"
 #include "Object/Collision/Vertical/RightMask.h"
@@ -60,6 +61,8 @@
 
 // Notification
 #include "Class/Render/Editor/Notification.h"
+
+#include "Render/Struct/DataClasses.h"
 
 // Comparison Operation for Node Data
 bool operator== (const Object::Physics::Soft::NodeData& node1, const Object::Physics::Soft::NodeData& node2)
@@ -261,12 +264,18 @@ void Editor::Selector::deselectObject()
 	// Sort Vertices, if Needed
 	//sortVertices(false);
 
+	// Return the Object
 	change_controller->handleSelectorReturn(this);
+
+	// Delete the Selected Object Container
+	delete selected_object;
 
 	// Reset Some Variables
 	originated_from_level = false;
 	object_index = 0;
 	lighting_object = false;
+	springmass_node_modified = false;
+	springmass_spring_modified = false;
 }
 
 void Editor::Selector::deselectNode()
@@ -346,6 +355,8 @@ void Editor::Selector::deselectNode()
 	object_index = 0;
 	lighting_object = false;
 	uuid = 0;
+	springmass_node_modified = false;
+	springmass_spring_modified = false;
 }
 
 void Editor::Selector::deselectSpring()
@@ -402,6 +413,8 @@ void Editor::Selector::deselectSpring()
 	object_index = 0;
 	lighting_object = false;
 	uuid = 0;
+	springmass_node_modified = false;
+	springmass_spring_modified = false;
 
 	// Delete the Node Array
 	delete[] node_list;
@@ -958,6 +971,9 @@ void Editor::Selector::storeSelectorData(DataClass::Data_Object* data_object)
 	}
 
 	}
+
+	// Store Object Info
+	data_object->info(*info);
 }
 
 void Editor::Selector::allocateSelectorVerticesHorizontalMasks(DataClass::Data_Object* data_object)
@@ -1171,12 +1187,6 @@ void Editor::Selector::storeSelectorDataHorizontalMasks(DataClass::Data_Object* 
 		new_selected_horizontal_line.object_width = &horizontal_line_data.width;
 		new_selected_horizontal_line.data_object = data_object;
 
-		// Get Object Info
-		if (object_identifier[1] == Object::Mask::FLOOR)
-			Object::Mask::Floor::FloorMaskLine::info(*info, data_horizontal_line.getName(), horizontal_line_data, static_cast<DataClass::Data_FloorMaskHorizontalLine*>(data_object)->getPlatform());
-		else
-			Object::Mask::Ceiling::CeilingMaskLine::info(*info, data_horizontal_line.getName(), horizontal_line_data);
-
 		break;
 	}
 
@@ -1199,12 +1209,6 @@ void Editor::Selector::storeSelectorDataHorizontalMasks(DataClass::Data_Object* 
 		new_selected_line.object_opposite_y = &slant_data.position2.y;
 		new_selected_line.data_object = data_object;
 
-		// Get Object Info
-		if (object_identifier[1] == Object::Mask::FLOOR)
-			Object::Mask::Floor::FloorMaskSlant::info(*info, data_slant.getName(), slant_data, static_cast<DataClass::Data_FloorMaskSlant*>(data_object)->getPlatform());
-		else
-			Object::Mask::Ceiling::CeilingMaskSlant::info(*info, data_slant.getName(), slant_data);
-
 		break;
 	}
 
@@ -1226,12 +1230,6 @@ void Editor::Selector::storeSelectorDataHorizontalMasks(DataClass::Data_Object* 
 		new_selected_rectangle.object_width = &slope_data.width;
 		new_selected_rectangle.object_height = &slope_data.height;
 		new_selected_rectangle.data_object = data_object;
-
-		// Get Object Info
-		if (object_identifier[1] == Object::Mask::FLOOR)
-			Object::Mask::Floor::FloorMaskSlope::info(*info, data_slope.getName(), slope_data, static_cast<DataClass::Data_FloorMaskSlope*>(data_object)->getPlatform());
-		else
-			Object::Mask::Ceiling::CeilingMaskSlope::info(*info, data_slope.getName(), slope_data);
 
 		break;
 	}
@@ -1406,12 +1404,6 @@ void Editor::Selector::storeSelectorDataVerticalMasks(DataClass::Data_Object* da
 		new_selected_vertical_line.object_height = &vertical_line_data.height;
 		new_selected_vertical_line.data_object = data_object;
 
-		// Get Object Info
-		if (object_identifier[1] == Object::Mask::LEFT_WALL)
-			Object::Mask::Left::LeftMaskLine::info(*info, data_vertical_line.getName(), vertical_line_data);
-		else
-			Object::Mask::Right::RightMaskLine::info(*info, data_vertical_line.getName(), vertical_line_data);
-
 		break;
 	}
 
@@ -1433,12 +1425,6 @@ void Editor::Selector::storeSelectorDataVerticalMasks(DataClass::Data_Object* da
 		new_selected_rectangle.object_width = &curve_data.width;
 		new_selected_rectangle.object_height = &curve_data.height;
 		new_selected_rectangle.data_object = data_object;
-
-		// Get Object Info
-		if (object_identifier[1] == Object::Mask::LEFT_WALL)
-			Object::Mask::Left::LeftMaskCurve::info(*info, data_curve.getName(), curve_data);
-		else
-			Object::Mask::Right::RightMaskCurve::info(*info, data_curve.getName(), curve_data);
 
 		break;
 	}
@@ -1526,9 +1512,6 @@ void Editor::Selector::storeSelectorDataTriggerMasks(DataClass::Data_Object* dat
 	// Store Object Data
 	new_selected_rectangle.object_x = &trigger_data.position.x;
 	new_selected_rectangle.object_y = &trigger_data.position.y;
-
-	// Get Object Info
-	Object::Mask::Trigger::TriggerMask::info(*info, data_trigger.getName(), trigger_data);
 }
 
 void Editor::Selector::allocateSelectorVerticesShapes(int index, DataClass::Data_Object* data_object)
@@ -1816,9 +1799,6 @@ void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object
 		new_selected_rectangle.object_height = rectangle_data.pointerToHeight();
 		new_selected_rectangle.data_object = data_object;
 
-		// Get Object Info
-		getShapeInfo(&rectangle_data, data_object);
-
 		break;
 	}
 
@@ -1840,9 +1820,6 @@ void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object
 		new_selected_trapezoid.object_height_modifier = trapezoid_data.pointerToHeightOffset();
 		new_selected_trapezoid.data_object = data_object;
 
-		// Get Object Info
-		getShapeInfo(&trapezoid_data, data_object);
-
 		break;
 	}
 
@@ -1863,9 +1840,6 @@ void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object
 		new_selected_triangle.coords3 = *triangle_data.pointerToThirdPosition();
 		new_selected_triangle.data_object = data_object;
 
-		// Get Object Info
-		getShapeInfo(&triangle_data, data_object);
-
 		break;
 	}
 
@@ -1885,9 +1859,6 @@ void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object
 		new_selected_circle.object_inner_radius = circle_data.pointerToRadiusInner();
 		new_selected_circle.data_object = data_object;
 
-		// Get Object Info
-		getShapeInfo(&circle_data, data_object);
-
 		break;
 	}
 
@@ -1906,9 +1877,6 @@ void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object
 		new_selected_circle.object_radius = polygon_data.pointerToRadius();
 		new_selected_circle.object_inner_radius = polygon_data.pointerToRaidusInner();
 		new_selected_circle.data_object = data_object;
-
-		// Get Object Info
-		getShapeInfo(&polygon_data, data_object);
 
 		break;
 	}
@@ -2206,9 +2174,6 @@ void Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_obje
 		// Enable Resize
 		enable_resize = true;
 
-		// Get Object Info
-		Object::Light::Directional::Directional::info(*info, data_directional.getName(), light_data, directional_data);
-
 		break;
 	}
 
@@ -2267,9 +2232,6 @@ void Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_obje
 
 		// Disable Resize
 		enable_resize = false;
-
-		// Get Object Info
-		Object::Light::Point::Point::info(*info, data_point.getName(), light_data, point_data);
 
 		break;
 	}
@@ -2330,9 +2292,6 @@ void Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_obje
 		// Disable Resize
 		enable_resize = false;
 
-		// Get Object Info
-		Object::Light::Spot::Spot::info(*info, data_spot.getName(), light_data, spot_data);
-
 		break;
 	}
 
@@ -2390,9 +2349,6 @@ void Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_obje
 
 		// Enable Resize
 		enable_resize = true;
-
-		// Get Object Info
-		Object::Light::Beam::Beam::info(*info, data_beam.getName(), light_data, beam_data);
 
 		break;
 	}
@@ -2998,9 +2954,6 @@ void Editor::Selector::storeSelectorDataHinge(DataClass::Data_Object* data_objec
 		new_selected_rectangle.object_x = &anchor_data.position.x;
 		new_selected_rectangle.object_y = &anchor_data.position.y;
 
-		// Get Object Info
-		Object::Physics::Hinge::Anchor::info(*info, data_object->getName(), anchor_data);
-
 		break;
 	}
 
@@ -3013,9 +2966,6 @@ void Editor::Selector::storeSelectorDataHinge(DataClass::Data_Object* data_objec
 		// Set Object Position
 		new_selected_rectangle.object_x = &hinge_data.position.x;
 		new_selected_rectangle.object_y = &hinge_data.position.y;
-
-		// Get Object Info
-		Object::Physics::Hinge::Hinge::info(*info, data_object->getName(), hinge_data, static_cast<DataClass::Data_Hinge*>(data_object)->getFile());
 
 		break;
 	}
@@ -3120,25 +3070,8 @@ void Editor::Selector::storeSelectorDataEntity(DataClass::Data_Object* data_obje
 	new_selected_rectangle.object_x = &object_data.position.x;
 	new_selected_rectangle.object_y = &object_data.position.y;
 
-	// Get Object Info
-	Object::Entity::NPC::info(*info, data_object->getName(), object_data);
-
 	// Disable Resize
 	enable_resize = false;
-}
-
-void Editor::Selector::getShapeInfo(Shape::Shape* shape, DataClass::Data_Object* data_object)
-{
-	// Get Object Data
-	Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
-
-	// Selected Object is Terrain
-	if (data_object->getObjectIdentifier()[0] == Object::TERRAIN)
-		Object::Terrain::TerrainBase::info(*info, data_object->getName(), object_data, shape);
-
-	// Selected Object is Rigid Body
-	else
-		Object::Physics::Rigid::RigidBody::info(*info, data_object->getName(), object_data, shape);
 }
 
 void Editor::Selector::uninitializeSelector()

@@ -37,8 +37,6 @@ namespace Object::Terrain
 		// Initialize Object
 		TerrainBase(Shape::Shape* shape_, ObjectData data_);
 
-		void write(std::ofstream& object_file, std::ofstream& editor_file);
-
 		void updateObject();
 
 		// Return Pointer to Position
@@ -59,17 +57,11 @@ namespace Object::Terrain
 
 #ifdef EDITOR
 
-		// Select Object
-		void select(Editor::Selector& selector, Editor::ObjectInfo& object_info);
-
 		// Return Position of Object
 		glm::vec2 returnPosition();
 
 		// Return Shape of Object
 		Shape::Shape* returnShapePointer();
-
-		// Select Object Info
-		static void info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, Shape::Shape* shape);
 
 #endif
 

@@ -1,4 +1,5 @@
 #include "Slant.h"
+#include "Render/Struct/DataClasses.h"
 
 Object::Mask::Slant::Slant(SlantData& data_)
 {
@@ -53,3 +54,26 @@ void Object::Mask::Slant::initializeVisualizer(GLuint& VAO, GLuint& VBO, glm::ma
 }
 
 #endif
+
+Object::Mask::SlantData& DataClass::Data_Slant::getSlantData()
+{
+	return data;
+}
+
+int& DataClass::Data_Slant::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_Slant::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_Slant::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.position2 = position + glm::vec2(size, 0.0f);
+	data.script = 0;
+	data.material = 0;
+}

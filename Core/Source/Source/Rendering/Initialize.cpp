@@ -705,12 +705,6 @@ bool Source::Render::Initialize::initialize()
 	// Generate Debugger
 	debugger->initializeDebugger();
 
-	// Read UUID to Start At
-	std::ifstream uuid_file;
-	uuid_file.open("../Resources/Data/EngineData/uuid.dat", std::ios::binary);
-	uuid_file.read((char*)&Global::uuid_counter, sizeof(uint32_t));
-	uuid_file.close();
-
 #endif
 
 	// Allow the Splash Screen to Fade
@@ -728,6 +722,15 @@ bool Source::Render::Initialize::initialize()
 	// Prompt User to Load a Project
 	//project_selector->readProjectListFile();
 	project_selector->initializeProjectSelector();
+
+	// Read UUID to Start At
+	if (!Global::project_file_path.empty())
+	{
+		std::ifstream uuid_file;
+		uuid_file.open(Global::project_resources_path + "/Data/CommonData/UUID.dat", std::ios::binary);
+		uuid_file.read((char*)&Global::uuid_counter, sizeof(uint32_t));
+		uuid_file.close();
+	}
 
 	// Returns True if a Project was not Selected
 	return Global::project_file_path.empty();

@@ -9,45 +9,22 @@
 #include "Render/GUI/VerticalScrollBar.h"
 #include "Render/GUI/ColorWheel.h"
 
-// Objects Data List
-#include "Object/Object.h"
-#include "Render/Shape/Rectangle.h"
-#include "Render/Shape/Trapezoid.h"
-#include "Render/Shape/Triangle.h"
-#include "Render/Shape/Circle.h"
-#include "Render/Shape/Polygon.h"
-#include "Object/Collision/Horizontal/Line/HorizotnalLine.h"
-#include "Object/Collision/Horizontal/Slant/Slant.h"
-#include "Object/Collision/Horizontal/Slope/Slope.h"
-#include "Object/Collision/Vertical/Line/VerticalLine.h"
-#include "Object/Collision/Vertical/Curve/Curve.h"
-#include "Object/Collision/Trigger/TriggerMask.h"
-#include "Object/Lighting/Directional.h"
-#include "Object/Lighting/Point.h"
-#include "Object/Lighting/Spot.h"
-#include "Object/Lighting/Beam.h"
-#include "Object/Physics/RigidBody/RigidRectangle.h"
-#include "Object/Physics/RigidBody/RigidTrapezoid.h"
-#include "Object/Physics/RigidBody/RigidTriangle.h"
-#include "Object/Physics/RigidBody/RigidCircle.h"
-#include "Object/Physics/RigidBody/RigidPolygon.h"
-#include "Object/Physics/Softody/SpringMass.h"
-#include "Object/Physics/Softody/Wire.h"
-#include "Object/Physics/Hinge/Anchor.h"
-#include "Object/Physics/Hinge/Hinge.h"
-#include "Object/Entity/EntityBase.h"
-#include "Object/Entity/NPC.h"
-#include "Object/Entity/Controllables.h"
-#include "Object/Entity/Interactables.h"
-#include "Object/Entity/Dynamics.h"
-
-
-// Data Classes
-#include "Render/Struct/DataClasses.h"
+#include "Object/Physics/Softody/SoftBody.h"
+#include "Render/Struct/Texture.h"
 
 // Externals
 #include "ExternalLibs.h"
 #include "Macros.h"
+
+namespace DataClass
+{
+	class DataClass;
+}
+
+namespace Shape
+{
+	class Shape;
+}
 
 namespace Editor
 {
@@ -436,9 +413,6 @@ namespace Editor
 		// Update Color Wheels
 		void updateColorWheels(ColorWheel& wheel_, glm::vec4& color, unsigned int* wheel_color_, double mouseStaticX, double mouseStaticY, int offsetx, bool update);
 
-		// Function to Generate a New UUID
-		uint32_t genNewUUID();
-
 	public:
 
 		// Current Editing Mode of Window
@@ -456,41 +430,9 @@ namespace Editor
 		// Object Identifier of New Object
 		uint8_t new_object_identifier[3] = { 0 };
 
-		// Object Identifier
-		//unsigned char object_identifier[3];
-
 		// Lists of Object Values
-		//EditorSpecificData                            editor_data;
-		//Object::ObjectData                            object_data;
-		//Shape::Rectangle                              rectangle_data;
-		//Shape::Trapezoid                              trapezoid_data;
-		//Shape::Triangle                               triangle_data;
-		//Shape::Circle                                 circle_data;
-		//Shape::Polygon                                polygon_data;
-		//Object::Mask::HorizontalLineData              horizontal_line_data;
-		//Object::Mask::SlantData                       slant_data;
-		//Object::Mask::SlopeData                       slope_data;
-		//Object::Mask::VerticalLineData                vertical_line_data;
-		//Object::Mask::CurveData                       curve_data;
-		//Object::Mask::Trigger::TriggerData            trigger_data;
-		//Object::Light::LightData                      light_data;
-		//Object::Light::Directional::DirectionalData   directional_data;
-		//Object::Light::Point::PointData               point_data;
-		//Object::Light::Spot::SpotData                 spot_data;
-		//Object::Light::Beam::BeamData                 beam_data;
-		//Object::Physics::Rigid::RigidBodyData         rigid_body_data;
-		//Object::Physics::Soft::WireData				  wire_data;
-		//Object::Physics::Hinge::AnchorData            anchor_data;
-		//Object::Physics::Hinge::HingeData             hinge_data;
-		//Object::Entity::EntityData                    entity_data;
-		//Object::Entity::InteractableData              interactable_data;
-		//Object::Entity::DynamicData                   dynamic_data;
 		Object::Physics::Soft::NodeData               node_data;
 		Object::Physics::Soft::Spring                 spring_data;
-		//bool                                          floor_mask_platform;
-		//uint16_t                                      npc_ai;
-		//std::string                                   file_name;
-		//uint32_t                                      uuid;
 
 		DataClass::Data_Object* data_object = nullptr;
 

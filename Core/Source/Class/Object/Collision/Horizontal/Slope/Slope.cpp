@@ -5,6 +5,8 @@
 
 #include "Source/Algorithms/Quick Math/QuickMath.h"
 
+#include "Render/Struct/DataClasses.h"
+
 Object::Mask::Slope::Slope(SlopeData& data_)
 {
 	// Store Data
@@ -63,4 +65,28 @@ void Object::Mask::Slope::initializeVisualizer(GLuint& VAO, GLuint& VBO, glm::ma
 }
 
 #endif
+
+Object::Mask::SlopeData& DataClass::Data_Slope::getSlopeData()
+{
+	return data;
+}
+
+int& DataClass::Data_Slope::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_Slope::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_Slope::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.width = size * 2.0f;
+	data.height = size;
+	data.script = 0;
+	data.material = 0;
+}
 

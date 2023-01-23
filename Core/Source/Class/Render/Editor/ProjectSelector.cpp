@@ -669,7 +669,9 @@ bool Editor::ProjectSelector::createProject()
         std::filesystem::create_directories(current_project_path + "\\Fonts");
         std::filesystem::create_directories(current_project_path + "\\Music");
         std::filesystem::create_directories(current_project_path + "\\Models");
+        std::filesystem::create_directories(current_project_path + "\\Models\\Hinges");
         std::filesystem::create_directories(current_project_path + "\\Models\\SoftBodies");
+        std::filesystem::create_directories(current_project_path + "\\Models\\Structures");
         std::filesystem::create_directories(current_project_path + "\\Scripts");
         std::filesystem::create_directories(current_project_path + "\\Sound");
         std::filesystem::create_directories(current_project_path + "\\Textures");

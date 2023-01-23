@@ -1,5 +1,5 @@
 #include "FloorMask.h"
-
+#include "Render/Struct/DataClasses.h"
 #include "Source/Vertices/Visualizer/Visualizer.h"
 
 bool Object::Mask::Floor::FloorMask::testCollisions(glm::vec2 test_position, float error)
@@ -46,4 +46,9 @@ bool Object::Mask::Floor::FloorMask::testEdgeCollisions(glm::vec2& left_vertex, 
 	}
 
 	return false;
+}
+
+bool& DataClass::Data_Floor::getPlatform()
+{
+	return platform;
 }

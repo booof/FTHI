@@ -70,11 +70,11 @@ namespace Editor
 		public:
 
 			// Pointer to Data Object
-			DataClass::Data_Object* data_object;
+			DataClass::Data_Object* data_object = nullptr;
 
 			// Position of the Object
-			float* object_x;
-			float* object_y;
+			float* object_x = nullptr;
+			float* object_y = nullptr;
 		};
 
 		class Selected_Rectangle : public Selected_Object
@@ -83,8 +83,8 @@ namespace Editor
 		public:
 
 			// Size of the Object
-			float* object_width;
-			float* object_height;
+			float* object_width = nullptr;
+			float* object_height = nullptr;
 
 			// Determines if Rectangle can Resize
 			bool enable_resize = true;
@@ -96,8 +96,8 @@ namespace Editor
 		public:
 
 			// Size Offset of the Object
-			float* object_width_modifier;
-			float* object_height_modifier;
+			float* object_width_modifier = nullptr;
+			float* object_height_modifier = nullptr;
 		};
 
 		class Selected_Triangle : public Selected_Object
@@ -106,9 +106,9 @@ namespace Editor
 		public:
 
 			// The Coordinates of the Object
-			glm::vec2 coords1;
-			glm::vec2 coords2;
-			glm::vec2 coords3;
+			glm::vec2 coords1 = glm::vec2(0);
+			glm::vec2 coords2 = glm::vec2(0);
+			glm::vec2 coords3 = glm::vec2(0);
 		};
 
 		class Selected_Circle : public Selected_Object
@@ -117,8 +117,8 @@ namespace Editor
 		public:
 
 			// Radius of the Circle
-			float* object_radius;
-			float* object_inner_radius;
+			float* object_radius = nullptr;
+			float* object_inner_radius = nullptr;
 		};
 
 		class Selected_Horizontal_Line : public Selected_Object
@@ -127,7 +127,7 @@ namespace Editor
 		public:
 
 			// Width of the Object
-			float* object_width;
+			float* object_width = nullptr;
 		};
 
 		class Selected_Vertical_Line : public Selected_Object
@@ -136,7 +136,7 @@ namespace Editor
 		public:
 
 			// Height of the Object
-			float* object_height;
+			float* object_height = nullptr;
 		};
 
 		class Selected_Line : public Selected_Object
@@ -145,8 +145,8 @@ namespace Editor
 		public:
 
 			// Opposite Point of Line
-			float* object_opposite_x;
-			float* object_opposite_y;
+			float* object_opposite_x = nullptr;
+			float* object_opposite_y = nullptr;
 		};
 
 		// Determines if Object is in Resize Mode
@@ -212,26 +212,6 @@ namespace Editor
 		float offset_x;
 		float offset_y;
 
-		//// Position Values of Object
-		//float* object_x;
-		//float* object_y;
-
-		//// Size Values of Object
-		//float* object_width;
-		//float* object_height;
-
-		//// Size Modifiers of Object
-		//float* object_width_modifier;
-		//float* object_height_modifier;
-
-		//// Radius Values of Object
-		//float* object_radius;
-		//float* object_inner_radius;
-
-		//// Opposite Position Value for Lines
-		//float* object_opposite_x;
-		//float* object_opposite_y;
-
 		// Resize Horizontal Condition
 		int8_t change_horizontal;
 
@@ -241,22 +221,13 @@ namespace Editor
 		// Determines if Object is Activly Being Moved or Resized
 		bool moving = false;
 
-		// Temporary Triangle
-		//Shape::Triangle triangle_data;
-
 		// Temp Position
 		glm::vec2 temp_position;
-
-		// Temp File Name
-		//std::string file_name;
 
 		// Temp UUID
 		uint32_t uuid;
 
 		// Triangle Collision Values
-		//glm::vec2 coords1 = glm::vec2(0.0f);
-		//glm::vec2 coords2 = glm::vec2(0.0f);
-		//glm::vec2 coords3 = glm::vec2(0.0f);
 		int8_t selected_vertex = 0;
 		bool should_sort = false;
 
@@ -371,9 +342,6 @@ namespace Editor
 
 		// Store Data for Entities
 		void storeSelectorDataEntity(DataClass::Data_Object* data_object);
-
-		// Object Info for Shapes
-		void getShapeInfo(Shape::Shape* shape, DataClass::Data_Object* data_object);
 
 		
 		// End of Storing Data Functions

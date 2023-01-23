@@ -21,6 +21,7 @@
 #include "Source/Algorithms/Common/Common.h"
 #include "Class/Render/Shader/Shader.h"
 #include "ChangeController.h"
+#include "UnsavedLevel.h"
 #include "Source/Vertices/Visualizer/Visualizer.h"
 
 // Collisions
@@ -1225,6 +1226,8 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 		{
 			// Get Reference to Object
 			Object::Physics::Soft::SpringMass& object = *static_cast<Object::Physics::Soft::SpringMass*>(&*(physics_list.it));
+			selector.springmass_node_modified = false;
+			selector.springmass_spring_modified = false;
 
 			// Test if Object is Locked or Marked to Pass Over
 			if (object.lock || object.skip_selection)
@@ -1338,6 +1341,7 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						selector.springmass_node_modified = false;
 						selector.springmass_spring_modified = true;
 						selector.object_index = 0;
+						selector.data_object = object_pointer->data_object;
 						//selector.uuid = 0;
 						//selector.object_data.position = object.returnPosition();
 						//selector.file_name = object.file_name;
@@ -1474,6 +1478,7 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 					selector.springmass_node_modified = true;
 					selector.springmass_spring_modified = false;
 					selector.object_index = 0;
+					selector.data_object = object_pointer->data_object;
 					//selector.uuid = 0;
 					//selector.object_data.position = object.returnPosition();
 					//selector.file_name = object.file_name;
@@ -1748,6 +1753,7 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 
 				// Make a Copy of the Data Class
 				selector.data_object = selector.data_object->makeCopy();
+				std::cout << "b\n";
 
 				return true;
 			}

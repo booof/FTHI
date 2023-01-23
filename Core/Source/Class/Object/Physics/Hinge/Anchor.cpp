@@ -1,4 +1,5 @@
 #include "Anchor.h"
+#include "Render/Struct/DataClasses.h"
 
 // Globals
 #include "Globals.h"
@@ -106,34 +107,6 @@ glm::vec2* Object::Physics::Hinge::Anchor::pointerToPosition()
 	return &data.position;
 }
 
-void Object::Physics::Hinge::Anchor::write(std::ofstream& object_file, std::ofstream& editor_file)
-{
-	// Write Object Identifier
-	object_file.put(PHYSICS);
-	object_file.put((uint8_t)PHYSICS_BASES::HINGE_BASE);
-	object_file.put((uint8_t)HINGES::ANCHOR);
-
-	// Write Object Data
-	object_file.write((char*)&uuid, sizeof(uint32_t));
-	object_file.write((char*)&data, sizeof(AnchorData));
-
-	// Write Editor Data
-	uint16_t name_size = (uint16_t)name.size();
-	editor_file.write((char*)&name_size, sizeof(uint16_t));
-	editor_file.write((char*)&clamp, sizeof(bool));
-	editor_file.write((char*)&lock, sizeof(bool));
-	editor_file.write((char*)&name[0], name_size);
-}
-
-void Object::Physics::Hinge::Anchor::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
-{
-	// Store Object Information
-	info(object_info, name, data);
-
-	// Selector Helper
-	select2(selector);
-}
-
 bool Object::Physics::Hinge::Anchor::testMouseCollisions(float x, float y)
 {
 	if (x > data.position.x - 0.5f && x < data.position.x + 0.5f)
@@ -152,11 +125,63 @@ glm::vec2 Object::Physics::Hinge::Anchor::returnPosition()
 	return data.position;
 }
 
-void Object::Physics::Hinge::Anchor::info(Editor::ObjectInfo& object_info, std::string& name, AnchorData& data)
+Object::Object* DataClass::Data_Anchor::genObject()
+{
+	return new Object::Physics::Hinge::Anchor(uuid, data);
+}
+
+void DataClass::Data_Anchor::writeObjectData(std::ofstream& object_file)
+{
+	object_file.write((char*)&uuid, sizeof(uint32_t));
+	object_file.write((char*)&data, sizeof(Object::Physics::Hinge::HingeData));
+}
+
+void DataClass::Data_Anchor::readObjectData(std::ifstream& object_file)
+{
+	object_file.read((char*)&uuid, sizeof(uint32_t));
+	object_file.read((char*)&data, sizeof(Object::Physics::Hinge::HingeData));
+}
+
+DataClass::Data_Anchor::Data_Anchor()
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::PHYSICS;
+	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::HINGE_BASE;
+	object_identifier[2] = (uint8_t)Object::Physics::HINGES::ANCHOR;
+}
+
+void DataClass::Data_Anchor::info(Editor::ObjectInfo& object_info)
 {
 	// Store Object Information
 	object_info.clearAll();
 	object_info.setObjectType("Anchor", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+}
+
+DataClass::Data_Object* DataClass::Data_Anchor::makeCopy()
+{
+	return new Data_Anchor(*this);
+}
+
+int& DataClass::Data_Anchor::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_Anchor::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_Anchor::generateInitialValues(glm::vec2& position)
+{
+	generateUUID();
+	data.position = position;
+	data.script = 0;
+}
+
+Object::Physics::Hinge::AnchorData& DataClass::Data_Anchor::getAnchorData()
+{
+	return data;
 }

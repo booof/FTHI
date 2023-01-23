@@ -1,4 +1,5 @@
 #include "RigidBody.h"
+#include "Render/Struct/DataClasses.h"
 
 // Globals
 #include "Globals.h"
@@ -18,6 +19,12 @@
 #include "Render/Editor/ObjectInfo.h"
 
 #include "Source/Algorithms/Quick Math/QuickMath.h"
+
+#include "RigidRectangle.h"
+#include "RigidTrapezoid.h"
+#include "RigidTriangle.h"
+#include "RigidCircle.h"
+#include "RigidPolygon.h"
 
 // Compare Values of Named Nodes
 bool operator==(const Object::Physics::Rigid::Named_Node node1, const Object::Physics::Rigid::Named_Node node2)
@@ -250,81 +257,6 @@ glm::vec2* Object::Physics::Rigid::RigidBody::pointerToPosition()
 	return &physics.Position;
 }
 
-void Object::Physics::Rigid::RigidBody::write(std::ofstream& object_file, std::ofstream& editor_file)
-{
-	// Write Object Identifier
-	object_file.put(PHYSICS);
-	object_file.put((uint8_t)PHYSICS_BASES::RIGID_BODY);
-	object_file.put(shape->shape);
-
-	// Write Data
-	object_file.write((char*)&uuid, sizeof(uint32_t));
-	object_file.write((char*)&data, sizeof(ObjectData));
-	object_file.write((char*)&rigid, sizeof(RigidBodyData));
-
-	// Write Shape
-	switch (shape->shape)
-	{
-
-	// Rectangle
-	case Shape::RECTANGLE:
-	{
-		Shape::Rectangle* temp_rect = static_cast<Shape::Rectangle*>(shape);
-		object_file.write((char*)(temp_rect)+8, sizeof(Shape::Rectangle) - 8);
-		break;
-	}
-
-	// Trapezoid
-	case Shape::TRAPEZOID:
-	{
-		Shape::Trapezoid* temp_trap = static_cast<Shape::Trapezoid*>(shape);
-		object_file.write((char*)(temp_trap)+8, sizeof(Shape::Trapezoid) - 8);
-		break;
-	}
-
-	// Triangle
-	case Shape::TRIANGLE:
-	{
-		Shape::Triangle* temp_tri = static_cast<Shape::Triangle*>(shape);
-		object_file.write((char*)(temp_tri)+8, sizeof(Shape::Triangle) - 8);
-		break;
-	}
-
-	// Circle
-	case Shape::CIRCLE:
-	{
-		Shape::Circle* temp_circle = static_cast<Shape::Circle*>(shape);
-		object_file.write((char*)(temp_circle)+8, sizeof(Shape::Circle) - 8);
-		break;
-	}
-
-	// Polygon
-	case Shape::POLYGON:
-	{
-		Shape::Polygon* temp_poly = static_cast<Shape::Polygon*>(shape);
-		object_file.write((char*)(temp_poly)+8, sizeof(Shape::Polygon) - 8);
-		break;
-	}
-
-	}
-
-	// Write Editor Data
-	uint16_t name_size = (uint16_t)name.size();
-	editor_file.write((char*)&name_size, sizeof(uint16_t));
-	editor_file.write((char*)&clamp, sizeof(bool));
-	editor_file.write((char*)&lock, sizeof(bool));
-	editor_file.write((char*)&name[0], name_size);
-}
-
-void Object::Physics::Rigid::RigidBody::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
-{
-	// Store Object Information
-	info(object_info, name, data, shape);
-
-	// Selector Helper
-	select2(selector);
-}
-
 bool Object::Physics::Rigid::RigidBody::testMouseCollisions(float x, float y)
 {
 	return shape->testMouseCollisions(x, y, data.position.x, data.position.y);
@@ -335,7 +267,43 @@ glm::vec2 Object::Physics::Rigid::RigidBody::returnPosition()
 	return data.position;
 }
 
-void Object::Physics::Rigid::RigidBody::info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, Shape::Shape* shape)
+Object::Object* DataClass::Data_RigidBody::genObject()
+{
+	switch (object_identifier[2])
+	{
+	case Shape::TRAPEZOID: return new Object::Physics::Rigid::RigidTrapezoid(uuid, data, rigid, shape);
+	case Shape::TRIANGLE: return new Object::Physics::Rigid::RigidTriangle(uuid, data, rigid, shape);
+	case Shape::CIRCLE: return new Object::Physics::Rigid::RigidCircle(uuid, data, rigid, shape);
+	case Shape::POLYGON: return new Object::Physics::Rigid::RigidPolygon(uuid, data, rigid, shape);
+	default: return new Object::Physics::Rigid::RigidRectangle(uuid, data, rigid, shape);
+	}
+}
+
+void DataClass::Data_RigidBody::writeObjectData(std::ofstream& object_file)
+{
+	object_file.write((char*)&uuid, sizeof(uint32_t));
+	object_file.write((char*)&data, sizeof(Object::ObjectData));
+	object_file.write((char*)&rigid, sizeof(Object::Physics::Rigid::RigidBodyData));
+	shape->writeShape(object_file);
+}
+
+void DataClass::Data_RigidBody::readObjectData(std::ifstream& object_file)
+{
+	object_file.read((char*)&uuid, sizeof(uint32_t));
+	object_file.read((char*)&data, sizeof(Object::ObjectData));
+	object_file.read((char*)&rigid, sizeof(Object::Physics::Rigid::RigidBodyData));
+	shape = shapes[object_identifier[2]](object_file);
+}
+
+DataClass::Data_RigidBody::Data_RigidBody(uint8_t shape_identifier)
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::PHYSICS;
+	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::RIGID_BODY;
+	object_identifier[2] = shape_identifier;
+}
+
+void DataClass::Data_RigidBody::info(Editor::ObjectInfo& object_info)
 {
 	// Map to Shape Names
 	static std::string shape_name_map[] = { "Rectangle", "Trapezoid", "Triangle", "Circle", "Polygon" };
@@ -347,4 +315,39 @@ void Object::Physics::Rigid::RigidBody::info(Editor::ObjectInfo& object_info, st
 	object_info.addTextValue("Shape: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &shape_name_map[shape->shape], glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 	shape->selectInfo(object_info);
+}
+
+DataClass::Data_Object* DataClass::Data_RigidBody::makeCopy()
+{
+	Data_RigidBody* new_rigid_body = new Data_RigidBody(*this);
+	new_rigid_body->shape = new_rigid_body->shape->makeCopy();
+	return new_rigid_body;
+}
+
+Object::Physics::Rigid::RigidBodyData& DataClass::Data_RigidBody::getRigidData()
+{
+	return rigid;
+}
+
+void DataClass::Data_RigidBody::generateInitialValues(glm::vec2& position, Shape::Shape* new_shape)
+{
+	// Generate Object Data
+	generateUUID();
+	data.position = position;
+	data.zpos = -1.0f;
+	data.colors = glm::vec4(1.0f, 0.5f, 0.0f, 1.0f);
+	data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
+	data.texture_name = 0;
+	data.script = 0;
+	data.material_name = 0;
+
+	// Generate Rigid Body Data
+	rigid.mass = 1.0f;
+	rigid.max_health = 10.0f;
+	rigid.center_of_gravity = glm::vec2(0.0f, 0.0f);
+	rigid.initial_rotation = 0.0f;
+	rigid.fluid = false;
+
+	// Store Shape
+	shape = new_shape;
 }

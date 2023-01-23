@@ -127,8 +127,14 @@ namespace DataClass
 		// Get the Position of an Object
 		virtual glm::vec2& getPosition() = 0;
 
+		// Set the Object Info of the Object
+		virtual void info(Editor::ObjectInfo& object_info) = 0;
+
 		// Create a Copy of the Object
 		virtual Data_Object* makeCopy() = 0;
+
+		// Make a Unique Copy of the Object
+		Data_Object* makeCopyUnique();
 	};
 
 	// Sub Object Data Class
@@ -237,6 +243,9 @@ namespace DataClass
 		// Floor Mask Horizontal Line Data 
 		Data_FloorMaskHorizontalLine();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 	};
@@ -257,6 +266,9 @@ namespace DataClass
 
 		// Floor Mask Slant Data
 		Data_FloorMaskSlant();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
@@ -279,6 +291,9 @@ namespace DataClass
 		// Floor Mask Slope Data
 		Data_FloorMaskSlope();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 	};
@@ -299,6 +314,9 @@ namespace DataClass
 
 		// Ceiling Mask Horizontal Line Data
 		Data_CeilingMaskHorizontalLine();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
@@ -321,6 +339,9 @@ namespace DataClass
 		// Ceiling Mask Slant Data
 		Data_CeilingMaskSlant();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 	};
@@ -341,6 +362,9 @@ namespace DataClass
 
 		// Ceiling Mask Slope Data
 		Data_CeilingMaskSlope();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
@@ -401,6 +425,9 @@ namespace DataClass
 		// Left Mask Vertical Line Data
 		Data_LeftMaskVerticalLine();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 	};
@@ -421,6 +448,9 @@ namespace DataClass
 
 		// Left Mask Curve Data
 		Data_LeftMaskCurve();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
@@ -443,6 +473,9 @@ namespace DataClass
 		// Right Mask Vertical Line Data
 		Data_RightMaskVerticalLine();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 	};
@@ -463,6 +496,9 @@ namespace DataClass
 
 		// Right Mask Curve Data
 		Data_RightMaskCurve();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
@@ -486,6 +522,9 @@ namespace DataClass
 
 		// Trigger Mask Data
 		Data_TriggerMask();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
@@ -536,6 +575,9 @@ namespace DataClass
 		// Terrain Data
 		Data_Terrain(uint8_t layer_identifier, uint8_t shape_identifier);
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
@@ -585,6 +627,9 @@ namespace DataClass
 		// Directional Light Data
 		Data_Directional();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
@@ -612,6 +657,9 @@ namespace DataClass
 
 		// Point Light Data
 		Data_Point();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
@@ -641,6 +689,9 @@ namespace DataClass
 		// Spot Light Data
 		Data_Spot();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
@@ -669,6 +720,9 @@ namespace DataClass
 		// Beam Light Data
 		Data_Beam();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
@@ -690,7 +744,7 @@ namespace DataClass
 
 		uint32_t& getUUID();
 
-		void generateUUID(uint32_t& new_uuid);
+		void generateUUID();
 	};
 
 	// Rigid Body Physics Object
@@ -713,12 +767,15 @@ namespace DataClass
 		// Rigid Body Data
 		Data_RigidBody(uint8_t shape_identifier);
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
 		Object::Physics::Rigid::RigidBodyData& getRigidData();
 
-		void generateInitialValues(glm::vec2& position, Shape::Shape* new_shape, uint32_t& new_uuid);
+		void generateInitialValues(glm::vec2& position, Shape::Shape* new_shape);
 	};
 
 	// SpringMass Physics Object
@@ -741,12 +798,15 @@ namespace DataClass
 		// SpringMass Data
 		Data_SpringMass();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
 		std::string& getFile();
 
-		void generateInitialValues(glm::vec2& position, uint32_t& new_uuid);
+		void generateInitialValues(glm::vec2& position);
 	};
 
 	// Wire Physics Object
@@ -769,10 +829,13 @@ namespace DataClass
 		// Wire Data
 		Data_Wire();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
-		void generateInitialValues(glm::vec2& position, float& size, uint32_t& new_uuid);
+		void generateInitialValues(glm::vec2& position, float& size);
 
 		Object::Physics::Soft::WireData& getWireData();
 	};
@@ -797,6 +860,9 @@ namespace DataClass
 		// Anchor Data
 		Data_Anchor();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
@@ -804,7 +870,7 @@ namespace DataClass
 
 		glm::vec2& getPosition();
 
-		void generateInitialValues(glm::vec2& position, uint32_t& new_uuid);
+		void generateInitialValues(glm::vec2& position);
 
 		Object::Physics::Hinge::AnchorData& getAnchorData();
 	};
@@ -832,6 +898,9 @@ namespace DataClass
 		// Hinge Data
 		Data_Hinge();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
@@ -839,7 +908,7 @@ namespace DataClass
 
 		glm::vec2& getPosition();
 
-		void generateInitialValues(glm::vec2& position, uint32_t& new_uuid);
+		void generateInitialValues(glm::vec2& position);
 
 		Object::Physics::Hinge::HingeData& getHingeData();
 
@@ -859,7 +928,7 @@ namespace DataClass
 
 		Object::Entity::EntityData& getEntityData();
 
-		void generateInitialData(glm::vec2& position, uint32_t& new_uuid);
+		void generateInitialData(glm::vec2& position);
 	};
 
 	// NPC Entities
@@ -882,6 +951,9 @@ namespace DataClass
 		// NPC Data
 		Data_NPC();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 	};
@@ -902,6 +974,9 @@ namespace DataClass
 
 		// Controllable Entity Data
 		Data_Controllable();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
@@ -927,6 +1002,9 @@ namespace DataClass
 		// Interactable Entity Data
 		Data_Interactable();
 
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 	};
@@ -950,6 +1028,9 @@ namespace DataClass
 
 		// Dynamic Entity Data
 		Data_Dynamic();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();

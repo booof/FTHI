@@ -1,4 +1,5 @@
 #include "VerticalLine.h"
+#include "Render/Struct/DataClasses.h"
 
 Object::Mask::VerticalLine::VerticalLine(VerticalLineData data_)
 {
@@ -44,4 +45,27 @@ void Object::Mask::VerticalLine::initializeVisualizer(GLuint& VAO, GLuint& VBO, 
 	// Unbind Object
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+}
+
+Object::Mask::VerticalLineData& DataClass::Data_VerticalLine::getVerticalLineData()
+{
+	return data;
+}
+
+int& DataClass::Data_VerticalLine::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_VerticalLine::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_VerticalLine::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.height = size;
+	data.script = 0;
+	data.material = 0;
 }

@@ -1,30 +1,9 @@
 #include "UnsavedLevel.h"
 #include "Source/Algorithms/Common/Common.h"
 #include "Class/Render/Editor/Selector.h"
+#include "ChangeController.h"
 #include "Globals.h"
-
-// Verbose Objects
-#include "Class/Render/Shape/Shape.h"
-#include "Class/Render/Shape/Rectangle.h"
-#include "Class/Render/Shape/Trapezoid.h"
-#include "Class/Render/Shape/Triangle.h"
-#include "Class/Render/Shape/Circle.h"
-#include "Class/Render/Shape/Polygon.h"
-#include "Class/Object/Collision/Horizontal/Line/FloorMaskLine.h"
-#include "Class/Object/Collision/Horizontal/Slant/FloorMaskSlant.h"
-#include "Class/Object/Collision/Horizontal/Slope/FloorMaskSlope.h"
-#include "Class/Object/Collision/Vertical/Line/LeftMaskLine.h"
-#include "Class/Object/Collision/Vertical/Curve/LeftMaskCurve.h"
-#include "Class/Object/Collision/Vertical/Line/RightMaskLine.h"
-#include "Class/Object/Collision/Vertical/Curve/RightMaskCurve.h"
-#include "Class/Object/Collision/Horizontal/Line/CeilingMaskLine.h"
-#include "Class/Object/Collision/Horizontal/Slant/CeilingMaskSlant.h"
-#include "Class/Object/Collision/Horizontal/Slope/CeilingMaskSlope.h"
-#include "Class/Object/Collision/Trigger/TriggerMask.h"
-#include "Class/Object/Terrain/Foreground.h"
-#include "Class/Object/Terrain/Formerground.h"
-#include "Class/Object/Terrain/Background.h"
-#include "Class/Object/Terrain/Backdrop.h"
+#include "Render/Struct/DataClasses.h"
 
 DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t object_identifier[3])
 {  
@@ -65,6 +44,7 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		case (Object::Mask::HORIZONTAL_SLANT): return new DataClass::Data_CeilingMaskSlant();
 		case (Object::Mask::HORIZONTAL_SLOPE): return new DataClass::Data_CeilingMaskSlope();
 		}
+		return nullptr;
 	};
 
 	auto readTriggers = [&object_identifier]()->DataClass::Data_Object* {
@@ -88,6 +68,7 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		case (Object::Light::SPOT): return new DataClass::Data_Spot();
 		case (Object::Light::BEAM): return new DataClass::Data_Beam();
 		}
+		return nullptr;
 	};
 
 	auto readRigid = [&object_identifier]()->DataClass::Data_Object* {
@@ -100,6 +81,7 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		case ((int)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS): return new DataClass::Data_SpringMass();
 		case ((int)Object::Physics::SOFT_BODY_TYPES::WIRE): return new DataClass::Data_Wire();
 		}
+		return nullptr;
 	};
 
 	auto readHinge = [&object_identifier]()->DataClass::Data_Object* {
@@ -108,6 +90,7 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		case ((int)Object::Physics::HINGES::ANCHOR): return new DataClass::Data_Anchor();
 		case ((int)Object::Physics::HINGES::HINGE): return new DataClass::Data_Hinge();
 		}
+		return nullptr;
 	};
 
 	auto readPhysics = [&object_identifier, &readRigid, &readSoft, &readHinge]()->DataClass::Data_Object* {
@@ -116,13 +99,14 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 	};
 
 	auto readEntities = [&object_identifier]()->DataClass::Data_Object* {
-		switch (object_identifier[2])
+		switch (object_identifier[1])
 		{
 		case ((int)Object::Entity::ENTITY_NPC): return new DataClass::Data_NPC();
 		case ((int)Object::Entity::ENTITY_CONTROLLABLE): return new DataClass::Data_Controllable();
 		case ((int)Object::Entity::ENTITY_INTERACTABLE): return new DataClass::Data_Interactable();
 		case ((int)Object::Entity::ENTITY_DYNAMIC): return new DataClass::Data_Dynamic();
 		}
+		return nullptr;
 	};
 
 	std::function<DataClass::Data_Object*()> objects[5] = {readMasks, readTerrain, readLights, readPhysics, readEntities};
@@ -143,9 +127,6 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(LevelInstance&
 
 	// Size of Object File
 	uint32_t object_size = 0;
-
-	// Set Unmodified Flag
-	instance.unmodified = true;
 
 	// If Editor File is Empty, Load Empty Headers
 	std::filesystem::path temp = editor_path;
@@ -173,6 +154,20 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(LevelInstance&
 	object_file.seekg(0, std::ios::beg);
 	editor_file.seekg(0, std::ios::beg);
 
+	// Objects That Don't Belong
+	struct InvalidObject {
+		DataClass::Data_Object* data_object;
+		int16_t object_x;
+		int16_t object_y;
+	}; 
+
+	// An Array of Objects That Don't Belong In This Level
+	std::vector<InvalidObject> invalid_location;
+
+	// Level Pos of Object
+	int16_t object_x = 0;
+	int16_t object_y = 0;
+
 	// Iterate Through Object File Until All is Read
 	Global::object_index_counter++;
 	while (object_file.tellg() < object_size)
@@ -180,7 +175,16 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(LevelInstance&
 		object_file.read((char*)&object_identifier, 3);
 		DataClass::Data_Object* object = lambdaDataObject(object_identifier);
 		object->readObject(object_file, editor_file);
-		instance.data_objects.push_back(object);
+
+		// If Read Object's Position Does Not Match the Current Level,
+		// Find a Way to Transfer Between Unsaved Levels
+		object_x = floor(object->getPosition().x / 128.0f);
+		object_y = floor(object->getPosition().y / 64.0f);
+		if (object_x != level_x || object_y != level_y)
+			invalid_location.push_back(InvalidObject(object, object_x, object_y));
+		else
+			instance.data_objects.push_back(object);
+
 		Global::object_index_counter++;
 	}
 	Global::object_index_counter++;
@@ -188,6 +192,10 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(LevelInstance&
 	// Close Files
 	object_file.close();
 	editor_file.close();
+
+	// Deal With Invalid Objects
+	for (InvalidObject& object : invalid_location)
+		change_controller->transferObject(object.data_object, object.object_x, object.object_y, 0);
 }
 
 void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, LevelInstance& instance)
@@ -232,73 +240,6 @@ void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects,
 
 		}
 	}
-}
-
-void Render::Objects::UnsavedLevel::writeInstance(LevelInstance& instance)
-{
-	// Array of Objects
-	Object::Object** objects = new Object::Object*[instance.header.number_of_loaded_objects];
-	uint16_t temp_var = 0;
-
-	// Array of Physics
-	Struct::List<Object::Physics::PhysicsBase> physics = Struct::List<Object::Physics::PhysicsBase>();
-
-	// Array of Entities
-	Struct::List<Object::Entity::EntityBase> entities = Struct::List<Object::Entity::EntityBase>();
-
-	// Build Objects
-	buildObjects(objects, temp_var, physics, entities);
-
-	// Files
-	std::ofstream object_file;
-	std::ofstream editor_file;
-
-	// Open Files
-	object_file.open(object_path, std::ios::binary);
-	editor_file.open(editor_path, std::ios::binary);
-
-	// Write Headers Number of Objects
-
-	// Write Data to Files
-	for (int i = 0; i < temp_var; i++)
-	{
-		objects[i]->write(object_file, editor_file);
-		delete objects[i];
-	}
-
-	for (Struct::List<Object::Physics::PhysicsBase>::Iterator it = physics.beginStatic(); it != physics.endStatic(); it++)
-		(*it).write(object_file, editor_file);
-
-	for (Struct::List<Object::Entity::EntityBase>::Iterator it = entities.beginStatic(); it != entities.endStatic(); it++)
-		(*it).write(object_file, editor_file);
-
-	// Delete Arrays
-	delete[] objects;
-
-	// Close Files
-	object_file.close();
-	editor_file.close();
-}
-
-Render::Objects::UnsavedLevel::LevelInstance* Render::Objects::UnsavedLevel::makeCopyOfInstance(LevelInstance& instance)
-{
-	// Iterator
-	uint16_t iterator = 0;
-
-	// Create a New Instance
-	LevelInstance* new_instance_ = new LevelInstance;
-	LevelInstance& new_instance = *new_instance_;
-
-	// Set Number of Stack Instances to 1
-	new_instance.master_stack_instances = 1;
-
-	// Copy Data Into Arrays
-	new_instance.data_objects.resize(instance.data_objects.size());
-	for (int i = 0; i < instance.data_objects.size(); i++)
-		new_instance.data_objects[i] = instance.data_objects[i];
-
-	// Return Pointer to Instance
-	return new_instance_;
 }
 
 Shape::Shape* Render::Objects::UnsavedLevel::getShapePointer(Editor::Selector* selector)
@@ -385,8 +326,6 @@ Render::Objects::UnsavedLevel::UnsavedLevel()
 
 Render::Objects::UnsavedLevel::~UnsavedLevel()
 {
-	std::cout << "deleting unsaved level at " << (int)level_x << " " << (int)level_y << "\n";
-
 	// Delete the Stack
 	slave_stack.deleteStack();
 }
@@ -599,22 +538,6 @@ void Render::Objects::UnsavedLevel::write(bool& save)
 	}
 }
 
-uint8_t Render::Objects::UnsavedLevel::revertChanges(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities)
-{
-	// Build Unmodified Data
-	buildObjects(objects, index, physics, entities);
-
-	// Set Selected Unmodified Flag
-	selected_unmodified = true;
-
-	// Increment Number of Times Unmodified Appears in Stack
-	unmodified_data->master_stack_instances++;
-
-	// Return Index of Unmodified Data in Stack Once it Appended
-	//return slave_stack.appendInstance(unmodified_data);
-	return 0;
-}
-
 void Render::Objects::UnsavedLevel::generateChangeList()
 {
 	if (!making_changes)
@@ -640,6 +563,11 @@ bool Render::Objects::UnsavedLevel::finalizeChangeList()
 	}
 
 	return false;
+}
+
+void Render::Objects::UnsavedLevel::transferObject(DataClass::Data_Object* data_object)
+{
+	instance_with_changes.data_objects.push_back(data_object);
 }
 
 void Render::Objects::UnsavedLevel::createChangeAppend(Editor::Selector* selector)
@@ -722,7 +650,8 @@ void Render::Objects::UnsavedLevel::traverseChangeList(bool backward)
 	if (backward)
 	{
 		moveBackwardsThroughChanges(slave_stack.returnInstance());
-		slave_stack.moveBackward();
+		if (slave_stack.moveBackward())
+			changeToUnmodified();
 	}
 
 	// Move Forwards Through Change List
@@ -730,6 +659,7 @@ void Render::Objects::UnsavedLevel::traverseChangeList(bool backward)
 	{
 		slave_stack.moveForward();
 		moveForwardsThroughChanges(slave_stack.returnInstance());
+		changeToModified();
 	}
 }
 
@@ -831,8 +761,9 @@ void Render::Objects::UnsavedLevel::SlaveStack::moveForward()
 	stack_index++;
 }
 
-void Render::Objects::UnsavedLevel::SlaveStack::moveBackward()
+bool Render::Objects::UnsavedLevel::SlaveStack::moveBackward()
 {
 	stack_index--;
+	return stack_index == 0;
 }
 

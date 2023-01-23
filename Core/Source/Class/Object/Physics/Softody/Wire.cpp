@@ -1,4 +1,5 @@
 #include "Wire.h"
+#include "Render/Struct/DataClasses.h"
 
 // Selector
 #include "Render/Editor/Selector.h"
@@ -82,38 +83,6 @@ glm::vec2* Object::Physics::Soft::Wire::pointerToPosition()
 	return &nodes[0].Position;
 }
 
-void Object::Physics::Soft::Wire::write(std::ofstream& object_file, std::ofstream& editor_file)
-{
-	// Write Object Identifier
-	object_file.put(PHYSICS);
-	object_file.put((uint8_t)PHYSICS_BASES::SOFT_BODY);
-	object_file.put((uint8_t)SOFT_BODY_TYPES::WIRE);
-
-	// Write Object Data
-	object_file.write((char*)&uuid, sizeof(uint32_t));
-	object_file.write((char*)&data, sizeof(ObjectData));
-	object_file.write((char*)&wire, sizeof(WireData));
-	
-	// Write Editor Data
-	uint16_t name_size = (uint16_t)name.size();
-	editor_file.write((char*)&name_size, sizeof(uint16_t));
-	editor_file.write((char*)&clamp, sizeof(bool));
-	editor_file.write((char*)&lock, sizeof(bool));
-	editor_file.write((char*)&name[0], name_size);
-}
-
-void Object::Physics::Soft::Wire::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
-{
-	// Store Object Information
-	info(object_info, name, data, wire);
-
-	// Set Selector to Active Highlight
-	selector.activateHighlighter();
-
-	// Selector Helper
-	select2(selector);
-}
-
 bool Object::Physics::Soft::Wire::testMouseCollisions(float x, float y)
 {
 	// Parameterize Line
@@ -140,7 +109,34 @@ glm::vec2 Object::Physics::Soft::Wire::returnPosition()
 	return data.position;
 }
 
-void Object::Physics::Soft::Wire::info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, WireData& wire)
+Object::Object* DataClass::Data_Wire::genObject()
+{
+	return new Object::Physics::Soft::Wire(uuid, data, wire);
+}
+
+void DataClass::Data_Wire::writeObjectData(std::ofstream& object_file)
+{
+	object_file.write((char*)&uuid, sizeof(uint32_t));
+	object_file.write((char*)&data, sizeof(Object::ObjectData));
+	object_file.write((char*)&wire, sizeof(Object::Physics::Soft::WireData));
+}
+
+void DataClass::Data_Wire::readObjectData(std::ifstream& object_file)
+{
+	object_file.read((char*)&uuid, sizeof(uint32_t));
+	object_file.read((char*)&data, sizeof(Object::ObjectData));
+	object_file.read((char*)&wire, sizeof(Object::Physics::Soft::WireData));
+}
+
+DataClass::Data_Wire::Data_Wire()
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::PHYSICS;
+	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
+	object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::WIRE;
+}
+
+void DataClass::Data_Wire::info(Editor::ObjectInfo& object_info)
 {
 	// Store Object Information
 	object_info.clearAll();
@@ -148,4 +144,35 @@ void Object::Physics::Soft::Wire::info(Editor::ObjectInfo& object_info, std::str
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addDoubleValue("Pos1: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 	object_info.addDoubleValue("Pos2: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &wire.position2.x, &wire.position2.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+}
+
+DataClass::Data_Object* DataClass::Data_Wire::makeCopy()
+{
+	return new Data_Wire(*this);
+}
+
+void DataClass::Data_Wire::generateInitialValues(glm::vec2& position, float& size)
+{
+	generateUUID();
+	data.position = position;
+	data.zpos = -1.0f;
+	data.colors = glm::vec4(1.0f, 0.5f, 0.0f, 1.0f);
+	data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
+	data.texture_name = 0;
+	data.script = 0;
+	data.material_name = 0;
+	wire.position2 = position + glm::vec2(size, 0.0f);
+	wire.Mass = 1.0f;
+	wire.Health = 10.0f;
+	wire.Radius = 0.2f;
+	wire.node_instances = 5;
+	wire.total_rest_length = size;
+	wire.break_distance = size * 2.0f;
+	wire.Stiffness = 1.0f;
+	wire.Dampening = 1.0f;
+}
+
+Object::Physics::Soft::WireData& DataClass::Data_Wire::getWireData()
+{
+	return wire;
 }

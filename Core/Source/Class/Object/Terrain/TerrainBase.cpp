@@ -1,8 +1,14 @@
 #include "TerrainBase.h"
+#include "Render/Struct/DataClasses.h"
 #include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Constants.h"
 #include "Globals.h"
+
+#include "Backdrop.h"
+#include "Background.h"
+#include "Foreground.h"
+#include "Formerground.h"
 
 // Initialize Terrain
 Object::Terrain::TerrainBase::TerrainBase(Shape::Shape* shape_, ObjectData data_)
@@ -43,70 +49,6 @@ Object::Terrain::TerrainBase::TerrainBase(Shape::Shape* shape_, ObjectData data_
 
 #endif
 
-}
-
-void Object::Terrain::TerrainBase::write(std::ofstream& object_file, std::ofstream& editor_file)
-{
-	// Write Object Identifier
-	object_file.put(TERRAIN);
-	object_file.put(layer);
-	object_file.put(shape->shape);
-
-	// Write Shape
-	switch (shape->shape)
-	{
-
-	// Rectangle
-	case Shape::RECTANGLE:
-	{
-		Shape::Rectangle* temp_rect = static_cast<Shape::Rectangle*>(shape);
-		object_file.write((char*)(temp_rect) + 8, sizeof(Shape::Rectangle) - 8);
-		break;
-	}
-
-	// Trapezoid
-	case Shape::TRAPEZOID:
-	{
-		Shape::Trapezoid* temp_trap = static_cast<Shape::Trapezoid*>(shape);
-		object_file.write((char*)(temp_trap) + 8 , sizeof(Shape::Trapezoid) - 8);
-		break;
-	}
-
-	// Triangle
-	case Shape::TRIANGLE:
-	{
-		Shape::Triangle* temp_tri = static_cast<Shape::Triangle*>(shape);
-		object_file.write((char*)(temp_tri) + 8, sizeof(Shape::Triangle) - 8);
-		break;
-	}
-
-	// Circle
-	case Shape::CIRCLE:
-	{
-		Shape::Circle* temp_circle = static_cast<Shape::Circle*>(shape);
-		object_file.write((char*)(temp_circle) + 8, sizeof(Shape::Circle) - 8);
-		break;
-	}
-
-	// Polygon
-	case Shape::POLYGON:
-	{
-		Shape::Polygon* temp_poly = static_cast<Shape::Polygon*>(shape);
-		object_file.write((char*)(temp_poly) + 8, sizeof(Shape::Polygon) - 8);
-		break;
-	}
-
-	}
-
-	// Write Data
-	object_file.write((char*)&data, sizeof(data));
-
-	// Write Editor Data
-	uint16_t name_size = (uint16_t)name.size();
-	editor_file.write((char*)&name_size, sizeof(uint16_t));
-	editor_file.write((char*)&clamp, sizeof(bool));
-	editor_file.write((char*)&lock, sizeof(bool));
-	editor_file.write((char*)&name[0], name_size);
 }
 
 void Object::Terrain::TerrainBase::updateObject()
@@ -152,15 +94,6 @@ void Object::Terrain::TerrainBase::initializeTerrain(int& offset_, int& instance
 
 #ifdef EDITOR
 
-void Object::Terrain::TerrainBase::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
-{
-	// Store Object Information
-	info(object_info, name, data, shape);
-
-	// Selector Helper
-	select2(selector);
-}
-
 glm::vec2 Object::Terrain::TerrainBase::returnPosition()
 {
 	return data.position;
@@ -169,20 +102,6 @@ glm::vec2 Object::Terrain::TerrainBase::returnPosition()
 Shape::Shape* Object::Terrain::TerrainBase::returnShapePointer()
 {
 	return shape;
-}
-
-void Object::Terrain::TerrainBase::info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, Shape::Shape* shape)
-{
-	// Map to Shape Names
-	static std::string shape_name_map[] = { "Rectangle", "Trapezoid", "Triangle", "Circle", "Polygon" };
-
-	// Store Object Information
-	object_info.clearAll();
-	object_info.setObjectType("Terrain", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addTextValue("Shape: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &shape_name_map[shape->shape], glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
-	shape->selectInfo(object_info);
 }
 
 Object::ObjectData& Object::Terrain::TerrainBase::returnObjectData()
@@ -204,4 +123,81 @@ void Object::Terrain::TerrainBase::updateModel()
 }
 
 #endif
+
+Object::Object* DataClass::Data_Terrain::genObject()
+{
+	switch (object_identifier[1])
+	{
+	case Object::Terrain::BACKDROP: return new Object::Terrain::Backdrop(shape, data); break;
+	case Object::Terrain::BACKGROUND_3:
+	case Object::Terrain::BACKGROUND_2:
+	case Object::Terrain::BACKGROUND_1: return new Object::Terrain::Background(shape, data, layer); break;
+	case Object::Terrain::FOREGROUND: return new Object::Terrain::Foreground(shape, data); break;
+	default: return new Object::Terrain::Formerground(shape, data);
+	}
+}
+
+void DataClass::Data_Terrain::writeObjectData(std::ofstream& object_file)
+{
+	shape->writeShape(object_file);
+	object_file.write((char*)&data, sizeof(Object::ObjectData));
+	if (testIfBackground())
+		object_file.write((char*)&layer, sizeof(uint8_t));
+}
+
+void DataClass::Data_Terrain::readObjectData(std::ifstream& object_file)
+{
+	shape = shapes[object_identifier[2]](object_file);
+	object_file.read((char*)&data, sizeof(Object::ObjectData));
+	if (testIfBackground())
+		object_file.read((char*)&layer, sizeof(uint8_t));
+}
+
+bool DataClass::Data_Terrain::testIfBackground()
+{
+	return object_identifier[1] == Object::Terrain::BACKGROUND_1 ||
+		object_identifier[1] == Object::Terrain::BACKGROUND_2 ||
+		object_identifier[1] == Object::Terrain::BACKGROUND_3;
+}
+
+DataClass::Data_Terrain::Data_Terrain(uint8_t layer_identifier, uint8_t shape_identifier)
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::TERRAIN;
+	object_identifier[1] = layer_identifier;
+	object_identifier[2] = shape_identifier;
+}
+
+void DataClass::Data_Terrain::info(Editor::ObjectInfo& object_info)
+{
+	// Map to Shape Names
+	static std::string shape_name_map[] = { "Rectangle", "Trapezoid", "Triangle", "Circle", "Polygon" };
+
+	// Store Object Information
+	object_info.clearAll();
+	object_info.setObjectType("Terrain", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addTextValue("Shape: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &shape_name_map[shape->shape], glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	shape->selectInfo(object_info);
+}
+
+DataClass::Data_Object* DataClass::Data_Terrain::makeCopy()
+{
+	Data_Terrain* new_terrain = new Data_Terrain(*this);
+	new_terrain->shape = new_terrain->shape->makeCopy();
+	return new_terrain;
+}
+
+void DataClass::Data_Terrain::generateInitialValues(glm::vec2& position, glm::vec4 color, Shape::Shape* new_shape)
+{
+	data.position = position;
+	data.zpos = -1.0f;
+	data.colors = color;
+	data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
+	data.texture_name = 0;
+	data.script = 0;
+	data.material_name = 0;
+	shape = new_shape;
+}
 

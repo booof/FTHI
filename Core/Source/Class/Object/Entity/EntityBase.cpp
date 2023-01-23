@@ -1,4 +1,5 @@
 #include "EntityBase.h"
+#include "Render/Struct/DataClasses.h"
 #include "Source/Vertices/Rectangle/RectangleVertices.h"
 #include "Source/Loaders/Textures.h"
 #include "Globals.h"
@@ -120,4 +121,20 @@ bool Object::Entity::EntityBase::testMouseCollisions(float x, float y)
 glm::vec2 Object::Entity::EntityBase::returnPosition()
 {
 	return data.position;
+}
+
+Object::Entity::EntityData& DataClass::Data_Entity::getEntityData()
+{
+	return entity;
+}
+
+void DataClass::Data_Entity::generateInitialData(glm::vec2& position)
+{
+	generateUUID();
+	data.position = position;
+	entity.half_width = 2.0f;
+	entity.half_height = 2.0f;
+	entity.half_collision_width = 2.0f;
+	entity.half_collision_height = 2.0f;
+	data.script = 0;
 }

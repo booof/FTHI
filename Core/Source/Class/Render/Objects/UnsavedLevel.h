@@ -7,38 +7,6 @@
 
 #include "SubLevel.h"
 
-#include "Class/Render/Struct/List.h"
-
-// Objects Data List
-#include "Object/Object.h"
-#include "Render/Shape/Rectangle.h"
-#include "Render/Shape/Trapezoid.h"
-#include "Render/Shape/Triangle.h"
-#include "Render/Shape/Circle.h"
-#include "Render/Shape/Polygon.h"
-#include "Object/Collision/Horizontal/Line/HorizotnalLine.h"
-#include "Object/Collision/Horizontal/Slant/Slant.h"
-#include "Object/Collision/Horizontal/Slope/Slope.h"
-#include "Object/Collision/Vertical/Line/VerticalLine.h"
-#include "Object/Collision/Vertical/Curve/Curve.h"
-#include "Object/Collision/Trigger/TriggerMask.h"
-#include "Object/Lighting/Directional.h"
-#include "Object/Lighting/Point.h"
-#include "Object/Lighting/Spot.h"
-#include "Object/Lighting/Beam.h"
-#include "Object/Physics/PhysicsBase.h"
-#include "Object/Physics/RigidBody/RigidBody.h"
-#include "Object/Physics/Softody/SpringMass.h"
-#include "Object/Physics/Softody/Wire.h"
-#include "Object/Physics/Hinge/Anchor.h"
-#include "Object/Physics/Hinge/Hinge.h"
-#include "Object/Entity/NPC.h"
-#include "Object/Entity/Controllables.h"
-#include "Object/Entity/Interactables.h"
-#include "Object/Entity/Dynamics.h"
-
-#include "Render/Struct/DataClasses.h"
-
 // This is a Class That Acts as a Storage Container for SubLevel Objects
 // Similar Containers to Main Level, However Are Specific to Static Objects From a Sub Level File
 // All Changes Made in Editor Will Not Affect Sub Levels, But Will Instead Affect Contents From This Contianer
@@ -54,6 +22,16 @@
 namespace Editor
 {
 	class Selector;
+}
+
+namespace DataClass
+{
+	class Data_Object;
+}
+
+namespace Shape
+{
+	class Shape;
 }
 
 namespace Render::Objects
@@ -105,9 +83,6 @@ namespace Render::Objects
 		// Instance of Level
 		struct LevelInstance
 		{
-			// If True, This Instance is the Unmodified Instance
-			bool unmodified = false;
-
 			// The Amount of Times This Instance Appears in Master Stack
 			// Once This Count Reaches 0, This Instance Will be Deleted
 			// Unmodified Instance Will Allways Have an One More Than Is Used In Stack
@@ -168,7 +143,7 @@ namespace Render::Objects
 			void moveForward();
 
 			// Move Backward Through Change List
-			void moveBackward();
+			bool moveBackward();
 		};
 
 		// Slave Stack
@@ -218,91 +193,8 @@ namespace Render::Objects
 		// Build Objects Helper
 		void buildObjectsHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, LevelInstance& instance);
 
-		// Write Instance to File
-		void writeInstance(LevelInstance& instance);
-
-		// Mask a Copy of an Instance
-		LevelInstance* makeCopyOfInstance(LevelInstance& instance);
-
-		// Test if Object Identifier is In Array
-		template <class Type> int16_t testIN(Type* type_array, uint16_t array_size, uint32_t object_index)
-		{
-			for (int16_t i = 0; i < array_size; i++)
-			{
-				// If The Object Index in Array Matches the Test Index, Return Index of Object in Array
-				if (type_array[i].object_index == object_index)
-					return i;
-			}
-			
-			// If Object Identifier is Not In Array, Return -1
-			return -1;
-		}
-
-		// Resize and Append a New Object Into Array
-		template <class Type> void appendIntoArray(Type** type_array, Type& new_object, uint16_t& array_size)
-		{
-			// Generate New Array With Size + 1
-			Type* new_array = new Type[array_size + 1];
-
-			// Copy All Instances Into New Array
-			for (uint16_t i = 0; i < array_size; i++)
-			{
-				new_array[i] = std::move((*type_array)[i]);
-			}
-
-			// Append New Object
-			new_array[array_size] = std::move(new_object);
-
-			// Delte Old Array
-			delete[] *type_array;
-
-			// Move New Array to Old Array Location
-			*type_array = new_array;
-
-			// Increment Array Size 
-			array_size++;
-		}
-
 		// Return Pointer to Shape Data
 		Shape::Shape* getShapePointer(Editor::Selector* selector);
-
-		// Remove Index in Array. Returns True if Object was Removed
-		template <class Type> bool popFromArray(Type** type_array, uint16_t& array_size, uint32_t object_index)
-		{
-			// Get Index of Object in Array
-			int16_t index = testIN(*type_array, array_size, object_index);
-
-			// If Index is -1, return false
-			if (index == -1)
-				return false;
-
-			// Create New Array With Size - 1
-			Type* new_array = new Type[array_size - 1];
-
-			// Copy All Data From Old Array to New Array, Excluding Object Index
-			uint16_t new_array_index = 0;
-			for (uint16_t i = 0; i < array_size; i++)
-			{
-				// Only Copy Data if Not Currently at Object Index
-				if (i != index)
-				{
-					new_array[new_array_index] = std::move((*type_array)[i]);
-					new_array_index++;
-				}
-			}
-
-			// Delete Old Array
-			delete[] *type_array;
-
-			// Store Pointer to New Array in Old Array Location
-			*type_array = new_array;
-
-			// Decrement Array Size
-			array_size--;
-
-			// Return True
-			return true;
-		}
 
 		// Change Vertex Colors to Modified
 		void changeToModified();
@@ -353,14 +245,14 @@ namespace Render::Objects
 		// Write Current Instance to File
 		void write(bool& save);
 
-		// Revert Changes to Unmodified Data
-		uint8_t revertChanges(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities);
-
 		// Creates a New Change List
 		void generateChangeList();
 
 		// Finalize a New Change List. Returns True if a Change List was Created
 		bool finalizeChangeList();
+
+		// Transfer An Object From Another Unsaved Level
+		void transferObject(DataClass::Data_Object* data_object);
 
 		// Create a New Change by Appending a New Object
 		void createChangeAppend(Editor::Selector* selector);

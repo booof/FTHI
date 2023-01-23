@@ -621,9 +621,6 @@
     <ClCompile Include="Source\Class\Render\GUI\MasterElement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Class\Render\Struct\DataClasses.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Source\Main\Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

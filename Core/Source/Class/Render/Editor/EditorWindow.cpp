@@ -25,6 +25,8 @@
 #include "Source/Collisions/Point Collisions/PointCollisions.h"
 #include "Source/Loaders/Fonts.h"
 
+#include "Render/Struct/DataClasses.h"
+
 void Editor::EditorWindow::initializeWindow()
 {
 	// Create Width and Height
@@ -3280,7 +3282,7 @@ void Editor::EditorWindow::finalizeNewObjectVertices(float distance)
 
 	// Create ScrollBar
 	bar1X = border2X - 2 * scale;
-	bar1 = GUI::VerticalScrollBar(bar1X, position.y + height / 2 - 10 * scale, 2.0f * scale, editorHeight, editorHeightFull, bar1.percent);
+	bar1 = GUI::VerticalScrollBar(bar1X, position.y + height / 2 - 10 * scale, 2.0f * scale, editorHeight, editorHeightFull, 0);
 
 	if (!active_window && false)
 	{
@@ -3482,8 +3484,6 @@ void Editor::EditorWindow::generateNewObject()
 	// Physics
 	case Object::PHYSICS:
 	{
-		uint32_t uuid = genNewUUID();
-
 		switch (new_object_identifier[1])
 		{
 
@@ -3491,7 +3491,7 @@ void Editor::EditorWindow::generateNewObject()
 		case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
 		{
 			DataClass::Data_RigidBody* new_rigid = new DataClass::Data_RigidBody(new_object_identifier[2]);
-			new_rigid->generateInitialValues(new_position, generateNewShape(new_size), uuid);
+			new_rigid->generateInitialValues(new_position, generateNewShape(new_size));
 			data_object = new_rigid;
 
 			break;
@@ -3509,7 +3509,7 @@ void Editor::EditorWindow::generateNewObject()
 			case (int)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS:
 			{
 				DataClass::Data_SpringMass* new_springmass = new DataClass::Data_SpringMass();
-				new_springmass->generateInitialValues(new_position, uuid);
+				new_springmass->generateInitialValues(new_position);
 				data_object = new_springmass;
 
 				break;
@@ -3519,7 +3519,7 @@ void Editor::EditorWindow::generateNewObject()
 			case (int)Object::Physics::SOFT_BODY_TYPES::WIRE:
 			{
 				DataClass::Data_Wire* new_wire = new DataClass::Data_Wire();
-				new_wire->generateInitialValues(new_position, new_size, uuid);
+				new_wire->generateInitialValues(new_position, new_size);
 				data_object = new_wire;
 
 				break;
@@ -3538,7 +3538,7 @@ void Editor::EditorWindow::generateNewObject()
 			case (int)Object::Physics::HINGES::ANCHOR:
 			{
 				DataClass::Data_Anchor* new_anchor = new DataClass::Data_Anchor();
-				new_anchor->generateInitialValues(new_position, uuid);
+				new_anchor->generateInitialValues(new_position);
 				data_object = new_anchor;
 
 				break;
@@ -3548,7 +3548,7 @@ void Editor::EditorWindow::generateNewObject()
 			case (int)Object::Physics::HINGES::HINGE:
 			{
 				DataClass::Data_Hinge* new_hinge = new DataClass::Data_Hinge();
-				new_hinge->generateInitialValues(new_position, uuid);
+				new_hinge->generateInitialValues(new_position);
 				data_object = new_hinge;
 
 				break;
@@ -3565,8 +3565,6 @@ void Editor::EditorWindow::generateNewObject()
 	// Entity
 	case Object::ENTITY:
 	{
-		uint32_t uuid = genNewUUID();
-
 		switch (new_object_identifier[1])
 		{
 			
@@ -3574,7 +3572,7 @@ void Editor::EditorWindow::generateNewObject()
 		case Object::Entity::ENTITY_NPC:
 		{
 			DataClass::Data_NPC* new_npc = new DataClass::Data_NPC();
-			new_npc->generateInitialData(position, uuid);
+			new_npc->generateInitialData(position);
 			data_object = new_npc;
 
 			break;
@@ -3584,7 +3582,7 @@ void Editor::EditorWindow::generateNewObject()
 		case Object::Entity::ENTITY_CONTROLLABLE:
 		{
 			DataClass::Data_Controllable* new_controllable = new DataClass::Data_Controllable();
-			new_controllable->generateInitialData(position, uuid);
+			new_controllable->generateInitialData(position);
 			data_object = new_controllable;
 
 			break;
@@ -3594,7 +3592,7 @@ void Editor::EditorWindow::generateNewObject()
 		case Object::Entity::ENTITY_INTERACTABLE:
 		{
 			DataClass::Data_Interactable* new_interactable = new DataClass::Data_Interactable();
-			new_interactable->generateInitialData(position, uuid);
+			new_interactable->generateInitialData(position);
 			data_object = new_interactable;
 
 			break;
@@ -3604,7 +3602,7 @@ void Editor::EditorWindow::generateNewObject()
 		case Object::Entity::ENTITY_DYNAMIC:
 		{
 			DataClass::Data_Dynamic* new_dynamic = new DataClass::Data_Dynamic();
-			new_dynamic->generateInitialData(position, uuid);
+			new_dynamic->generateInitialData(position);
 			data_object = new_dynamic;
 
 			break;
@@ -3843,21 +3841,6 @@ void Editor::EditorWindow::updateColorWheels(ColorWheel& wheel_, glm::vec4& colo
 		color.a = wheel_color_[3] / 255.0f;
 		wheel_.FindColors(color);
 	}
-}
-
-uint32_t Editor::EditorWindow::genNewUUID()
-{
-	// Increment UUID
-	Global::uuid_counter++;
-
-	// Store Change in File
-	std::ofstream uuid_file;
-	uuid_file.open("../Resources/Data/EngineData/uuid.dat", std::ios::binary);
-	uuid_file.write((char*)&Global::uuid_counter, sizeof(uint32_t));
-	uuid_file.close();
-
-	// Return UUID
-	return Global::uuid_counter;
 }
 
 void Editor::EditorWindow::genNewObjectWindow()

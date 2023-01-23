@@ -1,50 +1,14 @@
 #include "RightMaskLine.h"
+#include "Render/Struct/DataClasses.h"
 #include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Globals.h"
 
 #ifdef EDITOR
 
-void Object::Mask::Right::RightMaskLine::write(std::ofstream& object_file, std::ofstream& editor_file)
-{
-	// Write Object Identifier
-	object_file.put(MASK);
-	object_file.put(RIGHT_WALL);
-	object_file.put(VERTICAL_LINE);
-
-	// Write Data
-	object_file.write((char*)&data, sizeof(data));
-
-	// Write Editor Data
-	uint16_t name_size = (uint16_t)name.size();
-	editor_file.write((char*)&name_size, sizeof(uint16_t));
-	editor_file.write((char*)&clamp, sizeof(bool));
-	editor_file.write((char*)&lock, sizeof(bool));
-	editor_file.write((char*)&name[0], name.size());
-}
-
-void Object::Mask::Right::RightMaskLine::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
-{
-	// Store Object Information
-	info(object_info, name, data);
-
-	// Selector Helper
-	select2(selector);
-}
-
 glm::vec2 Object::Mask::Right::RightMaskLine::returnPosition()
 {
 	return data.position;
-}
-
-void Object::Mask::Right::RightMaskLine::info(Editor::ObjectInfo& object_info, std::string& name, VerticalLineData& data)
-{
-	// Store Object Information
-	object_info.clearAll();
-	object_info.setObjectType("Right Wall Mask Vertical Line", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
-	object_info.addSingleValue("Height: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &data.height, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), false);
 }
 
 #endif
@@ -116,4 +80,42 @@ void Object::Mask::Right::RightMaskLine::getTopAndBottomEdgeVertices(glm::vec2& 
 {
 	top = glm::vec2(data.position.x, y_top);
 	bottom = data.position;
+}
+
+Object::Object* DataClass::Data_RightMaskVerticalLine::genObject()
+{
+	return new Object::Mask::Right::RightMaskLine(data);
+}
+
+void DataClass::Data_RightMaskVerticalLine::writeObjectData(std::ofstream& object_file)
+{
+	object_file.write((char*)&data, sizeof(Object::Mask::VerticalLineData));
+}
+
+void DataClass::Data_RightMaskVerticalLine::readObjectData(std::ifstream& object_file)
+{
+	object_file.read((char*)&data, sizeof(Object::Mask::VerticalLineData));
+}
+
+DataClass::Data_RightMaskVerticalLine::Data_RightMaskVerticalLine()
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::MASK;
+	object_identifier[1] = Object::Mask::RIGHT_WALL;
+	object_identifier[2] = Object::Mask::VERTICAL_LINE;
+}
+
+void DataClass::Data_RightMaskVerticalLine::info(Editor::ObjectInfo& object_info)
+{
+	// Store Object Information
+	object_info.clearAll();
+	object_info.setObjectType("Right Wall Mask Vertical Line", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addSingleValue("Height: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &data.height, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), false);
+}
+
+DataClass::Data_Object* DataClass::Data_RightMaskVerticalLine::makeCopy()
+{
+	return new Data_RightMaskVerticalLine(*this);
 }

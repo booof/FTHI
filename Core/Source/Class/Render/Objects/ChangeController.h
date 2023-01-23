@@ -4,8 +4,6 @@
 
 #include "ExternalLibs.h"
 
-#include "UnsavedLevel.h"
-
 // This is the Main Class for Undo/Redo Handling and Storing of Data Until it is Saved
 // All Unsaved Level Instances Are Stored in this Object
 // All Changes Made Will Appear in a Master Stack with Instances that Points to Unsaved Level Stack of that Change
@@ -18,8 +16,20 @@
 // Stack Will Persist Until a Save is Made
 // Each Stack Instance Includes a Level Coords and Camera Position At Change Location
 
+namespace DataClass
+{
+	class Data_Object;
+}
+
+namespace Editor
+{
+	class Selector;
+}
+
 namespace Render::Objects
 {
+	class UnsavedLevel;
+
 	class Level;
 
 	// Struct for Saved Level Identifier
@@ -148,6 +158,9 @@ namespace Render::Objects
 
 		// Generate a New Unsaved Level
 		UnsavedLevel* generateUnsavedLevel(int16_t x, int16_t y, int8_t z);
+
+		// Transfer An Object Between Levels
+		void transferObject(DataClass::Data_Object* data_object, int16_t x, int16_t y, int8_t z);
 
 		// Handle an Object Retrun From Selector
 		void handleSelectorReturn(Editor::Selector* selector);

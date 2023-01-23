@@ -1,4 +1,5 @@
 #include "Beam.h"
+#include "Render/Struct/DataClasses.h"
 
 // Selector
 #include "Class/Render/Editor/Selector.h"
@@ -142,15 +143,6 @@ void Object::Light::Beam::Beam::initializeVisualizer()
 	glBindVertexArray(0);
 }
 
-void Object::Light::Beam::Beam::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
-{
-	// Store Object Information
-	info(object_info, name, data, beam);
-
-	// Selector Helper
-	select2(selector);
-}
-
 bool Object::Light::Beam::Beam::testMouseCollisions(float x, float y)
 {
 	// Check if Object is Between X-Values
@@ -170,37 +162,62 @@ bool Object::Light::Beam::Beam::testMouseCollisions(float x, float y)
 	return false;
 }
 
-void Object::Light::Beam::Beam::write(std::ofstream& object_file, std::ofstream& editor_file)
-{
-	// Write Object Identifier
-	object_file.put(LIGHT);
-	object_file.put(BEAM);
-
-	// Write Data
-	object_file.write((char*)&beam, sizeof(beam));
-	object_file.write((char*)&data, sizeof(data));
-
-	// Write Editor Data
-	uint16_t name_size = (uint16_t)name.size();
-	editor_file.write((char*)&name_size, sizeof(uint16_t));
-	editor_file.write((char*)&clamp, sizeof(bool));
-	editor_file.write((char*)&lock, sizeof(bool));
-	editor_file.write((char*)&name[0], name.size());
-}
-
 glm::vec2 Object::Light::Beam::Beam::returnPosition()
 {
 	return data.position;
 }
 
-void Object::Light::Beam::Beam::info(Editor::ObjectInfo& object_info, std::string& name, LightData& data, BeamData& beam)
+#endif
+
+Object::Object* DataClass::Data_Beam::genObject()
+{
+	return new Object::Light::Beam::Beam(beam, light_data);
+}
+
+void DataClass::Data_Beam::writeObjectData(std::ofstream& object_file)
+{
+	object_file.write((char*)&beam, sizeof(Object::Light::Beam::BeamData));
+	object_file.write((char*)&light_data, sizeof(Object::Light::LightData));
+}
+
+void DataClass::Data_Beam::readObjectData(std::ifstream& object_file)
+{
+	object_file.read((char*)&beam, sizeof(Object::Light::Beam::BeamData));
+	object_file.read((char*)&light_data, sizeof(Object::Light::LightData));
+}
+
+DataClass::Data_Beam::Data_Beam()
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::LIGHT;
+	object_identifier[1] = Object::Light::BEAM;
+	object_identifier[2] = 0;
+}
+
+void DataClass::Data_Beam::info(Editor::ObjectInfo& object_info)
 {
 	// Store Object Information
 	object_info.clearAll();
 	object_info.setObjectType("Beam Light", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &light_data.position.x, &light_data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 }
 
-#endif
+DataClass::Data_Object* DataClass::Data_Beam::makeCopy()
+{
+	return new Data_Beam(*this);
+}
+
+Object::Light::Beam::BeamData& DataClass::Data_Beam::getBeamData()
+{
+	return beam;
+}
+
+void DataClass::Data_Beam::generateInitialValues(glm::vec2& position, float& size)
+{
+	generateInitialLightValues(position);
+	beam.position2 = position + glm::vec2(size, 0.0f);
+	beam.linear = DEFAULT_LINEAR;
+	beam.quadratic = DEFAULT_QUADRATIC;
+}
 

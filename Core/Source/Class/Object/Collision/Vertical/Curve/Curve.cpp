@@ -1,4 +1,5 @@
 #include "Curve.h"
+#include "Render/Struct/DataClasses.h"
 
 // Line Vertex Generators
 #include "Source/Vertices/Line/LineVertices.h"
@@ -60,4 +61,28 @@ void Object::Mask::Curve::initializeVisualizer(GLuint& VAO, GLuint& VBO, glm::ma
 }
 
 #endif
+
+Object::Mask::CurveData& DataClass::Data_Curve::getCurveData()
+{
+	return data;
+}
+
+int& DataClass::Data_Curve::getScript()
+{
+	return data.script;
+}
+
+glm::vec2& DataClass::Data_Curve::getPosition()
+{
+	return data.position;
+}
+
+void DataClass::Data_Curve::generateInitialValues(glm::vec2& position, float& size)
+{
+	data.position = position;
+	data.width = size;
+	data.height = size;
+	data.script = 0;
+	data.material = 0;
+}
 

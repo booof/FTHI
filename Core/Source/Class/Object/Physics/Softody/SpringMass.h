@@ -39,12 +39,6 @@ namespace Object::Physics::Soft
 
 #ifdef EDITOR
 
-		// Write Object to File
-		void write(std::ofstream& object_file, std::ofstream& editor_file);
-
-		// Select Object
-		void select(Editor::Selector& selector, Editor::ObjectInfo& object_info);
-
 		// Test if Mouse Intersects Object
 		bool testMouseCollisions(float x, float y);
 
@@ -53,9 +47,6 @@ namespace Object::Physics::Soft
 
 		// Secondary Selection Function
 		void select3(Editor::Selector& selector);
-
-		// Select Object Info
-		static void info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, std::string& file_name);
 
 #endif
 	};

@@ -28,7 +28,7 @@ void Source::Rendering::Editing::edit(Render::Objects::Level* level, Editor::Sel
 			Source::Listeners::SmoothKeyCallback_Editor(*level->camera, *selector, *level, accelerationTimer);
 
 		// If Selector is Inactive, Perform Selecting
-		if (!selector->active)
+		if (!selector->active && !selector->editing && !selector->force_selector_initialization)
 			level->testSelector(*selector, *object_info);
 
 		// If Selecting and Right Click, Activate Editor Window

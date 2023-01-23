@@ -88,7 +88,6 @@
     <ClCompile Include="Source\Class\Render\Shape\Rectangle.cpp" />
     <ClCompile Include="Source\Class\Render\Shape\Trapezoid.cpp" />
     <ClCompile Include="Source\Class\Render\Shape\Triangle.cpp" />
-    <ClCompile Include="Source\Class\Render\Struct\DataClasses.cpp" />
     <ClCompile Include="Source\Class\Render\Struct\LinkedList.cpp" />
     <ClCompile Include="Source\Includes\Globals.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
@@ -410,6 +409,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <DisableSpecificWarnings>6386;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
@@ -443,6 +443,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)/Modules;$(SolutionDir)/Core/Source;$(SolutionDir)/Core/Source/Class;$(SolutionDir)/Modules/FREETYPE/FREETYPE/include;$(SolutionDir)/Core/Source/Includes;$(SolutionDir)/Core/Source/Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <DisableSpecificWarnings>6386;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

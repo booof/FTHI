@@ -14,6 +14,7 @@
 #include "Class/Render/Editor/ScriptWizard.h"
 #include "Class/Render/Editor/ProjectSelector.h"
 #include "Class/Render/Editor/Debugger.h"
+#include "Render/Struct/DataClasses.h"
 
 void Source::Listeners::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -730,6 +731,8 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 		// WASD Moves By X Levels Where X is Defined as Level Stride in Editor Options
 		// No Acceleration Timer
 
+		// Edit Level Stride Will be Placed in Scene Manager Instead
+
 		// Undo Change
 		if (Global::Keys[GLFW_KEY_Z])
 		{
@@ -748,6 +751,29 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 		if (Global::Keys[GLFW_KEY_R])
 		{
 
+		}
+
+		// Copy to Clipboard
+		if (Global::Keys[GLFW_KEY_C])
+		{
+			// Clipboard Should be an Array in the Change Controller That
+			// Contains a List of Copied Values. Each Copy or Cut Instruction
+			// Will Add to the Clipboard. Copying Can Only Be Done When Selecting 
+			// An Object. This Copy Command Will Not Unselect the Current DataClass
+		}
+
+		// Cut to Clipboard
+		if (Global::Keys[GLFW_KEY_X])
+		{
+			// Cut Should Add the DataClass the Selector is Using to the Clipboard
+			// But Will Not Deselet the Object and Simply Stop Selecting Altogether
+		}
+
+		// Paste From Most Recent
+		if (Global::Keys[GLFW_KEY_V])
+		{
+			// Only Pastes Most Recent Action, Use Shift Modifier With V to Paste
+			// Previous Actions
 		}
 
 		return;
@@ -771,6 +797,12 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 		{
 			Global::Keys[GLFW_KEY_U] = false;
 			debugger->updateWindow();
+		}
+
+		// Open the Clipboard to View Clipboard History
+		if (Global::Keys[GLFW_KEY_V])
+		{
+
 		}
 
 		return;
@@ -844,7 +876,7 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 	}
 
 	// Delete Object
-	if (Global::Keys[GLFW_KEY_BACKSPACE] && selector.editing)
+	if ((Global::Keys[GLFW_KEY_BACKSPACE] || Global::Keys[GLFW_KEY_DELETE]) && selector.editing)
 	{
 		selector.clear();
 	}
@@ -1063,8 +1095,12 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 		if (selector.editing)
 		{
 			selector.deselectObject();
-			selector.editing = true;
-			selector.active = true;
+			std::cout << "selector old  " << selector.data_object << "  \n";
+			std::cout << "selector old x  " << &selector.data_object->getPosition().x << "  \n";
+			selector.data_object = selector.data_object->makeCopyUnique();
+			std::cout << "selector new  " << selector.data_object << "  \n";
+			std::cout << "selector new x  " << &selector.data_object->getPosition().x << "  \n";
+			selector.force_selector_initialization = true;
 		}
 	}
 

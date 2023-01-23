@@ -16,17 +16,8 @@ namespace Object::Mask
 
 #ifdef EDITOR
 
-		// Write Object to File
-		void write(std::ofstream& object_file, std::ofstream& editor_file);
-
-		// Select Object
-		void select(Editor::Selector& selector, Editor::ObjectInfo& object_info);
-
 		// Return Position of Object
 		glm::vec2 returnPosition();
-
-		// Select Object Info
-		static void info(Editor::ObjectInfo& object_info, std::string& name, SlantData& data, bool platform);
 
 #endif
 

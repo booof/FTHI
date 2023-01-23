@@ -28,20 +28,6 @@ namespace Object::Entity
 
 		// Update Object
 		void updateObject();
-
-#ifdef EDITOR
-
-		// Write Object to File
-		void write(std::ofstream& object_file, std::ofstream& editor_file);
-
-		// Select Object 
-		void select(Editor::Selector& selector, Editor::ObjectInfo& object_info);
-
-		// Select Object Info
-		static void info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data);
-
-#endif
-
 	};
 }
 

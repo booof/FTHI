@@ -83,6 +83,10 @@ Scripts::ScriptHandler script_handler = Scripts::ScriptHandler();
 // Bind Function Pointers
 EXPORT void __stdcall bindFunctionPointer(int index, Object::Object* object)
 {
+	// If Index is Greater than the Array Size, Set to Null
+	if (index > OBJECT_SCRIPT_SIZE)
+		index = 0;
+
 	Scripts::ObjectScriptGroup& group = script_handler.script_array[index];
 	object->init = group.init_pointer;
 	object->loop = group.update_pointer;

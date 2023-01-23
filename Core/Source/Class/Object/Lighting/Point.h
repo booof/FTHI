@@ -40,20 +40,11 @@ namespace Object::Light::Point
 		// Initialize Visualizer
 		void initializeVisualizer();
 
-		// Select Object
-		void select(Editor::Selector& selector, Editor::ObjectInfo& object_info);
-
 		// Test if Mouse Intersects Object
 		bool testMouseCollisions(float x, float y);
 
-		// Write to File
-		void write(std::ofstream& object_file, std::ofstream& editor_file);
-
 		// Return Position of Object
 		glm::vec2 returnPosition();
-
-		// Select Object Info
-		static void info(Editor::ObjectInfo& object_info, std::string& name, LightData& data, PointData& point);
 
 #endif
 

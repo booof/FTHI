@@ -1,4 +1,5 @@
 #include "SpringMass.h"
+#include "Render/Struct/DataClasses.h"
 
 // Common Functions
 #include "Source/Algorithms/Common/Common.h"
@@ -171,41 +172,6 @@ void Object::Physics::Soft::SpringMass::read()
 	}
 }
 
-void Object::Physics::Soft::SpringMass::write(std::ofstream& object_file, std::ofstream& editor_file)
-{
-	// Write Object Identifier
-	object_file.put(PHYSICS);
-	object_file.put((uint8_t)PHYSICS_BASES::SOFT_BODY);
-	object_file.put((uint8_t)SOFT_BODY_TYPES::SPRING_MASS);
-
-	// Write Object Data
-	object_file.write((char*)&uuid, sizeof(uint32_t));
-	uint16_t file_name_size = (uint16_t)file_name.size();
-	object_file.write((char*)&file_name_size, sizeof(uint16_t));
-	object_file.write((char*)&data, sizeof(ObjectData));
-	object_file.write((char*)&file_name[0], file_name_size);
-
-	// Write Editor Data
-	uint16_t name_size = (uint16_t)name.size();
-	editor_file.write((char*)&name_size, sizeof(uint16_t));
-	editor_file.write((char*)&clamp, sizeof(bool));
-	editor_file.write((char*)&lock, sizeof(bool));
-	editor_file.write((char*)&name[0], name_size);
-}
-
-void Object::Physics::Soft::SpringMass::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
-{
-	// Store Object Information
-	info(object_info, name, data, file_name);
-
-	// Reset Some Values
-	selector.springmass_node_modified = false;
-	selector.springmass_spring_modified = false;
-
-	// Selector Helper
-	select2(selector);
-}
-
 bool Object::Physics::Soft::SpringMass::testMouseCollisions(float x, float y)
 {
 	if (x > data.position.x - 1.0f && x < data.position.x + 1.0f)
@@ -242,7 +208,39 @@ void Object::Physics::Soft::SpringMass::select3(Editor::Selector& selector)
 	}
 }
 
-void Object::Physics::Soft::SpringMass::info(Editor::ObjectInfo& object_info, std::string& name, ObjectData& data, std::string& file_name)
+Object::Object* DataClass::Data_SpringMass::genObject()
+{
+	return new Object::Physics::Soft::SpringMass(uuid, data, file_name);
+}
+
+void DataClass::Data_SpringMass::writeObjectData(std::ofstream& object_file)
+{
+	uint16_t file_name_size = file_name.size();
+	object_file.write((char*)&uuid, sizeof(uint32_t));
+	object_file.write((char*)&file_name_size, sizeof(uint16_t));
+	object_file.write((char*)&data, sizeof(Object::ObjectData));
+	object_file.write(file_name.c_str(), file_name_size);
+}
+
+void DataClass::Data_SpringMass::readObjectData(std::ifstream& object_file)
+{
+	uint16_t file_name_size;
+	object_file.read((char*)&uuid, sizeof(uint32_t));
+	object_file.read((char*)&file_name_size, sizeof(uint16_t));
+	object_file.read((char*)&data, sizeof(Object::ObjectData));
+	file_name.resize(file_name_size);
+	object_file.read(&file_name[0], file_name_size);
+}
+
+DataClass::Data_SpringMass::Data_SpringMass()
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::PHYSICS;
+	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
+	object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
+}
+
+void DataClass::Data_SpringMass::info(Editor::ObjectInfo& object_info)
 {
 	// Store Object Information
 	object_info.clearAll();
@@ -250,4 +248,27 @@ void Object::Physics::Soft::SpringMass::info(Editor::ObjectInfo& object_info, st
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 	object_info.addTextValue("File: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &file_name, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
+}
+
+DataClass::Data_Object* DataClass::Data_SpringMass::makeCopy()
+{
+	return new Data_SpringMass(*this);
+}
+
+std::string& DataClass::Data_SpringMass::getFile()
+{
+	return file_name;
+}
+
+void DataClass::Data_SpringMass::generateInitialValues(glm::vec2& position)
+{
+	generateUUID();
+	data.position = position;
+	data.zpos = -1.0f;
+	data.colors = glm::vec4(1.0f, 0.5f, 0.0f, 1.0f);
+	data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
+	data.texture_name = 0;
+	data.script = 0;
+	data.material_name = 0;
+	file_name = "NULL";
 }

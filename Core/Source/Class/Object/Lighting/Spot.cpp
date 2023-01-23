@@ -1,4 +1,5 @@
 #include "Spot.h"
+#include "Render/Struct/DataClasses.h"
 
 // Selector
 #include "Class/Render/Editor/Selector.h"
@@ -136,15 +137,6 @@ void Object::Light::Spot::Spot::initializeVisualizer()
 	glBindVertexArray(0);
 }
 
-void Object::Light::Spot::Spot::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
-{
-	// Store Object Information
-	info(object_info, name, data, spot);
-
-	// Selector Helper
-	select2(selector);
-}
-
 bool Object::Light::Spot::Spot::testMouseCollisions(float x, float y)
 {
 	if (x > data.position.x - 1.0f && x < data.position.x + 1.0f && y > data.position.y - 2.0f && y < data.position.y + 2.0f)
@@ -155,37 +147,64 @@ bool Object::Light::Spot::Spot::testMouseCollisions(float x, float y)
 	return false;
 }
 
-void Object::Light::Spot::Spot::write(std::ofstream& object_file, std::ofstream& editor_file)
-{
-	// Write Object Identifier
-	object_file.put(LIGHT);
-	object_file.put(SPOT);
-	
-	// Write Data
-	object_file.write((char*)&spot, sizeof(spot));
-	object_file.write((char*)&data, sizeof(data));
-
-	// Write Editor Data
-	uint16_t name_size = (uint16_t)name.size();
-	editor_file.write((char*)&name_size, sizeof(uint16_t));
-	editor_file.write((char*)&clamp, sizeof(bool));
-	editor_file.write((char*)&lock, sizeof(bool));
-	editor_file.write((char*)&name[0], name.size());
-}
-
 glm::vec2 Object::Light::Spot::Spot::returnPosition()
 {
 	return data.position;
 }
 
-void Object::Light::Spot::Spot::info(Editor::ObjectInfo& object_info, std::string& name, LightData& data, SpotData& spot)
+#endif
+
+Object::Object* DataClass::Data_Spot::genObject()
+{
+	return new Object::Light::Spot::Spot(spot, light_data);
+}
+
+void DataClass::Data_Spot::writeObjectData(std::ofstream& object_file)
+{
+	object_file.write((char*)&spot, sizeof(Object::Light::Spot::SpotData));
+	object_file.write((char*)&light_data, sizeof(Object::Light::LightData));
+}
+
+void DataClass::Data_Spot::readObjectData(std::ifstream& object_file)
+{
+	object_file.read((char*)&spot, sizeof(Object::Light::Spot::SpotData));
+	object_file.read((char*)&light_data, sizeof(Object::Light::LightData));
+}
+
+DataClass::Data_Spot::Data_Spot()
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::LIGHT;
+	object_identifier[1] = Object::Light::SPOT;
+	object_identifier[2] = 0;
+}
+
+void DataClass::Data_Spot::info(Editor::ObjectInfo& object_info)
 {
 	// Store Object Information
 	object_info.clearAll();
 	object_info.setObjectType("Spot Light", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &light_data.position.x, &light_data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 }
 
-#endif
+DataClass::Data_Object* DataClass::Data_Spot::makeCopy()
+{
+	return new Data_Spot(*this);
+}
+
+Object::Light::Spot::SpotData& DataClass::Data_Spot::getSpotData()
+{
+	return spot;
+}
+
+void DataClass::Data_Spot::generateInitialValues(glm::vec2& position)
+{
+	generateInitialLightValues(position);
+	spot.direction = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	spot.angle1 = 0.2f;
+	spot.angle2 = 0.5f;
+	spot.linear = DEFAULT_LINEAR;
+	spot.quadratic = DEFAULT_QUADRATIC;
+}
 

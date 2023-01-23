@@ -125,13 +125,8 @@ namespace Object
 
 #ifdef EDITOR
 
-		// Write Object to File
-		virtual void write(std::ofstream& object_file, std::ofstream& editor_file) = 0;
-
 		// Select Object
-		virtual void select(Editor::Selector& selector, Editor::ObjectInfo& object_info) = 0;
-
-		void select2(Editor::Selector& selector);
+		void select(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test if Mouse Intersects Object
 		virtual bool testMouseCollisions(float x, float y) = 0;
