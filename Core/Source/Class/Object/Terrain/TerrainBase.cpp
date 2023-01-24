@@ -201,3 +201,8 @@ void DataClass::Data_Terrain::generateInitialValues(glm::vec2& position, glm::ve
 	shape = new_shape;
 }
 
+uint8_t& DataClass::Data_Terrain::getLayer()
+{
+	return layer;
+}
+

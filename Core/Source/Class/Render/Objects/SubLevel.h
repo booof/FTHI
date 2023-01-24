@@ -21,24 +21,6 @@ namespace Object
 
 namespace Render::Objects
 {
-	struct ObjectCount;
-
-	// Header Data Struct
-	struct LevelHeader
-	{
-		int number_of_loaded_objects = 0;
-		short floor_count = 0;
-		short left_count = 0;
-		short right_count = 0;
-		short ceiling_count = 0;
-		short trigger_count = 0;
-		short terrain_count = 0;
-		short directional_count = 0;
-		short point_count = 0;
-		short spot_count = 0;
-		short beam_count = 0;
-	};
-
 	// Container for Chunk of the World
 	class SubLevel
 	{
@@ -56,7 +38,8 @@ namespace Render::Objects
 		int level_version;
 
 		// Header Data
-		LevelHeader header;
+		//LevelHeader header;
+		uint32_t number_of_loaded_objects = 0;
 
 		// The Array of All Active Objects
 		Object::Object** active_objects;
@@ -98,10 +81,10 @@ namespace Render::Objects
 #endif
 
 		// Add Header
-		void addHeader(ObjectCount& object_count);
+		void addHeader(uint32_t& object_count);
 
 		// Subtract Header
-		void subtractHeader(ObjectCount& object_count);
+		void subtractHeader(uint32_t& object_count);
 
 		// Delete Level
 		~SubLevel();

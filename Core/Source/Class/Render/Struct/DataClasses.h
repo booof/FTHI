@@ -582,6 +582,8 @@ namespace DataClass
 		Data_Object* makeCopy();
 
 		void generateInitialValues(glm::vec2& position, glm::vec4 color, Shape::Shape* new_shape);
+
+		uint8_t& getLayer();
 	};
 
 	// Light Object

@@ -84,7 +84,7 @@ void Render::Objects::SubLevel::readHeaders()
 	unsaved_level->active_objects = &active_objects;
 
 	// Get Header From Unsaved Level
-	header = unsaved_level->returnObjectHeader();
+	number_of_loaded_objects = unsaved_level->returnObjectHeader();
 }
 
 void Render::Objects::SubLevel::drawVisualizer()
@@ -317,34 +317,14 @@ void Render::Objects::SubLevel::writeLevel()
 
 #endif
 
-void Render::Objects::SubLevel::addHeader(ObjectCount& object_count)
+void Render::Objects::SubLevel::addHeader(uint32_t& object_count)
 {
-	object_count.total_object_count += header.number_of_loaded_objects;
-	object_count.floor_count += header.floor_count;
-	object_count.left_count += header.left_count;
-	object_count.right_count += header.right_count;
-	object_count.ceiling_count += header.ceiling_count;
-	object_count.trigger_count += header.trigger_count;
-	object_count.terrain_count += header.terrain_count;
-	object_count.directional_count += header.directional_count;
-	object_count.point_count += header.point_count;
-	object_count.spot_count += header.spot_count;
-	object_count.beam_count += header.beam_count;
+	object_count += number_of_loaded_objects;
 }
 
-void Render::Objects::SubLevel::subtractHeader(ObjectCount& object_count)
+void Render::Objects::SubLevel::subtractHeader(uint32_t& object_count)
 {
-	object_count.total_object_count -= header.number_of_loaded_objects;
-	object_count.floor_count -= header.floor_count;
-	object_count.left_count -= header.left_count;
-	object_count.right_count -= header.right_count;
-	object_count.ceiling_count -= header.ceiling_count;
-	object_count.trigger_count -= header.trigger_count;
-	object_count.terrain_count -= header.terrain_count;
-	object_count.directional_count -= header.directional_count;
-	object_count.point_count -= header.point_count;
-	object_count.spot_count -= header.spot_count;
-	object_count.beam_count -= header.beam_count;
+	object_count -= number_of_loaded_objects;
 }
 
 Render::Objects::SubLevel::~SubLevel()
@@ -355,12 +335,10 @@ Render::Objects::SubLevel::~SubLevel()
 #endif
 
 	// Deactivate All Static Objects Part of This Level
-	for (int i = 0; i < header.number_of_loaded_objects; i++)
-	{
+	for (uint32_t i = 0; i < number_of_loaded_objects; i++)
 		active_objects[i]->active = false;
-	}
 
 	// Delete Active Objects Array
-	if (header.number_of_loaded_objects)
+	if (number_of_loaded_objects)
 		delete[] active_objects;
 }

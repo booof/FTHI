@@ -70,11 +70,11 @@ void Render::Objects::Level::testReload()
 		level_position = new_level;
 
 		// Read Levels
-		uint16_t index = temp_index_holder.total_object_count;
+		uint16_t index = temp_index_holder;
 		for (int i = 0; i < 9; i++)
 		{
 			if (!sublevels[i]->initialized)
-				sublevels[i]->readLevel(objects, index, physics_list, entity_list);
+				sublevels[i]->readLevel(container.object_array, index, physics_list, entity_list);
 		}
 
 		// Segregate Some Objects Into Seperate Arrays
@@ -96,14 +96,17 @@ void Render::Objects::Level::testReload()
 
 void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level_new, bool reload_all)
 {
-	// Empty Object Counts
-	static ObjectCount null_objects;
-
 	// Pointer to New Level
 	SubLevel* new_level;
 
+	// Reset Temp Index Holder
+	temp_index_holder = 0;
+
 	// Store Old Object Counts
-	ObjectCount object_count_old = object_count;
+	uint32_t total_object_count_old = container.total_object_count;
+
+	// Variable for New Object Count
+	uint32_t total_object_count_new = 0;
 
 	// Test if Handler Should do a Complete Map Reset
 	if ((abs(level_old.x - level_new.x) > 1 || abs(level_old.y - level_new.y) > 1) || (level_old == level_new) || reload_all)
@@ -114,10 +117,6 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 			//sublevels[i]->~SubLevel();
 			delete sublevels[i];
 		}
-
-		// Reset Level Objects
-		object_count = null_objects;
-		temp_index_holder = null_objects;
 
 		// Reset Physics
 		physics_list.erase();
@@ -133,14 +132,14 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 			{
 
 				new_level = new SubLevel((int)level_new.x + level_x, (int)level_new.y + level_y);
-				new_level->addHeader(object_count);
+				new_level->addHeader(total_object_count_new);
 				sublevels[iterater] = new_level;
 				iterater++;
 			}
 		}
 
 		// Allocate Memory
-		reallocateAll(initialized);
+		reallocateAll(initialized, total_object_count_new);
 		initialized = true;
 
 #ifdef SHOW_LEVEL_LOADING
@@ -158,7 +157,7 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 		// Deconstruct Old Levels
 		for (int i = 2; i < 9; i += 3)
 		{
-			sublevels[i]->subtractHeader(object_count);
+			sublevels[i]->subtractHeader(container.total_object_count);
 			delete sublevels[i];
 		}
 
@@ -170,16 +169,14 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 			if (!(i % 3))
 			{
 				new_level = new SubLevel((int)level_new.x - 1, (int)level_new.y + next_level_location);
-				new_level->addHeader(object_count);
+				new_level->addHeader(container.total_object_count);
 				sublevels[i] = new_level;
 				next_level_location++;
 			}
 
 			// Shift Levels
 			else
-			{
 				sublevels[i] = sublevels[i - 1];
-			}
 		}
 
 #ifdef SHOW_LEVEL_LOADING
@@ -194,7 +191,7 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 		// Deconstruct Old Levels
 		for (int i = 0; i < 9; i += 3)
 		{
-			sublevels[i]->subtractHeader(object_count);
+			sublevels[i]->subtractHeader(container.total_object_count);
 			delete sublevels[i];
 		}
 
@@ -206,16 +203,14 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 			if ((i % 3) == 2)
 			{
 				new_level = new SubLevel((int)level_new.x + 1, (int)level_new.y + next_level_location);
-				new_level->addHeader(object_count);
+				new_level->addHeader(container.total_object_count);
 				sublevels[i] = new_level;
 				next_level_location--;
 			}
 
 			// Shift Levels
 			else
-			{
 				sublevels[i] = sublevels[i + 1];
-			}
 		}
 
 #ifdef SHOW_LEVEL_LOADING
@@ -230,7 +225,7 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 		// Deconstruct Old Levels
 		for (int i = 6; i < 9; i++)
 		{
-			sublevels[i]->subtractHeader(object_count);
+			sublevels[i]->subtractHeader(container.total_object_count);
 			delete sublevels[i];
 		}
 
@@ -242,16 +237,14 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 			if (i < 3)
 			{
 				new_level = new SubLevel((int)level_new.x + next_level_location, (int)level_new.y + 1);
-				new_level->addHeader(object_count);
+				new_level->addHeader(container.total_object_count);
 				sublevels[i] = new_level;
 				next_level_location--;
 			}
 
 			// Shift Levels
 			else
-			{
 				sublevels[i] = sublevels[i - 3];
-			}
 		}
 
 #ifdef SHOW_LEVEL_LOADING
@@ -266,7 +259,7 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 		// Deconstruct Old Levels
 		for (int i = 0; i < 3; i++)
 		{
-			sublevels[i]->subtractHeader(object_count);
+			sublevels[i]->subtractHeader(container.total_object_count);
 			delete sublevels[i];
 		}
 
@@ -278,16 +271,14 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 			if (i > 5)
 			{
 				new_level = new SubLevel((int)level_new.x + next_level_location, (int)level_new.y - 1);
-				new_level->addHeader(object_count);
+				new_level->addHeader(container.total_object_count);
 				sublevels[i] = new_level;
 				next_level_location++;
 			}
 
 			// Shift Levels
 			else
-			{
 				sublevels[i] = sublevels[i + 3];
-			}
 		}
 
 #ifdef SHOW_LEVEL_LOADING
@@ -301,14 +292,11 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 #endif
 
 	// Reallocate Memory of Pointers
-	reallocatePostReload(object_count_old);
+	reallocatePostReload(total_object_count_old);
 }
 
 void Render::Objects::Level::segregateObjects()
 {
-	// Temp Pointer to Object to Segregate
-	Object::Object* object;
-
 	// IDEA: Segregation of Objects Will be Changed to Occour in a Heap Instead of Here All at Once.
 	// This will reduce overall complexity. In addition, All Objects Will Remain in a Single List, But 
 	// Seperated/Segregated by their Object Identifier. First Index in the Object Identifier will be Used
@@ -316,86 +304,36 @@ void Render::Objects::Level::segregateObjects()
 	// Importance. There will be a Data Structure That Contains the Start/End Indicies for Each Important
 	// Object Group i.e. Terrain, Lights, Masks
 
-	// Iterate All Objects Starting at Main Object Index
-	for (int& i = temp_index_holder.total_object_count; i < object_count.total_object_count; i++)
-	{	
-		// Get Object Pointer
-		object = objects[i];
+	// EDIT: Sorting Will Instead be Done Through Quick Sort
 
-		// Parse Storage Type
-		switch (object->storage_type)
+	// Sort the Objects Through Quick Sort
+	Algorithms::Sorting::quickIdentifierSort(container.object_array, container.total_object_count);
+
+	// Need to Have Structure With Array Indexable Pointers and Array Lengths to Segregate Objects
+	Object::Object** object_array_pointer = container.object_array;
+	Object::Object*** current_array_pointer = reinterpret_cast<Object::Object***>(&container.floor_start);
+	(*current_array_pointer) = object_array_pointer;
+	uint16_t* current_array_size_pointer = &container.floor_size;
+	uint8_t container_index = 0;
+
+	// The Map for Container Index to Container Storage Type
+	uint8_t storage_map[10] = { Object::FLOOR_COUNT, Object::LEFT_COUNT, Object::RIGHT_COUNT, Object::CEILING_COUNT, Object::TRIGGER_COUNT, Object::TERRAIN_COUNT, Object::DIRECTIONAL_COUNT, Object::POINT_COUNT, Object::SPOT_COUNT, Object::BEAM_COUNT };
+
+	// Segregate Objects
+	Object::Object* current_object = nullptr;
+	Object::Object** object_array_end_pointer = object_array_pointer + container.total_object_count;
+	while (object_array_pointer < object_array_end_pointer)
+	{
+		current_object = *object_array_pointer;
+		while (current_object->storage_type != storage_map[container_index])
 		{
-		// Floor Objects
-		case Object::FLOOR_COUNT:
-		{
-			floor_masks[temp_index_holder.floor_count] = static_cast<Object::Mask::Floor::FloorMask*>(object);
-			temp_index_holder.floor_count++;
-			break;
+			current_array_pointer++;
+			(*current_array_pointer) = object_array_pointer;
+			current_array_size_pointer++;
+			container_index++;
 		}
-		// Left Objects
-		case Object::LEFT_COUNT:
-		{
-			left_masks[temp_index_holder.left_count] = static_cast<Object::Mask::Left::LeftMask*>(object);
-			temp_index_holder.left_count++;
-			break;
-		}
-		// Right Objects
-		case Object::RIGHT_COUNT:
-		{
-			right_masks[temp_index_holder.right_count] = static_cast<Object::Mask::Right::RightMask*>(object);
-			temp_index_holder.right_count++;
-			break;
-		}
-		// Ceiling Objects
-		case Object::CEILING_COUNT:
-		{
-			ceiling_masks[temp_index_holder.ceiling_count] = static_cast<Object::Mask::Ceiling::CeilingMask*>(object);
-			temp_index_holder.ceiling_count++;
-			break;
-		}
-		// Trigger Objects
-		case Object::TRIGGER_COUNT:
-		{
-			trigger_masks[temp_index_holder.trigger_count] = static_cast<Object::Mask::Trigger::TriggerMask*>(object);
-			temp_index_holder.trigger_count++;
-			break;
-		}
-		// Terrain Objects
-		case Object::TERRAIN_COUNT:
-		{
-			terrain[temp_index_holder.terrain_count] = static_cast<Object::Terrain::TerrainBase*>(object);
-			temp_index_holder.terrain_count++;
-			break;
-		}
-		// Directional Objects
-		case Object::DIRECTIONAL_COUNT:
-		{
-			directional_lights[temp_index_holder.directional_count] = static_cast<Object::Light::Directional::Directional*>(object);
-			temp_index_holder.directional_count++;
-			break;
-		}
-		// Point Objects
-		case Object::POINT_COUNT:
-		{
-			point_lights[temp_index_holder.point_count] = static_cast<Object::Light::Point::Point*>(object);
-			temp_index_holder.point_count++;
-			break;
-		}
-		// Spot Objects
-		case Object::SPOT_COUNT:
-		{
-			spot_lights[temp_index_holder.spot_count] = static_cast<Object::Light::Spot::Spot*>(object);
-			temp_index_holder.spot_count++;
-			break;
-		}
-		// Beam Objects
-		case Object::BEAM_COUNT:
-		{
-			beam_lights[temp_index_holder.beam_count] = static_cast<Object::Light::Beam::Beam*>(object);
-			temp_index_holder.beam_count++;
-			break;
-		}
-		}
+		(*current_array_size_pointer)++;
+		object_array_pointer++;
 	}
 }
 
@@ -434,104 +372,72 @@ void Render::Objects::Level::reallocateEntities()
 {
 }
 
-void Render::Objects::Level::reallocatePostReload(ObjectCount& object_count_old)
+void Render::Objects::Level::reallocatePostReload(uint32_t old_object_count)
 {
-	// Reallocate Floor Objects
-	temp_index_holder.floor_count = reallocateHelper(&floor_masks, object_count_old.floor_count, object_count.floor_count);
+	// Retrieve the Total Object Count and Array
+	uint16_t new_object_count = container.total_object_count;
+	Object::Object** old_object_array = container.object_array;
 
-	// Reallocate Left Objects
-	temp_index_holder.left_count = reallocateHelper(&left_masks, object_count_old.left_count, object_count.left_count);
+	// Reset Container
+	container = { 0 };
 
-	// Reallocate Right Objects
-	temp_index_holder.right_count = reallocateHelper(&right_masks, object_count_old.right_count, object_count.right_count);
-
-	// Reallocate Ceiling Objects
-	temp_index_holder.ceiling_count = reallocateHelper(&ceiling_masks, object_count_old.ceiling_count, object_count.ceiling_count);
-
-	// Reallocate Trigger Objects
-	temp_index_holder.trigger_count = reallocateHelper(&trigger_masks, object_count_old.trigger_count, object_count.trigger_count);
-
-	// Reallocate Terrain Objects
-	temp_index_holder.terrain_count = reallocateHelper(&terrain, object_count_old.terrain_count, object_count.terrain_count);
-
-	// Reallocate Directional Objects
-	temp_index_holder.directional_count = reallocateHelper(&directional_lights, object_count_old.directional_count, object_count.directional_count);
-
-	// Reallocate Point Objects
-	temp_index_holder.point_count = reallocateHelper(&point_lights, object_count_old.point_count, object_count.point_count);
-
-	// Reallocate Spot Objects
-	temp_index_holder.spot_count = reallocateHelper(&spot_lights, object_count_old.spot_count, object_count.spot_count);
-
-	// Reallocate Beam Objects
-	temp_index_holder.beam_count = reallocateHelper(&beam_lights, object_count_old.beam_count, object_count.beam_count);
+	// Store Values Back in Container
+	container.total_object_count = new_object_count;
+	container.object_array = old_object_array;
 
 	// Reallocate Main Object List
-	temp_index_holder.total_object_count = 0;
-	Object::Object** new_list = new Object::Object*[object_count.total_object_count];
-	if (object_count_old.total_object_count != 0)
+	temp_index_holder = 0;
+	Object::Object** new_list = new Object::Object*[container.total_object_count];
+	if (container.total_object_count != 0)
 	{
 		// Move Active Objects Into Array
-		for (uint16_t i = 0; i < object_count_old.total_object_count; i++)
+		for (uint16_t i = 0; i < old_object_count; i++)
 		{
 			// Copy Pointer of Active Object Into Array, If Object is Active
-			if (objects[i]->active)
+			if (container.object_array[i]->active)
 			{
-				new_list[temp_index_holder.total_object_count] = objects[i];
-				temp_index_holder.total_object_count++;
+				//new_list[temp_index_holder.total_object_count] = objects[i];
+				new_list[temp_index_holder] = container.object_array[i];
+				temp_index_holder++;
 			}
 
 			// Else, Delete Pointer to New Object Since It is No Longer Being Used
 			else
-			{
-				delete objects[i];
-			}
+				delete container.object_array[i];
 		}
 
 		// Delete Old Array
-		delete objects;
+		delete container.object_array;
 	}
-	objects = new_list;
+
+	// Swap Arrays
+	container.object_array = new_list;
 }
 
-void Render::Objects::Level::reallocateAll(bool del)
+void Render::Objects::Level::reallocateAll(bool del, uint32_t size)
 {
 	// Test if Memory Has Previously Been Allocated
 	if (del)
 	{
-		delete[] objects;
-		delete[] floor_masks;
-		delete[] left_masks;
-		delete[] right_masks;
-		delete[] ceiling_masks;
-		delete[] trigger_masks;
-		delete[] terrain;
-		delete[] directional_lights;
-		delete[] point_lights;
-		delete[] spot_lights;
-		delete[] beam_lights;
+		delete[] container.object_array;
 		physics_list.erase();
 		entity_list.erase();
 	}
 
+	// Null Initialize Container
+	container = { 0 };
+
+	// Set Size of Container
+	container.total_object_count = size;
+
 	// Allocate Memory
-	objects = new Object::Object*[object_count.total_object_count];
-	floor_masks = new Object::Mask::Floor::FloorMask*[object_count.floor_count];
-	left_masks = new Object::Mask::Left::LeftMask*[object_count.left_count];
-	right_masks = new Object::Mask::Right::RightMask*[object_count.right_count];
-	ceiling_masks = new Object::Mask::Ceiling::CeilingMask*[object_count.ceiling_count];
-	trigger_masks = new Object::Mask::Trigger::TriggerMask*[object_count.trigger_count];
-	terrain = new Object::Terrain::TerrainBase*[object_count.terrain_count];
-	directional_lights = new Object::Light::Directional::Directional*[object_count.directional_count];
-	point_lights = new Object::Light::Point::Point*[object_count.point_count];
-	spot_lights = new Object::Light::Spot::Spot*[object_count.spot_count];
-	beam_lights = new Object::Light::Beam::Beam*[object_count.beam_count];
+	container.object_array = new Object::Object*[size];
 }
 
 void Render::Objects::Level::constructTerrain()
 {
 	// Sort Terrain Objects By Z-Position
-	Algorithms::Sorting::quickZSort(terrain, (int)object_count.terrain_count);
+	Algorithms::Sorting::quickZSort(container.terrain_start, container.terrain_size);
 
 	// Calculate Total Number of Vertices and Color Instances
 	int vertices = 0;
@@ -550,32 +456,32 @@ void Render::Objects::Level::constructTerrain()
 
 	}
 
-	for (int i = 0; i < object_count.terrain_count; i++)
+	for (int i = 0; i < container.terrain_size; i++)
 	{
 		// Increment Instance Counts
-		vertices += terrain[i]->number_of_vertices;
+		vertices += container.terrain_start[i]->number_of_vertices;
 		instances++;
-
+		
 		// Increment Terrain Layer Segregators
-		switch (terrain[i]->layer)
+		switch (container.terrain_start[i]->layer)
 		{
 		case Object::Terrain::BACKDROP:
-			number_of_vertices[1] += terrain[i]->number_of_vertices;
+			number_of_vertices[1] += container.terrain_start[i]->number_of_vertices;
 		case Object::Terrain::BACKGROUND_3:
-			number_of_vertices[2] += terrain[i]->number_of_vertices;
+			number_of_vertices[2] += container.terrain_start[i]->number_of_vertices;
 		case Object::Terrain::BACKGROUND_2:
-			number_of_vertices[3] += terrain[i]->number_of_vertices;
+			number_of_vertices[3] += container.terrain_start[i]->number_of_vertices;
 		case Object::Terrain::BACKGROUND_1:
-			number_of_vertices[4] += terrain[i]->number_of_vertices;
+			number_of_vertices[4] += container.terrain_start[i]->number_of_vertices;
 		case Object::Terrain::FOREGROUND:
-			number_of_vertices[5] += terrain[i]->number_of_vertices;
+			number_of_vertices[5] += container.terrain_start[i]->number_of_vertices;
 		case Object::Terrain::FORMERGROUND:
-			number_of_vertices[6] += terrain[i]->number_of_vertices;
+			number_of_vertices[6] += container.terrain_start[i]->number_of_vertices;
 		}
-
+		
 #ifdef EDITOR
-
-		switch (terrain[i]->layer)
+		
+		switch (container.terrain_start[i]->layer)
 		{
 		case Object::Terrain::BACKDROP:
 			terrain_seperators[1]++;
@@ -590,7 +496,7 @@ void Render::Objects::Level::constructTerrain()
 		case Object::Terrain::FORMERGROUND:
 			terrain_seperators[6]++;
 		}
-
+		
 #endif
 	}
 	vertices *= 5;
@@ -609,10 +515,8 @@ void Render::Objects::Level::constructTerrain()
 	int offset = 0;
 	int instant = Constant::INSTANCE_SIZE;
 	int instance_index = 1;
-	for (int i = 0; i < object_count.terrain_count; i++)
-	{
-		terrain[i]->initializeTerrain(offset, instant, instance_index);
-	}
+	for (int i = 0; i < container.terrain_size; i++)
+		container.terrain_start[i]->initializeTerrain(offset, instant, instance_index);
 
 	// Unbind Buffer Object
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -623,13 +527,13 @@ void Render::Objects::Level::constructTerrain()
 void Render::Objects::Level::loadLights()
 {
 	// Allocate Memory for Lights
-	Vertices::Buffer::clearLightBuffer(Global::DirectionalBuffer, Global::PointBuffer, Global::SpotBuffer, Global::BeamBuffer, object_count.directional_count, object_count.point_count, object_count.spot_count, object_count.beam_count);
+	Vertices::Buffer::clearLightBuffer(Global::DirectionalBuffer, Global::PointBuffer, Global::SpotBuffer, Global::BeamBuffer, container.directional_size, container.point_size, container.spot_size, container.beam_size);
 
 	// Sort Lights Based on Layer
-	Algorithms::Sorting::quickZSort(directional_lights, object_count.directional_count);
-	Algorithms::Sorting::quickZSort(point_lights, object_count.point_count);
-	Algorithms::Sorting::quickZSort(spot_lights, object_count.spot_count);
-	Algorithms::Sorting::quickZSort(beam_lights, object_count.beam_count);
+	Algorithms::Sorting::quickZSort(container.directional_start, container.directional_size);
+	Algorithms::Sorting::quickZSort(container.point_start, container.point_size);
+	Algorithms::Sorting::quickZSort(container.spot_start, container.spot_size);
+	Algorithms::Sorting::quickZSort(container.beam_start, container.beam_size);
 
 	// Reset Number of Vertices
 	for (int i = 0; i < 7; i++)
@@ -642,14 +546,14 @@ void Render::Objects::Level::loadLights()
 
 	// Generate Directional Lights
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::DirectionalBuffer);
-	for (int i = 0, j = 16; i < object_count.directional_count; i++, j += 96)
+	for (int i = 0, j = 16; i < container.directional_size; i++, j += 96)
 	{
 		// Bind Light
-		directional_lights[i]->buffer_offset = j;
-		directional_lights[i]->loadLight();
+		container.directional_start[i]->buffer_offset = j;
+		container.directional_start[i]->loadLight();
 
 		// Determine Segregators for Light
-		switch (directional_lights[i]->returnLayer())
+		switch (container.directional_start[i]->returnLayer())
 		{
 		case Object::Terrain::BACKDROP:
 			directional_seperators[1]++;
@@ -668,14 +572,14 @@ void Render::Objects::Level::loadLights()
 
 	// Generate Point Lights
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::PointBuffer);
-	for (int i = 0, j = 16; i < object_count.point_count; i++, j += 80)
+	for (int i = 0, j = 16; i < container.point_size; i++, j += 80)
 	{
 		// Bind Light
-		point_lights[i]->buffer_offset = j;
-		point_lights[i]->loadLight();
+		container.point_start[i]->buffer_offset = j;
+		container.point_start[i]->loadLight();
 
 		// Determine Segregators for Light
-		switch (point_lights[i]->returnLayer())
+		switch (container.point_start[i]->returnLayer())
 		{
 		case Object::Terrain::BACKDROP:
 			point_seperators[1]++;
@@ -694,14 +598,14 @@ void Render::Objects::Level::loadLights()
 
 	// Generate Spot Lights
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::SpotBuffer);
-	for (int i = 0, j = 16; i < object_count.spot_count; i++, j += 96)
+	for (int i = 0, j = 16; i < container.spot_size; i++, j += 96)
 	{
 		// Bind Light
-		spot_lights[i]->buffer_offset = j;
-		spot_lights[i]->loadLight();
+		container.spot_start[i]->buffer_offset = j;
+		container.spot_start[i]->loadLight();
 
 		// Determine Segregators for Light
-		switch (spot_lights[i]->returnLayer())
+		switch (container.spot_start[i]->returnLayer())
 		{
 		case Object::Terrain::BACKDROP:
 			spot_seperators[1]++;
@@ -720,14 +624,14 @@ void Render::Objects::Level::loadLights()
 
 	// Generate Beam Lights
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::BeamBuffer);
-	for (int i = 0, j = 16; i < object_count.beam_count; i++, j += 96)
+	for (int i = 0, j = 16; i < container.beam_size; i++, j += 96)
 	{
 		// Bind Light
-		beam_lights[i]->buffer_offset = j;
-		beam_lights[i]->loadLight();
+		container.beam_start[i]->buffer_offset = j;
+		container.beam_start[i]->loadLight();
 
 		// Determine Segregators for Light
-		switch (beam_lights[i]->returnLayer())
+		switch (container.beam_start[i]->returnLayer())
 		{
 		case Object::Terrain::BACKDROP:
 			beam_seperators[1]++;
@@ -829,9 +733,8 @@ Render::Objects::Level::Level(std::string save_path, std::string core_path)
 	}
 
 	// Reset Level Objects
-	static ObjectCount null_objects;
-	object_count = null_objects;
-	temp_index_holder = null_objects;
+	container = { 0 };
+	temp_index_holder = 0;
 
 	// Initialize SubLevels
 	level_position = glm::vec2(0, 0);
@@ -839,11 +742,11 @@ Render::Objects::Level::Level(std::string save_path, std::string core_path)
 	{
 		glm::vec2 coords = level_from_index(i);
 		sublevels[i] = new SubLevel((int)coords.x, (int)coords.y);
-		sublevels[i]->addHeader(object_count);
+		sublevels[i]->addHeader(container.total_object_count);
 	}
 
 	// Allocate Memory
-	reallocateAll(false);
+	reallocateAll(false, container.total_object_count);
 	initialized = true;
 
 	// Read SubLevels
@@ -851,9 +754,7 @@ Render::Objects::Level::Level(std::string save_path, std::string core_path)
 	uint16_t index2 = 0;
 	uint16_t index3 = 0;
 	for (int i = 0; i < 9; i++)
-	{
-		sublevels[i]->readLevel(objects, index1, physics_list, entity_list);
-	}
+		sublevels[i]->readLevel(container.object_array, index1, physics_list, entity_list);
 
 	// Segregate Some Objects Into Seperate Arrays
 	segregateObjects();
@@ -883,10 +784,10 @@ void Render::Objects::Level::updateCamera()
 void Render::Objects::Level::updateContainer()
 {
 	// Update General Objects in Level
-	for (int i = 0; i < object_count.total_object_count; i++)
+	for (uint32_t i = 0; i < container.total_object_count; i++)
 	{
-		objects[i]->loop(objects[i]);
-		objects[i]->updateObject();
+		container.object_array[i]->loop(container.object_array[i]);
+		container.object_array[i]->updateObject();
 	}
 
 	// Update Physics Objects
@@ -906,8 +807,8 @@ void Render::Objects::Level::updateContainer()
 	// Perform Physics-Mask Collision Detection
 	for (physics_list.it = physics_list.beginStatic(); physics_list.it != physics_list.endStatic(); physics_list.it++)
 	{
-		Source::Collisions::Mask::maskCollisionsPhysics(&physics_list.it, object_count.floor_count, object_count.left_count, object_count.right_count,
-			object_count.ceiling_count, object_count.trigger_count, floor_masks, left_masks, right_masks, ceiling_masks, trigger_masks);
+		Source::Collisions::Mask::maskCollisionsPhysics(&physics_list.it, container.floor_size, container.left_wall_size, container.right_wall_size, container.ceiling_size,
+			container.trigger_size, container.floor_start, container.left_wall_start, container.right_wall_start, container.ceiling_start, container.trigger_start);
 	}
 
 	// Perform Physics-Entity Collision Detection
@@ -916,8 +817,8 @@ void Render::Objects::Level::updateContainer()
 	// Perform Entity-Mask Collision Detection
 	for (entity_list.it = entity_list.beginStatic(); entity_list.it != entity_list.endStatic(); entity_list.it++)
 	{
-		Source::Collisions::Mask::maskCollisionsEntity(*entity_list.it, object_count.floor_count, object_count.left_count, object_count.right_count,
-			object_count.ceiling_count, object_count.trigger_count, floor_masks, left_masks, right_masks, ceiling_masks, trigger_masks);
+		Source::Collisions::Mask::maskCollisionsEntity(*entity_list.it, container.floor_size, container.left_wall_size, container.right_wall_size, container.ceiling_size,
+			container.trigger_size, container.floor_start, container.left_wall_start, container.right_wall_start, container.ceiling_start, container.trigger_start);
 	}
 
 	// Perform Physics-Physics Collision Detection
@@ -932,8 +833,10 @@ void Render::Objects::Level::drawContainer()
 {
 	// If Framebuffer Resize, Remake Projection
 	if (Global::framebufferResize || Global::zoom || true)
+	{
 		for (int i = 0; i < 6; i++)
 			projection[i] = Global::projection;
+	}
 
 	// Bind Object Shader
 	Global::objectShader.Use();
@@ -1017,24 +920,24 @@ void Render::Objects::Level::drawVisualizers()
 		sublevels[i]->drawVisualizer();
 
 	// Draw Floor Masks
-	for (int i = 0; i < object_count.floor_count; i++)
-		floor_masks[i]->blitzLine();
+	for (int i = 0; i < container.floor_size; i++)
+		container.floor_start[i]->blitzLine();
 
 	// Draw Left Masks
-	for (int i = 0; i < object_count.left_count; i++)
-		left_masks[i]->blitzLine();
+	for (int i = 0; i < container.left_wall_size; i++)
+		container.left_wall_start[i]->blitzLine();
 
 	// Draw Right Masks
-	for (int i = 0; i < object_count.right_count; i++)
-		right_masks[i]->blitzLine();
-	
+	for (int i = 0; i < container.right_wall_size; i++)
+		container.right_wall_start[i]->blitzLine();
+
 	// Draw Ceiling Masks
-	for (int i = 0; i < object_count.ceiling_count; i++)
-		ceiling_masks[i]->blitzLine();
+	for (int i = 0; i < container.ceiling_size; i++)
+		container.ceiling_start[i]->blitzLine();
 
 	// Draw Trigger Masks
-	for (int i = 0; i < object_count.trigger_count; i++)
-		trigger_masks[i]->blitzLine();
+	for (int i = 0; i < container.trigger_size; i++)
+		container.trigger_start[i]->blitzLine();
 
 	// Bind Texture Shader
 	Global::texShaderStatic.Use();
@@ -1042,20 +945,20 @@ void Render::Objects::Level::drawVisualizers()
 	glUniform1i(Global::directionLoc, 1);
 
 	// Draw Directional Lights
-	for (int i = 0; i < object_count.directional_count; i++)
-		directional_lights[i]->blitzObject();
+	for (int i = 0; i < container.directional_size; i++)
+		container.directional_start[i]->blitzObject();
 
 	// Draw Point Lights
-	for (int i = 0; i < object_count.point_count; i++)
-		point_lights[i]->blitzObject();
+	for (int i = 0; i < container.point_size; i++)
+		container.point_start[i]->blitzObject();
 
 	// Draw Spot Lights
-	for (int i = 0; i < object_count.spot_count; i++)
-		spot_lights[i]->blitzObject();
-	
+	for (int i = 0; i < container.spot_size; i++)
+		container.spot_start[i]->blitzObject();
+
 	// Draw Beam Lights
-	for (int i = 0; i < object_count.beam_count; i++)
-		beam_lights[i]->blitzObject();
+	for (int i = 0; i < container.beam_size; i++)
+		container.beam_start[i]->blitzObject();
 }
 
 void Render::Objects::Level::testSelector(Editor::Selector& selector, Editor::ObjectInfo& object_info)
@@ -1124,7 +1027,7 @@ bool Render::Objects::Level::testSelectorTerrain(short index, Editor::Selector& 
 {
 	for (int i = terrain_seperators[index]; i < terrain_seperators[index + 1]; i++)
 	{
-		uint8_t returned_value = testSelectorOnObject(&terrain, object_count.terrain_count, selector, i, object_info);
+		uint8_t returned_value = testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.terrain_start), container.terrain_size, selector, i, object_info);
 		if (returned_value)
 		{
 			if (returned_value == 2)
@@ -1143,7 +1046,7 @@ bool Render::Objects::Level::testSelectorLights(short index, Editor::Selector& s
 	// Directional Light
 	for (int i = directional_seperators[index]; i < directional_seperators[index + 1]; i++)
 	{
-		returned_value = testSelectorOnObject(&directional_lights, object_count.directional_count, selector, i, object_info);
+		returned_value = testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.directional_start), container.directional_size, selector, i, object_info);
 		if (returned_value)
 		{
 			if (returned_value == 2)
@@ -1155,7 +1058,7 @@ bool Render::Objects::Level::testSelectorLights(short index, Editor::Selector& s
 	// Point Light
 	for (int i = point_seperators[index]; i < point_seperators[index + 1]; i++)
 	{
-		returned_value = testSelectorOnObject(&point_lights, object_count.point_count, selector, i, object_info);
+		returned_value = testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.point_start), container.point_size, selector, i, object_info);
 		if (returned_value)
 		{
 			if (returned_value == 2)
@@ -1167,7 +1070,7 @@ bool Render::Objects::Level::testSelectorLights(short index, Editor::Selector& s
 	// Spot Light
 	for (int i = spot_seperators[index]; i < spot_seperators[index + 1]; i++)
 	{
-		returned_value = testSelectorOnObject(&spot_lights, object_count.spot_count, selector, i, object_info);
+		returned_value = testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.point_size), container.spot_size, selector, i, object_info);
 		if (returned_value)
 		{
 			if (returned_value == 2)
@@ -1179,7 +1082,7 @@ bool Render::Objects::Level::testSelectorLights(short index, Editor::Selector& s
 	// Beam Light
 	for (int i = beam_seperators[index]; i < beam_seperators[index + 1]; i++)
 	{
-		returned_value = testSelectorOnObject(&beam_lights, object_count.beam_count, selector, i, object_info);
+		returned_value = testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.beam_start), container.beam_size, selector, i, object_info);
 		if (returned_value)
 		{
 			if (returned_value == 2)
@@ -1332,9 +1235,6 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						Global::Selected_Cursor = Global::CURSORS::HAND;
 
 						// Select Spring
-						//selector.object_identifier[0] = Object::PHYSICS;
-						//selector.object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
-						//selector.object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
 						selector.spring_data = object.springs[i];
 						selector.spring_data.Node1 = object.nodes[object.springs[i].Node1].Name;
 						selector.spring_data.Node2 = object.nodes[object.springs[i].Node2].Name;
@@ -1342,9 +1242,6 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						selector.springmass_spring_modified = true;
 						selector.object_index = 0;
 						selector.data_object = object_pointer->data_object;
-						//selector.uuid = 0;
-						//selector.object_data.position = object.returnPosition();
-						//selector.file_name = object.file_name;
 						selector.connection_pos_left = node_pos_1;
 						selector.connection_pos_right = node_pos_2;
 						selector.activateHighlighter();
@@ -1466,9 +1363,6 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 					Global::Selected_Cursor = Global::CURSORS::HAND;
 
 					// Select Node
-					//selector.object_identifier[0] = Object::PHYSICS;
-					//selector.object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
-					//selector.object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
 					selector.node_data.position = object.nodes[i].Position;
 					selector.node_data.mass = object.nodes[i].Mass;
 					selector.node_data.health = object.nodes[i].Health;
@@ -1479,9 +1373,6 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 					selector.springmass_spring_modified = false;
 					selector.object_index = 0;
 					selector.data_object = object_pointer->data_object;
-					//selector.uuid = 0;
-					//selector.object_data.position = object.returnPosition();
-					//selector.file_name = object.file_name;
 					selector.activateHighlighter();
 					object_info.clearAll();
 					object_info.setObjectType("SpringMass Node", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -1579,45 +1470,45 @@ bool Render::Objects::Level::testSelectorEntity(Editor::Selector& selector, Edit
 bool Render::Objects::Level::testSelectorMasks(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	// Test Floor Masks
-	for (int i = 0; i < object_count.floor_count; i++)
+	for (int i = 0; i < container.floor_size; i++)
 	{
-		if (testSelectorOnObject(&floor_masks, object_count.floor_count, selector, i, object_info))
+		if (testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.floor_start), container.floor_size, selector, i, object_info))
 		{
 			return true;
 		}
 	}
 
 	// Test Left Wall Masks
-	for (int i = 0; i < object_count.left_count; i++)
+	for (int i = 0; i < container.left_wall_size; i++)
 	{
-		if (testSelectorOnObject(&left_masks, object_count.left_count, selector, i, object_info))
+		if (testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.left_wall_start), container.left_wall_size, selector, i, object_info))
 		{
 			return true;
 		}
 	}
 
 	// Test Right Wall Masks
-	for (int i = 0; i < object_count.right_count; i++)
+	for (int i = 0; i < container.right_wall_size; i++)
 	{
-		if (testSelectorOnObject(&right_masks, object_count.right_count, selector, i, object_info))
+		if (testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.right_wall_start), container.right_wall_size, selector, i, object_info))
 		{
 			return true;
 		}
 	}
 
 	// Test Ceiling Masks
-	for (int i = 0; i < object_count.ceiling_count; i++)
+	for (int i = 0; i < container.ceiling_size; i++)
 	{
-		if (testSelectorOnObject(&ceiling_masks, object_count.ceiling_count, selector, i, object_info))
+		if (testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.ceiling_start), container.ceiling_size, selector, i, object_info))
 		{
 			return true;
 		}
 	}
 
 	// Test Trigger Masks
-	for (int i = 0; i < object_count.trigger_count; i++)
+	for (int i = 0; i < container.trigger_size; i++)
 	{
-		if (testSelectorOnObject(&trigger_masks, object_count.trigger_count, selector, i, object_info))
+		if (testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.trigger_start), container.trigger_size, selector, i, object_info))
 		{
 			return true;
 		}
@@ -1627,7 +1518,7 @@ bool Render::Objects::Level::testSelectorMasks(Editor::Selector& selector, Edito
 }
 
 template<class Type>
-uint8_t Render::Objects::Level::testSelectorOnObject(Type*** object_list, short& count, Editor::Selector& selector, int index, Editor::ObjectInfo& object_info)
+uint8_t Render::Objects::Level::testSelectorOnObject(Type*** object_list, uint16_t& count, Editor::Selector& selector, int index, Editor::ObjectInfo& object_info)
 {
 	// Get Reference of List and Object
 	Type** temp_list = *object_list;
@@ -1668,17 +1559,11 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Type*** object_list, short&
 			// Activate Selector
 			selector.active = true;
 
-			// Mark Object for Deletion
-			object.marked = true;
-
 			// Store Level of Origin
 			storeLevelOfOrigin(selector, object.returnPosition());
 
-			// Remove Object From Spot List
-			removeSelectedFromList(object_list, count, index);
-
 			// Remove Object From Global Objects List
-			removeMarkedFromList();
+			removeMarkedFromList(temp_list[index]);
 
 			// Reset Object Info
 			object_info.clearAll();
@@ -1739,9 +1624,6 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 				// Activate Selector
 				selector.active = true;
 
-				// Mark Object for Deletion
-				object.marked = true;
-
 				// Store Level of Origin
 				storeLevelOfOrigin(selector, object.returnPosition());
 
@@ -1753,7 +1635,6 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 
 				// Make a Copy of the Data Class
 				selector.data_object = selector.data_object->makeCopy();
-				std::cout << "b\n";
 
 				return true;
 			}
@@ -1765,68 +1646,55 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 	return false;
 }
 
-template<class Type>
-void Render::Objects::Level::removeSelectedFromList(Type*** old_list, short& count, short object_index)
+void Render::Objects::Level::removeMarkedFromList(Object::Object* marked_object)
 {
-	// Create New Terrain Objects List
-	count--;
-	Type** new_list = new Type*[count];
+	// Retrieve the Total Object Count and Array
+	uint16_t new_object_count = container.total_object_count - 1;
+	Object::Object** old_object_array = container.object_array;
 
-	// Copy Terrain Objects Into New Array Without Selected Object
-	short new_list_index = 0;
-	for (int j = 0; j < count + 1; j++)
-	{
-		// Test if Object is Selected Object
-		if (j == object_index)
-			continue;
+	// Reset Container
+	container = { 0 };
 
-		// Else, Copy Object to List
-		new_list[new_list_index] = (*old_list)[j];
-		new_list_index++;
-	}
+	// Store Values Back in Container
+	container.total_object_count = new_object_count;
+	container.object_array = old_object_array;
 
-	// Delete Old List
-	delete[] *old_list;
-
-	// Swap Arrays
-	*old_list = new_list;
-}
-
-void Render::Objects::Level::removeMarkedFromList()
-{
 	// Create New Array of Objects
-	object_count.total_object_count--;
-	Object::Object** new_list = new Object::Object*[object_count.total_object_count];
+	Object::Object** new_list = new Object::Object*[container.total_object_count];
 
 	// Coppy Objects From Old List to New List, Skipping Marked Object
 	short new_list_index = 0;
-	for (int i = 0; i < object_count.total_object_count + 1; i++)
+	for (uint32_t i = 0; i < container.total_object_count + 1; i++)
 	{
 		// Test if Object is Marked
-		if (objects[i]->marked)
+		//if (container.object_array[i]->marked)
+		if (container.object_array[i] == marked_object)
 		{
 			// Delete Object
-			delete objects[i];
+			delete container.object_array[i];
 			continue;
 		}
 
 		// Else, Copy Object
-		new_list[new_list_index] = objects[i];
+		new_list[new_list_index] = container.object_array[i];
 		new_list_index++;
 	}
 
 	// Delete Old List
-	delete[] objects;
+	delete[] container.object_array;
 
 	// Swap Lists
-	objects = new_list;
+	container.object_array = new_list;
+
+	// Segregate Objects
+	segregateObjects();
 }
 
 void Render::Objects::Level::resetObjectPassOver()
 {
 	// General Objects
-	for (int i = 0; i < object_count.total_object_count; i++)
-		objects[i]->skip_selection = false;
+	for (uint32_t i = 0; i < container.total_object_count; i++)
+		container.object_array[i]->skip_selection = false;
 
 	// Entities
 	for (entity_list.it = entity_list.begin(); entity_list.it != entity_list.end(); entity_list.it++)
@@ -1884,9 +1752,7 @@ void Render::Objects::Level::reloadAll()
 	uint16_t index2 = 0;
 	uint16_t index3 = 0;
 	for (int i = 0; i < 9; i++)
-	{
-		sublevels[i]->readLevel(objects, index1, physics_list, entity_list);
-	}
+		sublevels[i]->readLevel(container.object_array, index1, physics_list, entity_list);
 
 	// Segregate Some Objects Into Seperate Arrays
 	segregateObjects();
@@ -1928,22 +1794,22 @@ void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm:
 
 GLuint Render::Objects::Level::returnDirectionalBufferSize()
 {
-	return 96 * object_count.directional_count + 16;
+	return 96 * container.directional_size + 16;
 }
 
 GLuint Render::Objects::Level::returnPointBufferSize()
 {
-	return 80 * object_count.point_count + 16;
+	return 80 * container.point_size + 16;
 }
 
 GLuint Render::Objects::Level::returnSpotBufferSize()
 {
-	return 96 * object_count.spot_count + 16;
+	return 96 * container.spot_size + 16;
 }
 
 GLuint Render::Objects::Level::returnBeamBufferSize()
 {
-	return 96 * object_count.beam_count + 16;
+	return 96 * container.beam_size + 16;
 }
 
 #endif

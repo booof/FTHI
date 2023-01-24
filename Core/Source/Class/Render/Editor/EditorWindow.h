@@ -18,7 +18,8 @@
 
 namespace DataClass
 {
-	class DataClass;
+	class Data_Object;
+	class Data_Terrain;
 }
 
 namespace Shape

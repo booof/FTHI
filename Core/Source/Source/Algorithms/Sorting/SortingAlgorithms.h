@@ -10,6 +10,12 @@ namespace Object::Physics::Rigid
 	struct Named_Node;
 }
 
+// Declaration for Data Classes
+namespace Object
+{
+	class Object;
+}
+
 namespace Algorithms::Sorting
 {
 	// Bubble Sorting Algorithm With Offsets
@@ -106,6 +112,16 @@ namespace Algorithms::Sorting
 	{
 		quickZSortHelper(objects, 0, list_size - 1);
 	}
+
+	// Quick Identifier Sort Partition Function
+	int quickIdentifierSortPartition(Object::Object** objects, int first, int last);
+
+	// Quick Identifier Sort Helper Function
+	void quickIdentifierSortHelper(Object::Object** objects, int first, int last);
+
+	// Quick Identifier Sort
+	// Sorts Based on Object Identifier from Lowest to Highest
+	void quickIdentifierSort(Object::Object** objects, int list_size);
 
 	// Sort an Array of Named Nodes
 	void sortNamedNodes(Object::Physics::Rigid::Named_Node** list, int size);

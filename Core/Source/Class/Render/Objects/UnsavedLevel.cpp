@@ -18,6 +18,7 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		case (Object::Mask::HORIZONTAL_LINE): return new DataClass::Data_FloorMaskHorizontalLine();
 		case (Object::Mask::HORIZONTAL_SLANT): return new DataClass::Data_FloorMaskSlant();
 		case (Object::Mask::HORIZONTAL_SLOPE): return new DataClass::Data_FloorMaskSlope();
+		default: return nullptr;
 		}
 	};
 
@@ -26,6 +27,7 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		{
 		case (Object::Mask::VERTICAL_LINE): return new DataClass::Data_LeftMaskVerticalLine();
 		case (Object::Mask::VERTICAL_CURVE): return new DataClass::Data_LeftMaskCurve();
+		default: return nullptr;
 		}
 	};
 
@@ -34,6 +36,7 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		{
 		case (Object::Mask::VERTICAL_LINE): return new DataClass::Data_RightMaskVerticalLine();
 		case (Object::Mask::VERTICAL_CURVE): return new DataClass::Data_RightMaskCurve();
+		default: return nullptr;
 		}
 	};
 
@@ -43,8 +46,8 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		case (Object::Mask::HORIZONTAL_LINE): return new DataClass::Data_CeilingMaskHorizontalLine();
 		case (Object::Mask::HORIZONTAL_SLANT): return new DataClass::Data_CeilingMaskSlant();
 		case (Object::Mask::HORIZONTAL_SLOPE): return new DataClass::Data_CeilingMaskSlope();
+		default: return nullptr;
 		}
-		return nullptr;
 	};
 
 	auto readTriggers = [&object_identifier]()->DataClass::Data_Object* {
@@ -67,8 +70,8 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		case (Object::Light::POINT): return new DataClass::Data_Point();
 		case (Object::Light::SPOT): return new DataClass::Data_Spot();
 		case (Object::Light::BEAM): return new DataClass::Data_Beam();
+		default: return nullptr;
 		}
-		return nullptr;
 	};
 
 	auto readRigid = [&object_identifier]()->DataClass::Data_Object* {
@@ -80,8 +83,8 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		{
 		case ((int)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS): return new DataClass::Data_SpringMass();
 		case ((int)Object::Physics::SOFT_BODY_TYPES::WIRE): return new DataClass::Data_Wire();
+		default: return nullptr;
 		}
-		return nullptr;
 	};
 
 	auto readHinge = [&object_identifier]()->DataClass::Data_Object* {
@@ -89,8 +92,8 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		{
 		case ((int)Object::Physics::HINGES::ANCHOR): return new DataClass::Data_Anchor();
 		case ((int)Object::Physics::HINGES::HINGE): return new DataClass::Data_Hinge();
+		default: return nullptr;
 		}
-		return nullptr;
 	};
 
 	auto readPhysics = [&object_identifier, &readRigid, &readSoft, &readHinge]()->DataClass::Data_Object* {
@@ -105,8 +108,8 @@ DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t 
 		case ((int)Object::Entity::ENTITY_CONTROLLABLE): return new DataClass::Data_Controllable();
 		case ((int)Object::Entity::ENTITY_INTERACTABLE): return new DataClass::Data_Interactable();
 		case ((int)Object::Entity::ENTITY_DYNAMIC): return new DataClass::Data_Dynamic();
+		default: return nullptr;
 		}
-		return nullptr;
 	};
 
 	std::function<DataClass::Data_Object*()> objects[5] = {readMasks, readTerrain, readLights, readPhysics, readEntities};
@@ -154,6 +157,10 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(LevelInstance&
 	object_file.seekg(0, std::ios::beg);
 	editor_file.seekg(0, std::ios::beg);
 
+	// Read Current Number of Objects from File
+	uint16_t objects_size = 0;
+	object_file.read((char*)&objects_size, sizeof(uint16_t));
+
 	// Objects That Don't Belong
 	struct InvalidObject {
 		DataClass::Data_Object* data_object;
@@ -178,8 +185,8 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(LevelInstance&
 
 		// If Read Object's Position Does Not Match the Current Level,
 		// Find a Way to Transfer Between Unsaved Levels
-		object_x = floor(object->getPosition().x / 128.0f);
-		object_y = floor(object->getPosition().y / 64.0f);
+		object_x = (int16_t)floor(object->getPosition().x / 128.0f);
+		object_y = (int16_t)floor(object->getPosition().y / 64.0f);
 		if (object_x != level_x || object_y != level_y)
 			invalid_location.push_back(InvalidObject(object, object_x, object_y));
 		else
@@ -201,7 +208,7 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(LevelInstance&
 void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, LevelInstance& instance)
 {
 	// Allocate Memory for Active Array
-	*active_objects = new Object::Object*[instance.header.number_of_loaded_objects];
+	*active_objects = new Object::Object*[instance.number_of_loaded_objects];
 	Object::Object** active_array = *active_objects;
 	uint16_t active_index = 0;
 
@@ -439,55 +446,16 @@ void Render::Objects::UnsavedLevel::moveBackwardsThroughChanges(Changes* changes
 	}
 }
 
-Render::Objects::LevelHeader Render::Objects::UnsavedLevel::returnObjectHeader()
+uint16_t Render::Objects::UnsavedLevel::returnObjectHeader()
 {
-	// Temp Code to Set Header
-	instance_with_changes.header = { 0 };
+	instance_with_changes.number_of_loaded_objects = 0;
 	for (DataClass::Data_Object* dobject : instance_with_changes.data_objects)
 	{
 		uint8_t* id = dobject->getObjectIdentifier();
-		if (id[0] == Object::MASK)
-		{
-			if (id[1] == Object::Mask::FLOOR)
-				instance_with_changes.header.floor_count++;
-
-			else if (id[1] == Object::Mask::LEFT_WALL)
-				instance_with_changes.header.left_count++;
-
-			else if (id[1] == Object::Mask::RIGHT_WALL)
-				instance_with_changes.header.right_count++;
-
-			else if (id[1] == Object::Mask::CEILING)
-				instance_with_changes.header.ceiling_count++;
-
-			else if (id[1] == Object::Mask::TRIGGER)
-				instance_with_changes.header.trigger_count++;
-		}
-
-		else if (id[0] == Object::TERRAIN)
-			instance_with_changes.header.terrain_count++;
-
-		else if (id[0] == Object::LIGHT)
-		{
-			if (id[1] == Object::Light::DIRECTIONAL)
-				instance_with_changes.header.directional_count++;
-
-			else if (id[1] == Object::Light::POINT)
-				instance_with_changes.header.point_count++;
-
-			else if (id[1] == Object::Light::SPOT)
-				instance_with_changes.header.spot_count++;
-
-			else if (id[1] == Object::Light::BEAM)
-				instance_with_changes.header.beam_count++;
-		}
-
 		if (id[0] != Object::PHYSICS && id[0] != Object::ENTITY)
-			instance_with_changes.header.number_of_loaded_objects++;
+			instance_with_changes.number_of_loaded_objects++;
 	}
-
-	//return slave_stack.returnInstance()->header;
-	return instance_with_changes.header;
+	return instance_with_changes.number_of_loaded_objects;
 }
 
 void Render::Objects::UnsavedLevel::drawVisualizer()
@@ -508,7 +476,7 @@ void Render::Objects::UnsavedLevel::drawVisualizer()
 void Render::Objects::UnsavedLevel::write(bool& save)
 {
 	// If Unmodified Data is Selected, Don't Do Anything
-	if (selected_unmodified) {}
+	if (selected_unmodified && false) {}
 
 	// Else, Write Currently Selected Instance 
 	else 
@@ -523,6 +491,10 @@ void Render::Objects::UnsavedLevel::write(bool& save)
 		// Open Editor Data File
 		std::ofstream editor_file;
 		editor_file.open(editor_path, std::ios::binary);
+
+		// Write Current Number of Objects to File
+		uint16_t objects_size = (uint16_t)instance_with_changes.data_objects.size();
+		object_file.write((char*)&objects_size, sizeof(uint16_t));
 
 		// Write All Current Data Objects to Files
 		for (DataClass::Data_Object* data_object : instance_with_changes.data_objects)
@@ -587,7 +559,7 @@ void Render::Objects::UnsavedLevel::createChangeAppend(Editor::Selector* selecto
 
 	// Execute Change
 	instance_with_changes.data_objects.push_back(data_object);
-	instance_with_changes.header.number_of_loaded_objects++;
+	instance_with_changes.number_of_loaded_objects++;
 
 	// Store Change in Change List
 	current_change_list->changes.push_back(change);
@@ -618,7 +590,7 @@ void Render::Objects::UnsavedLevel::createChangePop(DataClass::Data_Object* data
 	}
 
 	// Execute Change
-	instance_with_changes.header.number_of_loaded_objects--;
+	instance_with_changes.number_of_loaded_objects--;
 
 	// Store Change in Change List
 	current_change_list->changes.push_back(change);
@@ -666,6 +638,58 @@ void Render::Objects::UnsavedLevel::traverseChangeList(bool backward)
 void Render::Objects::UnsavedLevel::removeChainListInstance()
 {
 	slave_stack.removeRecentInstance();
+}
+
+void Render::Objects::UnsavedLevel::returnMasks(DataClass::Data_Object*** masks, int& masks_size, uint8_t type, DataClass::Data_Object* match)
+{
+	// Initial Iteration: Count the Number of Masks Objects
+	masks_size = 0;
+	for (DataClass::Data_Object* data_object : instance_with_changes.data_objects)
+	{
+		if (data_object->getObjectIdentifier()[0] == Object::MASK && data_object->getObjectIdentifier()[1] == type && data_object != match)
+			masks_size++;
+	}
+
+	// Allocate Memory for Array
+	(*masks) = new DataClass::Data_Object*[masks_size];
+	DataClass::Data_Object** masks_array = *masks;
+
+	// Second Iteration: Send Data Object Into Array
+	int masks_index = 0;
+	for (DataClass::Data_Object* data_object : instance_with_changes.data_objects)
+	{
+		if (data_object->getObjectIdentifier()[0] == Object::MASK && data_object->getObjectIdentifier()[1] == type && data_object != match)
+		{
+			masks_array[masks_index] = data_object;
+			masks_index++;
+		}
+	}
+}
+
+void Render::Objects::UnsavedLevel::returnTerrainObjects(DataClass::Data_Terrain*** terrain_objects, int& terrain_objects_size, uint8_t layer, DataClass::Data_Object* match)
+{
+	// Initial Iteration: Count the Number of Terrain Objects
+	terrain_objects_size = 0;
+	for (DataClass::Data_Object* data_object : instance_with_changes.data_objects)
+	{
+		if (data_object->getObjectIdentifier()[0] == Object::TERRAIN && data_object != match && static_cast<DataClass::Data_Terrain*>(data_object)->getLayer() == layer)
+			terrain_objects_size++;
+	}
+
+	// Allocate Memory for Array
+	(*terrain_objects) = new DataClass::Data_Terrain * [terrain_objects_size];
+	DataClass::Data_Terrain** terrain_objects_array = *terrain_objects;
+
+	// Second Iteration: Send Data Object Into Array
+	int terrain_objects_index = 0;
+	for (DataClass::Data_Object* data_object : instance_with_changes.data_objects)
+	{
+		if (data_object->getObjectIdentifier()[0] == Object::TERRAIN && data_object != match && static_cast<DataClass::Data_Terrain*>(data_object)->getLayer() == layer)
+		{
+			terrain_objects_array[terrain_objects_index] = static_cast<DataClass::Data_Terrain*>(data_object);
+			terrain_objects_index++;
+		}
+	}
 }
 
 Render::Objects::UnsavedLevel::SlaveStack::SlaveStack()

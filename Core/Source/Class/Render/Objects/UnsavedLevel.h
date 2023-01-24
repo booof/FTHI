@@ -27,6 +27,7 @@ namespace Editor
 namespace DataClass
 {
 	class Data_Object;
+	class Data_Terrain;
 }
 
 namespace Shape
@@ -83,13 +84,8 @@ namespace Render::Objects
 		// Instance of Level
 		struct LevelInstance
 		{
-			// The Amount of Times This Instance Appears in Master Stack
-			// Once This Count Reaches 0, This Instance Will be Deleted
-			// Unmodified Instance Will Allways Have an One More Than Is Used In Stack
-			uint8_t master_stack_instances = 1;
-
-			// Header
-			LevelHeader header;
+			// Number of Loaded Objects (Excluding Physics and Entities)
+			uint16_t number_of_loaded_objects = 0;
 			
 			// Array of Object Data
 			std::vector<DataClass::Data_Object*> data_objects;
@@ -176,7 +172,7 @@ namespace Render::Objects
 		bool making_changes = false;
 
 		// Current Change List
-		Changes* current_change_list;
+		Changes* current_change_list = nullptr;
 
 		// The Original Instance of Objects
 		LevelInstance original_instance;
@@ -228,7 +224,7 @@ namespace Render::Objects
 		bool saved = false;
 
 		// Pointer to Active Objects Array
-		Object::Object*** active_objects;
+		Object::Object*** active_objects = nullptr;
 
 		// Initialize Object
 		UnsavedLevel();
@@ -269,8 +265,14 @@ namespace Render::Objects
 		// Remove Instance in Change List
 		void removeChainListInstance();
 
+		// Return Masks of Desired Type
+		void returnMasks(DataClass::Data_Object*** masks, int& masks_size, uint8_t type, DataClass::Data_Object* match);
+
+		// Return Terrain Objects At Layer
+		void returnTerrainObjects(DataClass::Data_Terrain*** terrain_objects, int& terrain_objects_size, uint8_t layer, DataClass::Data_Object* match);
+
 		// Return Object Header
-		LevelHeader returnObjectHeader();
+		uint16_t returnObjectHeader();
 
 		// Draw Object State Visualizer
 		void drawVisualizer();

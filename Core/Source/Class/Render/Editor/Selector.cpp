@@ -5168,15 +5168,15 @@ void Editor::Selector::clampObjects(bool enabled, float(&endpoints)[8], int Type
 void Editor::Selector::clampFloorMasks(float(&endpoints)[8], Render::Objects::UnsavedLevel* unsaved_level, int Type, int i, int extraValue)
 {
 	// Return the Collision Mask Floor Objects From Level
-	Object::Mask::Floor::FloorMask** floor_masks = nullptr;
+	DataClass::Data_Object** floor_masks = nullptr;
 	int floor_masks_size = 0;
-	//unsaved_level->returnFloorMasks(&floor_masks, floor_masks_size, object_index);
+	unsaved_level->returnMasks(&floor_masks, floor_masks_size, Object::Mask::FLOOR, data_object);
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < floor_masks_size; j++)
 	{
 		// Get Current Object
-		Object::Mask::Floor::FloorMask* object = floor_masks[j];
+		Object::Mask::Floor::FloorMask* object = static_cast<Object::Mask::Floor::FloorMask*>(floor_masks[j]->generateObject());
 
 		// Skip Object if Clamp to Clamp is Enabled and Object is Not Clampable
 		if (!(!Global::editor_options->option_clamp_to_clamp || (object->clamp && Global::editor_options->option_clamp_to_clamp)))
@@ -5245,16 +5245,16 @@ void Editor::Selector::clampWallMasksLeft(float(&endpoints)[8], Render::Objects:
 	}
 
 	// Return the Collision Mask Left Wall Objects From Level
-	Object::Mask::Left::LeftMask** left_masks = nullptr;
+	DataClass::Data_Object** left_masks = nullptr;
 	int left_masks_size = 0;
-	//unsaved_level->returnLeftMasks(&left_masks, left_masks_size, object_index);
+	unsaved_level->returnMasks(&left_masks, left_masks_size, Object::Mask::LEFT_WALL, data_object);
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < left_masks_size; j++)
 	{
 		// Get Current Object
 		int iterations = 2;
-		Object::Mask::Left::LeftMask* object = left_masks[j];
+		Object::Mask::Left::LeftMask* object = static_cast<Object::Mask::Left::LeftMask*>(left_masks[j]->generateObject());
 
 		// Skip Object if Clamp to Clamp is Enabled and Object is Not Clampable
 		if (!(!Global::editor_options->option_clamp_to_clamp || (object->clamp && Global::editor_options->option_clamp_to_clamp)))
@@ -5318,16 +5318,16 @@ void Editor::Selector::clampWallMasksRight(float(&endpoints)[8], Render::Objects
 	}
 
 	// Return the Collision Mask Left Wall Objects From Level
-	Object::Mask::Right::RightMask** right_masks = nullptr;
+	DataClass::Data_Object** right_masks = nullptr;
 	int right_masks_size = 0;
-	//unsaved_level->returnRightMasks(&right_masks, right_masks_size, object_index);
+	unsaved_level->returnMasks(&right_masks, right_masks_size, Object::Mask::RIGHT_WALL, data_object);
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < right_masks_size; j++)
 	{
 		// Get Current Object
 		int iterations = 2;
-		Object::Mask::Right::RightMask* object = right_masks[j];
+		Object::Mask::Right::RightMask* object = static_cast<Object::Mask::Right::RightMask*>(right_masks[j]->generateObject());
 
 		// Skip Object if Clamp to Clamp is Enabled and Object is Not Clampable
 		if (!(!Global::editor_options->option_clamp_to_clamp || (object->clamp && Global::editor_options->option_clamp_to_clamp)))
@@ -5385,15 +5385,15 @@ void Editor::Selector::clampWallMasksRight(float(&endpoints)[8], Render::Objects
 void Editor::Selector::clampCeilingMasks(float(&endpoints)[8], Render::Objects::UnsavedLevel* unsaved_level, int Type, int i, int extraValue)
 {
 	// Return the Collision Mask Floor Objects From Level
-	Object::Mask::Ceiling::CeilingMask** ceiling_masks = nullptr;
+	DataClass::Data_Object** ceiling_masks = nullptr;
 	int ceiling_masks_size = 0;
-	//unsaved_level->returnCeilingMasks(&ceiling_masks, ceiling_masks_size, object_index);
+	unsaved_level->returnMasks(&ceiling_masks, ceiling_masks_size, Object::Mask::CEILING, data_object);
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < ceiling_masks_size; j++)
 	{
 		// Get Current Object
-		Object::Mask::Ceiling::CeilingMask* object = ceiling_masks[j];
+		Object::Mask::Ceiling::CeilingMask* object = static_cast<Object::Mask::Ceiling::CeilingMask*>(ceiling_masks[j]->generateObject());
 
 		// Skip Object if Clamp to Clamp is Enabled and Object is Not Clampable
 		if (!(!Global::editor_options->option_clamp_to_clamp || (object->clamp && Global::editor_options->option_clamp_to_clamp)))
@@ -5551,20 +5551,19 @@ void Editor::Selector::clampTerrainHelper(float(&endpoints)[8], Render::Objects:
 	//Global::activate_elusive_breakpoint = true;
 
 	// Get the Terrain Objects to Compare to Based on Layer
-	Object::Terrain::TerrainBase** terrain_objects = nullptr;
+	//Object::Terrain::TerrainBase** terrain_objects = nullptr;
+	DataClass::Data_Terrain** terrain_objects = nullptr;
 	int terrain_objects_size = 0;
-	//unsaved_level->returnTerrainObjects(&terrain_objects, terrain_objects_size, object_identifier[1], object_index);
+	unsaved_level->returnTerrainObjects(&terrain_objects, terrain_objects_size, static_cast<DataClass::Data_Terrain*>(data_object)->getLayer(), data_object);
 
 	// Perform Actual Clamping
 	abstractedClampTerrain(endpoints, midpoints, Type, i, terrain_objects_size, terrain_objects);
 
-	// Delete Terrain Objects
-	for (int i = 0; i < terrain_objects_size; i++)
-		delete terrain_objects[i];
+	// Delete Terrain Objects Array
 	delete[] terrain_objects;
 }
 
-void Editor::Selector::abstractedClampTerrain(float(&endpoints)[8], float(&midpoints)[8], int Type, int i, int max, Object::Terrain::TerrainBase** data)
+void Editor::Selector::abstractedClampTerrain(float(&endpoints)[8], float(&midpoints)[8], int Type, int i, int max, DataClass::Data_Terrain** data)
 {
 	// Transform Current Endpoint Into a Line
 	float slope1, intercept1;
@@ -5594,14 +5593,14 @@ void Editor::Selector::abstractedClampTerrain(float(&endpoints)[8], float(&midpo
 		float* testing_endpoints = 0;
 		int iterations = 0;
 		int second_type = 0;
-		Object::Terrain::TerrainBase* object = data[j];
+		DataClass::Data_Terrain* object = data[j];
 
 		// Skip Object if Clamp to Clamp is Enabled and Object is Not Clampable
-		if (!(!Global::editor_options->option_clamp_to_clamp || (object->clamp && Global::editor_options->option_clamp_to_clamp)))
+		if (!(!Global::editor_options->option_clamp_to_clamp || (object->getEditorData().clamp && Global::editor_options->option_clamp_to_clamp)))
 			continue;
 
 		// Parse Object Shape
-		Shape::Shape* shape = object->returnShapePointer();
+		Shape::Shape* shape = object->getShape();
 		switch (shape->shape)
 		{
 
@@ -5614,17 +5613,17 @@ void Editor::Selector::abstractedClampTerrain(float(&endpoints)[8], float(&midpo
 			float half_width = *temp_rect.pointerToWidth() * 0.5f;
 			float half_height = *temp_rect.pointerToHeight() * 0.5f;
 			testing_endpoints = new float[8] {
-				object->returnPosition().x - half_width, object->returnPosition().y - half_height,
-				object->returnPosition().x + half_width, object->returnPosition().y - half_height,
-				object->returnPosition().x + half_width, object->returnPosition().y + half_height,
-				object->returnPosition().x - half_width, object->returnPosition().y + half_height
+				object->getPosition().x - half_width, object->getPosition().y - half_height,
+				object->getPosition().x + half_width, object->getPosition().y - half_height,
+				object->getPosition().x + half_width, object->getPosition().y + half_height,
+				object->getPosition().x - half_width, object->getPosition().y + half_height
 			};
 
 			Vertices::Visualizer::visualizePoint(testing_endpoints[0], testing_endpoints[1], 1.0f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 			Vertices::Visualizer::visualizePoint(testing_endpoints[2], testing_endpoints[3], 1.0f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 			Vertices::Visualizer::visualizePoint(testing_endpoints[4], testing_endpoints[5], 1.0f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 			Vertices::Visualizer::visualizePoint(testing_endpoints[6], testing_endpoints[7], 1.0f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-			Vertices::Visualizer::visualizePoint(object->returnPosition(), 1.0f, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+			Vertices::Visualizer::visualizePoint(object->getPosition(), 1.0f, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
 			//Global::activate_elusive_breakpoint = true;
 
 			break;
@@ -5639,10 +5638,10 @@ void Editor::Selector::abstractedClampTerrain(float(&endpoints)[8], float(&midpo
 			float half_width = *temp_trap.pointerToWidth() * 0.5f;
 			float half_height = *temp_trap.pointerToHeight() * 0.5f;
 			testing_endpoints = new float[8] {
-				object->returnPosition().x - half_width,                                     object->returnPosition().y - half_height,
-				object->returnPosition().x + half_width,                                     object->returnPosition().y - half_height + *temp_trap.pointerToHeightOffset(),
-				object->returnPosition().x + half_width + *temp_trap.pointerToWidthOffset(), object->returnPosition().y + half_height + *temp_trap.pointerToHeightOffset(),
-				object->returnPosition().x - half_width + *temp_trap.pointerToWidthOffset(), object->returnPosition().y + half_height
+				object->getPosition().x - half_width,                                     object->getPosition().y - half_height,
+				object->getPosition().x + half_width,                                     object->getPosition().y - half_height + *temp_trap.pointerToHeightOffset(),
+				object->getPosition().x + half_width + *temp_trap.pointerToWidthOffset(), object->getPosition().y + half_height + *temp_trap.pointerToHeightOffset(),
+				object->getPosition().x - half_width + *temp_trap.pointerToWidthOffset(), object->getPosition().y + half_height
 			};
 
 			break;
@@ -5655,7 +5654,7 @@ void Editor::Selector::abstractedClampTerrain(float(&endpoints)[8], float(&midpo
 			iterations = 3;
 			second_type = Shape::TRIANGLE;
 			testing_endpoints = new float[6] {
-				object->returnPosition().x, object->returnPosition().y,
+				object->getPosition().x, object->getPosition().y,
 				temp_tri.pointerToSecondPosition()->x, temp_tri.pointerToSecondPosition()->y,
 				temp_tri.pointerToThirdPosition()->x, temp_tri.pointerToThirdPosition()->y,
 			};

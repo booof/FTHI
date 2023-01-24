@@ -471,7 +471,7 @@ namespace Editor
 		void clampTerrainHelper(float(&endpoints)[8], Render::Objects::UnsavedLevel* unsaved_level, int Type, int i, int extraValue);
 
 		// Abstracted Clamp Terrain
-		void abstractedClampTerrain(float(&endpoints)[8], float(&midpoints)[8], int Type, int i, int max, Object::Terrain::TerrainBase** data);
+		void abstractedClampTerrain(float(&endpoints)[8], float(&midpoints)[8], int Type, int i, int max, DataClass::Data_Terrain** data);
 
 		// Function Pointers
 		func c_floor = &Selector::clampFloorMasks;

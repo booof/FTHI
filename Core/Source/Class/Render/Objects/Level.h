@@ -105,20 +105,32 @@ namespace Object
 
 namespace Render::Objects
 {
-	// Number of Loaded Objects
-	struct ObjectCount
+	// Container for Currently Loaded Objects
+	struct ObjectContainer
 	{
-		int total_object_count = 0;
-		short floor_count = 0;
-		short left_count = 0;
-		short right_count = 0;
-		short ceiling_count = 0;
-		short trigger_count = 0;
-		short terrain_count = 0;
-		short directional_count = 0;
-		short point_count = 0;
-		short spot_count = 0;
-		short beam_count = 0;
+		uint32_t total_object_count = 0; // Total Number of Objects Currently Loaded
+		uint16_t floor_size = 0;
+		uint16_t left_wall_size = 0;
+		uint16_t right_wall_size = 0;
+		uint16_t ceiling_size = 0;
+		uint16_t trigger_size = 0;
+		uint16_t terrain_size = 0;
+		uint16_t directional_size = 0;
+		uint16_t point_size = 0;
+		uint16_t spot_size = 0;
+		uint16_t beam_size = 0;
+
+		Object::Object** object_array = nullptr; // The Array of All Objects Together
+		Object::Mask::Floor::FloorMask** floor_start = nullptr;
+		Object::Mask::Left::LeftMask** left_wall_start = nullptr;
+		Object::Mask::Right::RightMask** right_wall_start = nullptr;
+		Object::Mask::Ceiling::CeilingMask** ceiling_start = nullptr;
+		Object::Mask::Trigger::TriggerMask** trigger_start = nullptr;
+		Object::Terrain::TerrainBase** terrain_start = nullptr;
+		Object::Light::Directional::Directional** directional_start = nullptr;
+		Object::Light::Point::Point** point_start = nullptr;
+		Object::Light::Spot::Spot** spot_start = nullptr;
+		Object::Light::Beam::Beam** beam_start = nullptr;
 	};
 
 	// Container for All Objects Currently Being Rendered and Processed
@@ -126,9 +138,6 @@ namespace Render::Objects
 	{
 		// Determines if Initialized
 		bool initialized = false;
-
-		// Global SubLevel
-		//SubLevel global_level;
 
 		// Array of Loaded SubLevels
 		SubLevel* sublevels[9];
@@ -157,35 +166,14 @@ namespace Render::Objects
 		// Physics Texture
 		TextureHandler* physics_textures;
 
-		// General Objects
-		Object::Object** objects;
+		// The Container for All Level Objects
+		ObjectContainer container;
 
 		// Physics Objects
-		//Struct::LinkedList<Object::Physics::PhysicsBase> physics_list;
-		//Object::Physics::PhysicsBase** physics_list;
 		Struct::List<Object::Physics::PhysicsBase> physics_list;
 
 		// Entities
-		//Struct::LinkedList entities_list;
-		//std::vector<Object::Entity::EntityBase*> entity_list;
-		//Object::Entity::EntityBase** entity_list;
 		Struct::List<Object::Entity::EntityBase> entity_list;
-
-		// Collision Masks
-		Object::Mask::Floor::FloorMask** floor_masks;
-		Object::Mask::Left::LeftMask** left_masks;
-		Object::Mask::Right::RightMask** right_masks;
-		Object::Mask::Ceiling::CeilingMask** ceiling_masks;
-		Object::Mask::Trigger::TriggerMask** trigger_masks;
-
-		// Terrain Objects
-		Object::Terrain::TerrainBase** terrain;
-
-		// Lights
-		Object::Light::Directional::Directional** directional_lights;
-		Object::Light::Point::Point** point_lights;
-		Object::Light::Spot::Spot** spot_lights;
-		Object::Light::Beam::Beam** beam_lights;
 
 		// Light Seperators
 		short directional_seperators[7];
@@ -193,11 +181,8 @@ namespace Render::Objects
 		short spot_seperators[7];
 		short beam_seperators[7];
 
-		// Number of Objects
-		ObjectCount object_count;
-
 		// Temporary Index Holder for Adding New Objects
-		ObjectCount temp_index_holder;
+		uint32_t temp_index_holder = 0;
 
 		// Test if SubLevels Should be Reloaded
 		void testReload();
@@ -218,13 +203,13 @@ namespace Render::Objects
 		void reallocateEntities();
 
 		// Reallocate Memory After Level Reload
-		void reallocatePostReload(ObjectCount& object_count_old);
+		void reallocatePostReload(uint32_t old_total_object_count);
 
 		// Helper Reallocate Function
 		template <class Type> uint16_t reallocateHelper(Type*** list, int old_count, int new_count);
 
 		// Reallocate All Memory
-		void reallocateAll(bool del);
+		void reallocateAll(bool del, uint32_t size);
 
 		// Construct Terrain 
 		void constructTerrain();
@@ -285,16 +270,13 @@ namespace Render::Objects
 		bool testSelectorMasks(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test Selector on an Individual Object
-		template <class Type> uint8_t testSelectorOnObject(Type*** object_list, short& count, Editor::Selector& selector, int index, Editor::ObjectInfo& object_info);
+		template <class Type> uint8_t testSelectorOnObject(Type*** object_list, uint16_t& count, Editor::Selector& selector, int index, Editor::ObjectInfo& object_info);
 
 		// Test Selector on an Object List
 		template <class Type> bool testSelectorOnList(Struct::List<Type>& object_list, Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
-		// Remove Object From Sub-List
-		template <class Type> void removeSelectedFromList(Type*** old_list, short& count, short object_index);
-
 		// Remove Object From Primary Object List
-		void removeMarkedFromList();
+		void removeMarkedFromList(Object::Object* marked_object);
 
 		// Reset the Object Pass Over Flag
 		void resetObjectPassOver();

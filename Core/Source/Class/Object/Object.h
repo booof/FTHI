@@ -134,9 +134,6 @@ namespace Object
 		// Return Position of Object
 		virtual glm::vec2 returnPosition() = 0;
 
-		// If True, Object is Marked for Deletion
-		bool marked = false;
-
 		// Temp Debug Function
 		void debug_funct();
 
