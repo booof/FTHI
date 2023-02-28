@@ -22,7 +22,7 @@ Object::Mask::Curve::Curve(CurveData& data_)
 	amplitude = (1.0f + (6.0f / data.width));
 
 	// Calculate X Offset
-	x_offset = (21.0f * data.width - 25.0f) / 30.0f;
+	x_offset = (21.0f * abs(data.width) - 25.0f) / 30.0f;
 }
 
 #ifdef EDITOR

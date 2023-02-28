@@ -12,10 +12,10 @@ void Object::Object::initializeScript(int script)
 void Object::Object::select(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	// Store Data Object in Selector
-	selector.data_object = data_object;
+	selector.highlighted_object = data_object;
 
 	// Store Object Information
-	selector.data_object->info(object_info);
+	selector.highlighted_object->info(object_info);
 
 	// Set Selector to Active Highlight
 	selector.activateHighlighter();

@@ -165,6 +165,9 @@ namespace Render::Objects
 		// Handle an Object Retrun From Selector
 		void handleSelectorReturn(Editor::Selector* selector);
 
+		// Handle the Return of a Single Object From Selector
+		void handleSingleSelectorReturn(DataClass::Data_Object* data_object);
+
 		// Hangle Deletion of an Object From Selector
 		void handleSelectorDelete(Editor::Selector* selector);
 

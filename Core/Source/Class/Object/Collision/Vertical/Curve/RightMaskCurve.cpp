@@ -1,6 +1,5 @@
 #include "RightMaskCurve.h"
 #include "Render/Struct/DataClasses.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Globals.h"
 
@@ -19,7 +18,7 @@ bool Object::Mask::Right::RightMaskCurve::testCollisions(glm::vec2 test_position
 	if ((modified_coordinates.y < test_position.y && y_top > test_position.y) || (modified_coordinates.y > test_position.y && y_top < test_position.y))
 	{
 		// Calculated X-Value
-		float localX = (log((test_position.y - modified_coordinates.y) / slope) / log(amplitude) + x_offset - modified_coordinates.x);
+		float localX = (log((test_position.y - modified_coordinates.y) / slope) / log(amplitude) + x_offset + modified_coordinates.x);
 
 		// Check if Object X intercepts Wall X
 		if (localX + error > test_position.x && localX - 0.01f < test_position.x)

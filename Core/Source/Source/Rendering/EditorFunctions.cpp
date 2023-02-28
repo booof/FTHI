@@ -17,6 +17,9 @@ void Source::Rendering::Editing::edit(Render::Objects::Level* level, Editor::Sel
 	// Memory for Acceleration Timer
 	static glm::vec4 accelerationTimer = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
+	// Set Selector to Disable Highlighting
+	selector->highlighting = false;
+
 	// Test if Engine is Paused
 	if (Global::paused)
 		Source::Listeners::smoothKeyCallbackEditorSimplified(*level->camera, accelerationTimer);
@@ -28,7 +31,7 @@ void Source::Rendering::Editing::edit(Render::Objects::Level* level, Editor::Sel
 			Source::Listeners::SmoothKeyCallback_Editor(*level->camera, *selector, *level, accelerationTimer);
 
 		// If Selector is Inactive, Perform Selecting
-		if (!selector->active && !selector->editing && !selector->force_selector_initialization)
+		if (((!selector->active && !selector->editing) || Global::Keys[GLFW_KEY_LEFT_CONTROL] || Global::Keys[GLFW_KEY_RIGHT_CONTROL]))
 			level->testSelector(*selector, *object_info);
 
 		// If Selecting and Right Click, Activate Editor Window
@@ -74,7 +77,7 @@ void Source::Rendering::Editing::renderEditor(Render::Objects::Level* level, Edi
 		}
 
 		// Test if Selector Highlighter Should be Displayed
-		else if (selector->highlighting)
+		if (selector->highlighting)
 		{
 			selector->blitzHighlighter();
 		}

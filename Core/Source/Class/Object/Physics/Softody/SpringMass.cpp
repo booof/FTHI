@@ -4,7 +4,6 @@
 // Common Functions
 #include "Source/Algorithms/Common/Common.h"
 
-// Selector
 #include "Render/Editor/Selector.h"
 
 // Object Info
@@ -12,7 +11,7 @@
 
 #include "Globals.h"
 
-Object::Physics::Soft::SpringMass::SpringMass(uint32_t& uuid_, ObjectData& data_, std::string& file_name_)
+Object::Physics::Soft::SpringMass::SpringMass(uint32_t& uuid_, ObjectData& data_, std::string& file_name_, DataClass::Data_SpringMass* data_object_)
 {
 	// Store Object Type
 	type = PHYSICS_TYPES::TYPE_SPRING_MASS;
@@ -22,6 +21,7 @@ Object::Physics::Soft::SpringMass::SpringMass(uint32_t& uuid_, ObjectData& data_
 	file_name = file_name_;
 	path = Global::project_resources_path + "/Models/SoftBodies/" + file_name;
 	uuid = uuid_;
+	data_object = data_object_;
 
 	// Store Storage Type
 	storage_type = PHYSICS_COUNT;
@@ -113,12 +113,18 @@ void Object::Physics::Soft::SpringMass::read()
 		if (node_count)
 		{
 			nodes = new Node[node_count + 1]; // +1 is in event selected node is Being Edited
+			data_nodes = new DataClass::Data_SpringMassNode*[node_count];
+			for (int i = 0; i < node_count; i++)
+				data_nodes[i] = new DataClass::Data_SpringMassNode();
 			skip_nodes = new bool[node_count] {0};
 		}
 		file.read((char*)&spring_count, 1);
 		if (spring_count)
 		{
 			springs = new Spring[spring_count];
+			data_springs = new DataClass::Data_SpringMassSpring*[spring_count];
+			for (int i = 0; i < spring_count; i++)
+				data_springs[i] = new DataClass::Data_SpringMassSpring();
 			skip_springs = new bool[spring_count] {0};
 		}
 
@@ -139,17 +145,19 @@ void Object::Physics::Soft::SpringMass::read()
 			// Read Node
 			if (byte == 0)
 			{
-				file.read((char*)&node_data, sizeof(node_data));
-				nodes[node_index] = Node(node_data);
-				nodes[node_index].Position += data.position;
+				data_nodes[node_index]->readObjectData(file);
+				data_nodes[node_index]->storeParent(static_cast<DataClass::Data_SpringMass*>(data_object));
+				nodes[node_index] = Node(data_nodes[node_index]->genNode());
+				//nodes[node_index].Position += data.position;
 				node_index++;
 			}
 
 			// Read Spring
 			else
 			{
-				file.read((char*)&spring_data, sizeof(spring_data));
-				springs[spring_index] = Spring(spring_data);
+				data_springs[spring_index]->readObjectData(file);
+				data_springs[spring_index]->storeParent(static_cast<DataClass::Data_SpringMass*>(data_object));
+				springs[spring_index] = Spring(data_springs[spring_index]->genSpring());
 				max_node_name = (spring_data.Node1 > max_node_name) ? spring_data.Node1 : max_node_name;
 				max_node_name = (spring_data.Node2 > max_node_name) ? spring_data.Node2 : max_node_name;
 				spring_index++;
@@ -193,7 +201,7 @@ glm::vec2 Object::Physics::Soft::SpringMass::returnPosition()
 void Object::Physics::Soft::SpringMass::select3(Editor::Selector& selector)
 {
 	// Update Node Map
-	node_map[selector.node_data.name] = node_count;
+	node_map[static_cast<DataClass::Data_SpringMassNode*>(selector.highlighted_object)->getNodeData().name] = node_count;
 
 	// Store Pointer to Node
 	selector.node_pointer = &nodes[node_count];
@@ -210,7 +218,7 @@ void Object::Physics::Soft::SpringMass::select3(Editor::Selector& selector)
 
 Object::Object* DataClass::Data_SpringMass::genObject()
 {
-	return new Object::Physics::Soft::SpringMass(uuid, data, file_name);
+	return new Object::Physics::Soft::SpringMass(uuid, data, file_name, this);
 }
 
 void DataClass::Data_SpringMass::writeObjectData(std::ofstream& object_file)
@@ -271,4 +279,129 @@ void DataClass::Data_SpringMass::generateInitialValues(glm::vec2& position)
 	data.script = 0;
 	data.material_name = 0;
 	file_name = "NULL";
+}
+
+Object::Object* DataClass::Data_SpringMassNode::genObject()
+{
+	return nullptr;
+}
+
+int& DataClass::Data_SpringMassNode::getScript()
+{
+	return parent->getScript();
+}
+
+glm::vec2& DataClass::Data_SpringMassNode::getPosition()
+{
+	return parent->getPosition();
+}
+
+void DataClass::Data_SpringMassNode::info(Editor::ObjectInfo& object_info)
+{
+}
+
+DataClass::Data_Object* DataClass::Data_SpringMassNode::makeCopy()
+{
+	return this;
+}
+
+DataClass::Data_SpringMassNode::Data_SpringMassNode()
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::PHYSICS;
+	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
+	object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
+}
+
+void DataClass::Data_SpringMassNode::writeObjectData(std::ofstream& object_file)
+{
+
+}
+
+void DataClass::Data_SpringMassNode::readObjectData(std::ifstream& object_file)
+{
+	object_file.read((char*)&node_data, sizeof(node_data));
+}
+
+Object::Physics::Soft::Node DataClass::Data_SpringMassNode::genNode()
+{
+	return Object::Physics::Soft::Node(node_data);
+}
+
+void DataClass::Data_SpringMassNode::storeParent(Data_SpringMass* springmass_object)
+{
+	parent = springmass_object;
+	node_data.position += springmass_object->getPosition();
+}
+
+DataClass::Data_SpringMass* DataClass::Data_SpringMassNode::getParent()
+{
+	return parent;
+}
+
+Object::Physics::Soft::NodeData& DataClass::Data_SpringMassNode::getNodeData()
+{
+	return node_data;
+}
+
+Object::Object* DataClass::Data_SpringMassSpring::genObject()
+{
+	return nullptr;
+}
+
+int& DataClass::Data_SpringMassSpring::getScript()
+{
+	return parent->getScript();
+}
+
+glm::vec2& DataClass::Data_SpringMassSpring::getPosition()
+{
+	return parent->getPosition();
+}
+
+void DataClass::Data_SpringMassSpring::info(Editor::ObjectInfo& object_info)
+{
+}
+
+DataClass::Data_Object* DataClass::Data_SpringMassSpring::makeCopy()
+{
+	return this;
+}
+
+DataClass::Data_SpringMassSpring::Data_SpringMassSpring()
+{
+	// Set Object Identifier
+	object_identifier[0] = Object::PHYSICS;
+	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::SOFT_BODY;
+	object_identifier[2] = (uint8_t)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS;
+}
+
+void DataClass::Data_SpringMassSpring::writeObjectData(std::ofstream& object_file)
+{
+
+}
+
+void DataClass::Data_SpringMassSpring::readObjectData(std::ifstream& object_file)
+{
+	object_file.read((char*)&spring_data, sizeof(spring_data));
+}
+
+Object::Physics::Soft::Spring DataClass::Data_SpringMassSpring::genSpring()
+{
+	return spring_data;
+}
+
+void DataClass::Data_SpringMassSpring::storeParent(Data_SpringMass* springmass_object)
+{
+	parent = springmass_object;
+}
+
+DataClass::Data_SpringMass* DataClass::Data_SpringMassSpring::getParent()
+{
+	return parent;
+}
+
+Object::Physics::Soft::Spring& DataClass::Data_SpringMassSpring::getSpringData()
+{
+	return spring_data;
 }

@@ -811,6 +811,102 @@ namespace DataClass
 		void generateInitialValues(glm::vec2& position);
 	};
 
+	// SpringMass Node Object
+	class Data_SpringMassNode : public Data_Object
+	{
+		// Pointer to Parent Object
+		Data_SpringMass* parent;
+
+		// Node Data of Object
+		Object::Physics::Soft::NodeData node_data;
+
+		// Function to Read Data and Create an Object
+		Object::Object* genObject();
+
+		// Get the Script of an Object
+		int& getScript();
+
+		// Get the Position of an Object
+		glm::vec2& getPosition();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
+	public:
+
+		// SpringMass Node Data
+		Data_SpringMassNode();
+
+		// Function to Write Data to File
+		void writeObjectData(std::ofstream& object_file);
+
+		// Function to Read Data From File
+		void readObjectData(std::ifstream& object_file);
+
+		// Function to Generate the Node Object
+		Object::Physics::Soft::Node genNode();
+
+		// Function to Store Parent SpringMass Object
+		void storeParent(Data_SpringMass* springmass_object);
+
+		// Function to Retrieve the Parent SpringMass Object
+		Data_SpringMass* getParent();
+
+		// Function to Get the Node Data
+		Object::Physics::Soft::NodeData& getNodeData();
+	};
+
+	// SpringMass Node Object
+	class Data_SpringMassSpring : public Data_Object
+	{
+		// Pointer to Parent Object
+		Data_SpringMass* parent;
+
+		// Spring Data of Object
+		Object::Physics::Soft::Spring spring_data;
+
+		// Function to Read Data and Create an Object
+		Object::Object* genObject();
+
+		// Get the Script of an Object
+		int& getScript();
+
+		// Get the Position of an Object
+		glm::vec2& getPosition();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
+	public:
+
+		// SpringMass Spring Data
+		Data_SpringMassSpring();
+
+		// Function to Write Data to File
+		void writeObjectData(std::ofstream& object_file);
+
+		// Function to Read Data From File
+		void readObjectData(std::ifstream& object_file);
+
+		// Function to Generate the Spring Object
+		Object::Physics::Soft::Spring genSpring();
+
+		// Function to Store Parent SpringMass Object
+		void storeParent(Data_SpringMass* springmass_object);
+
+		// Function to Retrieve the Parent SpringMass Object
+		Data_SpringMass* getParent();
+
+		// Function to Get the Spring Data
+		Object::Physics::Soft::Spring& getSpringData();
+	};
+
 	// Wire Physics Object
 	class Data_Wire : public Data_SubObject, public Data_UUID
 	{

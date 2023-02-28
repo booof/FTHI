@@ -1,6 +1,5 @@
 #include "RightMaskLine.h"
 #include "Render/Struct/DataClasses.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Globals.h"
 
@@ -16,10 +15,10 @@ glm::vec2 Object::Mask::Right::RightMaskLine::returnPosition()
 bool Object::Mask::Right::RightMaskLine::testCollisions(glm::vec2 test_position, float error)
 {
 	// Check if Object is Between Y Values
-	if (data.position.y < test_position.y && y_top > test_position.y)
+	if (y_bottom < test_position.y && y_top > test_position.y)
 	{
 		// Check if Object is Between X Values
-		if (data.position.x + error > data.position.x && data.position.x - 0.01f < test_position.x)
+		if (data.position.x + error > test_position.x && data.position.x - 0.01f < test_position.x)
 		{
 			return true;
 		}

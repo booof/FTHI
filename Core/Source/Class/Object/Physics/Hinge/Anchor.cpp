@@ -7,9 +7,6 @@
 // Vertices
 #include "Source/Vertices/Rectangle/RectangleVertices.h"
 
-// Selector
-#include "Render/Editor/Selector.h"
-
 // Object Info
 #include "Render/Editor/ObjectInfo.h"
 

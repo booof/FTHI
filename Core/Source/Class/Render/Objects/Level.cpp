@@ -1129,8 +1129,7 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 		{
 			// Get Reference to Object
 			Object::Physics::Soft::SpringMass& object = *static_cast<Object::Physics::Soft::SpringMass*>(&*(physics_list.it));
-			selector.springmass_node_modified = false;
-			selector.springmass_spring_modified = false;
+			selector.add_child_object = Editor::CHILD_OBJECT_TYPES::NONE;
 
 			// Test if Object is Locked or Marked to Pass Over
 			if (object.lock || object.skip_selection)
@@ -1235,16 +1234,16 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						Global::Selected_Cursor = Global::CURSORS::HAND;
 
 						// Select Spring
-						selector.spring_data = object.springs[i];
-						selector.spring_data.Node1 = object.nodes[object.springs[i].Node1].Name;
-						selector.spring_data.Node2 = object.nodes[object.springs[i].Node2].Name;
-						selector.springmass_node_modified = false;
-						selector.springmass_spring_modified = true;
+						selector.add_child_object = Editor::CHILD_OBJECT_TYPES::SPRINGMASS_SPRING;
+						//selector.spring_data.Node1 = object.nodes[object.springs[i].Node1].Name;
+						//selector.spring_data.Node2 = object.nodes[object.springs[i].Node2].Name;
 						selector.object_index = 0;
-						selector.data_object = object_pointer->data_object;
-						selector.connection_pos_left = node_pos_1;
-						selector.connection_pos_right = node_pos_2;
+						//selector.data_objects.push_back(object_pointer->data_object);
+						selector.highlighted_object = object.data_springs[i];
+						selector.temp_connection_pos_left = node_pos_1;
+						selector.temp_connection_pos_right = node_pos_2;
 						selector.activateHighlighter();
+						selector.highlighting = true;
 						object_info.clearAll();
 						object_info.setObjectType("SpringMass Spring", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 						object_info.addDoubleValue("Nodes: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "L: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " R: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &object.nodes[object.springs[i].Node1].Name, &object.nodes[object.springs[i].Node2].Name, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), true);
@@ -1261,6 +1260,9 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						if (Global::LeftClick)
 						{
 							Global::LeftClick = false;
+
+							// Select Spring
+							selector.unadded_data_objects.push_back(object.data_springs[i]);
 
 							// Copy File Data Into Stream
 							std::stringstream file_stream;
@@ -1326,8 +1328,9 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 							// Enable Selector for Editing
 							selector.active = true;
 							selector.editing = false;
-							selector.data_object = object.data_object;
-							selector.readSpringMassFile();
+							//selector.data_objects.push_back(object.data_object);
+							//selector.unadded_data_objects.push_back(selector.highlighted_object);
+							//selector.readSpringMassFile();
 
 							//return true;
 						}
@@ -1363,17 +1366,17 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 					Global::Selected_Cursor = Global::CURSORS::HAND;
 
 					// Select Node
-					selector.node_data.position = object.nodes[i].Position;
-					selector.node_data.mass = object.nodes[i].Mass;
-					selector.node_data.health = object.nodes[i].Health;
-					selector.node_data.material = object.nodes[i].material;
-					selector.node_data.radius = object.nodes[i].Radius;
-					selector.node_data.name = object.nodes[i].Name;
-					selector.springmass_node_modified = true;
-					selector.springmass_spring_modified = false;
+					selector.add_child_object = Editor::CHILD_OBJECT_TYPES::SPRINGMASS_NODE;
+					//selector.node_data.position = object.nodes[i].Position;
+					//selector.node_data.mass = object.nodes[i].Mass;
+					//selector.node_data.health = object.nodes[i].Health;
+					//selector.node_data.material = object.nodes[i].material;
+					//selector.node_data.radius = object.nodes[i].Radius;
+					//selector.node_data.name = object.nodes[i].Name;
 					selector.object_index = 0;
-					selector.data_object = object_pointer->data_object;
+					selector.highlighted_object = object.data_nodes[i];
 					selector.activateHighlighter();
+					selector.highlighting = true;
 					object_info.clearAll();
 					object_info.setObjectType("SpringMass Node", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 					object_info.addSingleValue("Index: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object.nodes[i].Name, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), true);
@@ -1383,6 +1386,9 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 					if (Global::LeftClick)
 					{
 						Global::LeftClick = false;
+
+						// Select Node
+						selector.unadded_data_objects.push_back(object.data_nodes[i]);
 
 						//return true;
 
@@ -1450,7 +1456,8 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						// Enable Selector for Editing
 						selector.active = true;
 						selector.editing = false;
-						selector.data_object = object.data_object;
+						//selector.data_objects.push_back(object.data_object);
+						//selector.unadded_data_objects.push_back(selector.highlighted_object);
 					}
 
 					return true;
@@ -1552,6 +1559,7 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Type*** object_list, uint16
 		// If Object is Not Currently Selected, Set Highlighter Visualizer
 		if (selector.object_index != object.object_index)
 			temp_list[index]->select(selector, object_info);
+		selector.highlighting = true;
 
 		// If Left Click, Select Object
 		if (Global::LeftClick)
@@ -1569,7 +1577,7 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Type*** object_list, uint16
 			object_info.clearAll();
 
 			// Make a Copy of the Data Class
-			selector.data_object = selector.data_object->makeCopy();
+			selector.unadded_data_objects.push_back(selector.highlighted_object->makeCopy());
 
 			return 2;
 		}
@@ -1617,6 +1625,7 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 			// If Object is Not Currently Selected, Set Highlighter Visualizer
 			if (selector.object_index != object.object_index)
 				object.select(selector, object_info);
+			selector.highlighting = true;
 
 			// If Left Click, Select Object
 			if (Global::LeftClick)
@@ -1634,7 +1643,7 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 				object_info.clearAll();
 
 				// Make a Copy of the Data Class
-				selector.data_object = selector.data_object->makeCopy();
+				selector.unadded_data_objects.push_back(selector.highlighted_object->makeCopy());
 
 				return true;
 			}
@@ -1786,7 +1795,7 @@ void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm:
 	selector.level_of_origin = change_controller->getUnsavedLevel((int)coords.x, (int)coords.y, 0);
 
 	// Remove Object from Unsaved Level
-	selector.level_of_origin->createChangePop(selector.data_object);
+	selector.level_of_origin->createChangePop(selector.highlighted_object);
 
 	// Set Originated From Level Flag to True
 	selector.originated_from_level = true;

@@ -1,6 +1,5 @@
 #include "Interactables.h"
 #include "Render/Struct/DataClasses.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 
 Object::Entity::Interactables::Interactables(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, InteractableData& interactable_) : EntityBase(uuid_, entity_, data_)

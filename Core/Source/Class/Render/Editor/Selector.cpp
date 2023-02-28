@@ -88,12 +88,12 @@ bool operator< (const Object::Physics::Soft::NodeData& node1, const Object::Phys
 Editor::Selector::Selector()
 {
 	// Generate Vertex Objects for Object
-	glGenVertexArrays(1, &objectVAO);
-	glGenBuffers(1, &objectVBO);
+	glGenVertexArrays(1, &highlighted_vertex_objects.objectVAO);
+	glGenBuffers(1, &highlighted_vertex_objects.objectVBO);
 
 	// Generate Vertex Object for Outline
-	glGenVertexArrays(1, &outlineVAO);
-	glGenBuffers(1, &outlineVBO);
+	glGenVertexArrays(1, &highlighted_vertex_objects.outlineVAO);
+	glGenBuffers(1, &highlighted_vertex_objects.outlineVBO);
 
 	// Generate Vertex Object for Pivot
 	genPivotVertices();
@@ -104,19 +104,50 @@ Editor::Selector::Selector()
 	// Initialize Window
 	initializeWindow();
 	genBackground();
+
+	// Generate Vertex Object for Group Selector
+	glGenVertexArrays(1, &group_selector.outlineVAO);
+	glGenBuffers(1, &group_selector.outlineVBO);
+
+	// Bind Group Vertex Objects
+	glBindVertexArray(group_selector.outlineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, group_selector.outlineVBO);
+
+	// Enable Position Vertices for Group VAO
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(0));
+	glEnableVertexAttribArray(0);
+
+	// Enable Color Vertices for Group VBO
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(3 * sizeof(GL_FLOAT)));
+	glEnableVertexAttribArray(1);
+
+	// Unbind Vertex Objects
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	// Store Group Selector Resizing Pointer
+	Selected_Object::group_selector = &group_selector;
+
+	// Set Selected Object Initial Values
+	Selected_Object::moving = false;
+	Selected_Object::resizing = false;
+	Selected_Object::mouse_intersects_object = false;
+	Selected_Object::genSelectorVertices = [this](DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)->void { genSelectorVertices(data_object, vertex_objects); };
+	Selected_Object::sortVertices = [this](bool enable_rotation, Selected_Object* selected_object)->void { sortVertices(enable_rotation, selected_object); };
+	Selected_Object::storeTempConnectionPos = [this](glm::vec2& left, glm::vec2& right)->void {setTempConnectionPos(left, right); };
 }
 
 void Editor::Selector::activateHighlighter()
 {
 	// Allocate Memory for Selector Vertices
-	allocateSelectorVertices(data_object);
+	allocateSelectorVertices(highlighted_object, highlighted_vertex_objects);
 
 	// Generate Selector Vertices
-	genSelectorVertices(data_object);
+	genSelectorVertices(highlighted_object, highlighted_vertex_objects);
 
 	// Bind Outline Vertex Objects
-	glBindVertexArray(outlineVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+	glBindVertexArray(highlighted_vertex_objects.outlineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, highlighted_vertex_objects.outlineVBO);
 
 	// Enable Position Vertices for Outline VAO
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(0));
@@ -133,17 +164,8 @@ void Editor::Selector::activateHighlighter()
 
 void Editor::Selector::updateSelector()
 {
-	// If Initialization is Forced, Initialize Selector
-	if (force_selector_initialization)
-	{
-		editing = true;
-		active = true;
-		force_selector_initialization = false;
-		initializeSelector();
-	}
-
-	// If Active and Not Editing, Initialize Selector
-	else if (!editing && active)
+	// If Objects are Queued for Selection, Integrate into Selector
+	if (!unadded_data_objects.empty())
 		initializeSelector();
 
 	// If Editing, Edit Object
@@ -154,87 +176,102 @@ void Editor::Selector::updateSelector()
 void Editor::Selector::blitzSelector()
 {
 	// Draw Object
-	
-	// Object is a Object With Color and Texture
-	if (visualize_object)
+	for (Selected_Object* selected_object : selected_objects)
 	{
-		// Bind Object Shader
-		Global::objectShaderStatic.Use();
+		// Get Rendering Data
+		Selected_VertexObjects& vertex_objects = selected_object->vertex_objects;
 
-		// Send Matrix to Shader
-		//glm::mat4 matrix = level->returnProjectionViewMatrix(4) * model;
-		//glUniformMatrix4fv(Global::objectStaticMatrixLoc, 1, GL_FALSE, glm::value_ptr(matrix));
-		Global::modelLocObjectStatic = glGetUniformLocation(Global::objectShaderStatic.Program, "model");
-		glUniformMatrix4fv(Global::modelLocObjectStatic, 1, GL_FALSE, glm::value_ptr(model));
-		glUniform4f(glGetUniformLocation(Global::objectShaderStatic.Program, "view_pos"), level->camera->Position.x, level->camera->Position.y, 0.0f, 0.0f);
-		//glUniform1f(glGetUniformLocation(Global::objectShaderStatic.Program, "material.shininess"), 1.0);
+		// Object is a Object With Color and Texture
+		if (selected_object->vertex_objects.visualize_object)
+		{
+			// Bind Object Shader
+			Global::objectShaderStatic.Use();
 
-		// Draw Object
-		glBindVertexArray(objectVAO);
-		glDrawArrays(GL_TRIANGLES, 0, object_vertex_count);
-		glBindVertexArray(0);
-	}
+			// Send Matrix to Shader
+			//glm::mat4 matrix = level->returnProjectionViewMatrix(4) * model;
+			//glUniformMatrix4fv(Global::objectStaticMatrixLoc, 1, GL_FALSE, glm::value_ptr(matrix));
+			Global::modelLocObjectStatic = glGetUniformLocation(Global::objectShaderStatic.Program, "model");
+			glUniformMatrix4fv(Global::modelLocObjectStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
+			glUniform4f(glGetUniformLocation(Global::objectShaderStatic.Program, "view_pos"), level->camera->Position.x, level->camera->Position.y, 0.0f, 0.0f);
+			//glUniform1f(glGetUniformLocation(Global::objectShaderStatic.Program, "material.shininess"), 1.0);
 
-	// Object is Composed of Lines
-	else if (visualize_lines)
-	{
-		// Bind Static Color Shader
+			// Draw Object
+			glBindVertexArray(vertex_objects.objectVAO);
+			glDrawArrays(GL_TRIANGLES, 0, vertex_objects.object_vertex_count);
+			glBindVertexArray(0);
+		}
+
+		// Object is Composed of Lines
+		else if (vertex_objects.visualize_lines)
+		{
+			// Bind Static Color Shader
+			Global::colorShaderStatic.Use();
+			glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
+
+			// Draw Object
+			glBindVertexArray(vertex_objects.objectVAO);
+			glDrawArrays(GL_LINES, 0, vertex_objects.object_vertex_count);
+			glBindVertexArray(0);
+		}
+
+		// Object Only Has a Texture
+		else if (vertex_objects.visualize_texture)
+		{
+			// Bind Static Texture Shader
+			Global::texShaderStatic.Use();
+			glUniformMatrix4fv(Global::modelLocTextureStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
+
+			// Load Texture
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, texture.texture);
+
+			// Draw Object
+			glBindVertexArray(vertex_objects.objectVAO);
+			glDrawArrays(GL_TRIANGLES, 0, vertex_objects.object_vertex_count);
+			glBindVertexArray(0);
+		}
+
+		// Object Only Has a Color
+		else
+		{
+			// Bind Static Color Shader
+			Global::colorShaderStatic.Use();
+			glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
+
+			// Draw Object
+			glBindVertexArray(vertex_objects.objectVAO);
+			glDrawArrays(GL_TRIANGLES, 0, vertex_objects.object_vertex_count);
+			glBindVertexArray(0);
+		}
+
+		// Draw Highlighter
+
+		// Bind Highlighter Shader
 		Global::colorShaderStatic.Use();
-		glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
 
-		// Draw Object
-		glBindVertexArray(objectVAO);
-		glDrawArrays(GL_LINES, 0, object_vertex_count);
+		// Draw Highllighter
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glDrawArrays(GL_LINES, 0, vertex_objects.outline_vertex_count);
 		glBindVertexArray(0);
 	}
-
-	// Object Only Has a Texture
-	else if (visualize_texture)
-	{
-		// Bind Static Texture Shader
-		Global::texShaderStatic.Use();
-		glUniformMatrix4fv(Global::modelLocTextureStatic, 1, GL_FALSE, glm::value_ptr(model));
-
-		// Load Texture
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, texture.texture);
-
-		// Draw Object
-		glBindVertexArray(objectVAO);
-		glDrawArrays(GL_TRIANGLES, 0, object_vertex_count);
-		glBindVertexArray(0);
-	}
-
-	// Object Only Has a Color
-	else
-	{
-		// Bind Static Color Shader
-		Global::colorShaderStatic.Use();
-
-		// Draw Object
-		glBindVertexArray(objectVAO);
-		glDrawArrays(GL_TRIANGLES, 0, object_vertex_count);
-		glBindVertexArray(0);
-	}
-
-	// Draw Highlighter
-
-	// Bind Highlighter Shader
-	Global::colorShaderStatic.Use();
-	glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(model));
-
-	// Draw Highllighter
-	glBindVertexArray(outlineVAO);
-	glDrawArrays(GL_LINES, 0, outline_vertex_count);
-	glBindVertexArray(0);
 
 	// Draw Pivot, if Enabled
-	if (rotating)
+	if (Selected_Object::rotating)
 	{
 		glm::mat4 pivot_model = glm::translate(glm::mat4(1.0f), glm::vec3(pivot.x, pivot.y, 0.0f));
 		glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(pivot_model));
 		glBindVertexArray(pivotVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 30);
+		glBindVertexArray(0);
+	}
+
+	// Draw Group Selector, If Enabled
+	if (selected_objects.size() > 1)
+	{
+		glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(group_selector.model));
+		glBindVertexArray(group_selector.outlineVAO);
+		glDrawArrays(GL_LINES, 0, 8);
 		glBindVertexArray(0);
 	}
 }
@@ -243,11 +280,11 @@ void Editor::Selector::blitzHighlighter()
 {
 	// Bind Highlighter Shader
 	Global::colorShaderStatic.Use();
-	glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(highlighted_vertex_objects.model));
 
 	// Draw Highllighter
-	glBindVertexArray(outlineVAO);
-	glDrawArrays(GL_LINES, 0, outline_vertex_count);
+	glBindVertexArray(highlighted_vertex_objects.outlineVAO);
+	glDrawArrays(GL_LINES, 0, highlighted_vertex_objects.outline_vertex_count);
 	glBindVertexArray(0);
 }
 
@@ -259,26 +296,48 @@ void Editor::Selector::deselectObject()
 	highlighting = false;
 
 	// Clamp Objects, if Needed
-	clampBase();
+	for (Selected_Object* selected_object : selected_objects)
+		clampBase(selected_object);
 
-	// Sort Vertices, if Needed
-	//sortVertices(false);
+	// Handle the Desselection of Any Nodes
+	for (int i = 0; i < selected_objects.size(); i++)
+	{
+		if (selected_objects.at(i)->editing_shape == SPRINGMASS_NODE)
+		{
+			deselectNode(static_cast<Selected_SpringMassNode*>(selected_objects.at(i)));
+			selected_objects.erase(selected_objects.begin() + i);
+			data_objects.erase(data_objects.begin() + i);
+			i--;
+		}
+
+		else if (selected_objects.at(i)->editing_shape == SPRINGMASS_SPRING)
+		{
+			deselectSpring(static_cast<Selected_SpringMassSpring*>(selected_objects.at(i)));
+			selected_objects.erase(selected_objects.begin() + i);
+			data_objects.erase(data_objects.begin() + i);
+			i--;
+		}
+	}
 
 	// Return the Object
 	change_controller->handleSelectorReturn(this);
 
 	// Delete the Selected Object Container
-	delete selected_object;
+	for (Selected_Object* selected_object : selected_objects)
+		delete selected_object;
+	selected_objects.clear();
 
 	// Reset Some Variables
 	originated_from_level = false;
+	add_child_object = CHILD_OBJECT_TYPES::NONE;
+	add_child = false;
 	object_index = 0;
-	lighting_object = false;
-	springmass_node_modified = false;
-	springmass_spring_modified = false;
+
+	// Erase Data Objects
+	data_objects.clear();
 }
 
-void Editor::Selector::deselectNode()
+void Editor::Selector::deselectNode(Selected_SpringMassNode* selected_object)
 {
 	// Reset Connected List if Needed
 	if (connected_limbs_count)
@@ -288,7 +347,13 @@ void Editor::Selector::deselectNode()
 	}
 
 	// Get SpringMass File Name
-	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
+	std::string& file_name = static_cast<DataClass::Data_SpringMassNode*>(selected_object->data_object)->getParent()->getFile();
+
+	// Get Node Data
+	Object::Physics::Soft::NodeData& node_data = static_cast<DataClass::Data_SpringMassNode*>(selected_object->data_object)->getNodeData();
+
+	// Make Position of Node Relative to Object
+	static_cast<DataClass::Data_SpringMassNode*>(selected_object->data_object)->getNodeData().position -= static_cast<DataClass::Data_SpringMassNode*>(selected_object->data_object)->getParent()->getPosition();
 
 	// Copy File Data Into Stream
 	std::stringstream file_stream;
@@ -345,7 +410,7 @@ void Editor::Selector::deselectNode()
 	out_file.close();
 
 	// Reset Add Child Node Flag
-	add_child_object = false;
+	add_child_object = CHILD_OBJECT_TYPES::NONE;
 
 	// Reset Some Variables
 	active = false;
@@ -353,16 +418,19 @@ void Editor::Selector::deselectNode()
 	highlighting = false;
 	originated_from_level = false;
 	object_index = 0;
-	lighting_object = false;
 	uuid = 0;
-	springmass_node_modified = false;
-	springmass_spring_modified = false;
+
+	// Erase Data Objects
+	//data_objects.clear();
 }
 
-void Editor::Selector::deselectSpring()
+void Editor::Selector::deselectSpring(Selected_SpringMassSpring* selected_object)
 {
 	// Get SpringMass File Name
-	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
+	std::string& file_name = static_cast<DataClass::Data_SpringMassSpring*>(selected_object->data_object)->getParent()->getFile();
+
+	// Get Node Data
+	Object::Physics::Soft::Spring& spring_data = static_cast<DataClass::Data_SpringMassSpring*>(selected_object->data_object)->getSpringData();
 
 	// Copy File Data Into Stream
 	std::stringstream file_stream;
@@ -386,7 +454,6 @@ void Editor::Selector::deselectSpring()
 	out_file.put(temp_byte);
 
 	// Write Rest of File
-	//out_file << file_stream.rdbuf();
 	while (!file_stream.eof())
 	{
 		file_stream.read(&temp_byte, 1);
@@ -403,7 +470,7 @@ void Editor::Selector::deselectSpring()
 	out_file.close();
 
 	// Reset Add Child Node Flag
-	add_child_object = false;
+	add_child_object = CHILD_OBJECT_TYPES::NONE;
 
 	// Reset Some Variables
 	active = false;
@@ -411,19 +478,16 @@ void Editor::Selector::deselectSpring()
 	highlighting = false;
 	originated_from_level = false;
 	object_index = 0;
-	lighting_object = false;
 	uuid = 0;
-	springmass_node_modified = false;
-	springmass_spring_modified = false;
 
 	// Delete the Node Array
-	delete[] node_list;
+	delete[] selected_object->node_list;
 }
 
-void Editor::Selector::readSpringMassFile()
+void Editor::Selector::readSpringMassFile(Selected_SpringMassSpring* selected_object)
 {
 	// Get SpringMass File Name
-	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
+	std::string& file_name = static_cast<DataClass::Data_SpringMassSpring*>(selected_object->data_object)->getParent()->getFile();
 
 	// Open File
 	std::ifstream temp_file;
@@ -432,18 +496,18 @@ void Editor::Selector::readSpringMassFile()
 	// Determine the Number of Nodes
 	uint8_t temp_byte = 0;
 	uint8_t node_iterator = 0;
-	temp_file.read((char*)&node_count, 1);
+	temp_file.read((char*)&selected_object->node_count, 1);
 	temp_file.read((char*)&temp_byte, 1);
 
 	// Allocate Memory for Nodes
-	node_list = new Object::Physics::Soft::NodeData[node_count];
+	selected_object->node_list = new Object::Physics::Soft::NodeData[selected_object->node_count];
 
 	// Temp Data to Read To
 	Object::Physics::Soft::NodeData temp_node_data;
 	Object::Physics::Soft::Spring temp_spring_data;
 
 	// Reset Node Count
-	node_count = 0;
+	selected_object->node_count = 0;
 
 	// Read Rest of File
 	while (!temp_file.eof())
@@ -459,9 +523,9 @@ void Editor::Selector::readSpringMassFile()
 		if (temp_byte == 0)
 		{
 			temp_file.read((char*)&temp_node_data, sizeof(Object::Physics::Soft::NodeData));
-			temp_node_data.position += static_cast<DataClass::Data_SpringMass*>(data_object)->getObjectData().position;
-			node_list[node_count] = temp_node_data;
-			node_count++;
+			temp_node_data.position += static_cast<DataClass::Data_SpringMassSpring*>(selected_object->data_object)->getParent()->getObjectData().position;
+			selected_object->node_list[selected_object->node_count] = temp_node_data;
+			selected_object->node_count++;
 		}
 
 		// Read Spring Into Dummy Var
@@ -482,20 +546,24 @@ void Editor::Selector::readHingeFile()
 void Editor::Selector::moveWithCamera(Render::Camera::Camera& camera, uint8_t direction)
 {
 	// If Resizing or Not Moving, Don't Move Object
-	if (resizing || !moving)
+	if (Selected_Object::resizing || !Selected_Object::moving)
 		return;
 
 	// The Distance to Move the Object
 	float distance = Constant::SPEED * Global::deltaTime;
 
-	// Process Movements
-	if (direction == NORTH) { *selected_object->object_y += distance * camera.accelerationY; }
-	if (direction == SOUTH) { *selected_object->object_y -= distance * camera.accelerationY; }
-	if (direction == EAST) { *selected_object->object_x -= distance * camera.accelerationL; }
-	if (direction == WEST) { *selected_object->object_x += distance * camera.accelerationR; }
+	// Update for Each Selected Object
+	for (Selected_Object* selected_object : selected_objects)
+	{
+		// Process Movements
+		if (direction == NORTH) { *selected_object->object_y += distance * camera.accelerationY; }
+		if (direction == SOUTH) { *selected_object->object_y -= distance * camera.accelerationY; }
+		if (direction == EAST) { *selected_object->object_x -= distance * camera.accelerationL; }
+		if (direction == WEST) { *selected_object->object_x += distance * camera.accelerationR; }
 
-	// Update Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_object->object_x, *selected_object->object_y, 0.0f));
+		// Update Model Matrix
+		selected_object->vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_object->object_x, *selected_object->object_y, 0.0f));
+	}
 }
 
 void Editor::Selector::moveWithArrowKeys(uint8_t direction)
@@ -505,29 +573,29 @@ void Editor::Selector::moveWithArrowKeys(uint8_t direction)
 		return;
 
 	// If Resizing, Don't Move Object
-	if (resizing)
+	if (Selected_Object::resizing)
 		return;
 
 	// The Distance to Move the Object
 	float distance = Global::editor_options->option_shift_speed * Global::deltaTime;
 
-	// Process Movements
-	if (direction == NORTH) { *selected_object->object_y += distance; }
-	if (direction == SOUTH) { *selected_object->object_y -= distance; }
-	if (direction == EAST) { *selected_object->object_x += distance; }
-	if (direction == WEST) { *selected_object->object_x -= distance; }
+	// Update for Each Selected Object
+	for (Selected_Object* selected_object : selected_objects)
+	{
+		// Process Movements
+		if (direction == NORTH) { *selected_object->object_y += distance; }
+		if (direction == SOUTH) { *selected_object->object_y -= distance; }
+		if (direction == EAST) { *selected_object->object_x += distance; }
+		if (direction == WEST) { *selected_object->object_x -= distance; }
 
-	// Update Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_object->object_x, *selected_object->object_y, 0.0f));
+		// Update Model Matrix
+		selected_object->vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_object->object_x, *selected_object->object_y, 0.0f));
+	}
 }
 
 void Editor::Selector::stopResizing()
 {
-	change_horizontal = 0;
-	change_vertical = 0;
-	selected_vertex = 0;
-	mouse_angle = 0.0f;
-	moving = false;
+	Selected_Object::moving = false;
 	Global::LeftClick = false;
 }
 
@@ -545,11 +613,6 @@ void Editor::Selector::clear()
 	// Reset Some Variables
 	originated_from_level = false;
 	object_index = 0;
-}
-
-glm::vec2 Editor::Selector::getObjectPosition()
-{
-	return glm::vec2(*selected_object->object_x, *selected_object->object_y);
 }
 
 void Editor::Selector::storeLimbPointers(int index, Object::Physics::Soft::Spring* limbs, int limbs_size)
@@ -583,94 +646,119 @@ void Editor::Selector::storeLimbPointers(int index, Object::Physics::Soft::Sprin
 	}
 }
 
+bool& Editor::Selector::retrieveRotation()
+{
+	return Selected_Object::rotating;
+}
+
 void Editor::Selector::initializeSelector()
 {
-	// Allocate Memory for Selector Vertices
-	allocateSelectorVertices(data_object);
+	// Disable Left Click to Prevent Accidental Desselections
+	Global::LeftClick = false;
 
-	// Generate Selector Vertices
-	genSelectorVertices(data_object);
-
-	// Store Object Data
-	storeSelectorData(data_object);
-
-	// Bind Object Vertex Objects
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
-
-	// Object with Color and Texture
-	if (visualize_object)
+	for (DataClass::Data_Object* data_object : unadded_data_objects)
 	{
-		// Enable Position Vertices for Object VAO
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(GL_FLOAT), (void*)(0));
-		glEnableVertexAttribArray(0);
+		// Move Data Object to Data Object Array
+		data_objects.push_back(data_object);
 
-		// Enable Normal Vertices for Object VAO
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(GL_FLOAT), (void*)(3 * sizeof(GL_FLOAT)));
-		glEnableVertexAttribArray(1);
+		// Generate Vertex Objects
+		Selected_VertexObjects vertex_objects;
+		glGenVertexArrays(1, &vertex_objects.objectVAO);
+		glGenBuffers(1, &vertex_objects.objectVBO);
+		glGenVertexArrays(1, &vertex_objects.outlineVAO);
+		glGenBuffers(1, &vertex_objects.outlineVBO);
 
-		// Enable Color Vertices for Object VAO
-		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 12 * sizeof(GL_FLOAT), (void*)(6 * sizeof(GL_FLOAT)));
-		glEnableVertexAttribArray(2);
+		// Allocate Memory for Selector Vertices
+		allocateSelectorVertices(data_object, vertex_objects);
 
-		// Enable Texture Coordinates for Object VAO
-		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(GL_FLOAT), (void*)(10 * sizeof(GL_FLOAT)));
-		glEnableVertexAttribArray(3);
-	}
+		// Generate Selector Vertices
+		genSelectorVertices(data_object, vertex_objects);
 
-	// Object with Only Texture
-	else if (visualize_texture)
-	{
-		// Enable Position Vertices for Object VAO
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (void*)(0));
-		glEnableVertexAttribArray(0);
+		// Store Object Data
+		Selected_Object* selected_object = storeSelectorData(data_object);
+		selected_object->vertex_objects = vertex_objects;
+		selected_objects.push_back(selected_object);
 
-		// Enable Texture Vertices for Object VAO
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (void*)(3 * sizeof(GL_FLOAT)));
-		glEnableVertexAttribArray(1);
-	}
+		// Bind Object Vertex Objects
+		glBindVertexArray(vertex_objects.objectVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
-	// Object with Only Color
-	else
-	{
-		// Enable Position Vertices for Object VAO
+		// Object with Color and Texture
+		if (selected_object->vertex_objects.visualize_object)
+		{
+			// Enable Position Vertices for Object VAO
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(GL_FLOAT), (void*)(0));
+			glEnableVertexAttribArray(0);
+
+			// Enable Normal Vertices for Object VAO
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(GL_FLOAT), (void*)(3 * sizeof(GL_FLOAT)));
+			glEnableVertexAttribArray(1);
+
+			// Enable Color Vertices for Object VAO
+			glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 12 * sizeof(GL_FLOAT), (void*)(6 * sizeof(GL_FLOAT)));
+			glEnableVertexAttribArray(2);
+
+			// Enable Texture Coordinates for Object VAO
+			glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(GL_FLOAT), (void*)(10 * sizeof(GL_FLOAT)));
+			glEnableVertexAttribArray(3);
+		}
+
+		// Object with Only Texture
+		else if (selected_object->vertex_objects.visualize_texture)
+		{
+			// Enable Position Vertices for Object VAO
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (void*)(0));
+			glEnableVertexAttribArray(0);
+
+			// Enable Texture Vertices for Object VAO
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (void*)(3 * sizeof(GL_FLOAT)));
+			glEnableVertexAttribArray(1);
+		}
+
+		// Object with Only Color
+		else
+		{
+			// Enable Position Vertices for Object VAO
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(0));
+			glEnableVertexAttribArray(0);
+
+			// Enable Color Vertices for Object VAO
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(3 * sizeof(GL_FLOAT)));
+			glEnableVertexAttribArray(1);
+		}
+
+		// Bind Outline Vertex Objects
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
+
+		// Enable Position Vertices for Outline VAO
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(0));
 		glEnableVertexAttribArray(0);
 
-		// Enable Color Vertices for Object VAO
+		// Enable Color Vertices for Outline VBO
 		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(3 * sizeof(GL_FLOAT)));
 		glEnableVertexAttribArray(1);
+
+		// Unbind Vertex Objects
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 	}
-
-	// Bind Outline Vertex Objects
-	glBindVertexArray(outlineVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
-
-	// Enable Position Vertices for Outline VAO
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(0));
-	glEnableVertexAttribArray(0);
-
-	// Enable Color Vertices for Outline VBO
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(3 * sizeof(GL_FLOAT)));
-	glEnableVertexAttribArray(1);
-
-	// Unbind Vertex Objects
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-
-	// Reset Some Editing Values
-	change_horizontal = 0;
-	change_vertical = 0;
 
 	// Set Editing Flag to True
 	editing = true;
+
+	// Erase the Unadded Data Objects
+	unadded_data_objects.clear();
+
+	// Determine the Boundaries of the Group Selector
+	updateGroupSelector();
 }
 
-void Editor::Selector::allocateSelectorVertices(DataClass::Data_Object* data_object)
+void Editor::Selector::allocateSelectorVertices(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Vertex Array Object
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Parse Object
 	uint8_t* object_identifier = data_object->getObjectIdentifier();
@@ -685,19 +773,19 @@ void Editor::Selector::allocateSelectorVertices(DataClass::Data_Object* data_obj
 		// Horizontal Mask
 		if (object_identifier[1] == Object::Mask::FLOOR || object_identifier[1] == Object::Mask::CEILING)
 		{
-			allocateSelectorVerticesHorizontalMasks(data_object);
+			allocateSelectorVerticesHorizontalMasks(data_object, vertex_objects);
 		}
 
 		// Vertical Mask
 		else if (object_identifier[1] == Object::Mask::LEFT_WALL || object_identifier[1] == Object::Mask::RIGHT_WALL)
 		{
-			allocateSelectorVerticesVerticalMasks(data_object);
+			allocateSelectorVerticesVerticalMasks(data_object, vertex_objects);
 		}
 
 		// Trigger Object
 		else if (object_identifier[1] == Object::Mask::TRIGGER)
 		{
-			allocateSelectorVerticesTriggerMasks(data_object);
+			allocateSelectorVerticesTriggerMasks(data_object, vertex_objects);
 		}
 
 		break;
@@ -706,14 +794,14 @@ void Editor::Selector::allocateSelectorVertices(DataClass::Data_Object* data_obj
 	// Terrain
 	case Object::TERRAIN:
 	{
-		allocateSelectorVerticesShapes(object_identifier[2], data_object);
+		allocateSelectorVerticesShapes(object_identifier[2], data_object, vertex_objects);
 		break;
 	}
 
 	// Lights
 	case Object::LIGHT:
 	{
-		allocateSelectorVerticesLights(data_object);
+		allocateSelectorVerticesLights(data_object, vertex_objects);
 		break;
 	}
 
@@ -728,21 +816,21 @@ void Editor::Selector::allocateSelectorVertices(DataClass::Data_Object* data_obj
 			// Rigid Body
 		case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
 		{
-			allocateSelectorVerticesShapes(object_identifier[2], data_object);
+			allocateSelectorVerticesShapes(object_identifier[2], data_object, vertex_objects);
 			break;
 		}
 
 		// Soft Body
 		case (int)Object::Physics::PHYSICS_BASES::SOFT_BODY:
 		{
-			allocateSelectorVerticesSoftBody(data_object);
+			allocateSelectorVerticesSoftBody(data_object, vertex_objects);
 			break;
 		}
 
 		// Hinge Base
 		case (int)Object::Physics::PHYSICS_BASES::HINGE_BASE:
 		{
-			allocateSelectorVerticesHinge(data_object);
+			allocateSelectorVerticesHinge(data_object, vertex_objects);
 			break;
 		}
 
@@ -754,7 +842,7 @@ void Editor::Selector::allocateSelectorVertices(DataClass::Data_Object* data_obj
 	// Entity
 	case Object::ENTITY:
 	{
-		alocateSelectorVerticesEntity(data_object);
+		alocateSelectorVerticesEntity(data_object, vertex_objects);
 		break;
 	}
 
@@ -771,11 +859,11 @@ void Editor::Selector::allocateSelectorVertices(DataClass::Data_Object* data_obj
 	glBindVertexArray(0);
 }
 
-void Editor::Selector::genSelectorVertices(DataClass::Data_Object* data_object)
+void Editor::Selector::genSelectorVertices(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Vertex Array Object
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Parse Object
 	uint8_t* object_identifier = data_object->getObjectIdentifier();
@@ -790,19 +878,19 @@ void Editor::Selector::genSelectorVertices(DataClass::Data_Object* data_object)
 		// Horizontal Mask
 		if (object_identifier[1] == Object::Mask::FLOOR || object_identifier[1] == Object::Mask::CEILING)
 		{
-			genSelectorVerticesHorizontalMasks(data_object);
+			genSelectorVerticesHorizontalMasks(data_object, vertex_objects);
 		}
 
 		// Vertical Mask
 		else if (object_identifier[1] == Object::Mask::LEFT_WALL || object_identifier[1] == Object::Mask::RIGHT_WALL)
 		{
-			genSelectorVerticesVerticalMasks(data_object);
+			genSelectorVerticesVerticalMasks(data_object, vertex_objects);
 		}
 
 		// Trigger Object
 		else if (object_identifier[1] == Object::Mask::TRIGGER)
 		{
-			genSelectorVerticesTriggerMasks(data_object);
+			genSelectorVerticesTriggerMasks(data_object, vertex_objects);
 		}
 
 		break;
@@ -811,14 +899,14 @@ void Editor::Selector::genSelectorVertices(DataClass::Data_Object* data_object)
 	// Terrain
 	case Object::TERRAIN:
 	{
-		genSelectorVerticesShapes(object_identifier[2], data_object);
+		genSelectorVerticesShapes(object_identifier[2], data_object, vertex_objects);
 		break;
 	}
 
 	// Lights
 	case Object::LIGHT:
 	{
-		genSelectorVerticesLights(data_object);
+		genSelectorVerticesLights(data_object, vertex_objects);
 		break;
 	}
 
@@ -833,21 +921,21 @@ void Editor::Selector::genSelectorVertices(DataClass::Data_Object* data_object)
 		// Rigid Body
 		case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
 		{
-			genSelectorVerticesShapes(object_identifier[2], data_object);
+			genSelectorVerticesShapes(object_identifier[2], data_object, vertex_objects);
 			break;
 		}
 
 		// Soft Body
 		case (int)Object::Physics::PHYSICS_BASES::SOFT_BODY:
 		{
-			genSelectorVerticesSoftBody(data_object);
+			genSelectorVerticesSoftBody(data_object, vertex_objects);
 			break;
 		}
 
 		// Hinge Base
 		case (int)Object::Physics::PHYSICS_BASES::HINGE_BASE:
 		{
-			genSelectorVerticesHinge(data_object);
+			genSelectorVerticesHinge(data_object, vertex_objects);
 			break;
 		}
 
@@ -859,7 +947,7 @@ void Editor::Selector::genSelectorVertices(DataClass::Data_Object* data_object)
 	// Entity
 	case Object::ENTITY:
 	{
-		genSelectorVerticesEntity(data_object);
+		genSelectorVerticesEntity(data_object, vertex_objects);
 		break;
 	}
 
@@ -876,8 +964,11 @@ void Editor::Selector::genSelectorVertices(DataClass::Data_Object* data_object)
 	glBindVertexArray(0);
 }
 
-void Editor::Selector::storeSelectorData(DataClass::Data_Object* data_object)
+Editor::Selector::Selected_Object* Editor::Selector::storeSelectorData(DataClass::Data_Object* data_object)
 {
+	// Selected Object
+	Selected_Object* selected_object = nullptr;
+
 	// Parse Object
 	uint8_t* object_identifier = data_object->getObjectIdentifier();
 	switch (object_identifier[0])
@@ -891,19 +982,19 @@ void Editor::Selector::storeSelectorData(DataClass::Data_Object* data_object)
 		// Horizontal Mask
 		if (object_identifier[1] == Object::Mask::FLOOR || object_identifier[1] == Object::Mask::CEILING)
 		{
-			storeSelectorDataHorizontalMasks(data_object);
+			selected_object = storeSelectorDataHorizontalMasks(data_object);
 		}
 
 		// Vertical Mask
 		else if (object_identifier[1] == Object::Mask::LEFT_WALL || object_identifier[1] == Object::Mask::RIGHT_WALL)
 		{
-			storeSelectorDataVerticalMasks(data_object);
+			selected_object = storeSelectorDataVerticalMasks(data_object);
 		}
 
 		// Trigger Object
 		else if (object_identifier[1] == Object::Mask::TRIGGER)
 		{
-			storeSelectorDataTriggerMasks(data_object);
+			selected_object = storeSelectorDataTriggerMasks(data_object);
 		}
 
 		break;
@@ -912,14 +1003,14 @@ void Editor::Selector::storeSelectorData(DataClass::Data_Object* data_object)
 	// Terrain
 	case Object::TERRAIN:
 	{
-		storeSelectorDataShapes(object_identifier[2], data_object);
+		selected_object = storeSelectorDataShapes(object_identifier[2], data_object);
 		break;
 	}
 
 	// Lights
 	case Object::LIGHT:
 	{
-		storeSelectorDataLights(data_object);
+		selected_object = storeSelectorDataLights(data_object);
 		break;
 	}
 
@@ -934,21 +1025,21 @@ void Editor::Selector::storeSelectorData(DataClass::Data_Object* data_object)
 		// Rigid Body
 		case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
 		{
-			storeSelectorDataShapes(object_identifier[2], data_object);
+			selected_object = storeSelectorDataShapes(object_identifier[2], data_object);
 			break;
 		}
 
 		// Soft Body
 		case (int)Object::Physics::PHYSICS_BASES::SOFT_BODY:
 		{
-			storeSelectorDataSoftBody(data_object);
+			selected_object = storeSelectorDataSoftBody(data_object);
 			break;
 		}
 
 		// Hinge Base
 		case (int)Object::Physics::PHYSICS_BASES::HINGE_BASE:
 		{
-			storeSelectorDataHinge(data_object);
+			selected_object = storeSelectorDataHinge(data_object);
 			break;
 		}
 
@@ -960,7 +1051,7 @@ void Editor::Selector::storeSelectorData(DataClass::Data_Object* data_object)
 	// Entity
 	case Object::ENTITY:
 	{
-		storeSelectorDataEntity(data_object);
+		selected_object = storeSelectorDataEntity(data_object);
 		break;
 	}
 
@@ -974,13 +1065,16 @@ void Editor::Selector::storeSelectorData(DataClass::Data_Object* data_object)
 
 	// Store Object Info
 	data_object->info(*info);
+
+	// Return Selected Object
+	return selected_object;
 }
 
-void Editor::Selector::allocateSelectorVerticesHorizontalMasks(DataClass::Data_Object* data_object)
+void Editor::Selector::allocateSelectorVerticesHorizontalMasks(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Parse Horizontal Mask Shapes
 	switch (data_object->getObjectIdentifier()[2])
@@ -991,15 +1085,15 @@ void Editor::Selector::allocateSelectorVerticesHorizontalMasks(DataClass::Data_O
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 56, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 2;
+		vertex_objects.object_vertex_count = 2;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		break;
 	}
@@ -1009,15 +1103,15 @@ void Editor::Selector::allocateSelectorVerticesHorizontalMasks(DataClass::Data_O
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 56, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 2;
+		vertex_objects.object_vertex_count = 2;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		break;
 	}
@@ -1027,15 +1121,15 @@ void Editor::Selector::allocateSelectorVerticesHorizontalMasks(DataClass::Data_O
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 616, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 22;
+		vertex_objects.object_vertex_count = 22;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		break;
 	}
@@ -1043,24 +1137,24 @@ void Editor::Selector::allocateSelectorVerticesHorizontalMasks(DataClass::Data_O
 	}
 
 	// Object Does Not Consist of Color and Texture
-	visualize_object = false;
+	vertex_objects.visualize_object = false;
 
 	// Object is Composed of Lines
-	visualize_lines = true;
+	vertex_objects.visualize_lines = true;
 
 	// Object Only Has Color
-	visualize_texture = false;
+	vertex_objects.visualize_texture = false;
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object* data_object)
+void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Parse Horizontal Mask Shapes
 	uint8_t* object_identifier = data_object->getObjectIdentifier();
@@ -1082,8 +1176,8 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 56, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
@@ -1091,7 +1185,7 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(horizontal_line_data.position.x, horizontal_line_data.position.y, 0.0f));
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(horizontal_line_data.position.x, horizontal_line_data.position.y, 0.0f));
 
 		break;
 	}
@@ -1110,20 +1204,16 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 56, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
 		Vertices::Line::genLineHighlighter(0.0f, slant_data.position2.x - slant_data.position.x, 0.0f, slant_data.position2.y - slant_data.position.y, -0.9f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
-		// Generate Line Data
-		slope = (slant_data.position2.y - slant_data.position.y) / (slant_data.position2.x - slant_data.position.x);
-		intercept = slant_data.position.y - (slope * slant_data.position.x);
-
 		// Set Initial Position Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(slant_data.position.x, slant_data.position.y, 0.0f));
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(slant_data.position.x, slant_data.position.y, 0.0f));
 
 		break;
 	}
@@ -1138,11 +1228,11 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object
 		float object_vertices[154];
 		Vertices::Line::genLineSimplifiedCurve1(0.0f, 0.0f, -1.0f, slope_data.height, slope_data.width, object_identifier[1] == Object::Mask::FLOOR ? glm::vec4(0.04f, 0.24f, 1.0f, 1.0f) : glm::vec4(0.0f, 0.0f, 0.45f, 1.0f), 11, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 616, object_vertices);
-		object_vertex_count = 22;
+		vertex_objects.object_vertex_count = 22;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
@@ -1150,7 +1240,7 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(slope_data.position.x, slope_data.position.y, 0.0f));
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(slope_data.position.x, slope_data.position.y, 0.0f));
 
 		break;
 	}
@@ -1162,8 +1252,11 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataHorizontalMasks(DataClass::Data_Object* data_object)
+Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataHorizontalMasks(DataClass::Data_Object* data_object)
 {
+	// Selected Object
+	Selected_Object* selected_object = nullptr;
+
 	// Parse Horizontal Mask Shapes
 	uint8_t* object_identifier = data_object->getObjectIdentifier();
 	switch (object_identifier[2])
@@ -1179,7 +1272,7 @@ void Editor::Selector::storeSelectorDataHorizontalMasks(DataClass::Data_Object* 
 		// Shape is a Horizontal Line
 		selected_object = new Selected_Horizontal_Line();
 		Selected_Horizontal_Line& new_selected_horizontal_line = *static_cast<Selected_Horizontal_Line*>(selected_object);
-		editing_shape = HORIZONTAL_LINE;
+		selected_object->editing_shape = HORIZONTAL_LINE;
 
 		// Store Pointers to Data
 		new_selected_horizontal_line.object_x = &horizontal_line_data.position.x;
@@ -1200,13 +1293,15 @@ void Editor::Selector::storeSelectorDataHorizontalMasks(DataClass::Data_Object* 
 		// Shape is a Line
 		selected_object = new Selected_Line();
 		Selected_Line& new_selected_line = *static_cast<Selected_Line*>(selected_object);
-		editing_shape = LINE;
+		selected_object->editing_shape = LINE;
 
 		// Store Pointers to Data
 		new_selected_line.object_x = &slant_data.position.x;
 		new_selected_line.object_y = &slant_data.position.y;
 		new_selected_line.object_opposite_x = &slant_data.position2.x;
 		new_selected_line.object_opposite_y = &slant_data.position2.y;
+		new_selected_line.slope = (slant_data.position2.y - slant_data.position.y) / (slant_data.position2.x - slant_data.position.x);
+		new_selected_line.intercept = slant_data.position.y - (new_selected_line.slope * slant_data.position.x);
 		new_selected_line.data_object = data_object;
 
 		break;
@@ -1222,7 +1317,7 @@ void Editor::Selector::storeSelectorDataHorizontalMasks(DataClass::Data_Object* 
 		// Shape is a Rectangle
 		selected_object = new Selected_Rectangle();
 		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-		editing_shape = RECTANGLE;
+		selected_object->editing_shape = RECTANGLE;
 
 		// Store Pointers to Data
 		new_selected_rectangle.object_x = &slope_data.position.x;
@@ -1238,13 +1333,16 @@ void Editor::Selector::storeSelectorDataHorizontalMasks(DataClass::Data_Object* 
 
 	// Enable Resize
 	enable_resize = true;
+
+	// Return Selected Object
+	return selected_object;
 }
 
-void Editor::Selector::allocateSelectorVerticesVerticalMasks(DataClass::Data_Object* data_object)
+void Editor::Selector::allocateSelectorVerticesVerticalMasks(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Parse Vertical Mask Shapes
 	switch (data_object->getObjectIdentifier()[2])
@@ -1255,15 +1353,15 @@ void Editor::Selector::allocateSelectorVerticesVerticalMasks(DataClass::Data_Obj
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 56, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 2;
+		vertex_objects.object_vertex_count = 2;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		break;
 	}
@@ -1273,15 +1371,15 @@ void Editor::Selector::allocateSelectorVerticesVerticalMasks(DataClass::Data_Obj
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 616, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 22;
+		vertex_objects.object_vertex_count = 22;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		break;
 	}
@@ -1289,24 +1387,24 @@ void Editor::Selector::allocateSelectorVerticesVerticalMasks(DataClass::Data_Obj
 	}
 
 	// Object Does Not Consist of Color and Texture
-	visualize_object = false;
+	vertex_objects.visualize_object = false;
 
 	// Object is Composed of Lines
-	visualize_lines = true;
+	vertex_objects.visualize_lines = true;
 
 	// Object Only Has Color
-	visualize_texture = false;
+	vertex_objects.visualize_texture = false;
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* data_object)
+void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Parse Vertical Mask Shapes
 	uint8_t* object_identifier = data_object->getObjectIdentifier();
@@ -1328,8 +1426,8 @@ void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* 
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 56, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
@@ -1337,7 +1435,7 @@ void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* 
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(vertical_line_data.position.x, vertical_line_data.position.y, 0.0f));
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(vertical_line_data.position.x, vertical_line_data.position.y, 0.0f));
 
 		break;
 	}
@@ -1352,14 +1450,14 @@ void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* 
 		float slope = curve_data.height / 6.0f;
 		float amplitude = (1.0f + (6.0f / curve_data.width));
 		float x_offset = (21.0f * curve_data.width - 25.0f) / 30.0f;
-		int8_t sign = (object_identifier[1] == 1) ? 1 : -1;
+		int8_t sign = (object_identifier[1] == 1) ? -1 : 1;
 		float object_vertices[154];
 		Vertices::Line::genLineSimplifiedCurve2(-curve_data.width / 2 * sign, -curve_data.height / 2, -3.0f, curve_data.width, slope, amplitude, x_offset, sign, object_identifier[1] == Object::Mask::LEFT_WALL ? glm::vec4(1.0f, 0.4f, 0.0f, 1.0f) : glm::vec4(0.04f, 0.0f, 0.27f, 1.0f), 11, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 616, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
@@ -1367,7 +1465,7 @@ void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* 
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(curve_data.position.x, curve_data.position.y, 0.0f));
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(curve_data.position.x, curve_data.position.y, 0.0f));
 
 		break;
 	}
@@ -1379,8 +1477,11 @@ void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataVerticalMasks(DataClass::Data_Object* data_object)
+Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataVerticalMasks(DataClass::Data_Object* data_object)
 {
+	// Selected Object
+	Selected_Object* selected_object = nullptr;
+
 	// Parse Vertical Mask Shapes
 	uint8_t* object_identifier = data_object->getObjectIdentifier();
 	switch (object_identifier[2])
@@ -1396,7 +1497,7 @@ void Editor::Selector::storeSelectorDataVerticalMasks(DataClass::Data_Object* da
 		// Shape is a Vertical Line
 		selected_object = new Selected_Vertical_Line();
 		Selected_Vertical_Line& new_selected_vertical_line = *static_cast<Selected_Vertical_Line*>(selected_object);
-		editing_shape = VERTICAL_LINE;
+		selected_object->editing_shape = VERTICAL_LINE;
 
 		// Store Pointers to Data
 		new_selected_vertical_line.object_x = &vertical_line_data.position.x;
@@ -1417,7 +1518,7 @@ void Editor::Selector::storeSelectorDataVerticalMasks(DataClass::Data_Object* da
 		// Shape is a Rectangle
 		selected_object = new Selected_Rectangle();
 		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-		editing_shape = RECTANGLE;
+		selected_object->editing_shape = RECTANGLE;
 
 		// Store Pointers to Data
 		new_selected_rectangle.object_x = &curve_data.position.x;
@@ -1433,48 +1534,51 @@ void Editor::Selector::storeSelectorDataVerticalMasks(DataClass::Data_Object* da
 
 	// Enable Resize
 	enable_resize = true;
+
+	// Return Selected Object
+	return selected_object;
 }
 
-void Editor::Selector::allocateSelectorVerticesTriggerMasks(DataClass::Data_Object* data_object)
+void Editor::Selector::allocateSelectorVerticesTriggerMasks(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Allocate Memory for Object Vertices
 	glBufferData(GL_ARRAY_BUFFER, 168, NULL, GL_DYNAMIC_DRAW);
-	object_vertex_count = 6;
+	vertex_objects.object_vertex_count = 6;
 
 	// Bind Outline VAO
-	glBindVertexArray(outlineVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+	glBindVertexArray(vertex_objects.outlineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 	// Allocate Memory Outline Vertices
 	glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-	outline_vertex_count = 8;
+	vertex_objects.outline_vertex_count = 8;
 
 	// Object Does Not Consist of Color and Texture
-	visualize_object = false;
+	vertex_objects.visualize_object = false;
 
 	// Object is Compose of Triangles
-	visualize_lines = false;
+	vertex_objects.visualize_lines = false;
 
 	// Object Only Has Color
-	visualize_texture = false;
+	vertex_objects.visualize_texture = false;
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesTriggerMasks(DataClass::Data_Object* data_object)
+void Editor::Selector::genSelectorVerticesTriggerMasks(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Get the Trigger Line Data of the Data Class
 	Object::Mask::Trigger::TriggerData& trigger_data = static_cast<DataClass::Data_TriggerMask*>(data_object)->getTriggerData();
 
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Generate and Store Object Vertices
 	float object_vertices[42];
@@ -1482,8 +1586,8 @@ void Editor::Selector::genSelectorVerticesTriggerMasks(DataClass::Data_Object* d
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 	// Bind Outline VAO
-	glBindVertexArray(outlineVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+	glBindVertexArray(vertex_objects.outlineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 	// Generate and Store Outline Vertices
 	float outline_vertices[56];
@@ -1491,15 +1595,18 @@ void Editor::Selector::genSelectorVerticesTriggerMasks(DataClass::Data_Object* d
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 	// Set Initial Position Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(trigger_data.position.x, trigger_data.position.y, 0.0f));
+	vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(trigger_data.position.x, trigger_data.position.y, 0.0f));
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataTriggerMasks(DataClass::Data_Object* data_object)
+Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataTriggerMasks(DataClass::Data_Object* data_object)
 {
+	// Selected Object
+	Selected_Object* selected_object = nullptr;
+
 	// Transform Data Class into Trigger Mask and Get Trigger Data
 	DataClass::Data_TriggerMask& data_trigger = *static_cast<DataClass::Data_TriggerMask*>(data_object);
 	Object::Mask::Trigger::TriggerData& trigger_data = data_trigger.getTriggerData();
@@ -1507,18 +1614,21 @@ void Editor::Selector::storeSelectorDataTriggerMasks(DataClass::Data_Object* dat
 	// Shape is a Rectangle
 	selected_object = new Selected_Rectangle();
 	Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-	editing_shape = RECTANGLE;
+	selected_object->editing_shape = RECTANGLE;
 
 	// Store Object Data
 	new_selected_rectangle.object_x = &trigger_data.position.x;
 	new_selected_rectangle.object_y = &trigger_data.position.y;
+
+	// Return Selected Object
+	return selected_object;
 }
 
-void Editor::Selector::allocateSelectorVerticesShapes(int index, DataClass::Data_Object* data_object)
+void Editor::Selector::allocateSelectorVerticesShapes(int index, DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Parse Shape
 	switch (index)
@@ -1529,15 +1639,15 @@ void Editor::Selector::allocateSelectorVerticesShapes(int index, DataClass::Data
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 288, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 6;
+		vertex_objects.object_vertex_count = 6;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		break;
 	}
@@ -1547,15 +1657,15 @@ void Editor::Selector::allocateSelectorVerticesShapes(int index, DataClass::Data
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 288, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 6;
+		vertex_objects.object_vertex_count = 6;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		break;
 	}
@@ -1565,15 +1675,15 @@ void Editor::Selector::allocateSelectorVerticesShapes(int index, DataClass::Data
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 144, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 3;
+		vertex_objects.object_vertex_count = 3;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 168, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 6;
+		vertex_objects.outline_vertex_count = 6;
 
 		break;
 	}
@@ -1583,15 +1693,15 @@ void Editor::Selector::allocateSelectorVerticesShapes(int index, DataClass::Data
 	{
 		//Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 2880, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 60;
+		vertex_objects.object_vertex_count = 60;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 1120, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 40;
+		vertex_objects.outline_vertex_count = 40;
 
 		break;
 	}
@@ -1602,15 +1712,15 @@ void Editor::Selector::allocateSelectorVerticesShapes(int index, DataClass::Data
 		// Allocate Memory for Object Vertices
 		unsigned char number_of_sides = *static_cast<Shape::Polygon*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape())->pointerToNumberOfSides();
 		glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)144 * number_of_sides, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = number_of_sides * 3;
+		vertex_objects.object_vertex_count = number_of_sides * 3;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)56 * number_of_sides, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = number_of_sides * 2;
+		vertex_objects.outline_vertex_count = number_of_sides * 2;
 
 		break;
 	}
@@ -1618,24 +1728,24 @@ void Editor::Selector::allocateSelectorVerticesShapes(int index, DataClass::Data
 	}
 
 	// Object Consists of Color and Texture
-	visualize_object = true;
+	vertex_objects.visualize_object = true;
 
 	// Object is Compose of Triangles
-	visualize_lines = false;
+	vertex_objects.visualize_lines = false;
 
 	// Object Also Has Color
-	visualize_texture = false;
+	vertex_objects.visualize_texture = false;
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Object* data_object)
+void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Get the Object Data
 	Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
@@ -1656,8 +1766,8 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 288, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
@@ -1679,8 +1789,8 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 288, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
@@ -1707,8 +1817,8 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 144, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[42];
@@ -1730,8 +1840,8 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 2880, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[280];
@@ -1755,8 +1865,8 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 		delete[] object_vertices;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float* outline_vertices = new float[number_of_sides * 14];
@@ -1770,15 +1880,18 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 	}
 
 	// Set Initial Position Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(object_data.position.x, object_data.position.y, 0.0f));
+	vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(object_data.position.x, object_data.position.y, 0.0f));
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object* data_object)
+Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object* data_object)
 {
+	// Selected Object
+	Selected_Object* selected_object = nullptr;
+
 	// Parse Shape
 	switch (index)
 	{
@@ -1792,7 +1905,7 @@ void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object
 		// Shape is a Rectangle
 		selected_object = new Selected_Rectangle();
 		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-		editing_shape = RECTANGLE;
+		selected_object->editing_shape = RECTANGLE;
 
 		// Store Object Data
 		new_selected_rectangle.object_width = rectangle_data.pointerToWidth();
@@ -1811,7 +1924,7 @@ void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object
 		// Shape is a Trapezoid
 		selected_object = new Selected_Trapezoid();
 		Selected_Trapezoid& new_selected_trapezoid = *static_cast<Selected_Trapezoid*>(selected_object);
-		editing_shape = TRAPEZOID;
+		selected_object->editing_shape = TRAPEZOID;
 
 		// Store Object Data
 		new_selected_trapezoid.object_width = trapezoid_data.pointerToWidth();
@@ -1832,7 +1945,7 @@ void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object
 		// Shape is a Triangle
 		selected_object = new Selected_Triangle();
 		Selected_Triangle& new_selected_triangle = *static_cast<Selected_Triangle*>(selected_object);
-		editing_shape = TRIANGLE;
+		selected_object->editing_shape = TRIANGLE;
 
 		// Store Object Data
 		new_selected_triangle.coords1 = data_object->getPosition();
@@ -1852,7 +1965,7 @@ void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object
 		// Shape is a Circle
 		selected_object = new Selected_Circle();
 		Selected_Circle& new_selected_circle = *static_cast<Selected_Circle*>(selected_object);
-		editing_shape = CIRCLE;
+		selected_object->editing_shape = CIRCLE;
 
 		// Store Object Data
 		new_selected_circle.object_radius = circle_data.pointerToRadius();
@@ -1871,7 +1984,7 @@ void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object
 		// Shape is a Circle
 		selected_object = new Selected_Circle();
 		Selected_Circle& new_selected_circle = *static_cast<Selected_Circle*>(selected_object);
-		editing_shape = CIRCLE;
+		selected_object->editing_shape = CIRCLE;
 
 		// Store Object Data
 		new_selected_circle.object_radius = polygon_data.pointerToRadius();
@@ -1889,13 +2002,16 @@ void Editor::Selector::storeSelectorDataShapes(int index, DataClass::Data_Object
 
 	// Enable Resize
 	enable_resize = true;
+
+	// Return Selected Object
+	return selected_object;
 }
 
-void Editor::Selector::allocateSelectorVerticesLights(DataClass::Data_Object* data_object)
+void Editor::Selector::allocateSelectorVerticesLights(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Parse Light Types
 	switch (data_object->getObjectIdentifier()[1])
@@ -1906,15 +2022,15 @@ void Editor::Selector::allocateSelectorVerticesLights(DataClass::Data_Object* da
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 120, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 6;
+		vertex_objects.object_vertex_count = 6;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		break;
 	}
@@ -1924,15 +2040,15 @@ void Editor::Selector::allocateSelectorVerticesLights(DataClass::Data_Object* da
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 120, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 6;
+		vertex_objects.object_vertex_count = 6;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		break;
 	}
@@ -1942,15 +2058,15 @@ void Editor::Selector::allocateSelectorVerticesLights(DataClass::Data_Object* da
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 120, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 6;
+		vertex_objects.object_vertex_count = 6;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		break;
 	}
@@ -1960,15 +2076,15 @@ void Editor::Selector::allocateSelectorVerticesLights(DataClass::Data_Object* da
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 120, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 6;
+		vertex_objects.object_vertex_count = 6;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		break;
 	}
@@ -1976,24 +2092,24 @@ void Editor::Selector::allocateSelectorVerticesLights(DataClass::Data_Object* da
 	}
 
 	// Object Only Has Texture
-	visualize_object = false;
+	vertex_objects.visualize_object = false;
 
 	// Object Only Has Texture
-	visualize_texture = true;
+	vertex_objects.visualize_texture = true;
 
 	// Object is Composed of Triangles
-	visualize_lines = false;
+	vertex_objects.visualize_lines = false;
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_object)
+void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Get Light Data
 	Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
@@ -2014,17 +2130,13 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 120, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
 		Vertices::Line::genLineHighlighter(0.0f, directional_data.position2.x - light_data.position.x, 0.0f, directional_data.position2.y - light_data.position.y, -0.8f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
-
-		// Generate Line Data
-		slope = (directional_data.position2.y - light_data.position.y) / (directional_data.position2.x - light_data.position.x);
-		intercept = light_data.position.y - (slope * light_data.position.x);
 
 		break;
 	}
@@ -2038,8 +2150,8 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 120, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
@@ -2058,8 +2170,8 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 120, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
@@ -2081,17 +2193,13 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 120, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
 		Vertices::Line::genLineHighlighter(0.0f, beam_data.position2.x - light_data.position.x, 0.0f, beam_data.position2.y - light_data.position.y, -0.8f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
-
-		// Generate Line Data
-		slope = (beam_data.position2.y - light_data.position.y) / (beam_data.position2.x - light_data.position.x);
-		intercept = light_data.position.y - (slope * light_data.position.x);
 
 		break;
 	}
@@ -2099,15 +2207,21 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 	}
 
 	// Set Initial Position Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(light_data.position.x, light_data.position.y, 0.0f));
+	vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(light_data.position.x, light_data.position.y, 0.0f));
+
+	// Object is a Light
+	vertex_objects.lighting_object = true;
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_object)
+Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_object)
 {
+	// Selected Object
+	Selected_Object* selected_object = nullptr;
+
 	// Constant, Unchanging Values for the Width and Height of Point Lights and Spot Lights
 	static float temp_width = 5.0f;
 	static float temp_height = 5.0f;
@@ -2129,11 +2243,13 @@ void Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_obje
 		// Shape is a Line
 		selected_object = new Selected_Line();
 		Selected_Line& new_selected_line = *static_cast<Selected_Line*>(selected_object);
-		editing_shape = LINE;
+		selected_object->editing_shape = LINE;
 
 		// Store Pointers to Opposite Position Data
 		new_selected_line.object_opposite_x = &directional_data.position2.x;
 		new_selected_line.object_opposite_y = &directional_data.position2.y;
+		new_selected_line.slope = (directional_data.position2.y - light_data.position.y) / (directional_data.position2.x - light_data.position.x);
+		new_selected_line.intercept = light_data.position.y - (new_selected_line.slope * light_data.position.x);
 		new_selected_line.data_object = data_object;
 
 		// Store Texture
@@ -2187,7 +2303,7 @@ void Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_obje
 		// Shape is a Rectangle
 		selected_object = new Selected_Rectangle();
 		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-		editing_shape = RECTANGLE;
+		selected_object->editing_shape = RECTANGLE;
 
 		// Store Static Sizes
 		new_selected_rectangle.object_width = &temp_width;
@@ -2246,7 +2362,7 @@ void Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_obje
 		// Shape is a Rectangle
 		selected_object = new Selected_Rectangle();
 		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-		editing_shape = RECTANGLE;
+		selected_object->editing_shape = RECTANGLE;
 
 		// Store Static Sizes
 		new_selected_rectangle.object_width = &temp_width;
@@ -2305,11 +2421,13 @@ void Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_obje
 		// Shape is a Line
 		selected_object = new Selected_Line();
 		Selected_Line& new_selected_line = *static_cast<Selected_Line*>(selected_object);
-		editing_shape = LINE;
+		selected_object->editing_shape = LINE;
 
 		// Store Pointers to Opposite Position Data
 		new_selected_line.object_opposite_x = &beam_data.position2.x;
 		new_selected_line.object_opposite_y = &beam_data.position2.y;
+		new_selected_line.slope = (beam_data.position2.y - light_data.position.y) / (beam_data.position2.x - light_data.position.x);
+		new_selected_line.intercept = light_data.position.y - (new_selected_line.slope * light_data.position.x);
 		new_selected_line.data_object = data_object;
 
 		// Store Texture
@@ -2359,11 +2477,11 @@ void Editor::Selector::storeSelectorDataLights(DataClass::Data_Object* data_obje
 	selected_object->object_x = &light_data.position.x;
 	selected_object->object_y = &light_data.position.y;
 
-	// Object is a Light
-	lighting_object = true;
-
 	// Store Shader Data
 	storeSelectorShaderDataLights(data_object);
+
+	// Return Selected Object
+	return selected_object;
 }
 
 void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* data_object)
@@ -2514,11 +2632,11 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 	}
 }
 
-void Editor::Selector::allocateSelectorVerticesSoftBody(DataClass::Data_Object* data_object)
+void Editor::Selector::allocateSelectorVerticesSoftBody(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Parse Soft Body Types
 	switch (data_object->getObjectIdentifier()[2])
@@ -2529,18 +2647,18 @@ void Editor::Selector::allocateSelectorVerticesSoftBody(DataClass::Data_Object* 
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 168, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 6;
+		vertex_objects.object_vertex_count = 6;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		// Object is Not Composed of Lines
-		visualize_lines = false;
+		vertex_objects.visualize_lines = false;
 
 		break;
 	}
@@ -2550,18 +2668,18 @@ void Editor::Selector::allocateSelectorVerticesSoftBody(DataClass::Data_Object* 
 	{
 		// Allocate Memory for Object Vertices
 		glBufferData(GL_ARRAY_BUFFER, 56, NULL, GL_DYNAMIC_DRAW);
-		object_vertex_count = 2;
+		vertex_objects.object_vertex_count = 2;
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Allocate Memory for Outline Vertices
 		glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-		outline_vertex_count = 8;
+		vertex_objects.outline_vertex_count = 8;
 
 		// Object is Composed of Lines
-		visualize_lines = true;
+		vertex_objects.visualize_lines = true;
 
 		break;
 	}
@@ -2569,21 +2687,21 @@ void Editor::Selector::allocateSelectorVerticesSoftBody(DataClass::Data_Object* 
 	}
 
 	// Object is a Static Color
-	visualize_object = false;
+	vertex_objects.visualize_object = false;
 
 	// Object Only Has Color
-	visualize_texture = false;
+	vertex_objects.visualize_texture = false;
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_object)
+void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Parse Soft Body Types
 	switch (data_object->getObjectIdentifier()[2])
@@ -2593,8 +2711,11 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 	case (int)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS:
 	{
 		// Edit Node
-		if (springmass_node_modified)
+		if (add_child_object == CHILD_OBJECT_TYPES::SPRINGMASS_NODE)
 		{
+			// Get Node Data
+			Object::Physics::Soft::NodeData node_data = static_cast<DataClass::Data_SpringMassNode*>(data_object)->getNodeData();
+
 			// Generate and Store Object Vertices
 			float object_vertices[42];
 			float double_radius = node_data.radius * 2.0f;
@@ -2602,8 +2723,8 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 			// Bind Outline VAO
-			glBindVertexArray(outlineVAO);
-			glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+			glBindVertexArray(vertex_objects.outlineVAO);
+			glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 			// Generate and Store Outline Vertices
 			double_radius *= 1.2f;
@@ -2612,28 +2733,28 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 			// Set Initial Position Model Matrix
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(node_data.position.x, node_data.position.y, 0.0f));
+			vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(node_data.position.x, node_data.position.y, 0.0f));
 		}
 
 		// Edit Spring
-		else if (springmass_spring_modified)
+		else if (add_child_object == CHILD_OBJECT_TYPES::SPRINGMASS_SPRING)
 		{
 			// Generate and Store Object Vertices
 			float object_vertices[42];
-			Vertices::Line::genLineColor(connection_pos_left.x, connection_pos_right.x, connection_pos_left.y, connection_pos_right.y, -1.0f, 0.2f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), object_vertices);
+			Vertices::Line::genLineColor(temp_connection_pos_left.x, temp_connection_pos_right.x, temp_connection_pos_left.y, temp_connection_pos_right.y, -1.0f, 0.2f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), object_vertices);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 			// Bind Outline VAO
-			glBindVertexArray(outlineVAO);
-			glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+			glBindVertexArray(vertex_objects.outlineVAO);
+			glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 			// Generate and Store Outline Vertices
 			float outline_vertices[56];
-			Vertices::Line::genLineHighlighterWidth(connection_pos_left.x, connection_pos_right.x, connection_pos_left.y, connection_pos_right.y, -0.9f, 0.3f, outline_vertices);
+			Vertices::Line::genLineHighlighterWidth(temp_connection_pos_left.x, temp_connection_pos_right.x, temp_connection_pos_left.y, temp_connection_pos_right.y, -0.9f, 0.3f, outline_vertices);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 			// Set Initial Position Model Matrix
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+			vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 		}
 
 		// Edit Core
@@ -2648,8 +2769,8 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 			// Bind Outline VAO
-			glBindVertexArray(outlineVAO);
-			glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+			glBindVertexArray(vertex_objects.outlineVAO);
+			glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 			// Generate and Store Outline Vertices
 			float outline_vertices[56];
@@ -2657,7 +2778,7 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 			// Set Initial Position Model Matrix
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(object_data.position.x, object_data.position.y, 0.0f));
+			vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(object_data.position.x, object_data.position.y, 0.0f));
 		}
 
 		break;
@@ -2677,20 +2798,16 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 56, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
 		Vertices::Line::genLineHighlighter(0.0f, wire_data.position2.x - object_data.position.x, 0.0f, wire_data.position2.y - object_data.position.y, -0.9f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
-		// Generate Line Data
-		slope = (wire_data.position2.y - object_data.position.y) / (wire_data.position2.x - object_data.position.x);
-		intercept = object_data.position.y - (slope * object_data.position.x);
-
 		// Set Initial Position Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(object_data.position.x, object_data.position.y, 0.0f));
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(object_data.position.x, object_data.position.y, 0.0f));
 
 		break;
 	}
@@ -2702,8 +2819,11 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataSoftBody(DataClass::Data_Object* data_object)
+Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataSoftBody(DataClass::Data_Object* data_object)
 {
+	// Selected Object
+	Selected_Object* selected_object = nullptr;
+
 	// Parse Soft Body Types
 	switch (data_object->getObjectIdentifier()[2])
 	{
@@ -2712,35 +2832,21 @@ void Editor::Selector::storeSelectorDataSoftBody(DataClass::Data_Object* data_ob
 	case (int)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS:
 	{
 		// Edit Node
-		if (springmass_node_modified)
+		if (add_child_object == CHILD_OBJECT_TYPES::SPRINGMASS_NODE)
 		{
-			// Constant, Unchanging Values for the Width and Height of a SpringMass Core
-		//	static float temp_width = 5.0f;
-		//	static float temp_height = 5.0f;
+			// Get Node Data
+			Object::Physics::Soft::NodeData& node_data = static_cast<DataClass::Data_SpringMassNode*>(data_object)->getNodeData();
 
 			// Shape is a SpringMass Node
-			//editing_shape = SPRINGMASS_NODE;
+			selected_object = new Selected_SpringMassNode();
+			Selected_SpringMassNode& new_selected_springmass_node = *static_cast<Selected_SpringMassNode*>(selected_object);
+			selected_object->editing_shape = SPRINGMASS_NODE;
 
 			// Set Object Position
-			//object_x = &node_data.position.x;
-			//object_y = &node_data.position.y;
-
-			// Constant, Unchanging Values for the Width and Height of a SpringMass Core
-			static float temp_width = 5.0f;
-			static float temp_height = 5.0f;
-
-			// Shape is a SpringMass Node
-			selected_object = new Selected_Rectangle();
-			Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-			editing_shape = SPRINGMASS_NODE;
-
-			// Set Object Position
-			new_selected_rectangle.object_width = &temp_width;
-			new_selected_rectangle.object_height = &temp_height;
-			new_selected_rectangle.object_x = &node_data.position.x;
-			new_selected_rectangle.object_y = &node_data.position.y;
-			new_selected_rectangle.enable_resize = false;
-			new_selected_rectangle.data_object = data_object;
+			new_selected_springmass_node.object_x = &node_data.position.x;
+			new_selected_springmass_node.object_y = &node_data.position.y;
+			new_selected_springmass_node.object_radius = &node_data.radius;
+			new_selected_springmass_node.data_object = data_object;
 
 			// Get Object Info
 			info->clearAll();
@@ -2750,10 +2856,21 @@ void Editor::Selector::storeSelectorDataSoftBody(DataClass::Data_Object* data_ob
 		}
 
 		// Edit Spring
-		else if (springmass_spring_modified)
+		else if (add_child_object == CHILD_OBJECT_TYPES::SPRINGMASS_SPRING)
 		{
+			// Get Spring Data
+			Object::Physics::Soft::Spring& spring_data = static_cast<DataClass::Data_SpringMassSpring*>(data_object)->getSpringData();
+
 			// Shape is a SpringMass Spring
-			editing_shape = SPRINGMASS_SPRING;
+			selected_object = new Selected_SpringMassSpring();
+			Selected_SpringMassSpring& new_selected_springmass_spring = *static_cast<Selected_SpringMassSpring*>(selected_object);
+			selected_object->editing_shape = SPRINGMASS_SPRING;
+
+			// Set Object Position
+			// Idea: For When Moving Spring, Position is the Mean of the Two Node Positions (End Points)
+			new_selected_springmass_spring.data_object = data_object;
+			new_selected_springmass_spring.connection_pos_left = temp_connection_pos_left;
+			new_selected_springmass_spring.connection_pos_right = temp_connection_pos_right;
 
 			// Get Object Info
 			info->clearAll();
@@ -2763,31 +2880,27 @@ void Editor::Selector::storeSelectorDataSoftBody(DataClass::Data_Object* data_ob
 			info->addSingleValue("Max Length: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &spring_data.MaxLength, glm::vec4(0.0f, 0.9f, 0.0f, 1.0f), false);
 			info->addSingleValue("Spring Constant: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &spring_data.Stiffness, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), false);
 			info->addSingleValue("Dampening: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &spring_data.Dampening, glm::vec4(0.9f, 0.0f, 0.9f, 1.0f), false);
+
+			// Read SpringMass File
+			readSpringMassFile(&new_selected_springmass_spring);
 		}
 
 		// Edit Core
 		else
 		{
-			// Constant, Unchanging Values for the Width and Height of a SpringMass Core
-			static float temp_width = 5.0f;
-			static float temp_height = 5.0f;
-
 			// Transform Data Class into SpringMass and Get Object Data
 			DataClass::Data_SpringMass& data_springmass = *static_cast<DataClass::Data_SpringMass*>(data_object);
 			Object::ObjectData& object_data = data_springmass.getObjectData();
 
 			// Shape is a SpringMass Object
-			selected_object = new Selected_Rectangle();
-			Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-			editing_shape = SPRINGMASS_OBJECT;
+			selected_object = new Selected_SpringMassObject();
+			Selected_SpringMassObject& new_selected_springmass_object = *static_cast<Selected_SpringMassObject*>(selected_object);
+			selected_object->editing_shape = SPRINGMASS_OBJECT;
 
 			// Set Object Position
-			new_selected_rectangle.object_width = &temp_width;
-			new_selected_rectangle.object_height = &temp_height;
-			new_selected_rectangle.object_x = &object_data.position.x;
-			new_selected_rectangle.object_y = &object_data.position.y;
-			new_selected_rectangle.enable_resize = false;
-			new_selected_rectangle.data_object = data_object;
+			new_selected_springmass_object.object_x = &object_data.position.x;
+			new_selected_springmass_object.object_y = &object_data.position.y;
+			new_selected_springmass_object.data_object = data_object;
 
 			// Get Object Info
 			//Object::Physics::Soft::SpringMass::info(*info, editor_data.name, object_data, file_name);
@@ -2806,11 +2919,13 @@ void Editor::Selector::storeSelectorDataSoftBody(DataClass::Data_Object* data_ob
 		// Shape is a Line
 		selected_object = new Selected_Line();
 		Selected_Line& new_selected_line = *static_cast<Selected_Line*>(selected_object);
-		editing_shape = LINE;
+		selected_object->editing_shape = LINE;
 
 		// Store Pointers to Data
 		new_selected_line.object_opposite_x = &wire_data.position2.x;
 		new_selected_line.object_opposite_y = &wire_data.position2.y;
+		new_selected_line.slope = (wire_data.position2.y - data_wire.getPosition().y) / (wire_data.position2.x - data_wire.getPosition().x);
+		new_selected_line.intercept = data_wire.getPosition().y - (new_selected_line.slope * data_wire.getPosition().x);
 		new_selected_line.data_object = data_object;
 
 		// Set Object Position
@@ -2827,45 +2942,48 @@ void Editor::Selector::storeSelectorDataSoftBody(DataClass::Data_Object* data_ob
 
 	// Disable Resize
 	enable_resize = false;
+
+	// Return Selected Object
+	return selected_object;
 }
 
-void Editor::Selector::allocateSelectorVerticesHinge(DataClass::Data_Object* data_object)
+void Editor::Selector::allocateSelectorVerticesHinge(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Allocate Memory for Object Vertices
 	glBufferData(GL_ARRAY_BUFFER, 168, NULL, GL_DYNAMIC_DRAW);
-	object_vertex_count = 6;
+	vertex_objects.object_vertex_count = 6;
 
 	// Bind Outline VAO
-	glBindVertexArray(outlineVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+	glBindVertexArray(vertex_objects.outlineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 	// Allocate Memory for Outline Vertices
 	glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-	outline_vertex_count = 8;
+	vertex_objects.outline_vertex_count = 8;
 
 	// Object is a Static Color
-	visualize_object = false;
+	vertex_objects.visualize_object = false;
 
 	// Object is Not Composed of Lines
-	visualize_lines = false;
+	vertex_objects.visualize_lines = false;
 
 	// Object Only Has Color
-	visualize_texture = false;
+	vertex_objects.visualize_texture = false;
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_object)
+void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Parse Hinge Types
 	switch (data_object->getObjectIdentifier()[2])
@@ -2883,8 +3001,8 @@ void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_obj
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
@@ -2892,7 +3010,7 @@ void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_obj
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(anchor_data.position.x, anchor_data.position.y, 0.0f));
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(anchor_data.position.x, anchor_data.position.y, 0.0f));
 
 		break;
 	}
@@ -2909,8 +3027,8 @@ void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_obj
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 		// Bind Outline VAO
-		glBindVertexArray(outlineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
@@ -2918,7 +3036,7 @@ void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_obj
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(hinge_data.position.x, hinge_data.position.y, 0.0f));
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(hinge_data.position.x, hinge_data.position.y, 0.0f));
 
 		break;
 	}
@@ -2930,15 +3048,18 @@ void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_obj
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataHinge(DataClass::Data_Object* data_object)
+Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataHinge(DataClass::Data_Object* data_object)
 {
+	// Selected Object
+	Selected_Object* selected_object = nullptr;
+
 	static float temp_width = 2.0f;
 	static float temp_height = 2.0f;
 
 	// Object is a Rectangle
 	selected_object = new Selected_Rectangle();
 	Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-	editing_shape = RECTANGLE;
+	selected_object->editing_shape = RECTANGLE;
 
 	// Parse Hinge Types
 	switch (data_object->getObjectIdentifier()[2])
@@ -2979,49 +3100,52 @@ void Editor::Selector::storeSelectorDataHinge(DataClass::Data_Object* data_objec
 
 	// Disable Resize
 	enable_resize = false;
+
+	// Return Selected Object
+	return selected_object;
 }
 
-void Editor::Selector::alocateSelectorVerticesEntity(DataClass::Data_Object* data_object)
+void Editor::Selector::alocateSelectorVerticesEntity(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 
 	// Allocate Memory for Object Vertices
 	glBufferData(GL_ARRAY_BUFFER, 288, NULL, GL_DYNAMIC_DRAW);
-	object_vertex_count = 6;
+	vertex_objects.object_vertex_count = 6;
 
 	// Bind Outline VAO
-	glBindVertexArray(outlineVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+	glBindVertexArray(vertex_objects.outlineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 	// Allocate Memory for Outline Vertices
 	glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
-	outline_vertex_count = 8;
+	vertex_objects.outline_vertex_count = 8;
 
 	// Object Consists of Color and Texture
-	visualize_object = true;
+	vertex_objects.visualize_object = true;
 
 	// Object is Compose of Triangles
-	visualize_lines = false;
+	vertex_objects.visualize_lines = false;
 
 	// Object Also Has Color
-	visualize_texture = false;
+	vertex_objects.visualize_texture = false;
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::genSelectorVerticesEntity(DataClass::Data_Object* data_object)
+void Editor::Selector::genSelectorVerticesEntity(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
 {
 	// Get Object and Entity Data
 	Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
 	Object::Entity::EntityData& entity_data = static_cast<DataClass::Data_Entity*>(data_object)->getEntityData();
 
 	// Bind Object VAO
-	glBindVertexArray(objectVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
 	
 	// Generate and Store Object Vertices
 	float object_vertices[72];
@@ -3030,8 +3154,8 @@ void Editor::Selector::genSelectorVerticesEntity(DataClass::Data_Object* data_ob
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 288, object_vertices);
 
 	// Bind Outline VAO
-	glBindVertexArray(outlineVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
+	glBindVertexArray(vertex_objects.outlineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
 
 	// Generate and Store Outline Vertices
 	float outline_vertices[56];
@@ -3039,15 +3163,18 @@ void Editor::Selector::genSelectorVerticesEntity(DataClass::Data_Object* data_ob
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 	// Set Initial Position Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(object_data.position.x, object_data.position.y, 0.0f));
+	vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(object_data.position.x, object_data.position.y, 0.0f));
 
 	// Unbind Highlighter VAO
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Editor::Selector::storeSelectorDataEntity(DataClass::Data_Object* data_object)
+Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataEntity(DataClass::Data_Object* data_object)
 {
+	// Selected Object
+	Selected_Object* selected_object = nullptr;
+
 	static float full_width, full_height;
 
 	// Get Object and Entity Data
@@ -3057,7 +3184,7 @@ void Editor::Selector::storeSelectorDataEntity(DataClass::Data_Object* data_obje
 	// Shape is a Rectangle
 	selected_object = new Selected_Rectangle();
 	Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-	editing_shape = RECTANGLE;
+	selected_object->editing_shape = RECTANGLE;
 
 	// Store Object Data
 	full_width = entity_data.half_collision_width * 2.0f;
@@ -3072,65 +3199,15 @@ void Editor::Selector::storeSelectorDataEntity(DataClass::Data_Object* data_obje
 
 	// Disable Resize
 	enable_resize = false;
+
+	// Return Selected Object
+	return selected_object;
 }
 
 void Editor::Selector::uninitializeSelector()
 {
-	// Delete Object VAO
-	glDeleteVertexArrays(1, &objectVAO);
-	glDeleteBuffers(1, &objectVBO);
-
-	// Delete Outline VAO
-	glDeleteVertexArrays(1, &outlineVAO);
-	glDeleteBuffers(1, &outlineVBO);
-
-	// If Rotation is Possible, Delete Pivot Value
-	if (editing_shape == TRAPEZOID || editing_shape == TRIANGLE || editing_shape == LINE)
-	{
-		glDeleteVertexArrays(1, &pivotVAO);
-		glDeleteBuffers(1, &pivotVBO);
-	}
-}
-
-void Editor::Selector::outlineForResize()
-{
-	float colors[4] = { 0.0f, 0.0f, 0.85f, 1.0f };
-	outlineChangeColor(colors);
-	resizing = true;
-	mouse_intersects_object = true;
-}
-
-void Editor::Selector::outlineForMove()
-{
-	float colors[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
-	outlineChangeColor(colors);
-	resizing = false;
-	mouse_intersects_object = true;
-}
-
-void Editor::Selector::outlineForNotSelected()
-{
-	float colors[4] = { 0.55f, 0.55f, 0.0f, 0.95f };
-	outlineChangeColor(colors);
-	resizing = false;
-	mouse_intersects_object = false;
-}
-
-void Editor::Selector::outlineChangeColor(float* colors)
-{
-	// Bind Highlighter Object
-	glBindVertexArray(outlineVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, outlineVBO);
-
-	// Iterate Through Each Vertex and Change Color
-	for (int i = 3 * sizeof(GL_FLOAT), j = 0; j < outline_vertex_count; i += 7 * sizeof(GL_FLOAT), j++)
-	{
-		glBufferSubData(GL_ARRAY_BUFFER, i, 4 * sizeof(GL_FLOAT), colors);
-	}
-
-	// Unbind Highlighter Object
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	glDeleteVertexArrays(1, &pivotVAO);
+	glDeleteBuffers(1, &pivotVBO);
 }
 
 void Editor::Selector::genPivotVertices()
@@ -3163,1310 +3240,372 @@ void Editor::Selector::genPivotVertices()
 	glBindVertexArray(0);
 }
 
+void Editor::Selector::updateGroupSelector()
+{
+	// Only Update Group Selector if a Group is Selected
+	if (selected_objects.size() > 1)
+	{
+		// Reset the Group Selector
+		group_selector.position = glm::vec2(*selected_objects.at(0)->object_x, *selected_objects.at(0)->object_y);
+		group_selector.extreme_value_north = group_selector.position.y;
+		group_selector.extreme_value_south = group_selector.position.y;
+		group_selector.extreme_value_east = group_selector.position.x;
+		group_selector.extreme_value_west = group_selector.position.x;
+
+		// Update the Extreme Vertices of Group Selector
+		for (Selected_Object* selected_object : selected_objects)
+			selected_object->updateGroup(group_selector);
+
+		// Update the Vertex Objects
+		group_selector.position = glm::vec2((group_selector.extreme_value_east + group_selector.extreme_value_west) * 0.5f, (group_selector.extreme_value_north + group_selector.extreme_value_south) * 0.5f);
+
+		// Bind the Vertex Object
+		glBindVertexArray(group_selector.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, group_selector.outlineVBO);
+
+		// Generate and Bind Vertex Data
+		float vertices[56];
+		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.0f, group_selector.extreme_value_east - group_selector.extreme_value_west, group_selector.extreme_value_north - group_selector.extreme_value_south, vertices);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+		// Unbind the Vertex Object
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+
+		// Set Model Matrix
+		group_selector.model = glm::translate(glm::mat4(1.0f), glm::vec3(group_selector.position.x, group_selector.position.y, 0.0f));
+	}
+}
+
 void Editor::Selector::editObject()
 {
+	// Idea: update_functions should return an int that determinses if a Selected Object
+	// Was Interacted With. If it returns 1, nothing happened. If it returns 2, the Object
+	// Was Moused Over But Nothing Happened. If it returns 3, an Object
+	// is being Moved. If it returns 4, an Object is being Resized. If it returns 0, an
+	// Object was Deselected. All Objects will be Modified Based on the First Non-Zero
+	// Return Value Based on the Changes to the Object Being Modified. An Object That Has
+	// Been Individual Deselected With CTRL Will Return 1
+
+	// Idea: To allow the User to Determine the First Return Value, the "Tab to Skip"
+	// Button Will Be Used, But it will Send the Selected Object to the Back of the Array
+	// Instead of Skipping It
+
+	// Idea: For Resizing, Each Object Type Will Have Its Own Resizing Function for Each
+	// Other Object Type. When Another Selected Object is Being Resized, That Function Will
+	// Be Executed. Ex: A rectangle Will Have a Trapezoid Resizing Function If a Trapezoid
+	// Is Being Resized. This Function Will be Similar to the Trapezoid Resizing, However, The
+	// Rectangle Will Only Resize in the Same Cardinal Directions of the Trapezoid. Ex 2: A
+	// Resizing Circle Will Expand a Trapezoid, Rectangle, and Triangle In All Directions.
+
+	// Idea: For this Same Resizing Idea, The Other Objects Should Expand Way/Towards the 
+	// Modified Object Based on the Amount it is Being Resized
+
+	// Idea: In Addition to the Resizing Idea, There Should be a Highlighted Box Surrounding 
+	// All Selected Objects, As Long as the Number of Selected Objects is Greater Than 1. This
+	// Box Should Be Tangent to the Farthest Vertices In Each of the Four Cardinal Directions.
+	// This Box is Only Able to Resize Objects, and It Will Resize Like a Rectangle, However,
+	// It Cannot be Moved and Will Resize Around the Center of the Box.
+
 	// Test if Child Object Should be Added
-	if (add_child_object)
+	if (add_child_object != CHILD_OBJECT_TYPES::NONE && add_child)
 	{
 		addChild();
+		return;
+	}
+
+	// If the CTRL Modifier is Active, Attempt to Deselect a Singular Object
+	if (Global::Keys[GLFW_KEY_LEFT_CONTROL] || Global::Keys[GLFW_KEY_RIGHT_CONTROL])
+	{
+		for (int i = 0; i < selected_objects.size(); i++)
+		{
+			if (selected_objects.at(i)->updateObject() >= MOUSED_OVER)
+			{
+				// Desselect the Object if Left-Click is Held
+				if (Global::LeftClick)
+				{
+					// If There is Only 1 Object, Desselect the Entire Vector
+					if (selected_objects.size() == 1)
+						deselectObject();
+
+					// Else, Modify Vector to Only Affect the Singular Object
+					else
+					{
+						// Return SpringMass Node
+						if (selected_objects.at(i)->editing_shape == SPRINGMASS_NODE)
+							deselectNode(static_cast<Selected_SpringMassNode*>(selected_objects.at(i)));
+
+						// Return SpringMass Spring
+						else if (selected_objects.at(i)->editing_shape == SPRINGMASS_SPRING)
+							deselectSpring(static_cast<Selected_SpringMassSpring*>(selected_objects.at(i)));
+
+						// Return Normal Object
+						else
+							change_controller->handleSingleSelectorReturn(data_objects.at(i));
+
+						// Delete the Selected Object
+						delete selected_objects.at(i);
+
+						// Remove Object From the Vectors
+						selected_objects.erase(selected_objects.begin() + i);
+						data_objects.erase(data_objects.begin() + i);
+
+						// If A Group is Still Selected, Update Group Selector
+						if (selected_objects.size() > 1)
+							updateGroupSelector();
+					}
+
+					Global::LeftClick = false;
+				}
+
+				return;
+			}
+		}
 
 		return;
 	}
 
+	// Test the Group Selector Before Testing Other Objects
+	if (selected_objects.size() > 1 && !Selected_Object::moving && !Selected_Object::resizing || group_selector.resizing)
+	{
+		// If Group Selector is Resizing, Resize All
+		if (group_selector.resizing)
+		{
+			if (!Global::LeftClick)
+				group_selector.resizing = false;
+
+			else
+			{
+				for (Selected_Object* selected_object : selected_objects)
+				{
+					selected_object->moveObject();
+					genSelectorVertices(selected_object->data_object, selected_object->vertex_objects);
+					if (selected_object->vertex_objects.lighting_object)
+						storeSelectorShaderDataLights(selected_object->data_object);
+				}
+
+				// Reset the Group Selector
+				group_selector.position = glm::vec2(*selected_objects.at(0)->object_x, *selected_objects.at(0)->object_y);
+				group_selector.extreme_value_north = group_selector.position.y;
+				group_selector.extreme_value_south = group_selector.position.y;
+				group_selector.extreme_value_east = group_selector.position.x;
+				group_selector.extreme_value_west = group_selector.position.x;
+
+				// Update the Extreme Vertices of Group Selector
+				for (Selected_Object* selected_object : selected_objects)
+					selected_object->updateGroup(group_selector);
+
+				// Update the Vertex Objects
+				group_selector.position = glm::vec2((group_selector.extreme_value_east + group_selector.extreme_value_west) * 0.5f, (group_selector.extreme_value_north + group_selector.extreme_value_south) * 0.5f);
+
+				// Bind the Vertex Object
+				glBindVertexArray(group_selector.outlineVAO);
+				glBindBuffer(GL_ARRAY_BUFFER, group_selector.outlineVBO);
+
+				// Generate and Bind Vertex Data
+				float vertices[56];
+				Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.0f, group_selector.extreme_value_east - group_selector.extreme_value_west, group_selector.extreme_value_north - group_selector.extreme_value_south, vertices);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+				// Unbind the Vertex Object
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+				glBindVertexArray(0);
+
+				// Set Model Matrix
+				group_selector.model = glm::translate(glm::mat4(1.0f), glm::vec3(group_selector.position.x, group_selector.position.y, 0.0f));
+			}
+
+			return;
+		}
+
+		// Bind Highlighter Object
+		glBindVertexArray(group_selector.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, group_selector.outlineVBO);
+
+		if (!group_selector.resizing && Global::mouseRelativeX > group_selector.extreme_value_west - 1.0f && Global::mouseRelativeX < group_selector.extreme_value_east + 1.0f && Global::mouseRelativeY > group_selector.extreme_value_south - 1.0f && Global::mouseRelativeY < group_selector.extreme_value_north + 1.0f)
+		{
+			// Resize Variables
+			bool resize_horizontal = false;
+			bool resize_vertical = false;
+
+			// Test if Group Should Resize Horizontally
+			if (Global::mouseRelativeX < group_selector.extreme_value_west || Global::mouseRelativeX > group_selector.extreme_value_east)
+			{
+				resize_horizontal = true;
+				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
+			}
+
+			// Test if Group Should Resize Vertically
+			if (Global::mouseRelativeY < group_selector.extreme_value_south || Global::mouseRelativeY > group_selector.extreme_value_north)
+			{
+				resize_vertical = true;
+				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
+			}
+
+			// Prepare for Resizing of Groups
+			if (resize_vertical || resize_horizontal)
+			{
+				// Iterate Through Each Vertex and Change Color
+				for (int i = 3 * sizeof(GL_FLOAT), j = 0; j < 8; i += 7 * sizeof(GL_FLOAT), j++)
+					glBufferSubData(GL_ARRAY_BUFFER, i, 4 * sizeof(GL_FLOAT), glm::value_ptr(glm::vec4(0.0f, 0.0f, 0.85f, 1.0f)));
+
+				// Set Mouse Icon to Resize
+
+				if (Global::LeftClick)
+				{
+					group_selector.resizing = true;
+
+					for (Selected_Object* selected_object : selected_objects)
+					{
+						selected_object->offset_x = 0.0f;
+						selected_object->offset_y = 0.0f;
+						selected_object->change_horizontal = 0.0f;
+						selected_object->change_vertical = 0.0f;
+						if (resize_horizontal)
+							selected_object->setHorizontalGroupResize();
+						if (resize_vertical)
+							selected_object->setVerticalGroupResize();
+					}
+				}
+
+				return;
+			}
+		}
+
+		else
+		{
+			// Iterate Through Each Vertex and Change Color
+			for (int i = 3 * sizeof(GL_FLOAT), j = 0; j < 8; i += 7 * sizeof(GL_FLOAT), j++)
+				glBufferSubData(GL_ARRAY_BUFFER, i, 4 * sizeof(GL_FLOAT), glm::value_ptr(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f)));
+		}
+
+		// Unbind Highlighter Object
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+
+	// If Objects are Being Rotated, Rotate All
+	if (Selected_Object::rotating)
+	{
+		for (Selected_Object* selected_object : selected_objects)
+			sortVertices(true, selected_object);
+		return;
+	}
+
+	// If Left Click is Not Held, Objects Should Not be Moved Nor Resized
+	else if (!Global::LeftClick)
+	{
+		Selected_Object::moving = false;
+		Selected_Object::resizing = false;
+		for (Selected_Object* selected_object : selected_objects)
+		{
+			selected_object->change_horizontal = 0.0f;
+			selected_object->change_vertical = 0.0f;
+			if (selected_object->editing_shape == CIRCLE)
+				static_cast<Selected_Circle*>(selected_object)->selected_vertex = 0;
+			else if (selected_object->editing_shape == TRIANGLE)
+				static_cast<Selected_Triangle*>(selected_object)->selected_vertex = 0;
+		}
+	}
+
+	// If Objects are Being Moved, Move All
+	else if (Selected_Object::moving)
+	{
+		for (Selected_Object* selected_object : selected_objects)
+		{
+			// Move Object
+			selected_object->moveObject();	
+
+			// If Object is a Lighting Object, Update Shader Data
+			if (selected_object->vertex_objects.lighting_object)
+				storeSelectorShaderDataLights(selected_object->data_object);
+		}
+		updateGroupSelector();
+		return;
+	}
+
 	// Edit Object
-	update_functions[editing_shape]();
+	bool should_deselect = true;
+	for (int i = 0; i < selected_objects.size(); i++)
+	{
+		Selected_Object* selected_object = selected_objects.at(i);
+		uint8_t result = selected_object->updateObject();
+		should_deselect &= result == DESELECTED;
+		if (result >= MOUSED_OVER)
+		{
+			// Code to Make Other Objects Resize
+			if (result == RESIZING)
+			{
+				for (Selected_Object* selected_object2 : selected_objects)
+				{
+					if (selected_object2 != selected_object)
+					{
+						// Note: Possible Have Individual Resize Returns for Horizontal, Vertical, or Both
+
+						if (selected_object->change_horizontal)
+							selected_object2->setHorizontalGroupResize();
+						if (selected_object->change_vertical)
+							selected_object2->setVerticalGroupResize();
+						selected_object2->offset_x = *selected_object2->object_x - *selected_object->object_x;
+						selected_object2->offset_y = *selected_object2->object_y - *selected_object->object_y;
+					}
+				}
+			}
+
+			// Code to Make Other Objects Move
+			else if (result == MOVING)
+			{
+				for (Selected_Object* selected_object2 : selected_objects)
+				{
+					if (selected_object2 != selected_object)
+						selected_object2->setMouseOffset();
+				}
+			}
+
+			// Send Object to Front of List
+			if (result == MOVING || result == RESIZING)
+			{
+				selected_objects[i] = selected_objects[0];
+				selected_objects[0] = selected_object;
+			}
+
+			// If Tab is Pressed, Send Object to Back of the List
+			else if (Global::Keys[GLFW_KEY_TAB])
+			{
+				Global::Keys[GLFW_KEY_TAB] = false;
+				selected_objects[i] = selected_objects[selected_objects.size() - 1];
+				selected_objects[selected_objects.size() - 1] = selected_object;
+			}
+
+			break;
+		}
+
+		// Else, Reset Some Values
+		if (result <= MOUSED_OVER && !Selected_Object::moving && !Selected_Object::resizing)
+		{
+			selected_object->offset_x = 0.0f;
+			selected_object->offset_y = 0.0f;
+			selected_object->change_horizontal = 0.0f;
+			selected_object->change_vertical = 0.0f;
+		}
+	}
+
+	if (should_deselect)
+		deselectObject();
 
 	// Update Object Info
 	info->forceResize();
-
-	// If Object is a Lighting Object, Update Shader Data
-	if (lighting_object)
-		storeSelectorShaderDataLights(data_object);
 }
 
-void Editor::Selector::testResizeRectangle(bool enable_horizontal, bool enable_vertical, float* object_x, float* object_y, float* object_width, float* object_height)
+uint8_t Editor::Selector::updateHinge(Selected_Object* selected_object)
 {
-	// Test if Resizing Should be Considered
-	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
-	{
-		// How Far the Mouse Must be Inside Object to Stop Resizing
-		float resize_width = 1.5f * Global::zoom_scale;
-
-		// Change Horizontal Size of Object
-		if (enable_horizontal)
-		{
-			float half_absolute_width = abs(*object_width) * 0.5f;
-			int8_t size_sign = Algorithms::Math::getSign(*object_width); 
-
-			// Test if Left Side Should Shift
-			if (Global::mouseRelativeX < (*object_x - half_absolute_width + resize_width))
-			{
-				// Sign of Boolian Determines Which Side Doesn't Move
-				change_horizontal = -size_sign;
-				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
-			}
-
-			// Test if Right Side Should Shift
-			else if (Global::mouseRelativeX > (*object_x + half_absolute_width - resize_width))
-			{
-				change_horizontal = size_sign;
-				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
-			}
-		}
-
-		// Change Vertical Size of Object
-		if (enable_vertical)
-		{
-			float half_absolute_height = abs(*object_height) * 0.5f;
-			int8_t size_sign = Algorithms::Math::getSign(*object_height);
-
-			// Test if Top Side Should Shift
-			if (Global::mouseRelativeY > (*object_y + half_absolute_height - resize_width))
-			{
-				change_vertical = size_sign;
-				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
-			}
-
-			// Test if Bottom Side Should Shift
-			else if (Global::mouseRelativeY < (*object_y - half_absolute_height + resize_width))
-			{
-				change_vertical = -size_sign;
-				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
-			}
-		}
-
-		// Test if Color of Outline Should Change
-		if (!resizing && (change_vertical || change_horizontal))
-			outlineForResize();
-	}
+	return false;
 }
 
-void Editor::Selector::moveRectangle(bool enable_negative, float* object_x, float* object_y, float* object_width, float* object_height)
-{
-	// Stop Moving if LeftClick is no Longer Being Held
-	if (!Global::LeftClick)
-		moving = false;
-
-	else
-	{
-		// Shift Horizontal
-		if (change_horizontal != 0)
-		{
-			// Set Selected Cursor
-			Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
-
-			// Change Relative X if Enabled
-			if (Global::editor_options->option_disable_pass_through)
-			{
-				if (change_horizontal < 0 && Global::mouseRelativeX > *object_x) { Global::mouseRelativeX = *object_x - 0.05f; }
-				else if (change_horizontal > 0 && Global::mouseRelativeX < *object_x) { Global::mouseRelativeX = *object_x + 0.05f; }
-			}
-
-			// Calculate New xPos by Taking the Average of the x Position of the Unchanging (opposite) Side and the x Position of the Mouse
-			*object_x = (Global::mouseRelativeX + (*object_x - ((*object_width * 0.5f) * change_horizontal))) * 0.5f;
-
-			// Calculate New Width by Multiplying the Distance Between the Mouse and xPos by 2
-			*object_width = 2 * (Global::mouseRelativeX - *object_x) * change_horizontal;
-
-			// Prevent Size from Going Negative
-			if (*object_width <= 0.1f && !enable_negative)
-			{
-				*object_width = 0.1f;
-			}
-		}
-
-		// Shift Verticle
-		if (change_vertical != 0)
-		{
-			// Set Selected Cursor
-			Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
-
-			// Change Relative Y if Enabled
-			if (Global::editor_options->option_disable_pass_through)
-			{
-				if (change_vertical < 0 && Global::mouseRelativeY > *object_y) { Global::mouseRelativeY = *object_y - 0.05f; }
-				else if (change_vertical > 0 && Global::mouseRelativeY < *object_y) { Global::mouseRelativeY = *object_y + 0.05f; }
-			}
-
-			// Calculate New yPos by Taking the Average of the y Position of the Unchanging (opposite) Side and the y Position of the Mouse
-			*object_y = (Global::mouseRelativeY + (*object_y - ((*object_height * 0.5f) * change_vertical))) * 0.5f;
-
-			// Calculate New Height by Multiplying the Distance Between the Mouse and yPos by 2
-			*object_height = 2 * (Global::mouseRelativeY - *object_y) * change_vertical;
-
-			// Prevent Size from Going Negative
-			if (*object_height <= 0.1f && !enable_negative)
-			{
-				*object_height = 0.1f;
-			}
-		}
-
-		// Move if Size Doesn't Change
-		if (!(change_vertical || change_horizontal))
-		{
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-			*object_x = (float)(Global::mouseRelativeX + offset_x);
-			*object_y = (float)(Global::mouseRelativeY + offset_y);
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
-		}
-
-		// Else Update Vertices and Buffer Objects
-		else
-		{
-			genSelectorVertices(selected_object->data_object);
-		}
-	}
-}
-
-void Editor::Selector::updateRectangle()
-{
-	// Get Selected Rectangle Data
-	Selected_Rectangle& selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-
-	// Test if Mouse is Inside Object
-	if ((*selected_rectangle.object_x - (*selected_rectangle.object_width * 0.5f) < Global::mouseRelativeX) && (*selected_rectangle.object_x + (*selected_rectangle.object_width * 0.5f) > Global::mouseRelativeX) && (*selected_rectangle.object_y - (*selected_rectangle.object_height * 0.5f) < Global::mouseRelativeY) && (*selected_rectangle.object_y + (*selected_rectangle.object_height * 0.5f) > Global::mouseRelativeY))
-	{
-		// If Object is Currently Not Being Moved, Test If It Should
-		if (!moving)
-		{
-			// Reset Variables
-			change_horizontal = 0;
-			change_vertical = 0;
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-
-			// Test if Rectangle Should Resize
-			testResizeRectangle(true, true, selected_rectangle.object_x, selected_rectangle.object_y, selected_rectangle.object_width, selected_rectangle.object_height);
-
-			// Test if Color of Outline Should Change to Moving
-			if (!mouse_intersects_object || (resizing && !(change_vertical || change_horizontal)))
-				outlineForMove();
-
-			// If Left Mouse Button is Held, Start Moving
-			if (Global::LeftClick)
-			{
-				moving = true;
-				offset_x = *selected_rectangle.object_x - Global::mouseRelativeX;
-				offset_y = *selected_rectangle.object_y - Global::mouseRelativeY;
-			}
-		}
-	}
-
-	// Else, Test if Object Should be Deselected
-	else if (!moving)
-	{
-		// Update Outline Color
-		if (mouse_intersects_object)
-			outlineForNotSelected();
-
-		// If Left Click is Pressed, Deselect Object
-		if (Global::LeftClick)
-		{
-			deselectObject();
-			return;
-		}
-	}
-
-	// If Currently Moving, Move Rectangle
-	moveRectangle(true, selected_rectangle.object_x, selected_rectangle.object_y, selected_rectangle.object_width, selected_rectangle.object_height);
-}
-
-void Editor::Selector::testResizeTrapezoid(Selected_Trapezoid& selected_trapezoid)
-{
-	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
-	{
-		// How Far the Mouse Must be Inside Object to Stop Resizing
-		float resize_width = 1.5f * Global::zoom_scale;
-
-		// Calculate Half Values
-		float half_width = *selected_trapezoid.object_width * 0.5f;
-		float half_height = *selected_trapezoid.object_height * 0.5f;
-
-		// Values of Corners
-		glm::vec2 bottom_left = glm::vec2(*selected_trapezoid.object_x - half_width, *selected_trapezoid.object_y - half_height);
-		glm::vec2 bottom_right = glm::vec2(*selected_trapezoid.object_x + half_width, *selected_trapezoid.object_y - half_height + *selected_trapezoid.object_height_modifier);
-		glm::vec2 top_right = glm::vec2(*selected_trapezoid.object_x + half_width + *selected_trapezoid.object_width_modifier, *selected_trapezoid.object_y + half_height + *selected_trapezoid.object_height_modifier);
-		glm::vec2 top_left = glm::vec2(*selected_trapezoid.object_x - half_width + *selected_trapezoid.object_width_modifier, *selected_trapezoid.object_y + half_height);
-
-		// Test if Bottom Shoud Resize
-		if (Global::mouseRelativeX > bottom_left.x && Global::mouseRelativeX < bottom_right.x)
-		{
-			// Calculate Relative Values
-			float relative_y_bottom = ((bottom_left.y - bottom_right.y) / (bottom_left.x - bottom_right.x)) * (Global::mouseRelativeX - bottom_left.x) + bottom_left.y;
-
-			// Test if Y is Inside Reasonable Range
-			if (Global::mouseRelativeY > relative_y_bottom && Global::mouseRelativeY < relative_y_bottom + resize_width)
-			{
-				change_horizontal = 1;
-				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
-
-				// Calculate Offsets
-				offset_x = *selected_trapezoid.object_x - Global::mouseRelativeX;
-				offset_y = *selected_trapezoid.object_height_modifier * ((Global::mouseRelativeX - bottom_left.x) / (bottom_right.x - bottom_left.x));
-			}
-		}
-
-		// Test if Right Shoud Resize
-		if (Global::mouseRelativeY > bottom_right.y && Global::mouseRelativeY < top_right.y && !change_horizontal)
-		{
-			// Calculate Relative Values
-			float relative_x_right = ((bottom_right.x - top_right.x) / (bottom_right.y - top_right.y)) * (Global::mouseRelativeY - bottom_right.y) + bottom_right.x;
-
-			// Test if X is Inside Reasonable Range
-			if (Global::mouseRelativeX < relative_x_right && Global::mouseRelativeX > relative_x_right - resize_width)
-			{
-				change_vertical = 1;
-				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
-
-				// Calculate Offsets
-				offset_x = *selected_trapezoid.object_width_modifier * ((Global::mouseRelativeY - bottom_right.y) / (top_right.y - bottom_right.y));
-				offset_y = (*selected_trapezoid.object_y + *selected_trapezoid.object_height_modifier) - Global::mouseRelativeY;
-			}
-		}
-
-		// Test if Top Should Resize
-		if (Global::mouseRelativeX < top_right.x && Global::mouseRelativeX > top_left.x && !change_vertical)
-		{
-			// Calculate Relative Values
-			float relative_y_top = ((top_right.y - top_left.y) / (top_right.x - top_left.x)) * (Global::mouseRelativeX - top_right.x) + top_right.y;
-
-			// Test if Y is Inside Reasonable Range
-			if (Global::mouseRelativeY < relative_y_top && Global::mouseRelativeY > relative_y_top - resize_width)
-			{
-				change_horizontal = 2;
-				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
-
-				// Calculate Offsets
-				offset_x = (*selected_trapezoid.object_x + *selected_trapezoid.object_width_modifier) - Global::mouseRelativeX;
-				offset_y = *selected_trapezoid.object_height_modifier * ((Global::mouseRelativeX - top_left.x) / (top_right.x - bottom_left.x));
-			}
-		}
-
-		// Test if Left Should Resize
-		if (Global::mouseRelativeY < top_left.y && Global::mouseRelativeY > bottom_left.y && !change_horizontal)
-		{
-			// Calculate Relative Values
-			float relative_x_left = ((top_left.x - bottom_left.x) / (top_left.y - bottom_left.y)) * (Global::mouseRelativeY - top_left.y) + top_left.x;
-
-			// Test if X is Inside Reasonable Range
-			if (Global::mouseRelativeX > relative_x_left && Global::mouseRelativeX < relative_x_left + resize_width)
-			{
-				change_vertical = 2;
-				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
-
-				// Calculate Offsets
-				offset_x = *selected_trapezoid.object_width_modifier * ((Global::mouseRelativeY - bottom_left.y) / (top_left.y - bottom_left.y));
-				offset_y = *selected_trapezoid.object_y - Global::mouseRelativeY;
-			}
-		}
-
-		// Test if Color of Outline Should Change
-		if (!resizing && (change_vertical || change_horizontal))
-			outlineForResize();
-	}
-}
-
-void Editor::Selector::moveTrapezoid(Selected_Trapezoid& selected_trapezoid)
-{
-	// Stop Moving if LeftClick is no Longer Being Held
-	if (!Global::LeftClick)
-	{
-		moving = false;
-	}
-
-	else
-	{
-		// Shift Horizontal
-		if (change_horizontal)
-		{
-			// Shift Bottom
-			if (change_horizontal == 1)
-			{
-				// Calculate Change in X Values
-				float change = (*selected_trapezoid.object_x - Global::mouseRelativeX - offset_x) * 0.5f;
-
-				// Calculate Y Changes
-				float temp_yPos = (Global::mouseRelativeY - offset_y + (*selected_trapezoid.object_y - ((*selected_trapezoid.object_height * 0.5f) * -1))) * 0.5f;
-				float temp_Size2 = 2 * (Global::mouseRelativeY - offset_y - temp_yPos) * -1;
-
-				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
-				if (!Global::editor_options->option_disable_pass_through || temp_Size2 > 0.1f)
-				{
-					// Apply Change
-					*selected_trapezoid.object_x -= change;
-					*selected_trapezoid.object_width_modifier += change;
-
-					// Apply Calculated Size Change
-					*selected_trapezoid.object_y = temp_yPos;
-					*selected_trapezoid.object_height = temp_Size2;
-				}
-			}
-
-			// Shift Top
-			else if (change_horizontal == 2)
-			{
-				// Set Object X Offset
-				float temp_SizeOffset1 = (Global::mouseRelativeX + offset_x) - *selected_trapezoid.object_x;
-
-				// Calculate Y Changes
-				float temp_yPos = (Global::mouseRelativeY - offset_y + (*selected_trapezoid.object_y - (*selected_trapezoid.object_height * 0.5f))) * 0.5f;
-				float temp_Size2 = 2 * (Global::mouseRelativeY - offset_y - temp_yPos);
-
-				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
-				if (!Global::editor_options->option_disable_pass_through || temp_Size2 > 0.1f)
-				{
-					// Apply Calculated Size Change
-					*selected_trapezoid.object_width_modifier = temp_SizeOffset1;
-					*selected_trapezoid.object_y = temp_yPos;
-					*selected_trapezoid.object_height = temp_Size2;
-				}
-			}
-
-			// Prevent Size from Going Negative
-			if (*selected_trapezoid.object_height <= 0.1f)
-			{
-				*selected_trapezoid.object_height = 0.1f;
-			}
-		}
-
-		// Shift Vertical
-		else if (change_vertical)
-		{
-			// Shift Right
-			if (change_vertical == 1)
-			{
-				// Set Object Y Offset
-				float temp_SizeOffset2 = (Global::mouseRelativeY + offset_y) - *selected_trapezoid.object_y;
-
-				// Calculate X Changes
-				float temp_xPos = (Global::mouseRelativeX - offset_x + (*selected_trapezoid.object_x - (*selected_trapezoid.object_width * 0.5f))) * 0.5f;
-				float temp_Size1 = 2 * (Global::mouseRelativeX - offset_x - temp_xPos);
-
-				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
-				if (!Global::editor_options->option_disable_pass_through || temp_Size1 > 0.1f)
-				{
-					// Apply Calculated Size Change
-					*selected_trapezoid.object_height_modifier = temp_SizeOffset2;
-					*selected_trapezoid.object_x = temp_xPos;
-					*selected_trapezoid.object_width = temp_Size1;
-				}
-			}
-
-			// Shift Left
-			else if (change_vertical == 2)
-			{
-				// Calculate Change in Y Values
-				float change = (*selected_trapezoid.object_y - Global::mouseRelativeY - offset_y) * 0.5f;
-
-				// Calculate X Changes
-				float temp_xPos = (Global::mouseRelativeX - offset_x + (*selected_trapezoid.object_x - ((*selected_trapezoid.object_width * 0.5f) * -1))) * 0.5f;
-				float temp_Size1 = 2 * (Global::mouseRelativeX - offset_x - temp_xPos) * -1;
-
-				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
-				if (!Global::editor_options->option_disable_pass_through || temp_Size1 > 0.1f)
-				{
-					// Apply Change
-					*selected_trapezoid.object_y -= change;
-					*selected_trapezoid.object_height_modifier += change;
-
-					// Apply Calculated Size Change
-					*selected_trapezoid.object_x = temp_xPos;
-					*selected_trapezoid.object_width = temp_Size1;
-				}
-			}
-
-			// Prevent Size from Going Negative
-			if (*selected_trapezoid.object_width <= 0.1f)
-			{
-				*selected_trapezoid.object_width = 0.1f;
-			}
-		}
-
-		// Move if Size Doesn't Change
-		if (!(change_vertical || change_horizontal))
-		{
-			*selected_trapezoid.object_x = (float)(Global::mouseRelativeX + offset_x);
-			*selected_trapezoid.object_y = (float)(Global::mouseRelativeY + offset_y);
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_trapezoid.object_x, *selected_trapezoid.object_y, 0.0f));
-		}
-
-		// Else Update Vertices and Buffer Objects
-		else
-		{
-			genSelectorVertices(selected_trapezoid.data_object);
-		}
-	}
-}
-
-void Editor::Selector::updateTrapezoid()
-{
-	// Get Selected Trapezoid
-	Selected_Trapezoid& selected_trapezoid = *static_cast<Selected_Trapezoid*>(selected_object);
-
-	// Test if Mouse is Inside Object
-	if (Source::Collisions::Point::testTrapCollisions(*selected_trapezoid.object_x, *selected_trapezoid.object_y, *selected_trapezoid.object_width, *selected_trapezoid.object_height, *selected_trapezoid.object_width_modifier, *selected_trapezoid.object_height_modifier))
-	{
-		// If Object is Currently Not Being Moved, Test If It Should
-		if (!moving)
-		{
-			// Reset Variables
-			change_horizontal = 0;
-			change_vertical = 0;
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-
-			// Test if Rectangle Should Resize
-			testResizeTrapezoid(selected_trapezoid);
-
-			// Test if Color of Outline Should Change to Moving
-			if (!mouse_intersects_object || (resizing && !(change_vertical || change_horizontal)))
-				outlineForMove();
-
-			// If Left Mouse Button is Held, Start Moving
-			if (Global::LeftClick)
-			{
-				moving = true;
-
-				// Only Use Offset if Not Resizing (Offset is Already Defined for Resize)
-				if (!(change_vertical || change_horizontal))
-				{
-					offset_x = *selected_trapezoid.object_x - Global::mouseRelativeX;
-					offset_y = *selected_trapezoid.object_y - Global::mouseRelativeY;
-				}
-			}
-		}
-	}
-
-	// Else, Test if Object Should be Deselected
-	else if (!moving)
-	{
-		// Update Outline Color
-		if (mouse_intersects_object)
-			outlineForNotSelected();
-
-		// If Left Click is Pressed, Deselect Object
-		if (Global::LeftClick)
-		{
-			deselectObject();
-			return;
-		}
-	}
-
-	// Rotate Object
-	if (rotating)
-	{
-		sortVertices(true);
-	}
-
-	else
-	{
-		// If Currently Moving, Move Trapezoid
-		moveTrapezoid(selected_trapezoid);
-	}
-}
-
-void Editor::Selector::testResizeTriangle(Selected_Triangle& selected_triangle)
-{
-	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
-	{
-		// Test if the First Vector Should Move
-		if ((Global::mouseRelativeX >= selected_triangle.coords1.x - 2 && Global::mouseRelativeX <= selected_triangle.coords1.x + 2) && (Global::mouseRelativeY >= selected_triangle.coords1.y - 2 && Global::mouseRelativeY <= selected_triangle.coords1.y + 2))
-		{
-			selected_vertex = 1;
-		}
-
-		// Test if the Second Vector Should Move
-		else if ((Global::mouseRelativeX >= selected_triangle.coords2.x - 2 && Global::mouseRelativeX <= selected_triangle.coords2.x + 2) && (Global::mouseRelativeY >= selected_triangle.coords2.y - 2 && Global::mouseRelativeY <= selected_triangle.coords2.y + 2))
-		{
-			selected_vertex = 2;
-		}
-
-		// Test if the Third Vector Should Move
-		else if ((Global::mouseRelativeX >= selected_triangle.coords3.x - 2 && Global::mouseRelativeX <= selected_triangle.coords3.x + 2) && (Global::mouseRelativeY >= selected_triangle.coords3.y - 2 && Global::mouseRelativeY <= selected_triangle.coords3.y + 2))
-		{
-			selected_vertex = 3;
-		}
-
-		// Test if Color of Outline Should Change
-		if (!resizing && selected_vertex)
-			outlineForResize();
-	}
-}
-
-void Editor::Selector::moveTriangle(Selected_Triangle& selected_triangle)
-{
-	// Stop Moving if LeftClick is no Longer Being Held
-	if (!Global::LeftClick)
-	{
-		moving = false;
-	}
-
-	else
-	{
-		// Get the Triangle Shape
-		Shape::Triangle& triangle_data = *static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
-
-		// Test if Triangle Should be Resized
-		if (selected_vertex)
-		{
-			// Move Highest Vertex
-			if (selected_vertex == 1)
-			{
-				selected_triangle.coords1.x = Global::mouseRelativeX;
-				selected_triangle.coords1.y = Global::mouseRelativeY;
-			}
-
-			// Move Second Highest Vertex
-			else if (selected_vertex == 2)
-			{
-				selected_triangle.coords2.x = Global::mouseRelativeX;
-				selected_triangle.coords2.y = Global::mouseRelativeY;
-			}
-
-			// Move Lowest Vertex
-			else
-			{
-				selected_triangle.coords3.x = Global::mouseRelativeX;
-				selected_triangle.coords3.y = Global::mouseRelativeY;
-			}
-
-			// Store Vertices in Object Data
-			temp_position = selected_triangle.coords1;
-			triangle_data = Shape::Triangle(selected_triangle.coords2, selected_triangle.coords3);
-			static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData().position = selected_triangle.coords1;
-			selected_triangle.coords2 = *triangle_data.pointerToSecondPosition();
-			selected_triangle.coords3 = *triangle_data.pointerToThirdPosition();
-			should_sort = true;
-		}
-
-		// Move if Size Doesn't Change
-		if (!selected_vertex)
-		{
-			// Calclate New Coordinates
-			glm::vec2 delta_coords2 = selected_triangle.coords2 - selected_triangle.coords1;
-			glm::vec2 delta_coords3 = selected_triangle.coords3 - selected_triangle.coords1;
-			selected_triangle.coords1.x = (float)(Global::mouseRelativeX + offset_x);
-			selected_triangle.coords1.y = (float)(Global::mouseRelativeY + offset_y);
-			selected_triangle.coords2 = delta_coords2 + selected_triangle.coords1;
-			selected_triangle.coords3 = delta_coords3 + selected_triangle.coords1;
-
-			// Store New Position Data
-			temp_position = selected_triangle.coords1;
-			selected_triangle.object_x = &temp_position.x;
-			selected_triangle.object_y = &temp_position.y;
-			triangle_data = Shape::Triangle(selected_triangle.coords2, selected_triangle.coords3);
-			static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData().position = selected_triangle.coords1;
-			selected_triangle.coords2 = *triangle_data.pointerToSecondPosition();
-			selected_triangle.coords3 = *triangle_data.pointerToThirdPosition();
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_triangle.object_x, *selected_triangle.object_y, 0.0f));
-		}
-
-		// Else Update Vertices and Buffer Objects
-		else
-		{
-			genSelectorVertices(selected_triangle.data_object);
-		}
-	}
-}
-
-void Editor::Selector::updateTriangle()
-{
-	// Get Selected Triangle Data
-	Selected_Triangle& selected_triangle = *static_cast<Selected_Triangle*>(selected_object);
-
-	Vertices::Visualizer::visualizePoint(selected_triangle.coords1, 0.3f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-	Vertices::Visualizer::visualizePoint(selected_triangle.coords2, 0.3f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
-	Vertices::Visualizer::visualizePoint(selected_triangle.coords3, 0.3f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-
-	if (Source::Collisions::Point::testTriCollisions(selected_triangle.coords1, selected_triangle.coords2, selected_triangle.coords3))
-	{
-		// If Object is Currently Not Being Moved, Test If It Should
-		if (!moving)
-		{
-			// Reset Variables
-			selected_vertex = 0;
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-
-			// Test if Rectangle Should Resize
-			testResizeTriangle(selected_triangle);
-
-			// Test if Color of Outline Should Change to Moving
-			if (!mouse_intersects_object || (resizing && !selected_vertex))
-				outlineForMove();
-
-			// If Left Mouse Button is Held, Start Moving
-			if (Global::LeftClick)
-			{
-				moving = true;
-				offset_x = selected_triangle.coords1.x - Global::mouseRelativeX;
-				offset_y = selected_triangle.coords1.y - Global::mouseRelativeY;
-			}
-		}
-	}
-
-	// Else, Test if Object Should be Deselected
-	else if (!moving)
-	{
-		// Update Outline Color
-		if (mouse_intersects_object)
-			outlineForNotSelected();
-
-		// If Left Click is Pressed, Deselect Object
-		if (Global::LeftClick)
-		{
-			deselectObject();
-			return;
-		}
-	}
-
-	// Rotate Object
-	if (rotating)
-	{
-		sortVertices(true);
-	}
-
-	else
-	{
-		// If Currently Moving, Move Rectangle
-		moveTriangle(selected_triangle);
-	}
-}
-
-void Editor::Selector::testResizeCircle(float& distance, float& delta_w, float& delta_h, float* object_radius)
-{
-	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
-	{
-		// How Far the Mouse Must be Inside Object to Stop Resizing
-		float resize_width = 1.5f * Global::zoom_scale;
-
-		// Test if Mouse Touches Edge of Circle
-		if (distance > *object_radius - resize_width)
-		{
-			// Get Mouse Angle
-			mouse_angle = atan(delta_h / delta_w);
-			if (delta_w < 0)
-				mouse_angle += 3.141459f;
-
-			// Select Vertex Flag
-			selected_vertex = 1;
-
-			// Select Cursor
-			Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
-
-			// Test if Color of Outline Should Change
-			if (!resizing)
-				outlineForResize();
-		}
-	}
-}
-
-void Editor::Selector::moveCircle(float* object_x, float* object_y, float* object_radius)
-{
-	// Stop Moving if LeftClick is no Longer Being Held
-	if (!Global::LeftClick)
-	{
-		moving = false;
-	}
-
-	else
-	{
-		// Test if Circle is Resizing
-		if (selected_vertex)
-		{
-			// Radius is New Distance Between Mouse and Center
-			*object_radius = glm::distance(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), glm::vec2(*object_x, *object_y));
-		}
-
-		// Move if Size Doesn't Change
-		if (!selected_vertex)
-		{
-			*object_x = (float)(Global::mouseRelativeX + offset_x);
-			*object_y = (float)(Global::mouseRelativeY + offset_y);
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
-		}
-
-		// Else Update Vertices and Buffer Objects
-		else
-		{
-			genSelectorVertices(selected_object->data_object);
-		}
-	}
-}
-
-void Editor::Selector::updateCircle()
-{
-	// Get Selected Circle Data
-	Selected_Circle& selected_circle = *static_cast<Selected_Circle*>(selected_object);
-
-	// Get Distance Between Mouse and Center of Circle
-	float delta_w = Global::mouseRelativeX - *selected_circle.object_x;
-	float delta_h = Global::mouseRelativeY - *selected_circle.object_y;
-	float distance = glm::distance(glm::vec2(delta_w, delta_h), glm::vec2(0.0f, 0.0f));
-
-	// Test if Mouse is Inside Circle Object
-	if (distance < *selected_circle.object_radius)
-	{
-		// If Object is Currently Not Being Moved, Test If It Should
-		if (!moving)
-		{
-			// Reset Variables
-			selected_vertex = 0;
-			mouse_angle = 0.0f;
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-
-			// Test if Rectangle Should Resize
-			testResizeCircle(distance, delta_w, delta_h, selected_circle.object_radius);
-
-			// Test if Color of Outline Should Change to Moving
-			if (!mouse_intersects_object || (resizing && !selected_vertex))
-				outlineForMove();
-
-			// If Left Mouse Button is Held, Start Moving
-			if (Global::LeftClick)
-			{
-				moving = true;
-				offset_x = *selected_circle.object_x - Global::mouseRelativeX;
-				offset_y = *selected_circle.object_y - Global::mouseRelativeY;
-			}
-		}
-	}
-
-	// Else, Test if Object Should be Deselected
-	else if (!moving)
-	{
-		// Update Outline Color
-		if (mouse_intersects_object)
-			outlineForNotSelected();
-
-		// If Left Click is Pressed, Deselect Object
-		if (Global::LeftClick)
-		{
-			deselectObject();
-			return;
-		}
-	}
-
-	// If Currently Moving, Move Rectangle
-	moveCircle(selected_circle.object_x, selected_circle.object_y, selected_circle.object_radius);
-}
-
-void Editor::Selector::testResizeLine(Selected_Line& selected_line)
-{
-	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
-	{
-		// How Far the Mouse Must be Inside Object to Stop Resizing
-		float resize_width = 1.5f * Global::zoom_scale;
-
-		// Test if Mouse is Close to Origin Vertex
-		if (glm::distance(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), glm::vec2(*selected_line.object_x, *selected_line.object_y)) < resize_width)
-		{
-			// Set Vertex to First Vertex
-			selected_vertex = 1;
-
-			// Set Cursor
-			Global::Selected_Cursor = Global::CURSORS::POINT;
-		}
-
-		// Test if Mouse is Close to Opposite Vertex
-		else if (glm::distance(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), glm::vec2(*selected_line.object_opposite_x, *selected_line.object_opposite_y)) < resize_width)
-		{
-			// Set Vertex to Second Vertex
-			selected_vertex = 2;
-
-			// Set Cursor
-			Global::Selected_Cursor = Global::CURSORS::POINT;
-		}
-
-		// Test if Color of Outline Should Change
-		if (!resizing && selected_vertex)
-			outlineForResize();
-	}
-}
-
-void Editor::Selector::moveLine(Selected_Line& selected_line)
-{
-	// Stop Moving if LeftClick is no Longer Being Held
-	if (!Global::LeftClick)
-	{
-		moving = false;
-	}
-
-	else
-	{
-		// Test if Object Origin Vertex is Being Moved
-		if (selected_vertex == 1)
-		{
-			// Move Object Position
-			*selected_line.object_x = Global::mouseRelativeX;
-			*selected_line.object_y = Global::mouseRelativeY;
-		}
-		
-		// Test if Object Opposite Vertex is Being Moved
-		else if (selected_vertex == 2)
-		{
-			// Move Object Opposite Position
-			*selected_line.object_opposite_x = Global::mouseRelativeX;
-			*selected_line.object_opposite_y = Global::mouseRelativeY;
-		}
-
-		// Move if Size Doesn't Change
-		if (!selected_vertex)
-		{
-			// Find Distance Between Positions
-			glm::vec2 delta_pos = glm::vec2(*selected_line.object_opposite_x, *selected_line.object_opposite_y) - glm::vec2(*selected_line.object_x, *selected_line.object_y);
-
-			// Get New Origin Position
-			*selected_line.object_x = (float)(Global::mouseRelativeX + offset_x);
-			*selected_line.object_y = (float)(Global::mouseRelativeY + offset_y);
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_line.object_x, *selected_line.object_y, 0.0f));
-
-			// Generate Line Data
-			//intercept = slant_data.position.y - (slope * slant_data.position.x);
-			intercept = *selected_line.object_y - (slope * *selected_line.object_x);
-
-			// Find New Opposite Position
-			*selected_line.object_opposite_x = *selected_line.object_x + delta_pos.x;
-			*selected_line.object_opposite_y = *selected_line.object_y + delta_pos.y;
-		}
-
-		// Else Update Vertices and Buffer Objects
-		else
-		{
-			genSelectorVertices(selected_line.data_object);
-		}
-	}
-}
-
-void Editor::Selector::updateLine()
-{
-	Selected_Line& selected_line = *static_cast<Selected_Line*>(selected_object);
-
-	// Localized Y Value at MouseX
-	float LocalY = slope * Global::mouseRelativeX + intercept;
-
-	// Test if Mouse Intersects Lines
-	if (((*selected_line.object_x < Global::mouseRelativeX && *selected_line.object_opposite_x > Global::mouseRelativeX) || (*selected_line.object_opposite_x < Global::mouseRelativeX && *selected_line.object_x > Global::mouseRelativeX)) && LocalY < Global::mouseRelativeY + 1 && LocalY > Global::mouseRelativeY - 1)
-	{
-		// If Object is Currently Not Being Moved, Test If It Should
-		if (!moving)
-		{
-			// Reset Variables
-			selected_vertex = 0;
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-
-			// Test if Line Should Resize
-			testResizeLine(selected_line);
-
-			// Test if Color of Outline Should Change to Moving
-			if (!mouse_intersects_object || (resizing && !selected_vertex))
-				outlineForMove();
-
-			// If Left Mouse Button is Held, Start Moving
-			if (Global::LeftClick)
-			{
-				moving = true;
-				offset_x = *selected_line.object_x - Global::mouseRelativeX;
-				offset_y = *selected_line.object_y - Global::mouseRelativeY;
-			}
-		}
-	}
-
-	// Else, Test if Object Should be Deselected
-	else if (!moving)
-	{
-		// Update Outline Color
-		if (mouse_intersects_object)
-			outlineForNotSelected();
-
-		// If Left Click is Pressed, Deselect Object
-		if (Global::LeftClick)
-		{
-			deselectObject();
-			return;
-		}
-	}
-
-	// If Currently Moving, Move Line
-	moveLine(selected_line);
-}
-
-void Editor::Selector::updateHorizontalLine()
-{
-	// Get Selected Horizontal Line Data
-	Selected_Horizontal_Line& selected_horizontal_line = *static_cast<Selected_Horizontal_Line*>(selected_object);
-
-	// Test if Mouse is Inside Object
-	if ((*selected_horizontal_line.object_x - (*selected_horizontal_line.object_width * 0.5f) < Global::mouseRelativeX) && (*selected_horizontal_line.object_x + (*selected_horizontal_line.object_width * 0.5f) > Global::mouseRelativeX) && (*selected_horizontal_line.object_y - 0.5f < Global::mouseRelativeY) && (*selected_horizontal_line.object_y + 0.5f > Global::mouseRelativeY))
-	{
-		// If Object is Currently Not Being Moved, Test If It Should
-		if (!moving)
-		{
-			// Reset Variables
-			change_horizontal = 0;
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-
-			// Test if Rectangle Should Resize
-			testResizeRectangle(true, false, selected_horizontal_line.object_x, selected_horizontal_line.object_y, selected_horizontal_line.object_width, nullptr);
-
-			// Test if Color of Outline Should Change to Moving
-			if (!mouse_intersects_object || (resizing && !change_horizontal))
-				outlineForMove();
-
-			// If Left Mouse Button is Held, Start Moving
-			if (Global::LeftClick)
-			{
-				moving = true;
-				offset_x = *selected_horizontal_line.object_x - Global::mouseRelativeX;
-				offset_y = *selected_horizontal_line.object_y - Global::mouseRelativeY;
-			}
-		}
-	}
-
-	// Else, Test if Object Should be Deselected
-	else if (!moving)
-	{
-		// Update Outline Color
-		if (mouse_intersects_object)
-			outlineForNotSelected();
-
-		// If Left Click is Pressed, Deselect Object
-		if (Global::LeftClick)
-		{
-			deselectObject();
-			return;
-		}
-	}
-
-	// If Currently Moving, Move Rectangle
-	moveRectangle(true, selected_horizontal_line.object_x, selected_horizontal_line.object_y, selected_horizontal_line.object_width, nullptr);
-}
-
-void Editor::Selector::updateVerticalLine()
-{
-	// Get Selected Vertical Line Data
-	Selected_Vertical_Line& selected_vertical_line = *static_cast<Selected_Vertical_Line*>(selected_object);
-
-	// Test if Mouse is Inside Object
-	if ((*selected_vertical_line.object_x - 0.5f < Global::mouseRelativeX) && (*selected_vertical_line.object_y + 0.5f > Global::mouseRelativeX) && (*selected_vertical_line.object_y - (*selected_vertical_line.object_height / 2) < Global::mouseRelativeY) && (*selected_vertical_line.object_y + (*selected_vertical_line.object_height / 2) > Global::mouseRelativeY))
-	{
-		// If Object is Currently Not Being Moved, Test If It Should
-		if (!moving)
-		{
-			// Reset Variables
-			change_vertical = 0;
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-
-			// Test if Rectangle Should Resize
-			testResizeRectangle(false, true, selected_vertical_line.object_x, selected_vertical_line.object_y, nullptr, selected_vertical_line.object_height);
-
-			// Test if Color of Outline Should Change to Moving
-			if (!mouse_intersects_object || (resizing && !change_vertical))
-				outlineForMove();
-
-			// If Left Mouse Button is Held, Start Moving
-			if (Global::LeftClick)
-			{
-				moving = true;
-				offset_x = *selected_vertical_line.object_x - Global::mouseRelativeX;
-				offset_y = *selected_vertical_line.object_y - Global::mouseRelativeY;
-			}
-		}
-	}
-
-	// Else, Test if Object Should be Deselected
-	else if (!moving)
-	{
-		// Update Outline Color
-		if (mouse_intersects_object)
-			outlineForNotSelected();
-
-		// If Left Click is Pressed, Deselect Object
-		if (Global::LeftClick)
-		{
-			deselectObject();
-			return;
-		}
-	}
-
-	// If Currently Moving, Move Rectangle
-	moveRectangle(true, selected_vertical_line.object_x, selected_vertical_line.object_y, nullptr, selected_vertical_line.object_height);
-}
-
-void Editor::Selector::updateSpringMassObject()
-{
-	// Get Selected Rectangle Data
-	Selected_Rectangle& selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
-
-	// Test if Mouse is Inside Object
-	if (Global::mouseRelativeX > *selected_rectangle.object_x - 0.5f && Global::mouseRelativeX < *selected_rectangle.object_x + 0.5f && Global::mouseRelativeY > *selected_rectangle.object_y - 0.5f && Global::mouseRelativeY < *selected_rectangle.object_y + 0.5f)
-	{
-		Global::Selected_Cursor = Global::CURSORS::HAND;
-		outlineForMove();
-
-		// If Left Mouse Button is Held, Start Moving
-		if (Global::LeftClick)
-		{
-			moving = true;
-			offset_x = *selected_rectangle.object_x - Global::mouseRelativeX;
-			offset_y = *selected_rectangle.object_y - Global::mouseRelativeY;
-		}
-	}
-
-	// Else, Test if Object Should be Deselected
-	else if (!moving)
-	{
-		// Update Outline Color
-		if (mouse_intersects_object)
-			outlineForNotSelected();
-
-		// If Left Click is Pressed, Deselect Object
-		if (Global::LeftClick)
-		{
-			deselectObject();
-			return;
-		}
-	}
-
-	// If Currently Moving, Move Object
-	if (moving)
-	{
-		// Test if Object Should Stop Moving
-		if (!Global::LeftClick)
-			moving = false;
-
-		// Move Object
-		else
-		{
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-			*selected_rectangle.object_x = (float)(Global::mouseRelativeX + offset_x);
-			*selected_rectangle.object_y = (float)(Global::mouseRelativeY + offset_y);
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_rectangle.object_x, *selected_rectangle.object_y, 0.0f));
-		}
-	}
-}
-
-void Editor::Selector::updateSpringMassNode()
-{
-	// Test if Mouse is Inside Node
-	if (Global::mouseRelativeX > node_data.position.x - node_data.radius && Global::mouseRelativeX < node_data.position.x + node_data.radius && Global::mouseRelativeY > node_data.position.y - node_data.radius && Global::mouseRelativeY < node_data.position.y + node_data.radius)
-	{
-		// If Not Moving, Test if Node Should Move
-		if (!moving)
-		{
-			// Set Cursor
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-
-			// Test if Highlight Color Should be Changed
-			if (!mouse_intersects_object)
-				outlineForMove();
-
-			// If Left Mouse Button is Held, Start Moving
-			if (Global::LeftClick)
-			{
-				moving = true;
-				offset_x = *selected_object->object_x - Global::mouseRelativeX;
-				offset_y = *selected_object->object_y - Global::mouseRelativeY;
-			}
-		}
-	}
-
-	// Else, Test if Object Should be Deselected
-	else if (!moving)
-	{
-		// Update Outline Color
-		if (mouse_intersects_object)
-			outlineForNotSelected();
-
-		// If Left Click is Pressed, Deselect Object
-		if (Global::LeftClick)
-		{
-			node_data.position -= static_cast<DataClass::Data_SpringMass*>(data_object)->getObjectData().position;
-			deselectNode();
-			level->reloadAll();
-			return;
-		}
-	}
-
-	// If Currently Moving, Move Node
-	if (moving)
-	{
-		// Test if Node Should Stop Moving
-		if (!Global::LeftClick)
-			moving = false;
-
-		// Move Node
-		Global::Selected_Cursor = Global::CURSORS::HAND;
-		*selected_object->object_x = (float)(Global::mouseRelativeX + offset_x);
-		*selected_object->object_y = (float)(Global::mouseRelativeY + offset_y);
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_object->object_x, *selected_object->object_y, 0.0f));
-	}
-
-	// Update Node in Origin Object
-	*node_pointer = Object::Physics::Soft::Node(node_data);
-	//std::cout << node_pointer->Position.x << " " << node_pointer->Position.y << "  i\n";
-}
-
-void Editor::Selector::updateSpringMassSpring()
-{
-	// IDEA:
-	// Springs Can Only Be Moved by Their Ends
-	// If a Spring is Moved, It Will Snap to the Node Whose Origin is Closest to the Coordinates of the Mouse
-	// The Nodes That are Checked are The Nodes From the Same File as the Spring's Origin and The Positions of the Nodes Are Offset by The Position of the Individual Object the Spring is From
-	// The Checking of the Closest Node Happens Continuously and Will be Applied When the Mouse is Moved
-
-	// IDEA:
-	// Springs Can Be Attachted Between the Same Two Nodes Multiple Times, Use the "SKIP" Key to Cycle Through Which Spring Should be Selected
-
-	// Idea:
-	// To Allow Selection of Multiple Springs to be Clearer and To Tell The User Which Spring is Selected, There Should be an Area of the Window Dedicated to Showing the Data for the Currently Moused Over Object
-	// This Should Hold True for All Objects
-	// For Most Objects, Name, Object Type, and Position Should be Displayed
-	// For Springs, Spring Name (Index) and Spring Constant Should be Displayed
-
-	// IDEA:
-	// Springs Can be Moved By Parts That Are Not Ends, Moves Both Connected Nodes at the Same Time
-	// This Also Means Springs Can be Rotated, Rotating Both Nodes Around The Pivot
-	// When Saving the Changes to the Spring, Both the Nodes and Spring Must be Saved
-
-	// Test if Mouse Intersects First Position
-	if (glm::distance(connection_pos_left, glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY)) < 0.5f)
-	{
-		// If Not Moving, Test if Spring Should Move
-		if (!moving)
-		{
-			// Set Cursor
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-
-			// Test if Highlight Color Should be Changed
-			if (!mouse_intersects_object || !resizing)
-				outlineForResize();
-
-			// Set Values
-			resizing = true;
-			mouse_intersects_object = true;
-			change_horizontal = 0;
-			change_vertical = 0;
-
-			// If Left Mouse Button is Held, Start Moving
-			if (Global::LeftClick)
-			{
-				moving = true;
-				change_horizontal = 1;
-			}
-		}
-	}
-
-	// Test if Mouse Intersects Second Position
-	else if (glm::distance(connection_pos_right, glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY)) < 0.5f)
-	{
-		// If Not Moving, Test if Spring Should Move
-		if (!moving)
-		{
-			// Set Cursor
-			Global::Selected_Cursor = Global::CURSORS::HAND;
-
-			// Test if Highlight Color Should be Changed
-			if (!mouse_intersects_object || !resizing)
-				outlineForResize();
-
-			// Set Values
-			resizing = true;
-			mouse_intersects_object = true;
-			change_horizontal = 0;
-			change_vertical = 0;
-
-			// If Left Mouse Button is Held, Start Moving
-			if (Global::LeftClick)
-			{
-				moving = true;
-				change_vertical = 1;
-			}
-		}
-	}
-
-	// Else, Test if Object Should be Deselected
-	else if (!moving)
-	{
-		// Update Outline Color
-		if (mouse_intersects_object)
-			outlineForNotSelected();
-
-		// If Left Click is Pressed, Deselect Object
-		if (Global::LeftClick)
-		{
-			deselectSpring();
-			level->reloadAll();
-			return;
-		}
-	}
-
-	// If Currently Moving, Move Spring
-	if (moving)
-	{
-		// Test if Node Should Stop Moving
-		if (!Global::LeftClick)
-			moving = false;
-
-		// Move Endpoints
-		if (resizing)
-		{
-			// Iterate Through All Nodes and Find the Closest Match to Mouse Position
-			float shortest_length = 1000000.0f;
-			float temp_distance = 0;
-			int shortest_index = 0;
-			for (int i = 0; i < node_count; i++)
-			{
-				temp_distance = glm::distance(node_list[i].position, glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY));
-				if (temp_distance < shortest_length)
-				{
-					shortest_length = temp_distance;
-					shortest_index = i;
-				}
-			}
-
-			// Set Endpoint to Closest Value if Index is New
-			if (spring_data.Node1 != node_list[shortest_index].name && spring_data.Node2 != node_list[shortest_index].name)
-			{
-				glm::vec2 other_pos = glm::vec2(0.0f);
-
-				// Left Endpoint
-				if (change_horizontal)
-				{
-					spring_data.Node1 = node_list[shortest_index].name;
-					connection_pos_left = node_list[shortest_index].position;
-					for (int i = 0; i < node_count; i++)
-						if (node_list[i].name == spring_data.Node2)
-							other_pos = node_list[i].position;
-
-				}
-
-				// Right Endpoint
-				else if (change_vertical)
-				{
-					spring_data.Node2 = node_list[shortest_index].name;
-					connection_pos_right = node_list[shortest_index].position;
-					for (int i = 0; i < node_count; i++)
-						if (node_list[i].name == spring_data.Node1)
-							other_pos = node_list[i].position;
-				}
-
-				// Reset Rest and Max Lengths
-				spring_data.RestLength = glm::distance(node_list[shortest_index].position, other_pos);
-				spring_data.MaxLength = 2 * spring_data.RestLength;
-
-				// Change Vertices
-				genSelectorVerticesSoftBody(selected_object->data_object);
-			}
-		}
-	}
-}
-
-void Editor::Selector::updateHinge()
-{
-}
-
-void Editor::Selector::sortVertices(bool enable_rotation)
+void Editor::Selector::sortVertices(bool enable_rotation, Selected_Object* selected_object)
 {
 	// Rectangle
-	if (editing_shape == RECTANGLE)
+	if (selected_object->editing_shape == RECTANGLE)
 	{
 		// Get Selected Rectangle Data
 		Selected_Rectangle& selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
@@ -4523,7 +3662,7 @@ void Editor::Selector::sortVertices(bool enable_rotation)
 	}
 
 	// Trapezoid
-	else if (editing_shape == TRAPEZOID)
+	else if (selected_object->editing_shape == TRAPEZOID)
 	{
 		// Get Selected Trapezoid Data
 		Selected_Trapezoid& selected_trapezoid = *static_cast<Selected_Trapezoid*>(selected_object);
@@ -4641,7 +3780,7 @@ void Editor::Selector::sortVertices(bool enable_rotation)
 	}
 
 	// Triangle
-	else if (editing_shape == TRIANGLE)
+	else if (selected_object->editing_shape == TRIANGLE)
 	{
 		// Get Selected Triangle Data
 		Selected_Triangle& selected_triangle = *static_cast<Selected_Triangle*>(selected_object);
@@ -4701,50 +3840,69 @@ void Editor::Selector::sortVertices(bool enable_rotation)
 		Source::Collisions::Point::arrangeTriVertices(selected_triangle.coords1, selected_triangle.coords2, selected_triangle.coords3);
 
 		// Get the Triangle Shape
-		Shape::Triangle& triangle_data = *static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+		Shape::Triangle& triangle_data = *static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(data_objects.at(0))->getShape());
 
 		// Store Vertices in Object Data
 		temp_position = selected_triangle.coords1;
 		triangle_data = Shape::Triangle(selected_triangle.coords2, selected_triangle.coords3);
-		static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData().position = selected_triangle.coords1;
+		static_cast<DataClass::Data_SubObject*>(data_objects.at(0))->getObjectData().position = selected_triangle.coords1;
 		selected_triangle.coords2 = *triangle_data.pointerToSecondPosition();
 		selected_triangle.coords3 = *triangle_data.pointerToThirdPosition();
-		should_sort = true;
+		selected_triangle.should_sort = true;
 	}
 
 	// Update VAO and VBO
 	if (enable_rotation)
 	{
-		genSelectorVertices(selected_object->data_object);
+		genSelectorVertices(selected_object->data_object, selected_object->vertex_objects);
 	}
+}
+
+void Editor::Selector::setTempConnectionPos(glm::vec2& left, glm::vec2& right)
+{
+	temp_connection_pos_left = left;
+	temp_connection_pos_right = right;
 }
 
 void Editor::Selector::addChild()
 {
+	// NOTE: When Multiple Objects Are Selected, The Object Currently Edited by the Editor Window is
+	// Going to be the Moved to the First Index of the Selected Objects List. This Allows for The
+	// Currently Edited Object by the Editor Window to Have Changes Applied to Them Easily. Useful for
+	// When SpringMass Objects and Hinges are Being Edited and Child-Objects are Created
+	// 
+	// WARNING: NOT YET IMPLEMENTED
+
 	// SpringMass Node
-	if (springmass_node_modified)
-		addSpringMassNode();
+	if (add_child_object == CHILD_OBJECT_TYPES::SPRINGMASS_NODE)
+		addSpringMassNode(static_cast<Selected_SpringMassObject*>(selected_objects.at(0)));
 
 	// SpringMass Spring
-	else if (springmass_spring_modified)
-		addSpringMassSpring();
+	else if (add_child_object == CHILD_OBJECT_TYPES::SPRINGMASS_SPRING)
+		addSpringMassSpring(static_cast<Selected_SpringMassObject*>(selected_objects.at(0)));
 
 	// Hinge Object
-	else if (hinge_object_modified)
+	else if (add_child_object == CHILD_OBJECT_TYPES::HINGE_SUBOBJECT)
 		addHingeObject();
 }
 
-void Editor::Selector::addSpringMassNode()
+void Editor::Selector::addSpringMassNode(Selected_SpringMassObject* selected_object)
 {
 	// Get SpringMass File Name
-	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
+	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(selected_object->data_object)->getFile();
 
-	// Temp Node Object
+	// Generate New Node Object
+	Selected_SpringMassNode* new_selected_node = new Selected_SpringMassNode();
+	DataClass::Data_SpringMassNode* new_data_node = new DataClass::Data_SpringMassNode();
+	Object::Physics::Soft::NodeData& node_data = new_data_node->getNodeData();
+	int node_count = 0;
 	node_data.mass = 1.0f;
 	node_data.position = glm::vec2(1.0f, -1.0f);
 	node_data.health = 1.0f;
 	node_data.material = 1;
 	node_data.radius = 1.0f;
+	new_data_node->storeParent(static_cast<DataClass::Data_SpringMass*>(selected_object->data_object));
+	new_selected_node->data_object = new_data_node;
 
 	// Determine if the SpringMass File Exists. If So, Establish First Node
 	std::filesystem::path temp_path = Global::project_resources_path + "/Models/SoftBodies/" + file_name;
@@ -4840,14 +3998,14 @@ void Editor::Selector::addSpringMassNode()
 	}
 
 	// Write Data
-	deselectNode();
+	deselectNode(new_selected_node);
 	deselectObject();
 }
 
-void Editor::Selector::addSpringMassSpring()
+void Editor::Selector::addSpringMassSpring(Selected_SpringMassObject* selected_object)
 {
 	// Get SpringMass File Name
-	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
+	std::string& file_name = static_cast<DataClass::Data_SpringMass*>(selected_object->data_object)->getFile();
 
 	// Determine if the SpringMass File Exists. If Not, Throw Error Since There Are No Nodes to Connect To
 	std::filesystem::path temp_path = Global::project_resources_path + "/Models/SoftBodies/" + file_name;
@@ -4867,14 +4025,17 @@ void Editor::Selector::addSpringMassSpring()
 		std::ifstream temp_file;
 		temp_file.open(Global::project_resources_path + "/Models/SoftBodies/" + file_name, std::ios::binary);
 
+		// Generate the New SpringMass Spring Selected Object
+		Selected_SpringMassSpring* new_selected_spring = new Selected_SpringMassSpring();
+
 		// Determine the Number of Nodes
 		uint8_t temp_byte = 0;
 		uint8_t node_iterator = 0;
-		temp_file.read((char*)&node_count, 1);
+		temp_file.read((char*)&new_selected_spring->node_count, 1);
 		temp_file.read((char*)&temp_byte, 1);
 
 		// If There are Less Than Two Nodes, Throw Error
-		if (node_count < 2)
+		if (new_selected_spring->node_count < 2)
 		{
 			// Close File
 			temp_file.close();
@@ -4889,14 +4050,14 @@ void Editor::Selector::addSpringMassSpring()
 		else
 		{
 			// Allocate Memory for Nodes
-			node_list = new Object::Physics::Soft::NodeData[node_count];
+			new_selected_spring->node_list = new Object::Physics::Soft::NodeData[new_selected_spring->node_count];
 
 			// Temp Data to Read To
 			Object::Physics::Soft::NodeData temp_node_data;
 			Object::Physics::Soft::Spring temp_spring_data;
 
 			// Reset Node Count
-			node_count = 0;
+			new_selected_spring->node_count = 0;
 
 			// Read Rest of File
 			while (!temp_file.eof())
@@ -4912,9 +4073,9 @@ void Editor::Selector::addSpringMassSpring()
 				if (temp_byte == 0)
 				{
 					temp_file.read((char*)&temp_node_data, sizeof(Object::Physics::Soft::NodeData));
-					temp_node_data.position += static_cast<DataClass::Data_SpringMass*>(data_object)->getObjectData().position;
-					node_list[node_count] = temp_node_data;
-					node_count++;
+					temp_node_data.position += static_cast<DataClass::Data_SpringMass*>(selected_object->data_object)->getObjectData().position;
+					new_selected_spring->node_list[new_selected_spring->node_count] = temp_node_data;
+					new_selected_spring->node_count++;
 				}
 
 				// Read Spring Into Dummy Var
@@ -4927,16 +4088,20 @@ void Editor::Selector::addSpringMassSpring()
 			// Close File
 			temp_file.close();
 
-			// Establish Spring
-			spring_data.Node1 = node_list[0].name;
-			spring_data.Node2 = node_list[1].name;
-			spring_data.RestLength = glm::distance(node_list[0].position, node_list[1].position);
+			// Establish Spring Data
+			DataClass::Data_SpringMassSpring* new_data_spring = new DataClass::Data_SpringMassSpring();
+			Object::Physics::Soft::Spring& spring_data = new_data_spring->getSpringData();
+			spring_data.Node1 = new_selected_spring->node_list[0].name;
+			spring_data.Node2 = new_selected_spring->node_list[1].name;
+			spring_data.RestLength = glm::distance(new_selected_spring->node_list[0].position, new_selected_spring->node_list[1].position);
 			spring_data.MaxLength = spring_data.RestLength * 2.0f;
 			spring_data.Dampening = 1.0f;
 			spring_data.Stiffness = 1.0f;
+			new_data_spring->storeParent(static_cast<DataClass::Data_SpringMass*>(selected_object->data_object));
+			new_selected_spring->data_object = new_data_spring;
 
 			// Write Data
-			deselectSpring();
+			deselectSpring(new_selected_spring);
 			deselectObject();
 		}
 	}
@@ -4946,11 +4111,13 @@ void Editor::Selector::addHingeObject()
 {
 }
 
-void Editor::Selector::clampBase()
+void Editor::Selector::clampBase(Selected_Object* selected_object)
 {
 	// Get Object Identifier and Clamp Flag
-	uint8_t* object_identifier = data_object->getObjectIdentifier();
-	bool& clamp = data_object->getEditorData().clamp;
+	//uint8_t* object_identifier = data_objects.at(0)->getObjectIdentifier();
+	//bool& clamp = data_objects.at(0)->getEditorData().clamp;
+	uint8_t* object_identifier = selected_object->data_object->getObjectIdentifier();
+	bool& clamp = selected_object->data_object->getEditorData().clamp;
 
 	// Clamp Object, if Enabled
 	if (clamp)
@@ -5119,7 +4286,7 @@ void Editor::Selector::clampBase()
 		// Clamp Terrain
 		else if (object_identifier[0] == Object::TERRAIN)
 		{
-			clampTerrain(object_identifier[2], object_identifier[1]);
+			clampTerrain(object_identifier[2], object_identifier[1], selected_object);
 		}
 	}
 }
@@ -5170,7 +4337,7 @@ void Editor::Selector::clampFloorMasks(float(&endpoints)[8], Render::Objects::Un
 	// Return the Collision Mask Floor Objects From Level
 	DataClass::Data_Object** floor_masks = nullptr;
 	int floor_masks_size = 0;
-	unsaved_level->returnMasks(&floor_masks, floor_masks_size, Object::Mask::FLOOR, data_object);
+	unsaved_level->returnMasks(&floor_masks, floor_masks_size, Object::Mask::FLOOR, data_objects.at(0));
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < floor_masks_size; j++)
@@ -5247,7 +4414,7 @@ void Editor::Selector::clampWallMasksLeft(float(&endpoints)[8], Render::Objects:
 	// Return the Collision Mask Left Wall Objects From Level
 	DataClass::Data_Object** left_masks = nullptr;
 	int left_masks_size = 0;
-	unsaved_level->returnMasks(&left_masks, left_masks_size, Object::Mask::LEFT_WALL, data_object);
+	unsaved_level->returnMasks(&left_masks, left_masks_size, Object::Mask::LEFT_WALL, data_objects.at(0));
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < left_masks_size; j++)
@@ -5320,7 +4487,7 @@ void Editor::Selector::clampWallMasksRight(float(&endpoints)[8], Render::Objects
 	// Return the Collision Mask Left Wall Objects From Level
 	DataClass::Data_Object** right_masks = nullptr;
 	int right_masks_size = 0;
-	unsaved_level->returnMasks(&right_masks, right_masks_size, Object::Mask::RIGHT_WALL, data_object);
+	unsaved_level->returnMasks(&right_masks, right_masks_size, Object::Mask::RIGHT_WALL, data_objects.at(0));
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < right_masks_size; j++)
@@ -5387,7 +4554,7 @@ void Editor::Selector::clampCeilingMasks(float(&endpoints)[8], Render::Objects::
 	// Return the Collision Mask Floor Objects From Level
 	DataClass::Data_Object** ceiling_masks = nullptr;
 	int ceiling_masks_size = 0;
-	unsaved_level->returnMasks(&ceiling_masks, ceiling_masks_size, Object::Mask::CEILING, data_object);
+	unsaved_level->returnMasks(&ceiling_masks, ceiling_masks_size, Object::Mask::CEILING, data_objects.at(0));
 
 	// Search Through All Collision Mask Floors in Level to Determine if Object Should Clamp
 	for (int j = 0; j < ceiling_masks_size; j++)
@@ -5444,7 +4611,7 @@ void Editor::Selector::clampCeilingMasks(float(&endpoints)[8], Render::Objects::
 	// Search Through All in Collision Mask Walls to Determine if Object Should Clamp
 }
 
-void Editor::Selector::clampTerrain(int Shape, int Object)
+void Editor::Selector::clampTerrain(int Shape, int Object, Selected_Object* selected_object)
 {
 	switch (Shape)
 	{
@@ -5554,7 +4721,7 @@ void Editor::Selector::clampTerrainHelper(float(&endpoints)[8], Render::Objects:
 	//Object::Terrain::TerrainBase** terrain_objects = nullptr;
 	DataClass::Data_Terrain** terrain_objects = nullptr;
 	int terrain_objects_size = 0;
-	unsaved_level->returnTerrainObjects(&terrain_objects, terrain_objects_size, static_cast<DataClass::Data_Terrain*>(data_object)->getLayer(), data_object);
+	unsaved_level->returnTerrainObjects(&terrain_objects, terrain_objects_size, static_cast<DataClass::Data_Terrain*>(data_objects.at(0))->getLayer(), data_objects.at(0));
 
 	// Perform Actual Clamping
 	abstractedClampTerrain(endpoints, midpoints, Type, i, terrain_objects_size, terrain_objects);
@@ -5897,4 +5064,1931 @@ void Editor::Selector::abstractedClampTerrain(float(&endpoints)[8], float(&midpo
 		}
 	}
 }
+
+void Editor::Selector::Selected_Object::setMouseOffset()
+{
+	offset_x = *object_x - Global::mouseRelativeX;
+	offset_y = *object_y - Global::mouseRelativeY;
+	change_horizontal = 0;
+	change_vertical = 0;
+}
+
+void Editor::Selector::Selected_Object::outlineForResize()
+{
+	float colors[4] = { 0.0f, 0.0f, 0.85f, 1.0f };
+	outlineChangeColor(colors);
+	resizing = true;
+	mouse_intersects_object = true;
+}
+
+void Editor::Selector::Selected_Object::outlineForMove()
+{
+	float colors[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
+	outlineChangeColor(colors);
+	resizing = false;
+	mouse_intersects_object = true;
+}
+
+void Editor::Selector::Selected_Object::outlineForNotSelected()
+{
+	float colors[4] = { 0.55f, 0.55f, 0.0f, 0.95f };
+	outlineChangeColor(colors);
+	resizing = false;
+	mouse_intersects_object = false;
+}
+
+void Editor::Selector::Selected_Object::outlineChangeColor(float* colors)
+{
+	// Bind Highlighter Object
+	glBindVertexArray(vertex_objects.outlineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
+
+	// Iterate Through Each Vertex and Change Color
+	for (int i = 3 * sizeof(GL_FLOAT), j = 0; j < vertex_objects.outline_vertex_count; i += 7 * sizeof(GL_FLOAT), j++)
+	{
+		glBufferSubData(GL_ARRAY_BUFFER, i, 4 * sizeof(GL_FLOAT), colors);
+	}
+
+	// Unbind Highlighter Object
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+}
+
+uint8_t Editor::Selector::Selected_Rectangle::updateObject()
+{
+	// The Result of the Object Interaction
+	uint8_t result = ABSOLUTLY_NOTHING;
+
+	// Test if Mouse is Inside Object
+	if ((*object_x - (*object_width * 0.5f) < Global::mouseRelativeX) && (*object_x + (*object_width * 0.5f) > Global::mouseRelativeX) && (*object_y - (*object_height * 0.5f) < Global::mouseRelativeY) && (*object_y + (*object_height * 0.5f) > Global::mouseRelativeY))
+	{
+		// If Object is Currently Not Being Moved, Test If It Should
+		if (!moving)
+		{
+			// Reset Variables
+			change_horizontal = 0;
+			change_vertical = 0;
+			offset_x = 0;
+			offset_y = 0;
+			Global::Selected_Cursor = Global::CURSORS::HAND;
+
+			// Test if Rectangle Should Resize
+			testResizeRectangle(true, true);
+
+			// Test if Color of Outline Should Change to Moving
+			if (!mouse_intersects_object || (resizing && !(change_vertical || change_horizontal)))
+				outlineForMove();
+
+			// If Left Mouse Button is Held, Start Moving
+			if (Global::LeftClick)
+			{
+				moving = true;
+				if (change_horizontal || change_vertical)
+					return RESIZING;
+				else
+					setMouseOffset();
+				return MOVING;
+			}
+		}
+
+		result = MOUSED_OVER;
+	}
+
+	// Else, Test if Object Should be Deselected
+	else if (!moving)
+	{
+		// Update Outline Color
+		if (mouse_intersects_object)
+			outlineForNotSelected();
+
+		// If Left Click is Pressed, Deselect Object
+		if (Global::LeftClick)
+			return DESELECTED;
+	}
+
+	return result;
+}
+
+void Editor::Selector::Selected_Rectangle::updateGroup(Group_Selector& group_selector)
+{
+	float temp_compare_value = 0.0f;
+
+	// Test the North Extreme Value
+	temp_compare_value = *object_y + *object_height * 0.5f;
+	if (temp_compare_value > group_selector.extreme_value_north)
+		group_selector.extreme_value_north = temp_compare_value;
+
+	// Test the South Extreme Value
+	temp_compare_value = *object_y - *object_height * 0.5f;
+	if (temp_compare_value < group_selector.extreme_value_south)
+		group_selector.extreme_value_south = temp_compare_value;
+
+	// Test the East Extreme Value
+	temp_compare_value = *object_x + *object_width * 0.5f;
+	if (temp_compare_value > group_selector.extreme_value_east)
+		group_selector.extreme_value_east = temp_compare_value;
+
+	// Test the West Extreme Value
+	temp_compare_value = *object_x - *object_width * 0.5f;
+	if (temp_compare_value < group_selector.extreme_value_west)
+		group_selector.extreme_value_west = temp_compare_value;
+}
+
+void Editor::Selector::Selected_Rectangle::moveObject()
+{
+	bool enable_negative = false;
+
+	// Shift Horizontal
+	if (change_horizontal != 0)
+	{
+		// Set Selected Cursor
+		Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
+
+		// Change Relative X if Enabled
+		if (Global::editor_options->option_disable_pass_through)
+		{
+			if (change_horizontal < 0 && Global::mouseRelativeX > *object_x) { Global::mouseRelativeX = *object_x - 0.05f; }
+			else if (change_horizontal > 0 && Global::mouseRelativeX < *object_x) { Global::mouseRelativeX = *object_x + 0.05f; }
+		}
+
+		// Calculate New xPos by Taking the Average of the x Position of the Unchanging (opposite) Side and the x Position of the Mouse
+		if (!group_selector->resizing)
+		{
+			*object_x = (Global::mouseRelativeX + offset_x + (*object_x - ((*object_width * 0.5f) * change_horizontal))) * 0.5f;
+
+			// Calculate New Width by Multiplying the Distance Between the Mouse and xPos by 2
+			*object_width = 2 * (Global::mouseRelativeX + offset_x - *object_x) * change_horizontal;
+
+			// Prevent Size from Going Negative
+			if (*object_width <= 0.1f && !enable_negative)
+				*object_width = 0.1f;
+		}
+
+		else
+		{
+			float f = abs(group_selector->extreme_value_west - group_selector->position.x) - abs(Global::mouseRelativeX - group_selector->position.x);
+			if (*object_x < group_selector->position.x)
+				*object_x += f;
+			else
+				*object_x -= f;
+			*object_width -= f;
+
+			// Prevent Size from Going Negative
+			if (*object_width <= 0.1f)
+				*object_width = 0.1f;
+		}
+	}
+
+	// Shift Verticle
+	if (change_vertical != 0)
+	{
+		// Set Selected Cursor
+		Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
+
+		// Change Relative Y if Enabled
+		if (Global::editor_options->option_disable_pass_through)
+		{
+			if (change_vertical < 0 && Global::mouseRelativeY > *object_y) { Global::mouseRelativeY = *object_y - 0.05f; }
+			else if (change_vertical > 0 && Global::mouseRelativeY < *object_y) { Global::mouseRelativeY = *object_y + 0.05f; }
+		}
+
+		// Calculate New yPos by Taking the Average of the y Position of the Unchanging (opposite) Side and the y Position of the Mouse
+		if (!group_selector->resizing)
+		{
+			*object_y = (Global::mouseRelativeY + offset_y + (*object_y - ((*object_height * 0.5f) * change_vertical))) * 0.5f;
+
+			// Calculate New Height by Multiplying the Distance Between the Mouse and yPos by 2
+			*object_height = 2 * (Global::mouseRelativeY + offset_y - *object_y) * change_vertical;
+
+			// Prevent Size from Going Negative
+			if (*object_height <= 0.1f && !enable_negative)
+				*object_height = 0.1f;
+		}
+
+		else
+		{
+			float f = abs(group_selector->extreme_value_south - group_selector->position.y) - abs(Global::mouseRelativeY - group_selector->position.y);
+			if (*object_y < group_selector->position.y)
+				*object_y += f;
+			else
+				*object_y -= f;
+			 *object_height -= f;
+
+			// Prevent Size from Going Negative
+			if (*object_height <= 0.1f)
+				*object_height = 0.1f;
+		}
+	}
+
+	// Move if Size Doesn't Change
+	if (moving && !(change_vertical || change_horizontal))
+	{
+		Global::Selected_Cursor = Global::CURSORS::HAND;
+		*object_x = (float)(Global::mouseRelativeX + offset_x);
+		*object_y = (float)(Global::mouseRelativeY + offset_y);
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+	}
+
+	// Else Update Vertices and Buffer Objects
+	else
+		genSelectorVertices(data_object, vertex_objects);
+}
+
+void Editor::Selector::Selected_Rectangle::testResizeRectangle(bool enable_horizontal, bool enable_vertical)
+{
+	// Test if Resizing Should be Considered
+	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
+	{
+		// How Far the Mouse Must be Inside Object to Stop Resizing
+		float resize_width = 1.5f * Global::zoom_scale;
+
+		// Change Horizontal Size of Object
+		if (enable_horizontal)
+		{
+			float half_absolute_width = abs(*object_width) * 0.5f;
+			int8_t size_sign = Algorithms::Math::getSign(*object_width);
+
+			// Test if Left Side Should Shift
+			if (Global::mouseRelativeX < (*object_x - half_absolute_width + resize_width))
+			{
+				// Sign of Boolian Determines Which Side Doesn't Move
+				change_horizontal = -size_sign;
+				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
+			}
+
+			// Test if Right Side Should Shift
+			else if (Global::mouseRelativeX > (*object_x + half_absolute_width - resize_width))
+			{
+				change_horizontal = size_sign;
+				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
+			}
+		}
+
+		// Change Vertical Size of Object
+		if (enable_vertical)
+		{
+			float half_absolute_height = abs(*object_height) * 0.5f;
+			int8_t size_sign = Algorithms::Math::getSign(*object_height);
+
+			// Test if Top Side Should Shift
+			if (Global::mouseRelativeY > (*object_y + half_absolute_height - resize_width))
+			{
+				change_vertical = size_sign;
+				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
+			}
+
+			// Test if Bottom Side Should Shift
+			else if (Global::mouseRelativeY < (*object_y - half_absolute_height + resize_width))
+			{
+				change_vertical = -size_sign;
+				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
+			}
+		}
+
+		// Test if Color of Outline Should Change
+		if (!resizing && (change_vertical || change_horizontal))
+			outlineForResize();
+	}
+}
+
+void Editor::Selector::Selected_Rectangle::setHorizontalGroupResize()
+{
+	// Resize Left
+	if (Global::mouseRelativeX < *object_x)
+	{
+		offset_x = *object_x - abs(*object_width) * 0.5f - Global::mouseRelativeX;
+		change_horizontal = -Algorithms::Math::getSign(*object_width);
+	}
+
+	// Resize Right
+	else
+	{
+		offset_x = *object_x + abs(*object_width) * 0.5f - Global::mouseRelativeX;
+		change_horizontal = Algorithms::Math::getSign(*object_width);
+	}
+}
+
+void Editor::Selector::Selected_Rectangle::setVerticalGroupResize()
+{
+	// Resize South
+	if (Global::mouseRelativeY < *object_y)
+	{
+		offset_y = *object_y - abs(*object_height) * 0.5f - Global::mouseRelativeY;
+		change_vertical = -Algorithms::Math::getSign(*object_height);
+	}
+
+	// Resize North
+	else
+	{
+		offset_y = *object_y + abs(*object_height) * 0.5f - Global::mouseRelativeY;
+		change_vertical = Algorithms::Math::getSign(*object_height);
+	}
+}
+
+uint8_t Editor::Selector::Selected_Trapezoid::updateObject()
+{
+	// The Result of the Object Interaction
+	uint8_t result = ABSOLUTLY_NOTHING;
+
+	// Test if Mouse is Inside Object
+	if (Source::Collisions::Point::testTrapCollisions(*object_x, *object_y, *object_width, *object_height, *object_width_modifier, *object_height_modifier))
+	{
+		// If Object is Currently Not Being Moved, Test If It Should
+		if (!moving)
+		{
+			// Reset Variables
+			change_horizontal = 0;
+			change_vertical = 0;
+			Global::Selected_Cursor = Global::CURSORS::HAND;
+
+			// Test if Rectangle Should Resize
+			testResizeTrapezoid();
+
+			// Test if Color of Outline Should Change to Moving
+			if (!mouse_intersects_object || (resizing && !(change_vertical || change_horizontal)))
+				outlineForMove();
+
+			// If Left Mouse Button is Held, Start Moving
+			if (Global::LeftClick)
+			{
+				moving = true;
+
+				// Only Use Offset if Not Resizing (Offset is Already Defined for Resize)
+				if (change_horizontal || change_vertical)
+					return RESIZING;
+				else
+					setMouseOffset();
+				return MOVING;
+			}
+		}
+
+		result = MOUSED_OVER;
+	}
+
+	// Else, Test if Object Should be Deselected
+	else if (!moving)
+	{
+		// Update Outline Color
+		if (mouse_intersects_object)
+			outlineForNotSelected();
+
+		// If Left Click is Pressed, Deselect Object
+		if (Global::LeftClick)
+			return DESELECTED;
+	}
+
+	return result;
+}
+
+void Editor::Selector::Selected_Trapezoid::updateGroup(Group_Selector& group_selector)
+{
+	float temp_compare_value1 = 0.0f; // Higher Value (N/E)
+	float temp_compare_value2 = 0.0f; // Lower Value (S/W)
+
+	// The Vertical Offset is Positive
+	if (*object_height_modifier > 0)
+	{
+		temp_compare_value1 = *object_y + abs(*object_height) * 0.5f + *object_height_modifier;
+		temp_compare_value2 = *object_y - abs(*object_height) * 0.5f;
+	}
+
+	// The Vertical Offset is Negative
+	else
+	{
+		temp_compare_value1 = *object_y + abs(*object_height) * 0.5f;
+		temp_compare_value2 = *object_y - abs(*object_height) * 0.5f + *object_height_modifier;
+	}
+
+	// Test the North Extreme Value
+	if (temp_compare_value1 > group_selector.extreme_value_north)
+		group_selector.extreme_value_north = temp_compare_value1;
+
+	// Test the South Extreme Value
+	if (temp_compare_value2 < group_selector.extreme_value_south)
+		group_selector.extreme_value_south = temp_compare_value2;
+
+	// The Vertical Offset is Positive
+	if (*object_width_modifier > 0)
+	{
+		temp_compare_value1 = *object_x + *object_width * 0.5f + *object_width_modifier;
+		temp_compare_value2 = *object_x - *object_width * 0.5f;
+
+	}
+
+	// The Vertical Offset is Negative
+	else
+	{
+		temp_compare_value1 = *object_x + *object_width * 0.5f;
+		temp_compare_value2 = *object_x - *object_width * 0.5f + *object_width_modifier;
+	}
+
+	// Test the East Extreme Value
+	if (temp_compare_value1 > group_selector.extreme_value_east)
+		group_selector.extreme_value_east = temp_compare_value1;
+
+	// Test the West Extreme Value
+	if (temp_compare_value2 < group_selector.extreme_value_west)
+		group_selector.extreme_value_west = temp_compare_value2;
+}
+
+void Editor::Selector::Selected_Trapezoid::moveObject()
+{
+	// Shift Horizontal
+	if (change_horizontal)
+	{
+		// Shift Bottom
+		if (change_horizontal == 1)
+		{
+			if (!group_selector->resizing)
+			{
+				// Calculate Change in X Values
+				float change = (*object_x - Global::mouseRelativeX - offset_x) * 0.5f;
+
+				// Calculate Y Changes
+				float temp_yPos = (Global::mouseRelativeY - offset_y + (*object_y - ((*object_height * 0.5f) * -1))) * 0.5f;
+				float temp_Size2 = 2 * (Global::mouseRelativeY - offset_y - temp_yPos) * -1;
+
+				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
+				if (!Global::editor_options->option_disable_pass_through || temp_Size2 > 0.1f)
+				{
+					// Apply Change
+					*object_x -= change;
+					*object_width_modifier += change;
+
+					// Apply Calculated Size Change
+					*object_y = temp_yPos;
+					*object_height = temp_Size2;
+				}
+			}
+
+			else
+			{
+				float f = abs(group_selector->extreme_value_west - group_selector->position.x) - abs(Global::mouseRelativeX - group_selector->position.x);
+				if (*object_x < group_selector->position.x)
+					*object_x += f;
+				else
+					*object_x -= f;
+				*object_width -= f;
+
+				// Prevent Size from Going Negative
+				if (*object_width <= 0.1f)
+					*object_width = 0.1f;
+			}
+		}
+
+		// Shift Top
+		else if (change_horizontal == 2)
+		{
+			if (!group_selector->resizing)
+			{
+				// Set Object X Offset
+				float temp_SizeOffset1 = (Global::mouseRelativeX + offset_x) - *object_x;
+
+				// Calculate Y Changes
+				float temp_yPos = (Global::mouseRelativeY - offset_y + (*object_y - (*object_height * 0.5f))) * 0.5f;
+				float temp_Size2 = 2 * (Global::mouseRelativeY - offset_y - temp_yPos);
+
+				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
+				if (!Global::editor_options->option_disable_pass_through || temp_Size2 > 0.1f)
+				{
+					// Apply Calculated Size Change
+					*object_width_modifier = temp_SizeOffset1;
+					*object_y = temp_yPos;
+					*object_height = temp_Size2;
+				}
+			}
+
+			else
+			{
+				float f = abs(group_selector->extreme_value_west - group_selector->position.x) - abs(Global::mouseRelativeX - group_selector->position.x);
+				if (*object_x < group_selector->position.x)
+					*object_x += f;
+				else
+					*object_x -= f;
+				*object_width -= f;
+
+				// Prevent Size from Going Negative
+				if (*object_width <= 0.1f)
+					*object_width = 0.1f;
+			}
+		}
+
+		// Prevent Size from Going Negative
+		if (*object_height <= 0.1f)
+			*object_height = 0.1f;
+	}
+
+	// Shift Vertical
+	else if (change_vertical)
+	{
+		// Shift Right
+		if (change_vertical == 1)
+		{
+			if (!group_selector->resizing)
+			{
+				// Set Object Y Offset
+				float temp_SizeOffset2 = (Global::mouseRelativeY + offset_y) - *object_y;
+
+				// Calculate X Changes
+				float temp_xPos = (Global::mouseRelativeX - offset_x + (*object_x - (*object_width * 0.5f))) * 0.5f;
+				float temp_Size1 = 2 * (Global::mouseRelativeX - offset_x - temp_xPos);
+
+				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
+				if (!Global::editor_options->option_disable_pass_through || temp_Size1 > 0.1f)
+				{
+					// Apply Calculated Size Change
+					*object_height_modifier = temp_SizeOffset2;
+					*object_x = temp_xPos;
+					*object_width = temp_Size1;
+				}
+			}
+
+			else
+			{
+				float f = abs(group_selector->extreme_value_south - group_selector->position.y) - abs(Global::mouseRelativeY - group_selector->position.y);
+				if (*object_y < group_selector->position.y)
+					*object_y += f;
+				else
+					*object_y -= f;
+				*object_height -= f;
+
+				// Prevent Size from Going Negative
+				if (*object_height <= 0.1f)
+					*object_height = 0.1f;
+			}
+		}
+
+		// Shift Left
+		else if (change_vertical == 2)
+		{
+			if (!group_selector->resizing)
+			{
+				// Calculate Change in Y Values
+				float change = (*object_y - Global::mouseRelativeY - offset_y) * 0.5f;
+
+				// Calculate X Changes
+				float temp_xPos = (Global::mouseRelativeX - offset_x + (*object_x - ((*object_width * 0.5f) * -1))) * 0.5f;
+				float temp_Size1 = 2 * (Global::mouseRelativeX - offset_x - temp_xPos) * -1;
+
+				// If Pass Through is Disabled, Only Apply Changes if New Size is Large Enough
+				if (!Global::editor_options->option_disable_pass_through || temp_Size1 > 0.1f)
+				{
+					// Apply Change
+					*object_y -= change;
+					*object_height_modifier += change;
+
+					// Apply Calculated Size Change
+					*object_x = temp_xPos;
+					*object_width = temp_Size1;
+				}
+			}
+
+			else
+			{
+				float f = abs(group_selector->extreme_value_south - group_selector->position.y) - abs(Global::mouseRelativeY - group_selector->position.y);
+				if (*object_y < group_selector->position.y)
+					*object_y += f;
+				else
+					*object_y -= f;
+				*object_height -= f;
+
+				// Prevent Size from Going Negative
+				if (*object_height <= 0.1f)
+					*object_height = 0.1f;
+			}
+		}
+
+		// Prevent Size from Going Negative
+		if (*object_width <= 0.1f)
+			*object_width = 0.1f;
+	}
+
+	// Move if Size Doesn't Change
+	if (!(change_vertical || change_horizontal))
+	{
+		*object_x = (float)(Global::mouseRelativeX + offset_x);
+		*object_y = (float)(Global::mouseRelativeY + offset_y);
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+	}
+
+	// Else Update Vertices and Buffer Objects
+	else
+		genSelectorVertices(data_object, vertex_objects);
+}
+
+void Editor::Selector::Selected_Trapezoid::testResizeTrapezoid()
+{
+	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
+	{
+		// How Far the Mouse Must be Inside Object to Stop Resizing
+		float resize_width = 1.5f * Global::zoom_scale;
+
+		// Calculate Half Values
+		float half_width = *object_width * 0.5f;
+		float half_height = *object_height * 0.5f;
+
+		// Values of Corners
+		glm::vec2 bottom_left = glm::vec2(*object_x - half_width, *object_y - half_height);
+		glm::vec2 bottom_right = glm::vec2(*object_x + half_width, *object_y - half_height + *object_height_modifier);
+		glm::vec2 top_right = glm::vec2(*object_x + half_width + *object_width_modifier, *object_y + half_height + *object_height_modifier);
+		glm::vec2 top_left = glm::vec2(*object_x - half_width + *object_width_modifier, *object_y + half_height);
+
+		// Test if Bottom Shoud Resize
+		if (Global::mouseRelativeX > bottom_left.x && Global::mouseRelativeX < bottom_right.x)
+		{
+			// Calculate Relative Values
+			float relative_y_bottom = ((bottom_left.y - bottom_right.y) / (bottom_left.x - bottom_right.x)) * (Global::mouseRelativeX - bottom_left.x) + bottom_left.y;
+
+			// Test if Y is Inside Reasonable Range
+			if (Global::mouseRelativeY > relative_y_bottom && Global::mouseRelativeY < relative_y_bottom + resize_width)
+			{
+				change_horizontal = 1;
+				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
+
+				// Calculate Offsets
+				offset_x = *object_x - Global::mouseRelativeX;
+				offset_y = *object_height_modifier * ((Global::mouseRelativeX - bottom_left.x) / (bottom_right.x - bottom_left.x));
+			}
+		}
+
+		// Test if Right Shoud Resize
+		if (Global::mouseRelativeY > bottom_right.y && Global::mouseRelativeY < top_right.y && !change_horizontal)
+		{
+			// Calculate Relative Values
+			float relative_x_right = ((bottom_right.x - top_right.x) / (bottom_right.y - top_right.y)) * (Global::mouseRelativeY - bottom_right.y) + bottom_right.x;
+
+			// Test if X is Inside Reasonable Range
+			if (Global::mouseRelativeX < relative_x_right && Global::mouseRelativeX > relative_x_right - resize_width)
+			{
+				change_vertical = 1;
+				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
+
+				// Calculate Offsets
+				offset_x = *object_width_modifier * ((Global::mouseRelativeY - bottom_right.y) / (top_right.y - bottom_right.y));
+				offset_y = (*object_y + *object_height_modifier) - Global::mouseRelativeY;
+			}
+		}
+
+		// Test if Top Should Resize
+		if (Global::mouseRelativeX < top_right.x && Global::mouseRelativeX > top_left.x && !change_vertical)
+		{
+			// Calculate Relative Values
+			float relative_y_top = ((top_right.y - top_left.y) / (top_right.x - top_left.x)) * (Global::mouseRelativeX - top_right.x) + top_right.y;
+
+			// Test if Y is Inside Reasonable Range
+			if (Global::mouseRelativeY < relative_y_top && Global::mouseRelativeY > relative_y_top - resize_width)
+			{
+				change_horizontal = 2;
+				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
+
+				// Calculate Offsets
+				offset_x = (*object_x + *object_width_modifier) - Global::mouseRelativeX;
+				offset_y = *object_height_modifier * ((Global::mouseRelativeX - top_left.x) / (top_right.x - bottom_left.x));
+			}
+		}
+
+		// Test if Left Should Resize
+		if (Global::mouseRelativeY < top_left.y && Global::mouseRelativeY > bottom_left.y && !change_horizontal)
+		{
+			// Calculate Relative Values
+			float relative_x_left = ((top_left.x - bottom_left.x) / (top_left.y - bottom_left.y)) * (Global::mouseRelativeY - top_left.y) + top_left.x;
+
+			// Test if X is Inside Reasonable Range
+			if (Global::mouseRelativeX > relative_x_left && Global::mouseRelativeX < relative_x_left + resize_width)
+			{
+				change_vertical = 2;
+				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
+
+				// Calculate Offsets
+				offset_x = *object_width_modifier * ((Global::mouseRelativeY - bottom_left.y) / (top_left.y - bottom_left.y));
+				offset_y = *object_y - Global::mouseRelativeY;
+			}
+		}
+
+		// Test if Color of Outline Should Change
+		if (!resizing && (change_vertical || change_horizontal))
+			outlineForResize();
+	}
+}
+
+void Editor::Selector::Selected_Trapezoid::setHorizontalGroupResize()
+{
+	// Resize Left
+	if (Global::mouseRelativeX < *object_x)
+	{
+		offset_x = *object_x - abs(*object_width) * 0.5f - Global::mouseRelativeX;
+		change_horizontal = 2;
+	}
+
+	// Resize Right
+	else
+	{
+		offset_x = *object_x + abs(*object_width) * 0.5f - Global::mouseRelativeX;
+		change_horizontal = 1;
+	}
+}
+
+void Editor::Selector::Selected_Trapezoid::setVerticalGroupResize()
+{
+	// Resize South
+	if (Global::mouseRelativeY < *object_y)
+	{
+		offset_y = *object_y - abs(*object_height) * 0.5f - Global::mouseRelativeY;
+		change_vertical = 2;
+	}
+
+	// Resize North
+	else
+	{
+		offset_y = *object_y + abs(*object_height) * 0.5f - Global::mouseRelativeY;
+		change_vertical = 1;
+	}
+}
+
+uint8_t Editor::Selector::Selected_Triangle::updateObject()
+{
+	// The Result of the Object Interaction
+	uint8_t result = ABSOLUTLY_NOTHING;
+
+	//Vertices::Visualizer::visualizePoint(coords1, 0.3f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	//Vertices::Visualizer::visualizePoint(coords2, 0.3f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+	//Vertices::Visualizer::visualizePoint(coords3, 0.3f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+
+	if (Source::Collisions::Point::testTriCollisions(coords1, coords2, coords3))
+	{
+		// If Object is Currently Not Being Moved, Test If It Should
+		if (!moving)
+		{
+			// Reset Variables
+			selected_vertex = 0;
+			Global::Selected_Cursor = Global::CURSORS::HAND;
+
+			// Test if Rectangle Should Resize
+			testResizeTriangle();
+
+			// Test if Color of Outline Should Change to Moving
+			if (!mouse_intersects_object || (resizing && !selected_vertex))
+				outlineForMove();
+
+			// If Left Mouse Button is Held, Start Moving
+			if (Global::LeftClick)
+			{
+				moving = true;
+				setMouseOffset();
+				if (selected_vertex)
+					return RESIZING;
+				return MOVING;
+			}
+		}
+
+		result = MOUSED_OVER;
+	}
+
+	// Else, Test if Object Should be Deselected
+	else if (!moving)
+	{
+		// Update Outline Color
+		if (mouse_intersects_object)
+			outlineForNotSelected();
+
+		// If Left Click is Pressed, Deselect Object
+		if (Global::LeftClick)
+			return DESELECTED;
+	}
+
+	return result;
+}
+
+void Editor::Selector::Selected_Triangle::updateGroup(Group_Selector& group_selector)
+{
+	updateGroupHelper(group_selector, coords1);
+	updateGroupHelper(group_selector, coords2);
+	updateGroupHelper(group_selector, coords3);
+}
+
+void Editor::Selector::Selected_Triangle::updateGroupHelper(Group_Selector& group_selector, glm::vec2 test_pos)
+{
+	// Test North
+	if (test_pos.y > group_selector.extreme_value_north)
+		group_selector.extreme_value_north = test_pos.y;
+
+	// Test South
+	else if (test_pos.y < group_selector.extreme_value_south)
+		group_selector.extreme_value_south = test_pos.y;
+
+	// Test East
+	if (test_pos.x > group_selector.extreme_value_east)
+		group_selector.extreme_value_east = test_pos.x;
+
+	// Test West
+	else if (test_pos.x < group_selector.extreme_value_west)
+		group_selector.extreme_value_west = test_pos.x;
+}
+
+void Editor::Selector::Selected_Triangle::moveObject()
+{
+	if (group_selector->resizing)
+	{
+		if (change_horizontal > 0)
+		{
+			glm::vec2* coords_left = nullptr;
+			glm::vec2* coords_right = nullptr;
+			glm::vec2* coords_mid = nullptr;
+
+			if (coords1.x < coords2.x && coords1.x < coords3.x)
+			{
+				coords_left = &coords1;
+				if (coords2.x < coords3.x)
+				{
+					coords_mid = &coords2;
+					coords_right = &coords3;
+				}
+
+				else
+				{
+					coords_mid = &coords3;
+					coords_right = &coords2;
+				}
+			}
+
+			else if (coords3.x < coords1.x && coords2.x < coords3.x)
+			{
+				coords_left = &coords2;
+				if (coords1.x < coords3.x)
+				{
+					coords_mid = &coords1;
+					coords_right = &coords3;
+				}
+
+				else
+				{
+					coords_mid = &coords3;
+					coords_right = &coords1;
+				}
+			}
+
+			else
+			{
+				coords_left = &coords3;
+				if (coords1.x < coords2.x)
+				{
+					coords_mid = &coords1;
+					coords_right = &coords2;
+				}
+
+				else
+				{
+					coords_mid = &coords2;
+					coords_right = &coords1;
+				}
+			}
+
+			float left_distance = coords_mid->x - coords_left->x;
+			float right_distance = coords_right->x - coords_mid->x;
+
+			float f = abs(group_selector->extreme_value_west - group_selector->position.x) - abs(Global::mouseRelativeX - group_selector->position.x);
+			coords_left->x += f;
+			coords_right->x -= f;
+
+			if (left_distance != 0 && right_distance != 0)
+			{
+				float ratio = left_distance / right_distance;
+				coords_mid->x = (coords_right->x * ratio + coords_left->x) / (ratio + 1);
+			}
+		}
+
+		if (change_vertical > 0)
+		{
+			glm::vec2* coords_south = nullptr;
+			glm::vec2* coords_north = nullptr;
+			glm::vec2* coords_mid = nullptr;
+
+			if (coords1.y < coords2.y && coords1.y < coords3.y)
+			{
+				coords_south = &coords1;
+				if (coords2.y < coords3.y)
+				{
+					coords_mid = &coords2;
+					coords_north = &coords3;
+				}
+
+				else
+				{
+					coords_mid = &coords3;
+					coords_north = &coords2;
+				}
+			}
+
+			else if (coords3.y < coords1.y && coords2.y < coords3.y)
+			{
+				coords_south = &coords2;
+				if (coords1.y < coords3.y)
+				{
+					coords_mid = &coords1;
+					coords_north = &coords3;
+				}
+
+				else
+				{
+					coords_mid = &coords3;
+					coords_north = &coords1;
+				}
+			}
+
+			else
+			{
+				coords_south = &coords3;
+				if (coords1.y < coords2.y)
+				{
+					coords_mid = &coords1;
+					coords_north = &coords2;
+				}
+
+				else
+				{
+					coords_mid = &coords2;
+					coords_north = &coords1;
+				}
+			}
+
+			float south_distance = coords_mid->x - coords_south->x;
+			float north_distance = coords_north->x - coords_mid->x;
+
+			float f = abs(group_selector->extreme_value_south - group_selector->position.y) - abs(Global::mouseRelativeY - group_selector->position.y);
+			coords_south->y += f;
+			coords_north->y -= f;
+
+			if (south_distance != 0 && north_distance != 0)
+			{
+				float ratio = south_distance / north_distance;
+				coords_mid->x = (coords_north->x * ratio + coords_south->x) / (ratio + 1);
+			}
+		}
+
+		// Store Vertices in Object Data
+		Shape::Triangle& triangle_data = *static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+		triangle_data = Shape::Triangle(coords2, coords3);
+		static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData().position = coords1;
+		coords2 = *triangle_data.pointerToSecondPosition();
+		coords3 = *triangle_data.pointerToThirdPosition();
+		should_sort = true;
+	}
+
+	// Test if Triangle Should be Resized
+	else if (selected_vertex)
+	{
+		// Move Highest Vertex
+		if (selected_vertex == 1)
+		{
+			coords1.x = Global::mouseRelativeX;
+			coords1.y = Global::mouseRelativeY;
+		}
+
+		// Move Second Highest Vertex
+		else if (selected_vertex == 2)
+		{
+			coords2.x = Global::mouseRelativeX;
+			coords2.y = Global::mouseRelativeY;
+		}
+
+		// Move Lowest Vertex
+		else
+		{
+			coords3.x = Global::mouseRelativeX;
+			coords3.y = Global::mouseRelativeY;
+		}
+
+		// Store Vertices in Object Data
+		Shape::Triangle& triangle_data = *static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+		triangle_data = Shape::Triangle(coords2, coords3);
+		static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData().position = coords1;
+		coords2 = *triangle_data.pointerToSecondPosition();
+		coords3 = *triangle_data.pointerToThirdPosition();
+		should_sort = true;
+	}
+
+	// Move if Size Doesn't Change
+	if (!selected_vertex && !group_selector->resizing)
+	{
+		// Calclate New Coordinates
+		glm::vec2 delta_coords2 = coords2 - coords1;
+		glm::vec2 delta_coords3 = coords3 - coords1;
+		coords1.x = (float)(Global::mouseRelativeX + offset_x);
+		coords1.y = (float)(Global::mouseRelativeY + offset_y);
+		coords2 = delta_coords2 + coords1;
+		coords3 = delta_coords3 + coords1;
+
+		// Store New Position Data
+		Shape::Triangle& triangle_data = *static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(data_object)->getShape());
+		triangle_data = Shape::Triangle(coords2, coords3);
+		static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData().position = coords1;
+		coords2 = *triangle_data.pointerToSecondPosition();
+		coords3 = *triangle_data.pointerToThirdPosition();
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+	}
+
+	// Else Update Vertices and Buffer Objects
+	else
+		genSelectorVertices(data_object, vertex_objects);
+}
+
+void Editor::Selector::Selected_Triangle::testResizeTriangle()
+{
+	bool enable_resize = true;
+	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
+	{
+		// Test if the First Vector Should Move
+		if ((Global::mouseRelativeX >= coords1.x - 2 && Global::mouseRelativeX <= coords1.x + 2) && (Global::mouseRelativeY >= coords1.y - 2 && Global::mouseRelativeY <= coords1.y + 2))
+		{
+			selected_vertex = 1;
+		}
+
+		// Test if the Second Vector Should Move
+		else if ((Global::mouseRelativeX >= coords2.x - 2 && Global::mouseRelativeX <= coords2.x + 2) && (Global::mouseRelativeY >= coords2.y - 2 && Global::mouseRelativeY <= coords2.y + 2))
+		{
+			selected_vertex = 2;
+		}
+
+		// Test if the Third Vector Should Move
+		else if ((Global::mouseRelativeX >= coords3.x - 2 && Global::mouseRelativeX <= coords3.x + 2) && (Global::mouseRelativeY >= coords3.y - 2 && Global::mouseRelativeY <= coords3.y + 2))
+		{
+			selected_vertex = 3;
+		}
+
+		// Test if Color of Outline Should Change
+		if (!resizing && selected_vertex)
+			outlineForResize();
+	}
+}
+
+void Editor::Selector::Selected_Triangle::setHorizontalGroupResize()
+{
+	change_horizontal = 1.0f;
+}
+
+void Editor::Selector::Selected_Triangle::setVerticalGroupResize()
+{
+	change_vertical = 1.0f;
+}
+
+uint8_t Editor::Selector::Selected_Circle::updateObject()
+{
+	// The Result of the Object Interaction
+	uint8_t result = ABSOLUTLY_NOTHING;
+
+	// Get Distance Between Mouse and Center of Circle
+	float delta_w = Global::mouseRelativeX - *object_x;
+	float delta_h = Global::mouseRelativeY - *object_y;
+	float distance = glm::distance(glm::vec2(delta_w, delta_h), glm::vec2(0.0f, 0.0f));
+
+	// Test if Mouse is Inside Circle Object
+	if (distance < *object_radius)
+	{
+		// If Object is Currently Not Being Moved, Test If It Should
+		if (!moving)
+		{
+			// Reset Variables
+			selected_vertex = 0;
+			mouse_angle = 0.0f;
+			Global::Selected_Cursor = Global::CURSORS::HAND;
+
+			// Test if Rectangle Should Resize
+			testResizeCircle(distance, delta_w, delta_h);
+
+			// Test if Color of Outline Should Change to Moving
+			if (!mouse_intersects_object || (resizing && !selected_vertex))
+				outlineForMove();
+
+			// If Left Mouse Button is Held, Start Moving
+			if (Global::LeftClick)
+			{
+				moving = true;
+				setMouseOffset();
+				if (selected_vertex)
+					return RESIZING;
+				return MOVING;
+			}
+		}
+
+		result = MOUSED_OVER;
+	}
+
+	// Else, Test if Object Should be Deselected
+	else if (!moving)
+	{
+		// Update Outline Color
+		if (mouse_intersects_object)
+			outlineForNotSelected();
+
+		// If Left Click is Pressed, Deselect Object
+		if (Global::LeftClick)
+			return DESELECTED;
+	}
+
+	return result;
+}
+
+void Editor::Selector::Selected_Circle::updateGroup(Group_Selector& group_selector)
+{
+	// Test North
+	if (*object_y + *object_radius > group_selector.extreme_value_north)
+		group_selector.extreme_value_north = *object_y + *object_radius;
+
+	// Test South
+	if (*object_y - *object_radius < group_selector.extreme_value_south)
+		group_selector.extreme_value_south = *object_y - *object_radius;
+
+	// Test East
+	if (*object_x + *object_radius > group_selector.extreme_value_east)
+		group_selector.extreme_value_east = *object_x + *object_radius;
+
+	// Test West
+	if (*object_x - *object_radius < group_selector.extreme_value_west)
+		group_selector.extreme_value_west = *object_x - *object_radius;
+}
+
+void Editor::Selector::Selected_Circle::moveObject()
+{
+	// Group Resizing
+	if (group_selector->resizing)
+	{
+		// Horizontal Resize
+		if (selected_vertex == 1)
+		{
+			float f = abs(group_selector->extreme_value_west - group_selector->position.x) - abs(Global::mouseRelativeX - group_selector->position.x);
+			if (*object_x < group_selector->position.x)
+				*object_x += f;
+			else
+				*object_x -= f;
+			*object_radius -= f;
+		}
+
+		// Vertical Resize
+		else if (selected_vertex == 2)
+		{
+			float f = abs(group_selector->extreme_value_south - group_selector->position.y) - abs(Global::mouseRelativeY - group_selector->position.y);
+			if (*object_y < group_selector->position.y)
+				*object_y += f;
+			else
+				*object_y -= f;
+			*object_radius -= f;
+		}
+
+		// Prevent Size from Going Negative
+		if (*object_radius <= 0.1f)
+			*object_radius = 0.1f;
+	}
+
+	else
+	{
+		// Test if Circle is Resizing
+		if (selected_vertex)
+		{
+			// Radius is New Distance Between Mouse and Center
+			*object_radius = glm::distance(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), glm::vec2(*object_x, *object_y));
+		}
+	}
+
+	// Move if Size Doesn't Change
+	if (!selected_vertex)
+	{
+		*object_x = (float)(Global::mouseRelativeX + offset_x);
+		*object_y = (float)(Global::mouseRelativeY + offset_y);
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+	}
+
+	// Else Update Vertices and Buffer Objects
+	else
+		genSelectorVertices(data_object, vertex_objects);
+}
+
+void Editor::Selector::Selected_Circle::setHorizontalGroupResize()
+{
+	selected_vertex = 1;
+}
+
+void Editor::Selector::Selected_Circle::setVerticalGroupResize()
+{
+	selected_vertex = 2;
+}
+
+void Editor::Selector::Selected_Circle::testResizeCircle(float& distance, float& delta_w, float& delta_h)
+{
+	bool enable_resize = true;
+	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
+	{
+		// How Far the Mouse Must be Inside Object to Stop Resizing
+		float resize_width = 1.5f * Global::zoom_scale;
+
+		// Test if Mouse Touches Edge of Circle
+		if (distance > *object_radius - resize_width)
+		{
+			// Get Mouse Angle
+			mouse_angle = atan(delta_h / delta_w);
+			if (delta_w < 0)
+				mouse_angle += 3.141459f;
+
+			// Select Vertex Flag
+			selected_vertex = 1;
+
+			// Select Cursor
+			Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
+
+			// Test if Color of Outline Should Change
+			if (!resizing)
+				outlineForResize();
+		}
+	}
+}
+
+uint8_t Editor::Selector::Selected_Horizontal_Line::updateObject()
+{
+	// The Result of the Object Interaction
+	uint8_t result = ABSOLUTLY_NOTHING;
+
+	// Test if Mouse is Inside Object
+	if ((*object_x - (*object_width * 0.5f) < Global::mouseRelativeX) && (*object_x + (*object_width * 0.5f) > Global::mouseRelativeX) && (*object_y - 0.5f < Global::mouseRelativeY) && (*object_y + 0.5f > Global::mouseRelativeY))
+	{
+		// If Object is Currently Not Being Moved, Test If It Should
+		if (!moving)
+		{
+			// Reset Variables
+			change_horizontal = 0;
+			Global::Selected_Cursor = Global::CURSORS::HAND;
+
+			// Test if Rectangle Should Resize
+			testResizeRectangle(true, false);
+
+			// Test if Color of Outline Should Change to Moving
+			if (!mouse_intersects_object || (resizing && !change_horizontal))
+				outlineForMove();
+
+			// If Left Mouse Button is Held, Start Moving
+			if (Global::LeftClick)
+			{
+				moving = true;
+				if (change_horizontal)
+				{
+					offset_x = *object_x - Global::mouseRelativeX + *object_width * 0.5f * Algorithms::Math::getSign(change_horizontal);;
+					offset_y = *object_y - Global::mouseRelativeY;
+					return RESIZING;
+				}
+				setMouseOffset();
+				return MOVING;
+			}
+		}
+
+		result = MOUSED_OVER;
+	}
+
+	// Else, Test if Object Should be Deselected
+	else if (!moving)
+	{
+		// Update Outline Color
+		if (mouse_intersects_object)
+			outlineForNotSelected();
+
+		// If Left Click is Pressed, Deselect Object
+		if (Global::LeftClick)
+			return DESELECTED;
+	}
+
+	return result;
+}
+
+void Editor::Selector::Selected_Horizontal_Line::updateGroup(Group_Selector& group_selector)
+{
+	float temp_compare_value = 0.0f;
+
+	// Test the North Extreme Value
+	if (*object_y > group_selector.extreme_value_north)
+		group_selector.extreme_value_north = *object_y;
+
+	// Test the South Extreme Value
+	if (*object_y < group_selector.extreme_value_south)
+		group_selector.extreme_value_south = *object_y;
+
+	// Test the East Extreme Value
+	temp_compare_value = *object_x + *object_width * 0.5f;
+	if (temp_compare_value > group_selector.extreme_value_east)
+		group_selector.extreme_value_east = temp_compare_value;
+
+	// Test the West Extreme Value
+	temp_compare_value = *object_x - *object_width * 0.5f;
+	if (temp_compare_value < group_selector.extreme_value_west)
+		group_selector.extreme_value_west = temp_compare_value;
+}
+
+void Editor::Selector::Selected_Horizontal_Line::setVerticalGroupResize()
+{
+	offset_y = *object_y - Global::mouseRelativeY;
+}
+
+uint8_t Editor::Selector::Selected_Vertical_Line::updateObject()
+{
+	// The Result of the Object Interaction
+	uint8_t result = ABSOLUTLY_NOTHING;
+
+	// Test if Mouse is Inside Object
+	if ((*object_x - 0.5f < Global::mouseRelativeX) && (*object_x + 0.5f > Global::mouseRelativeX) && (*object_y - (*object_height / 2) < Global::mouseRelativeY) && (*object_y + (*object_height / 2) > Global::mouseRelativeY))
+	{
+		// If Object is Currently Not Being Moved, Test If It Should
+		if (!moving)
+		{
+			// Reset Variables
+			change_vertical = 0;
+			Global::Selected_Cursor = Global::CURSORS::HAND;
+
+			// Test if Rectangle Should Resize
+			testResizeRectangle(false, true);
+
+			// Test if Color of Outline Should Change to Moving
+			if (!mouse_intersects_object || (resizing && !change_vertical))
+				outlineForMove();
+
+			// If Left Mouse Button is Held, Start Moving
+			if (Global::LeftClick)
+			{
+				moving = true;
+				if (change_vertical)
+				{
+					offset_x = *object_x - Global::mouseRelativeX;
+					offset_y = *object_y - Global::mouseRelativeY + *object_height * 0.5f * Algorithms::Math::getSign(change_vertical);
+					return RESIZING;
+				}
+				setMouseOffset();
+				return MOVING;
+			}
+		}
+
+		result = MOUSED_OVER;
+	}
+
+	// Else, Test if Object Should be Deselected
+	else if (!moving)
+	{
+		// Update Outline Color
+		if (mouse_intersects_object)
+			outlineForNotSelected();
+
+		// If Left Click is Pressed, Deselect Object
+		if (Global::LeftClick)
+			return DESELECTED;
+	}
+
+	return result;
+}
+
+void Editor::Selector::Selected_Vertical_Line::updateGroup(Group_Selector& group_selector)
+{
+	float temp_compare_value = 0.0f;
+
+	// Test the North Extreme Value
+	temp_compare_value = *object_y + *object_height * 0.5f;
+	if (temp_compare_value > group_selector.extreme_value_north)
+		group_selector.extreme_value_north = temp_compare_value;
+
+	// Test the South Extreme Value
+	temp_compare_value = *object_y - *object_height * 0.5f;
+	if (temp_compare_value < group_selector.extreme_value_south)
+		group_selector.extreme_value_south = temp_compare_value;
+
+	// Test the East Extreme Value
+	if (*object_x > group_selector.extreme_value_east)
+		group_selector.extreme_value_east = *object_x;
+
+	// Test the West Extreme Value
+	if (*object_x < group_selector.extreme_value_west)
+		group_selector.extreme_value_west = *object_x;
+}
+
+void Editor::Selector::Selected_Vertical_Line::setHorizontalGroupResize()
+{
+	offset_x = *object_x - Global::mouseRelativeX;
+}
+
+uint8_t Editor::Selector::Selected_Line::updateObject()
+{
+	// The Result of the Object Interaction
+	uint8_t result = ABSOLUTLY_NOTHING;
+
+	// Localized Y Value at MouseX
+	float LocalY = slope * Global::mouseRelativeX + intercept;
+
+	// Test if Mouse Intersects Lines
+	if (((*object_x < Global::mouseRelativeX && *object_opposite_x > Global::mouseRelativeX) || (*object_opposite_x < Global::mouseRelativeX && *object_x > Global::mouseRelativeX)) && LocalY < Global::mouseRelativeY + 1 && LocalY > Global::mouseRelativeY - 1)
+	{
+		// If Object is Currently Not Being Moved, Test If It Should
+		if (!moving)
+		{
+			// Reset Variables
+			selected_vertex = 0;
+			Global::Selected_Cursor = Global::CURSORS::HAND;
+
+			// Test if Line Should Resize
+			testResizeLine();
+
+			// Test if Color of Outline Should Change to Moving
+			if (!mouse_intersects_object || (resizing && !selected_vertex))
+				outlineForMove();
+
+			// If Left Mouse Button is Held, Start Moving
+			if (Global::LeftClick)
+			{
+				moving = true;
+				setMouseOffset();
+				if (selected_vertex)
+					return RESIZING;
+				return MOVING;
+			}
+		}
+
+		result = MOUSED_OVER;
+	}
+
+	// Else, Test if Object Should be Deselected
+	else if (!moving)
+	{
+		// Update Outline Color
+		if (mouse_intersects_object)
+			outlineForNotSelected();
+
+		// If Left Click is Pressed, Deselect Object
+		if (Global::LeftClick)
+			return DESELECTED;
+	}
+
+	return result;
+}
+
+void Editor::Selector::Selected_Line::updateGroup(Group_Selector& group_selector)
+{
+	updateGroupHelper(group_selector, *object_x, *object_y);
+	updateGroupHelper(group_selector, *object_opposite_x, *object_opposite_y);
+}
+
+void Editor::Selector::Selected_Line::updateGroupHelper(Group_Selector& group_selector, float& test_x, float& test_y)
+{
+	// Test North
+	if (test_y > group_selector.extreme_value_north)
+		group_selector.extreme_value_north = test_y;
+
+	// Test South
+	else if (test_y < group_selector.extreme_value_south)
+		group_selector.extreme_value_south = test_y;
+
+	// Test East
+	if (test_x > group_selector.extreme_value_east)
+		group_selector.extreme_value_east = test_x;
+
+	// Test West
+	else if (test_x < group_selector.extreme_value_west)
+		group_selector.extreme_value_west = test_x;
+}
+
+void Editor::Selector::Selected_Line::moveObject()
+{
+	if (group_selector->resizing)
+	{
+		if (change_horizontal > 0.0f)
+		{
+			float f = abs(group_selector->extreme_value_west - group_selector->position.x) - abs(Global::mouseRelativeX - group_selector->position.x);
+
+			if (*object_x < *object_opposite_x)
+			{
+				*object_x += f;
+				*object_opposite_x -= f;
+			}
+
+			else
+			{
+				*object_x -= f;
+				*object_opposite_x += f;
+			}
+		}
+
+		if (change_vertical > 0.0f)
+		{
+			float f = abs(group_selector->extreme_value_south - group_selector->position.y) - abs(Global::mouseRelativeY - group_selector->position.y);
+
+			if (*object_y < *object_opposite_y)
+			{
+				*object_y += f;
+				*object_opposite_y -= f;
+			}
+
+			else
+			{
+				*object_y -= f;
+				*object_opposite_y += f;
+			}
+		}
+	}
+
+	else
+	{
+		// Test if Object Origin Vertex is Being Moved
+		if (selected_vertex == 1)
+		{
+			// Move Object Position
+			*object_x = Global::mouseRelativeX;
+			*object_y = Global::mouseRelativeY;
+		}
+
+		// Test if Object Opposite Vertex is Being Moved
+		else if (selected_vertex == 2)
+		{
+			// Move Object Opposite Position
+			*object_opposite_x = Global::mouseRelativeX;
+			*object_opposite_y = Global::mouseRelativeY;
+		}
+	}
+
+	// Move if Size Doesn't Change
+	if (!selected_vertex)
+	{
+		// Find Distance Between Positions
+		glm::vec2 delta_pos = glm::vec2(*object_opposite_x, *object_opposite_y) - glm::vec2(*object_x, *object_y);
+
+		// Get New Origin Position
+		*object_x = (float)(Global::mouseRelativeX + offset_x);
+		*object_y = (float)(Global::mouseRelativeY + offset_y);
+		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+
+		// Generate Line Data
+		intercept = *object_y - (slope * *object_x);
+
+		// Find New Opposite Position
+		*object_opposite_x = *object_x + delta_pos.x;
+		*object_opposite_y = *object_y + delta_pos.y;
+	}
+
+	// Else Update Vertices and Buffer Objects
+	else
+	{
+		slope = (*object_opposite_y - *object_y) / (*object_opposite_x - *object_x);
+		intercept = *object_y - (slope * *object_x);
+		genSelectorVertices(data_object, vertex_objects);
+	}
+}
+
+void Editor::Selector::Selected_Line::setHorizontalGroupResize()
+{
+	change_horizontal = 1.0f;
+	selected_vertex = 1;
+}
+
+void Editor::Selector::Selected_Line::setVerticalGroupResize()
+{
+	change_vertical = 1.0f;
+	selected_vertex = 1;
+}
+
+void Editor::Selector::Selected_Line::testResizeLine()
+{
+	bool enable_resize = true;
+	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
+	{
+		// How Far the Mouse Must be Inside Object to Stop Resizing
+		float resize_width = 1.5f * Global::zoom_scale;
+
+		// Test if Mouse is Close to Origin Vertex
+		if (glm::distance(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), glm::vec2(*object_x, *object_y)) < resize_width)
+		{
+			// Set Vertex to First Vertex
+			selected_vertex = 1;
+
+			// Set Cursor
+			Global::Selected_Cursor = Global::CURSORS::POINT;
+		}
+
+		// Test if Mouse is Close to Opposite Vertex
+		else if (glm::distance(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), glm::vec2(*object_opposite_x, *object_opposite_y)) < resize_width)
+		{
+			// Set Vertex to Second Vertex
+			selected_vertex = 2;
+
+			// Set Cursor
+			Global::Selected_Cursor = Global::CURSORS::POINT;
+		}
+
+		// Test if Color of Outline Should Change
+		if (!resizing && selected_vertex)
+			outlineForResize();
+	}
+}
+
+void Editor::Selector::Selected_Unsized::moveObject()
+{
+	Global::Selected_Cursor = Global::CURSORS::HAND;
+	*object_x = (float)(Global::mouseRelativeX + offset_x);
+	*object_y = (float)(Global::mouseRelativeY + offset_y);
+	vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
+}
+
+void Editor::Selector::Selected_Unsized::updateGroupHelper(Group_Selector& group_selector, float half_width, float half_height)
+{
+	float temp_compare_value = 0.0f;
+
+	// Test the North Extreme Value
+	temp_compare_value = *object_y + half_height;
+	if (temp_compare_value > group_selector.extreme_value_north)
+		group_selector.extreme_value_north = temp_compare_value;
+
+	// Test the South Extreme Value
+	temp_compare_value = *object_y - half_height;
+	if (temp_compare_value < group_selector.extreme_value_south)
+		group_selector.extreme_value_south = temp_compare_value;
+
+	// Test the East Extreme Value
+	temp_compare_value = *object_x + half_width;
+	if (temp_compare_value > group_selector.extreme_value_east)
+		group_selector.extreme_value_east = temp_compare_value;
+
+	// Test the West Extreme Value
+	temp_compare_value = *object_x - half_width;
+	if (temp_compare_value < group_selector.extreme_value_west)
+		group_selector.extreme_value_west = temp_compare_value;
+}
+
+uint8_t Editor::Selector::Selected_SpringMassObject::updateObject()
+{
+	// The Result of the Object Interaction
+	uint8_t result = ABSOLUTLY_NOTHING;
+
+	// Test if Mouse is Inside Object
+	if (Global::mouseRelativeX > *object_x - object_half_width && Global::mouseRelativeX < *object_x + object_half_width && Global::mouseRelativeY > *object_y - object_half_height && Global::mouseRelativeY < *object_y + object_half_height)
+	{
+		Global::Selected_Cursor = Global::CURSORS::HAND;
+		outlineForMove();
+
+		// If Left Mouse Button is Held, Start Moving
+		if (Global::LeftClick)
+		{
+			moving = true;
+			setMouseOffset();
+			return MOVING;
+		}
+
+		result = MOUSED_OVER;
+	}
+
+	// Else, Test if Object Should be Deselected
+	else if (!moving)
+	{
+		// Update Outline Color
+		if (mouse_intersects_object)
+			outlineForNotSelected();
+
+		// If Left Click is Pressed, Deselect Object
+		if (Global::LeftClick)
+		{
+			//deselectObject();
+			return DESELECTED;
+		}
+	}
+
+	return result;
+}
+
+void Editor::Selector::Selected_SpringMassObject::updateGroup(Group_Selector& group_selector)
+{
+	updateGroupHelper(group_selector, object_half_width, object_half_height);
+}
+
+uint8_t Editor::Selector::Selected_SpringMassNode::updateObject()
+{
+	// The Result of the Object Interaction
+	uint8_t result = ABSOLUTLY_NOTHING;
+
+	// Test if Mouse is Inside Node
+	if (Global::mouseRelativeX > *object_x - *object_radius && Global::mouseRelativeX < *object_x + *object_radius && Global::mouseRelativeY > *object_y - *object_radius && Global::mouseRelativeY < *object_y + *object_radius)
+	{
+		// If Not Moving, Test if Node Should Move
+		if (!moving)
+		{
+			// Set Cursor
+			Global::Selected_Cursor = Global::CURSORS::HAND;
+
+			// Test if Highlight Color Should be Changed
+			if (!mouse_intersects_object)
+				outlineForMove();
+
+			// If Left Mouse Button is Held, Start Moving
+			if (Global::LeftClick)
+			{
+				moving = true;
+				setMouseOffset();
+				return MOVING;
+			}
+		}
+
+		result = MOUSED_OVER;
+	}
+
+	// Else, Test if Object Should be Deselected
+	else if (!moving)
+	{
+		// Update Outline Color
+		if (mouse_intersects_object)
+			outlineForNotSelected();
+
+		// If Left Click is Pressed, Deselect Object
+		if (Global::LeftClick)
+			return DESELECTED;
+	}
+
+	// Update Node in Origin Object
+	//*node_pointer = Object::Physics::Soft::Node(node_data);
+	return result;
+}
+
+void Editor::Selector::Selected_SpringMassNode::updateGroup(Group_Selector& group_selector)
+{
+	updateGroupHelper(group_selector, *object_radius, *object_radius);
+}
+
+// Function to Update the Object
+uint8_t Editor::Selector::Selected_SpringMassSpring::updateObject()
+{
+	// IDEA:
+	// Springs Can Only Be Moved by Their Ends
+	// If a Spring is Moved, It Will Snap to the Node Whose Origin is Closest to the Coordinates of the Mouse
+	// The Nodes That are Checked are The Nodes From the Same File as the Spring's Origin and The Positions of the Nodes Are Offset by The Position of the Individual Object the Spring is From
+	// The Checking of the Closest Node Happens Continuously and Will be Applied When the Mouse is Moved
+
+	// IDEA:
+	// Springs Can Be Attachted Between the Same Two Nodes Multiple Times, Use the "SKIP" Key to Cycle Through Which Spring Should be Selected
+
+	// Idea:
+	// To Allow Selection of Multiple Springs to be Clearer and To Tell The User Which Spring is Selected, There Should be an Area of the Window Dedicated to Showing the Data for the Currently Moused Over Object
+	// This Should Hold True for All Objects
+	// For Most Objects, Name, Object Type, and Position Should be Displayed
+	// For Springs, Spring Name (Index) and Spring Constant Should be Displayed
+
+	// IDEA:
+	// Springs Can be Moved By Parts That Are Not Ends, Moves Both Connected Nodes at the Same Time
+	// This Also Means Springs Can be Rotated, Rotating Both Nodes Around The Pivot
+	// When Saving the Changes to the Spring, Both the Nodes and Spring Must be Saved
+
+	// The Result of the Object Interaction
+	uint8_t result = ABSOLUTLY_NOTHING;
+
+	// Test if Mouse Intersects First Position
+	if (glm::distance(connection_pos_left, glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY)) < 0.5f)
+	{
+		// If Not Moving, Test if Spring Should Move
+		if (!moving)
+		{
+			// Set Cursor
+			Global::Selected_Cursor = Global::CURSORS::HAND;
+
+			// Test if Highlight Color Should be Changed
+			if (!mouse_intersects_object || !resizing)
+				outlineForResize();
+
+			// Set Values
+			change_horizontal = 0;
+			change_vertical = 0;
+
+			// If Left Mouse Button is Held, Start Moving
+			if (Global::LeftClick)
+			{
+				moving = true;
+				change_horizontal = 1;
+				return MOVING;
+			}
+		}
+
+		result = MOUSED_OVER;
+	}
+
+	// Test if Mouse Intersects Second Position
+	else if (glm::distance(connection_pos_right, glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY)) < 0.5f)
+	{
+		// If Not Moving, Test if Spring Should Move
+		if (!moving)
+		{
+			// Set Cursor
+			Global::Selected_Cursor = Global::CURSORS::HAND;
+
+			// Test if Highlight Color Should be Changed
+			if (!mouse_intersects_object || !resizing)
+				outlineForResize();
+
+			// Set Values
+			change_horizontal = 0;
+			change_vertical = 0;
+
+			// If Left Mouse Button is Held, Start Moving
+			if (Global::LeftClick)
+			{
+				moving = true;
+				change_vertical = 1;
+				return MOVING;
+			}
+		}
+
+		result = MOUSED_OVER;
+	}
+
+	// Else, Test if Object Should be Deselected
+	else if (!moving)
+	{
+		// Update Outline Color
+		if (mouse_intersects_object)
+			outlineForNotSelected();
+
+		// If Left Click is Pressed, Deselect Object
+		if (Global::LeftClick)
+			return DESELECTED;
+	}
+
+	return result;
+}
+
+// Function to Update the Group Selector
+void Editor::Selector::Selected_SpringMassSpring::updateGroup(Group_Selector& group_selector)
+{
+
+}
+
+void Editor::Selector::Selected_SpringMassSpring::moveObject()
+{
+	// Move Endpoints
+	if (true)//resizing)
+	{
+		// Iterate Through All Nodes and Find the Closest Match to Mouse Position
+		float shortest_length = 1000000.0f;
+		float temp_distance = 0;
+		int shortest_index = 0;
+		for (int i = 0; i < node_count; i++)
+		{
+			temp_distance = glm::distance(node_list[i].position, glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY));
+			if (temp_distance < shortest_length)
+			{
+				shortest_length = temp_distance;
+				shortest_index = i;
+			}
+		}
+
+		// Get Spring Data
+		Object::Physics::Soft::Spring& spring_data = static_cast<DataClass::Data_SpringMassSpring*>(data_object)->getSpringData();
+
+		// Set Endpoint to Closest Value if Index is New
+		if (spring_data.Node1 != node_list[shortest_index].name && spring_data.Node2 != node_list[shortest_index].name)
+		{
+			glm::vec2 other_pos = glm::vec2(0.0f);
+
+			// Left Endpoint
+			if (change_horizontal)
+			{
+				spring_data.Node1 = node_list[shortest_index].name;
+				connection_pos_left = node_list[shortest_index].position;
+				for (int i = 0; i < node_count; i++)
+					if (node_list[i].name == spring_data.Node2)
+						other_pos = node_list[i].position;
+			}
+
+			// Right Endpoint
+			else if (change_vertical)
+			{
+				spring_data.Node2 = node_list[shortest_index].name;
+				connection_pos_right = node_list[shortest_index].position;
+				for (int i = 0; i < node_count; i++)
+					if (node_list[i].name == spring_data.Node1)
+						other_pos = node_list[i].position;
+			}
+
+			// Reset Rest and Max Lengths
+			spring_data.RestLength = glm::distance(node_list[shortest_index].position, other_pos);
+			spring_data.MaxLength = 2 * spring_data.RestLength;
+
+			// Find Positions of Spring
+			glm::vec2 left_pos = glm::vec2(0.0f);
+			glm::vec2 right_pos = glm::vec2(0.0f);
+			for (int i = 0; i < node_count; i++)
+			{
+				if (node_list[i].name == spring_data.Node1)
+					left_pos = node_list[i].position;
+				if (node_list[i].name == spring_data.Node2)
+					right_pos = node_list[i].position;
+			}
+
+			// Change Vertices
+			//storeTempConnectionPos(node_list[spring_data.Node1].position, node_list[spring_data.Node2].position);
+			storeTempConnectionPos(left_pos, right_pos);
+			genSelectorVertices(data_object, vertex_objects);
+		}
+	}
+}
+
+bool Editor::Selector::Selected_Object::moving;
+bool Editor::Selector::Selected_Object::resizing;
+bool Editor::Selector::Selected_Object::mouse_intersects_object;
+bool Editor::Selector::Selected_Object::rotating;
+std::function<void(DataClass::Data_Object*, Editor::Selector::Selected_VertexObjects&)> Editor::Selector::Selected_Object::genSelectorVertices;
+std::function<void(bool, Editor::Selector::Selected_Object*)> Editor::Selector::Selected_Object::sortVertices;
+std::function<void(glm::vec2&, glm::vec2&)> Editor::Selector::Selected_Object::storeTempConnectionPos;
+Editor::Selector::Group_Selector* Editor::Selector::Selected_Object::group_selector;
 

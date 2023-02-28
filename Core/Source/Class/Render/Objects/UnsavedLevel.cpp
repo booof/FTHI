@@ -251,8 +251,8 @@ void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects,
 
 Shape::Shape* Render::Objects::UnsavedLevel::getShapePointer(Editor::Selector* selector)
 {
-	Shape::Shape* old_shape = static_cast<DataClass::Data_Shape*>(selector->data_object)->getShape();
-	switch (selector->data_object->getObjectIdentifier()[2])
+	Shape::Shape* old_shape = static_cast<DataClass::Data_Shape*>(selector->data_objects.at(0))->getShape();
+	switch (selector->data_objects.at(0)->getObjectIdentifier()[2])
 	{
 
 	// Rectangle
@@ -542,7 +542,7 @@ void Render::Objects::UnsavedLevel::transferObject(DataClass::Data_Object* data_
 	instance_with_changes.data_objects.push_back(data_object);
 }
 
-void Render::Objects::UnsavedLevel::createChangeAppend(Editor::Selector* selector)
+void Render::Objects::UnsavedLevel::createChangeAppend(DataClass::Data_Object* data_object)
 {
 	// Generate Change List if Not Generated Already
 	generateChangeList();
@@ -550,9 +550,6 @@ void Render::Objects::UnsavedLevel::createChangeAppend(Editor::Selector* selecto
 	// Generate the New Change
 	Change* change = new Change;
 	change->change_type = CHANGE_TYPES::ADD;
-
-	// Retrieve the Data Object from the Selector
-	DataClass::Data_Object* data_object = selector->data_object;
 
 	// Store Data Object in Change
 	change->data = data_object;

@@ -1,9 +1,6 @@
 #include "Spot.h"
 #include "Render/Struct/DataClasses.h"
 
-// Selector
-#include "Class/Render/Editor/Selector.h"
-
 // Object Info
 #include "Class/Render/Editor/ObjectInfo.h"
 

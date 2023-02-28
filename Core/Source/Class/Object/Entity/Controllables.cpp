@@ -1,6 +1,5 @@
 #include "Controllables.h"
 #include "Render/Struct/DataClasses.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 
 Object::Entity::Controllables::Controllables(uint32_t& uuid_, EntityData& entity_, ObjectData& data_) : EntityBase(uuid_, entity_, data_)

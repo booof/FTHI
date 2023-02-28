@@ -1,6 +1,5 @@
 #include "FloorMaskSlant.h"
 #include "Render/Struct/DataClasses.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Source/Algorithms/Quick Math/QuickMath.h"
 #include "Globals.h"

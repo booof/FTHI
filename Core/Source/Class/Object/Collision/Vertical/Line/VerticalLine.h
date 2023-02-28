@@ -33,8 +33,8 @@ namespace Object::Mask
 		// Data for Line
 		VerticalLineData data;
 
-		// Top Y Position of Object
-		float y_top;
+		// Y Positions of Object
+		float y_top, y_bottom;
 
 		// Initialize Vertical Line
 		VerticalLine(VerticalLineData data_);

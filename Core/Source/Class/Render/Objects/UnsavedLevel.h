@@ -251,7 +251,7 @@ namespace Render::Objects
 		void transferObject(DataClass::Data_Object* data_object);
 
 		// Create a New Change by Appending a New Object
-		void createChangeAppend(Editor::Selector* selector);
+		void createChangeAppend(DataClass::Data_Object* data_object);
 
 		// Create a New Change by Removing an Object
 		void createChangePop(DataClass::Data_Object* data_object_to_remove);

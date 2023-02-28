@@ -1,6 +1,8 @@
 #include "ChangeController.h"
 #include "UnsavedLevel.h"
 #include "Class/Render/Editor/Selector.h"
+#include "Class/Render/Camera/Camera.h"
+#include "Class/Render/Struct/DataClasses.h"
 #include "Level.h"
 
 void Render::Objects::ChangeController::updateLevelPos(glm::vec2 position, glm::vec2& level)
@@ -104,15 +106,19 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 	ChainMember* current_instance = master_stack->returnCurrentInstance();
 
 	// Store Camera Position in Current Instance
-	current_instance->camera_pos = selector->getObjectPosition();
+	current_instance->camera_pos = glm::vec2(level->camera->Position.x, level->camera->Position.y);
 
-	// Get Position of Object in Terms of Level
-	glm::vec2 object_level_position;
-	updateLevelPos(selector->getObjectPosition(), object_level_position);
+	// Add All Data Objects
+	for (DataClass::Data_Object* data_object : selector->data_objects)
+	{
+		// Get Position of Object in Terms of Level
+		glm::vec2 object_level_position;
+		updateLevelPos(data_object->getPosition(), object_level_position);
 
-	// Get Unsaved Level of Where Object is Now
-	UnsavedLevel* temp_unsaved_level2 = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
-	temp_unsaved_level2->createChangeAppend(selector);
+		// Get Unsaved Level of Where Object is Now
+		UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
+		temp_unsaved_level->createChangeAppend(data_object);
+	}
 
 	// Finalize Changes
 	for (int i = 0; i < unsaved_levels.size(); i++)
@@ -123,6 +129,20 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 	}
 
 	// Reload Objects
+	level->reloadAll();
+}
+
+void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Data_Object* data_object)
+{
+	// Get Position of Object in Terms of Level
+	glm::vec2 object_level_position;
+	updateLevelPos(data_object->getPosition(), object_level_position);
+
+	// Get Unsaved Level of Where Object is Now
+	UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
+	temp_unsaved_level->createChangeAppend(data_object);
+
+	// TODO: Find a Way to Make Returned Object Show Up in Level Without Reloading All
 	level->reloadAll();
 }
 
@@ -140,13 +160,9 @@ void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* s
 	ChainMember* current_instance = master_stack->returnCurrentInstance();
 
 	// Store Camera Position in Current Instance
-	current_instance->camera_pos = selector->getObjectPosition();
+	current_instance->camera_pos = glm::vec2(level->camera->Position.x, level->camera->Position.y);
 
 	// As Deletion Change Has Already Been Made when Selecting, Simply Finalize the Changes
-
-	// Get Position of Object in Terms of Level
-	glm::vec2 object_level_position;
-	updateLevelPos(selector->getObjectPosition(), object_level_position);
 
 	// Finalize Changes
 	for (int i = 0; i < unsaved_levels.size(); i++)

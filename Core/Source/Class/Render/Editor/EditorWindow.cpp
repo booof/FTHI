@@ -464,7 +464,7 @@ void Editor::EditorWindow::resetBoxes(uint8_t new_box_size, uint8_t new_text_siz
 	texts = new GUI::TextObject*[texts_size];
 }
 
-void Editor::EditorWindow::genBoxesCommon(uint8_t& box_offset, uint8_t& text_offset, float* posX, float* posY)
+void Editor::EditorWindow::genBoxesCommon(uint8_t& box_offset, uint8_t& text_offset, float* posX, float* posY, DataClass::Data_Object* data_object)
 {
 	// Set Lock/Clamp Boxes Sizes
 	temp_box_data.width = 3.0f;
@@ -558,7 +558,7 @@ void Editor::EditorWindow::genBoxesCommon(uint8_t& box_offset, uint8_t& text_off
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesHorizontalLine(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesHorizontalLine(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Horizontal Line
 	DataClass::Data_HorizontalLine& data_horizontal_line = *static_cast<DataClass::Data_HorizontalLine*>(data_object);
@@ -580,7 +580,7 @@ void Editor::EditorWindow::genBoxesHorizontalLine(uint8_t& box_offset, uint8_t& 
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesSlant(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesSlant(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Horizontal Slant
 	DataClass::Data_Slant& data_slant = *static_cast<DataClass::Data_Slant*>(data_object);
@@ -615,7 +615,7 @@ void Editor::EditorWindow::genBoxesSlant(uint8_t& box_offset, uint8_t& text_offs
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesSlope(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesSlope(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Horizontal Slope
 	DataClass::Data_Slope& data_slope = *static_cast<DataClass::Data_Slope*>(data_object);
@@ -650,7 +650,7 @@ void Editor::EditorWindow::genBoxesSlope(uint8_t& box_offset, uint8_t& text_offs
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesPlatform(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesPlatform(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Get Platform from Correct Data Class
 	bool* floor_mask_platform;
@@ -672,7 +672,7 @@ void Editor::EditorWindow::genBoxesPlatform(uint8_t& box_offset, uint8_t& text_o
 	box_offset++;
 }
 
-void Editor::EditorWindow::genBoxesVerticalLine(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesVerticalLine(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Vertical Line
 	DataClass::Data_VerticalLine& data_vertical_line = *static_cast<DataClass::Data_VerticalLine*>(data_object);
@@ -694,7 +694,7 @@ void Editor::EditorWindow::genBoxesVerticalLine(uint8_t& box_offset, uint8_t& te
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesCurve(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesCurve(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Vertical Curve
 	DataClass::Data_Curve& data_curve = *static_cast<DataClass::Data_Curve*>(data_object);
@@ -747,7 +747,7 @@ void Editor::EditorWindow::genBoxesMaterial(uint8_t& box_offset, uint8_t& text_o
 	box_offset++;
 }
 
-void Editor::EditorWindow::genBoxesTrigger(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesTrigger(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Trigger Mask
 	DataClass::Data_TriggerMask& data_trigger = *static_cast<DataClass::Data_TriggerMask*>(data_object);
@@ -782,7 +782,7 @@ void Editor::EditorWindow::genBoxesTrigger(uint8_t& box_offset, uint8_t& text_of
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesObject(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesObject(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Trigger Mask
 	Object::ObjectData& object_data = (static_cast<DataClass::Data_SubObject*>(data_object))->getObjectData();
@@ -1129,7 +1129,7 @@ void Editor::EditorWindow::genBoxesPolygon(uint8_t& box_offset, uint8_t& text_of
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesLight(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesLight(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Get Light Data
 	Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
@@ -1199,7 +1199,7 @@ void Editor::EditorWindow::genBoxesLight(uint8_t& box_offset, uint8_t& text_offs
 	assignColorWheel(&wheelSpecular, box_offset, text_offset, specular_color, height_offset - 86.0f);
 }
 
-void Editor::EditorWindow::genBoxesDirectional(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesDirectional(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Directional Light
 	DataClass::Data_Directional& data_directional = *static_cast<DataClass::Data_Directional*>(data_object);
@@ -1234,7 +1234,7 @@ void Editor::EditorWindow::genBoxesDirectional(uint8_t& box_offset, uint8_t& tex
 	box_offset++;
 }
 
-void Editor::EditorWindow::genBoxesPoint(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesPoint(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Point Light
 	DataClass::Data_Point& data_point = *static_cast<DataClass::Data_Point*>(data_object);
@@ -1269,7 +1269,7 @@ void Editor::EditorWindow::genBoxesPoint(uint8_t& box_offset, uint8_t& text_offs
 	box_offset++;
 }
 
-void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Directional Light
 	DataClass::Data_Spot& data_spot = *static_cast<DataClass::Data_Spot*>(data_object);
@@ -1381,7 +1381,7 @@ void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offse
 	box_offset++;
 }
 
-void Editor::EditorWindow::genBoxesBeam(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesBeam(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Directional Light
 	DataClass::Data_Beam& data_beam = *static_cast<DataClass::Data_Beam*>(data_object);
@@ -1445,7 +1445,7 @@ void Editor::EditorWindow::genBoxesBeam(uint8_t& box_offset, uint8_t& text_offse
 	box_offset++;
 }
 
-void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Rigid Body
 	DataClass::Data_RigidBody& data_rigid_body = *static_cast<DataClass::Data_RigidBody*>(data_object);
@@ -1557,7 +1557,7 @@ void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_
 	box_offset++;
 }
 
-void Editor::EditorWindow::genBoxesSpringMass(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesSpringMass(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Spring Mass
 	DataClass::Data_SpringMass& data_spring_mass = *static_cast<DataClass::Data_SpringMass*>(data_object);
@@ -1590,8 +1590,11 @@ void Editor::EditorWindow::genBoxesSpringMass(uint8_t& box_offset, uint8_t& text
 	box_offset++;
 }
 
-void Editor::EditorWindow::genBoxesSpringMassNode(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesSpringMassNode(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
+	// Get Node Data from Data Object
+	Object::Physics::Soft::NodeData& node_data = static_cast<DataClass::Data_SpringMassNode*>(data_object)->getNodeData();
+
 	// Position Offset is in Position Boxes in Common Vertices
 	
 	// Node Name is in the Name Location in Common Vertices
@@ -1677,8 +1680,11 @@ void Editor::EditorWindow::genBoxesSpringMassNode(uint8_t& box_offset, uint8_t& 
 	text_offset++;
 }
 
-void Editor::EditorWindow::genBoxesSpringMassSpring(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesSpringMassSpring(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
+	// Get Spring Data from Data Object
+	Object::Physics::Soft::Spring& spring_data = static_cast<DataClass::Data_SpringMassSpring*>(data_object)->getSpringData();
+
 	// Node Indicies are in Location of Position Boxes in Common Vertices
 
 	// Node1 Name Box
@@ -1773,7 +1779,7 @@ void Editor::EditorWindow::genBoxesHinge(uint8_t& box_offset, uint8_t& text_offs
 {
 }
 
-void Editor::EditorWindow::genBoxesEntity(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
+void Editor::EditorWindow::genBoxesEntity(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
 {
 	// Convert Data to Entity
 	DataClass::Data_Entity& data_entity = *static_cast<DataClass::Data_Entity*>(data_object);
@@ -3095,17 +3101,17 @@ void Editor::EditorWindow::changeNewObjectSpringMass()
 	{
 		// New Object is a Node
 		if (index == 1)
-			springmass_node_modified = true;
+			add_child_object = CHILD_OBJECT_TYPES::SPRINGMASS_NODE;
 
 		// New Object is a Spring
 		else if (index == 2)
-			springmass_spring_modified = true;
+			add_child_object = CHILD_OBJECT_TYPES::SPRINGMASS_SPRING;
 
 		// Deactivate Window
 		active_window = false;
 
-		// Set Flag to Add Child Object
-		add_child_object = true;
+		// Set Flag to Add a Child Object
+		add_child = true;
 	}
 
 	// Store Pointer to ScrollBar
@@ -3316,6 +3322,9 @@ void Editor::EditorWindow::generateNewObject()
 	// Determine New Size of Object
 	float new_size = 10.0f;
 
+	// New Data Object
+	DataClass::Data_Object* new_data_object;
+
 	// Parse Object Identifier
 	switch (new_object_identifier[0])
 	{
@@ -3338,7 +3347,7 @@ void Editor::EditorWindow::generateNewObject()
 			{
 				DataClass::Data_HorizontalLine* new_horizontal_line = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_HorizontalLine*>(new DataClass::Data_FloorMaskHorizontalLine()) : static_cast<DataClass::Data_HorizontalLine*>(new DataClass::Data_CeilingMaskHorizontalLine());
 				new_horizontal_line->generateInitialValues(new_position, new_size);
-				data_object = new_horizontal_line;
+				new_data_object = new_horizontal_line;
 
 				break;
 			}
@@ -3348,7 +3357,7 @@ void Editor::EditorWindow::generateNewObject()
 			{
 				DataClass::Data_Slant* new_slant = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_Slant*>(new DataClass::Data_FloorMaskSlant()) : static_cast<DataClass::Data_Slant*>(new DataClass::Data_CeilingMaskSlant());
 				new_slant->generateInitialValues(new_position, new_size);
-				data_object = new_slant;
+				new_data_object = new_slant;
 
 				break;
 			}
@@ -3358,7 +3367,7 @@ void Editor::EditorWindow::generateNewObject()
 			{
 				DataClass::Data_Slope* new_slope = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_Slope*>(new DataClass::Data_FloorMaskSlope()) : static_cast<DataClass::Data_Slope*>(new DataClass::Data_CeilingMaskSlope());
 				new_slope->generateInitialValues(new_position, new_size);
-				data_object = new_slope;
+				new_data_object = new_slope;
 
 				break;
 			}
@@ -3380,7 +3389,7 @@ void Editor::EditorWindow::generateNewObject()
 			{
 				DataClass::Data_VerticalLine* new_vertical_line = (new_object_identifier[1] == 1) ? static_cast<DataClass::Data_VerticalLine*>(new DataClass::Data_LeftMaskVerticalLine()) : static_cast<DataClass::Data_VerticalLine*>(new DataClass::Data_RightMaskVerticalLine());
 				new_vertical_line->generateInitialValues(new_position, new_size);
-				data_object = new_vertical_line;
+				new_data_object = new_vertical_line;
 
 				break;
 			}
@@ -3390,7 +3399,7 @@ void Editor::EditorWindow::generateNewObject()
 			{
 				DataClass::Data_Curve* new_curve = (new_object_identifier[1] == 1) ? static_cast<DataClass::Data_Curve*>(new DataClass::Data_LeftMaskCurve()) : static_cast<DataClass::Data_Curve*>(new DataClass::Data_RightMaskCurve());
 				new_curve->generateInitialValues(new_position, new_size);
-				data_object = new_curve;
+				new_data_object = new_curve;
 
 				break;
 			}
@@ -3405,7 +3414,7 @@ void Editor::EditorWindow::generateNewObject()
 		{
 			DataClass::Data_TriggerMask* new_trigger = new DataClass::Data_TriggerMask();
 			new_trigger->generateInitialValues(new_position, new_size);
-			data_object = new_trigger;
+			new_data_object = new_trigger;
 
 			break;
 		}
@@ -3425,7 +3434,7 @@ void Editor::EditorWindow::generateNewObject()
 		// Generate Object Data
 		DataClass::Data_Terrain* new_terrain = new DataClass::Data_Terrain(new_object_identifier[1], new_object_identifier[2]);
 		new_terrain->generateInitialValues(new_position, terrain_layer_colors[new_object_identifier[1]], generateNewShape(new_size));
-		data_object = new_terrain;
+		new_data_object = new_terrain;
 
 		break;
 	}
@@ -3441,7 +3450,7 @@ void Editor::EditorWindow::generateNewObject()
 		{
 			DataClass::Data_Directional* new_directional = new DataClass::Data_Directional();
 			new_directional->generateInitialValues(new_position, new_size);
-			data_object = new_directional;
+			new_data_object = new_directional;
 
 			break;
 		}
@@ -3451,7 +3460,7 @@ void Editor::EditorWindow::generateNewObject()
 		{
 			DataClass::Data_Point* new_point = new DataClass::Data_Point();
 			new_point->generateInitialValues(new_position);
-			data_object = new_point;
+			new_data_object = new_point;
 
 			break;
 		}
@@ -3461,7 +3470,7 @@ void Editor::EditorWindow::generateNewObject()
 		{
 			DataClass::Data_Spot* new_spot = new DataClass::Data_Spot();
 			new_spot->generateInitialValues(new_position);
-			data_object = new_spot;
+			new_data_object = new_spot;
 
 			break;
 		}
@@ -3471,7 +3480,7 @@ void Editor::EditorWindow::generateNewObject()
 		{
 			DataClass::Data_Beam* new_beam = new DataClass::Data_Beam();
 			new_beam->generateInitialValues(new_position, new_size);
-			data_object = new_beam;
+			new_data_object = new_beam;
 
 			break;
 		}
@@ -3492,7 +3501,7 @@ void Editor::EditorWindow::generateNewObject()
 		{
 			DataClass::Data_RigidBody* new_rigid = new DataClass::Data_RigidBody(new_object_identifier[2]);
 			new_rigid->generateInitialValues(new_position, generateNewShape(new_size));
-			data_object = new_rigid;
+			new_data_object = new_rigid;
 
 			break;
 		}
@@ -3510,7 +3519,7 @@ void Editor::EditorWindow::generateNewObject()
 			{
 				DataClass::Data_SpringMass* new_springmass = new DataClass::Data_SpringMass();
 				new_springmass->generateInitialValues(new_position);
-				data_object = new_springmass;
+				new_data_object = new_springmass;
 
 				break;
 			}
@@ -3520,7 +3529,7 @@ void Editor::EditorWindow::generateNewObject()
 			{
 				DataClass::Data_Wire* new_wire = new DataClass::Data_Wire();
 				new_wire->generateInitialValues(new_position, new_size);
-				data_object = new_wire;
+				new_data_object = new_wire;
 
 				break;
 			}
@@ -3539,7 +3548,7 @@ void Editor::EditorWindow::generateNewObject()
 			{
 				DataClass::Data_Anchor* new_anchor = new DataClass::Data_Anchor();
 				new_anchor->generateInitialValues(new_position);
-				data_object = new_anchor;
+				new_data_object = new_anchor;
 
 				break;
 			}
@@ -3549,7 +3558,7 @@ void Editor::EditorWindow::generateNewObject()
 			{
 				DataClass::Data_Hinge* new_hinge = new DataClass::Data_Hinge();
 				new_hinge->generateInitialValues(new_position);
-				data_object = new_hinge;
+				new_data_object = new_hinge;
 
 				break;
 			}
@@ -3573,7 +3582,7 @@ void Editor::EditorWindow::generateNewObject()
 		{
 			DataClass::Data_NPC* new_npc = new DataClass::Data_NPC();
 			new_npc->generateInitialData(position);
-			data_object = new_npc;
+			new_data_object = new_npc;
 
 			break;
 		}
@@ -3583,7 +3592,7 @@ void Editor::EditorWindow::generateNewObject()
 		{
 			DataClass::Data_Controllable* new_controllable = new DataClass::Data_Controllable();
 			new_controllable->generateInitialData(position);
-			data_object = new_controllable;
+			new_data_object = new_controllable;
 
 			break;
 		}
@@ -3593,7 +3602,7 @@ void Editor::EditorWindow::generateNewObject()
 		{
 			DataClass::Data_Interactable* new_interactable = new DataClass::Data_Interactable();
 			new_interactable->generateInitialData(position);
-			data_object = new_interactable;
+			new_data_object = new_interactable;
 
 			break;
 		}
@@ -3603,7 +3612,7 @@ void Editor::EditorWindow::generateNewObject()
 		{
 			DataClass::Data_Dynamic* new_dynamic = new DataClass::Data_Dynamic();
 			new_dynamic->generateInitialData(position);
-			data_object = new_dynamic;
+			new_data_object = new_dynamic;
 
 			break;
 		}
@@ -3620,6 +3629,9 @@ void Editor::EditorWindow::generateNewObject()
 	}
 
 	}
+
+	// Store New Data Object
+	unadded_data_objects.push_back(new_data_object);
 }
 
 Shape::Shape* Editor::EditorWindow::generateNewShape(float new_size)
@@ -3738,6 +3750,7 @@ void Editor::EditorWindow::updateEditorMode()
 	// If Main Color Wheel is Active, Compute Color Wheel Collisions and Button Text
 	if (wheel_active)
 	{
+		DataClass::Data_Object* data_object = data_objects.at(0);
 		Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
 		if (update_wheel && !boxes[update_wheel]->texting) {
 			updateColorWheels(wheel, object_data.colors, wheel_color, mouseStaticX, mouseStaticY, 1, true);
@@ -3749,6 +3762,7 @@ void Editor::EditorWindow::updateEditorMode()
 	// Same but for Light Wheels
 	if (light_active)
 	{
+		DataClass::Data_Object* data_object = data_objects.at(0);
 		Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
 
 		// Update Ambient Wheel
@@ -3905,9 +3919,10 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	temp_text_data.static_ = true;
 
 	// Parse Object Identifier
-	uint8_t* object_identifier = data_object->getObjectIdentifier();
-	int& script = data_object->getScript();
-	glm::vec2& position = data_object->getPosition();
+	DataClass::Data_Object* current_data_object = data_objects.at(0);
+	uint8_t* object_identifier = current_data_object->getObjectIdentifier();
+	int& script = current_data_object->getScript();
+	glm::vec2& position = current_data_object->getPosition();
 
 	// Collision Masks
 	if (object_identifier[0] == 0)
@@ -3920,10 +3935,10 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			{
 				resetBoxes(9, 8);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
-				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
-				genBoxesHorizontalLine(box_offset, text_offset, windowTop - 61.0f);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+				genBoxesHorizontalLine(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 68.0f);
-				genBoxesPlatform(box_offset, text_offset, windowTop - 83.0f);
+				genBoxesPlatform(box_offset, text_offset, windowTop - 83.0f, current_data_object);
 				editorHeightFull = 90;
 			}
 
@@ -3932,10 +3947,10 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			{
 				resetBoxes(10, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
-				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
-				genBoxesSlant(box_offset, text_offset, windowTop - 61.0f);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+				genBoxesSlant(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
-				genBoxesPlatform(box_offset, text_offset, windowTop - 90.0f);
+				genBoxesPlatform(box_offset, text_offset, windowTop - 90.0f, current_data_object);
 				editorHeightFull = 97;
 			}
 
@@ -3944,10 +3959,10 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			{
 				resetBoxes(10, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
-				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
-				genBoxesSlope(box_offset, text_offset, windowTop - 61.0f);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+				genBoxesSlope(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
-				genBoxesPlatform(box_offset, text_offset, windowTop - 90.0f);
+				genBoxesPlatform(box_offset, text_offset, windowTop - 90.0f, current_data_object);
 				editorHeightFull = 97;
 			}
 		}
@@ -3960,8 +3975,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			{
 				resetBoxes(8, 8);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
-				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
-				genBoxesVerticalLine(box_offset, text_offset, windowTop - 61.0f);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+				genBoxesVerticalLine(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 68.0f);
 				editorHeightFull = 81;
 			}
@@ -3971,8 +3986,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			{
 				resetBoxes(9, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
-				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
-				genBoxesCurve(box_offset, text_offset, windowTop - 61.0f);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+				genBoxesCurve(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
 				editorHeightFull = 88;
 			}
@@ -3986,8 +4001,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			{
 				resetBoxes(8, 8);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
-				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
-				genBoxesVerticalLine(box_offset, text_offset, windowTop - 61.0f);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+				genBoxesVerticalLine(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 68.0f);
 				editorHeightFull = 81;
 			}
@@ -3997,8 +4012,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			{
 				resetBoxes(9, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
-				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
-				genBoxesCurve(box_offset, text_offset, windowTop - 61.0f);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+				genBoxesCurve(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
 				editorHeightFull = 88;
 			}
@@ -4012,8 +4027,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			{
 				resetBoxes(8, 8);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
-				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
-				genBoxesHorizontalLine(box_offset, text_offset, windowTop - 61.0f);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+				genBoxesHorizontalLine(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 68.0f);
 				editorHeightFull = 81;
 			}
@@ -4023,8 +4038,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			{
 				resetBoxes(9, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
-				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
-				genBoxesSlant(box_offset, text_offset, windowTop - 61.0f);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+				genBoxesSlant(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
 				editorHeightFull = 88;
 			}
@@ -4034,8 +4049,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			{
 				resetBoxes(9, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
-				genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
-				genBoxesSlope(box_offset, text_offset, windowTop - 61.0f);
+				genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+				genBoxesSlope(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 				genBoxesMaterial(box_offset, text_offset, windowTop - 75.0f);
 				editorHeightFull = 88;
 			}
@@ -4056,11 +4071,11 @@ void Editor::EditorWindow::genObjectEditorWindow()
 		getStringFromStringMap(STRING_MAPS::SCRIPT, script);
 
 		// Create Common Boxes
-		genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
+		genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
 
 		// Generate Shape Boxes
 		float object_data_offset = 0.0f;
-		Shape::Shape* shape = static_cast<DataClass::Data_Terrain*>(data_object)->getShape();
+		Shape::Shape* shape = static_cast<DataClass::Data_Terrain*>(current_data_object)->getShape();
 		switch (object_identifier[2])
 		{
 		// Rectangle
@@ -4101,7 +4116,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 		}
 
 		// Generate Object Data
-		genBoxesObject(box_offset, text_offset, windowTop - 69.0f - object_data_offset);
+		genBoxesObject(box_offset, text_offset, windowTop - 69.0f - object_data_offset, current_data_object);
 
 		editorHeightFull = 151 + object_data_offset;
 	}
@@ -4118,13 +4133,13 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			resetBoxes(21, 24);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
 
 			// Create Point Boxes
-			genBoxesDirectional(box_offset, text_offset, windowTop - 61.0f);
+			genBoxesDirectional(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 
 			// Create Light Boxes
-			genBoxesLight(box_offset, text_offset, windowTop - 76.0f);
+			genBoxesLight(box_offset, text_offset, windowTop - 76.0f, current_data_object);
 
 			editorHeightFull = 196.0f;
 		}
@@ -4136,13 +4151,13 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			resetBoxes(21, 24);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
 
 			// Create Directional Boxes
-			genBoxesPoint(box_offset, text_offset, windowTop - 61.0f);
+			genBoxesPoint(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 
 			// Create Light Boxes
-			genBoxesLight(box_offset, text_offset, windowTop - 76.0f);
+			genBoxesLight(box_offset, text_offset, windowTop - 76.0f, current_data_object);
 
 			editorHeightFull = 196.0f;
 		}
@@ -4154,13 +4169,13 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			resetBoxes(26, 30);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
 
 			// Create Spot Boxes
-			genBoxesSpot(box_offset, text_offset, windowTop - 61.0f);
+			genBoxesSpot(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 
 			// Create Light Boxes
-			genBoxesLight(box_offset, text_offset, windowTop - 103.0f);
+			genBoxesLight(box_offset, text_offset, windowTop - 103.0f, current_data_object);
 
 			editorHeightFull = 223.0f;
 		}
@@ -4172,13 +4187,13 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			resetBoxes(23, 26);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
 
 			// Create Beam Boxes
-			genBoxesBeam(box_offset, text_offset, windowTop - 61.0f);
+			genBoxesBeam(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 
 			// Create Light Boxes
-			genBoxesLight(box_offset, text_offset, windowTop - 90.0f);
+			genBoxesLight(box_offset, text_offset, windowTop - 90.0f, current_data_object);
 
 			editorHeightFull = 210.0f;
 		}
@@ -4195,11 +4210,11 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			getStringFromStringMap(STRING_MAPS::SCRIPT, script);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
 
 			// Generate Shape Boxes
 			float object_data_offset = 0.0f;
-			Shape::Shape* shape = static_cast<DataClass::Data_RigidBody*>(data_object)->getShape();
+			Shape::Shape* shape = static_cast<DataClass::Data_RigidBody*>(current_data_object)->getShape();
 			switch (object_identifier[2])
 			{
 				// Rectangle
@@ -4240,10 +4255,10 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			}
 
 			// Generate Rigid Body Data
-			genBoxesRigidBody(box_offset, text_offset, windowTop - 61.0f - object_data_offset);
+			genBoxesRigidBody(box_offset, text_offset, windowTop - 61.0f - object_data_offset, current_data_object);
 
 			// Generate Object Data
-			genBoxesObject(box_offset, text_offset, windowTop - 109.0f - object_data_offset);
+			genBoxesObject(box_offset, text_offset, windowTop - 109.0f - object_data_offset, current_data_object);
 
 			editorHeightFull = 191 + object_data_offset;
 		}
@@ -4255,25 +4270,25 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			if (object_identifier[2] == 0)
 			{
 				// SpringMass Node
-				if (springmass_node_modified)
+				if (add_child_object == CHILD_OBJECT_TYPES::SPRINGMASS_NODE)
 				{
 					// Allocate Memory
 					resetBoxes(5, 7);
 
 					// Generate Node Boxes
-					genBoxesSpringMassNode(box_offset, text_offset, windowTop);
+					genBoxesSpringMassNode(box_offset, text_offset, windowTop, current_data_object);
 
 					editorHeightFull = 80.0f;
 				}
 
 				// SpringMass Spring
-				else if (springmass_spring_modified)
+				else if (add_child_object == CHILD_OBJECT_TYPES::SPRINGMASS_SPRING)
 				{
 					// Allocate Memory
 					resetBoxes(6, 6);
 
 					// Generate Spring Boxes
-					genBoxesSpringMassSpring(box_offset, text_offset, windowTop);
+					genBoxesSpringMassSpring(box_offset, text_offset, windowTop, current_data_object);
 
 					editorHeightFull = 75.0f;
 				}
@@ -4284,10 +4299,10 @@ void Editor::EditorWindow::genObjectEditorWindow()
 					resetBoxes(8, 7);
 
 					// Generate Common Boxes
-					genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
+					genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
 
 					// Generate SpringMass Data
-					genBoxesSpringMass(box_offset, text_offset, windowTop - 61.0f);
+					genBoxesSpringMass(box_offset, text_offset, windowTop - 61.0f, current_data_object);
 
 					editorHeightFull = 75.0f;
 				}
@@ -4334,13 +4349,13 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			resetBoxes(20, 21);
 
 			// Create Common Boxes
-			genBoxesCommon(box_offset, text_offset, &position.x, &position.y);
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
 
 			// Generate Entity Data
-			genBoxesEntity(box_offset, text_offset, windowTop - 60.0f);
+			genBoxesEntity(box_offset, text_offset, windowTop - 60.0f, current_data_object);
 
 			// Generate Object Data
-			genBoxesObject(box_offset, text_offset, windowTop - 97.0f);
+			genBoxesObject(box_offset, text_offset, windowTop - 97.0f, current_data_object);
 
 			editorHeightFull = 179.0f;
 

@@ -1,9 +1,6 @@
 #include "Wire.h"
 #include "Render/Struct/DataClasses.h"
 
-// Selector
-#include "Render/Editor/Selector.h"
-
 // Object Info
 #include "Render/Editor/ObjectInfo.h"
 

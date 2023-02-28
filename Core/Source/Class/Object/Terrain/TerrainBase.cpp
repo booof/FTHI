@@ -1,6 +1,5 @@
 #include "TerrainBase.h"
 #include "Render/Struct/DataClasses.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Constants.h"
 #include "Globals.h"

@@ -12,9 +12,6 @@
 #include "Render/Shape/Circle.h"
 #include "Render/Shape/Polygon.h"
 
-// Selector
-#include "Render/Editor/Selector.h"
-
 // Object Info
 #include "Render/Editor/ObjectInfo.h"
 

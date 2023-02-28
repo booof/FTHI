@@ -1,6 +1,5 @@
 #include "FloorMaskLine.h"
 #include "Render/Struct/DataClasses.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Source/Vertices/Visualizer/Visualizer.h"
 #include "Globals.h"

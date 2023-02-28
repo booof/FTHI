@@ -6,6 +6,13 @@
 #include "SoftBody.h"
 #endif
 
+namespace DataClass
+{
+	class Data_SpringMass;
+	class Data_SpringMassNode;
+	class Data_SpringMassSpring;
+}
+
 namespace Object::Physics::Soft
 {
 	// Soft Body Physics Object With Data Loaded From File
@@ -17,6 +24,10 @@ namespace Object::Physics::Soft
 		std::string file_name = "NULL";
 		std::string path = "";
 
+		// The Lists of Data Objects
+		DataClass::Data_SpringMassNode** data_nodes;
+		DataClass::Data_SpringMassSpring** data_springs;
+
 		// The Map for the Nodes
 		int16_t* node_map = nullptr;
 
@@ -27,7 +38,7 @@ namespace Object::Physics::Soft
 		bool* skip_springs = nullptr;
 
 		// Initialize Object
-		SpringMass(uint32_t & uuid_, ObjectData& data_, std::string& file_name_);
+		SpringMass(uint32_t & uuid_, ObjectData& data_, std::string& file_name_, DataClass::Data_SpringMass* data_object_);
 
 		// Deconstructor
 		~SpringMass();

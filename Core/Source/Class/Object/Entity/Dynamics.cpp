@@ -1,6 +1,5 @@
 #include "Dynamics.h"
 #include "Render/Struct/DataClasses.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 
 Object::Entity::Dynamics::Dynamics(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, DynamicData& dynamic_) : EntityBase(uuid_, entity_, data_)

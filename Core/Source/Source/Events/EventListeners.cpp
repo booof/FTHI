@@ -1095,26 +1095,24 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 		if (selector.editing)
 		{
 			selector.deselectObject();
-			std::cout << "selector old  " << selector.data_object << "  \n";
-			std::cout << "selector old x  " << &selector.data_object->getPosition().x << "  \n";
-			selector.data_object = selector.data_object->makeCopyUnique();
-			std::cout << "selector new  " << selector.data_object << "  \n";
-			std::cout << "selector new x  " << &selector.data_object->getPosition().x << "  \n";
+			for (int i = 0; i < selector.data_objects.size(); i++)
+				selector.data_objects[i] = selector.data_objects[i]->makeCopyUnique();
 			selector.force_selector_initialization = true;
 		}
 	}
 
 	// Rotate Object
+	bool& rotating = selector.retrieveRotation();
 	if (selector.editing && Global::Keys[GLFW_KEY_R])
 	{
-		if (!selector.rotating)
+		if (!rotating)
 		{
 			selector.pivot = glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY);
 		}
-		selector.rotating = true;
+		rotating = true;
 	}
-
-	else { selector.rotating = false; }
+	
+	else { rotating = false; }
 
 	// Temp Disable Resizing
 	if (Global::Keys[GLFW_KEY_F])

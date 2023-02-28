@@ -6,8 +6,10 @@ Object::Mask::VerticalLine::VerticalLine(VerticalLineData data_)
 	// Store Data
 	data = std::move(data_);
 
-	// Find Upper Y Position
-	y_top = data.position.y + data.height;
+	// Calculate Bottom and Top Vertex Y Position
+	float half_height = data.height * 0.5f;
+	y_bottom = data.position.y - half_height;
+	y_top = data.position.y + half_height;
 }
 
 void Object::Mask::VerticalLine::initializeVisualizer(GLuint& VAO, GLuint& VBO, glm::mat4& model, glm::vec4 color)

@@ -30,9 +30,6 @@
 #include "Source/Vertices/Rectangle/RectangleVertices.h"
 #include "Source/Vertices/Visualizer/Visualizer.h"
 
-// Selector
-#include "Render/Editor/Selector.h"
-
 // Object Info
 #include "Render/Editor/ObjectInfo.h"
 
@@ -343,7 +340,7 @@ void Object::Physics::Hinge::Hinge::readFile()
 				file.read((char*)&temp_object_data, sizeof(ObjectData));
 				temp_file_name.resize(temp_file_name_size);
 				file.read((char*)&file_name[0], temp_file_name_size);
-				objects[temp_object_index] = new Soft::SpringMass(temp_uuid, temp_object_data, temp_file_name);
+				//objects[temp_object_index] = new Soft::SpringMass(temp_uuid, temp_object_data, temp_file_name);
 				temp_object_index++;
 				break;
 			}

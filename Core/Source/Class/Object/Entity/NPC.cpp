@@ -1,6 +1,5 @@
 #include "NPC.h"
 #include "Render/Struct/DataClasses.h"
-#include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 
 Object::Entity::NPC::NPC(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, uint16_t& ai) : EntityBase(uuid_, entity_, data_)

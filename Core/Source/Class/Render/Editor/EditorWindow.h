@@ -48,6 +48,15 @@ namespace Editor
 		PHYSICS_MATERIAL
 	};
 
+	// List of Possible Child Objects
+	enum class CHILD_OBJECT_TYPES : uint8_t
+	{
+		NONE = 0,
+		SPRINGMASS_NODE,
+		SPRINGMASS_SPRING,
+		HINGE_SUBOBJECT
+	};
+
 	// Editor Specific Data
 	struct EditorSpecificData
 	{
@@ -253,31 +262,31 @@ namespace Editor
 
 		// Common Boxes
 		// Boxes = 6, Text = 6
-		void genBoxesCommon(uint8_t& box_offset, uint8_t& text_offset, float* posX, float* posY);
+		void genBoxesCommon(uint8_t& box_offset, uint8_t& text_offset, float* posX, float* posY, DataClass::Data_Object* data_object);
 
 		// Horizontal Line Boxes
 		// Boxes = 1, Text = 1
-		void genBoxesHorizontalLine(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesHorizontalLine(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Slant Boxes
 		// Boxes = 2, Text = 2
-		void genBoxesSlant(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesSlant(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Slope Boxes
 		// Boxes = 2, Text = 2
-		void genBoxesSlope(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesSlope(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Platform Box
 		// Boxes = 1, Text = 0
-		void genBoxesPlatform(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesPlatform(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Vertical Line Boxes
 		// Boxes = 1, Text = 1
-		void genBoxesVerticalLine(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesVerticalLine(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Curve Boxes
 		// Boxes = 2, Text = 2
-		void genBoxesCurve(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesCurve(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Material Box
 		// Boxes = 1, Text = 1
@@ -285,11 +294,11 @@ namespace Editor
 
 		// Trigger Boxes
 		// Boxes = 2, Text = 2
-		void genBoxesTrigger(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesTrigger(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Object Boxes
 		// Boxes = 10, Text = 11
-		void genBoxesObject(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesObject(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Rectangle Boxes
 		// Boxes = 2, Text = 2
@@ -313,39 +322,39 @@ namespace Editor
 
 		// Light Boxes
 		// Boxes = 13, Text = 16
-		void genBoxesLight(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesLight(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Directional Boxes
 		// Boxes = 2, Text = 2
-		void genBoxesDirectional(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesDirectional(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Point Boxes
 		// Boxes = 2, Text = 2
-		void genBoxesPoint(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesPoint(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Spot Boxes
 		// Boxes = 7, 8
-		void genBoxesSpot(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesSpot(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Beam Boxes
 		// Boxes = 4, Text = 4
-		void genBoxesBeam(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesBeam(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Rigid Body Boxes
 		// Boxes = 7, Text = 8
-		void genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// SpringMass Boxes
 		// Boxes = 2, Text = 1
-		void genBoxesSpringMass(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesSpringMass(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// SpringMass Node Boxes
 		// Boxes = 6, Text = 7
-		void genBoxesSpringMassNode(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesSpringMassNode(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// SpringMass Spring Boxes
 		// Boxes = 6, Text = 6
-		void genBoxesSpringMassSpring(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesSpringMassSpring(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// Wire Boxes
 		// Boxes = 10, Text = 10
@@ -357,7 +366,7 @@ namespace Editor
 
 		// Gen Entity Boxes
 		// Boxes = 4, Text = 4
-		void genBoxesEntity(uint8_t& box_offset, uint8_t& text_offset, float height_offset);
+		void genBoxesEntity(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
 		// NPC AI Box
 		// Boxes = 1, Text = 1
@@ -431,11 +440,11 @@ namespace Editor
 		// Object Identifier of New Object
 		uint8_t new_object_identifier[3] = { 0 };
 
-		// Lists of Object Values
-		Object::Physics::Soft::NodeData               node_data;
-		Object::Physics::Soft::Spring                 spring_data;
+		// The Currently Selected Data Objects
+		std::vector<DataClass::Data_Object*> data_objects;
 
-		DataClass::Data_Object* data_object = nullptr;
+		// The List of Data Objects That Should be Added
+		std::vector<DataClass::Data_Object*> unadded_data_objects;
 
 		// Single Texture for Textured Objects
 		Struct::SingleTexture texture;
@@ -443,23 +452,13 @@ namespace Editor
 		// Object Index in Unsaved Levels
 		uint32_t object_index = 0;
 
-		// Shape of Editing Object
-		unsigned char editing_shape;
-
 		// Determines if Object Has Been Modified
 		bool modified = false;
 
-		// Determines if SpringMass Node is Being Modified
-		bool springmass_node_modified = false;
-
-		// Determines if SpringMass Spring is Being Modified
-		bool springmass_spring_modified = false;
-
-		// Determines if Hinge Object is Being Modified
-		bool hinge_object_modified = false;
-
 		// Determines if a New Child Object Should be Added
-		bool add_child_object = false;
+		// 0 = False, 1 = SpringMass Node, 2 = SpringMass Spring, 4 = Hinge SubObject
+		CHILD_OBJECT_TYPES add_child_object = CHILD_OBJECT_TYPES::NONE;
+		bool add_child = false;
 
 		// Create New Object Window
 		void genNewObjectWindow();
