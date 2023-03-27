@@ -17,6 +17,10 @@ namespace DataClass {
 	class Data_Object;
 }
 
+namespace Render::Objects {
+	class UnsavedGroup;
+}
+
 namespace Object
 {
 	// Base Objects List
@@ -80,9 +84,9 @@ namespace Object
 		// Initialize Script
 		void initializeScript(int script);
 
-#ifdef EDITOR
-
 	public:
+
+#ifdef EDITOR
 
 		// Pointer to the Data Class
 		DataClass::Data_Object* data_object;
@@ -94,9 +98,10 @@ namespace Object
 		uint32_t object_index = 0;       // The UUID For the Object
 		bool skip_selection = false;     // If True, Object is Skipped for Selection Until Mouse is Moved
 
-#endif
+		// The Pointer to the Unsaved Group Object
+		Render::Objects::UnsavedGroup* group_object = nullptr;
 
-	public:
+#endif
 
 		// Determines if Object is Active
 		bool active = true;
@@ -111,8 +116,13 @@ namespace Object
 		void (*loop)(Object*) = nullptr;
 
 		// Uninitializer Function for Scripts
-		//virtual void del() = 0;
 		void (*del)(Object*) = nullptr;
+
+		// The Pointer to the Parent Object
+		Object* parent;
+
+		// The Pointer to Child Objects
+		Object** children;
 
 		// The External Data Used by the Object (Used for Individual Object Specific Data in Scripts)
 		void* external_data = nullptr;
@@ -134,8 +144,14 @@ namespace Object
 		// Return Position of Object
 		virtual glm::vec2 returnPosition() = 0;
 
+		// Update Selected Position of Object
+		virtual void updateSelectedPosition(float deltaX, float deltaY) = 0;
+
 		// Temp Debug Function
 		void debug_funct();
+
+		// Draw Group Visualizer
+		void drawGroupVisualizer();
 
 #endif
 
@@ -153,6 +169,9 @@ namespace Object
 
 		// Number of Vertices in Object
 		int number_of_vertices = 0;
+
+		// Update Selected Position of Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 	};
 
 	// List of Objects

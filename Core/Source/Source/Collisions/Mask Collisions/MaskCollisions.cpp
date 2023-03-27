@@ -11,7 +11,7 @@
 
 #include "Class/Object/Physics/RigidBody/RigidBody.h"
 #include "Class/Object/Physics/RigidBody/RigidCircle.h"
-#include "Class/Object/Physics/Softody/SoftBody.h"
+#include "Class/Object/Physics/SoftBody/SoftBody.h"
 #include "Class/Object/Physics/Hinge/Hinge.h"
 #include "Class/Render/Shape/Shape.h"
 

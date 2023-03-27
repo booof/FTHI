@@ -26,6 +26,9 @@ namespace Object::Mask
 		// Test Collisions of Object
 		bool testCollisions(glm::vec2 test_position, float error);
 
+		// Update Selected Position of Object
+		void updateSelectedPosition(float deltaX, float deltaY);
+
 		// Function to Return Material
 		void returnMaterial(int& material);
 

@@ -292,12 +292,13 @@ void DataClass::Data_RigidBody::readObjectData(std::ifstream& object_file)
 	shape = shapes[object_identifier[2]](object_file);
 }
 
-DataClass::Data_RigidBody::Data_RigidBody(uint8_t shape_identifier)
+DataClass::Data_RigidBody::Data_RigidBody(uint8_t shape_identifier, uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::PHYSICS;
 	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::RIGID_BODY;
 	object_identifier[2] = shape_identifier;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_RigidBody::info(Editor::ObjectInfo& object_info)

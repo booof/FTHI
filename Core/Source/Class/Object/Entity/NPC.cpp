@@ -36,12 +36,13 @@ void DataClass::Data_NPC::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&ai, sizeof(uint16_t));
 }
 
-DataClass::Data_NPC::Data_NPC()
+DataClass::Data_NPC::Data_NPC(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::ENTITY;
 	object_identifier[1] = Object::Entity::ENTITY_NPC;
 	object_identifier[2] = 0;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_NPC::info(Editor::ObjectInfo& object_info)

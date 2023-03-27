@@ -9,9 +9,9 @@
 #include "Class/Object/Physics/RigidBody/RigidTriangle.h"
 #include "Class/Object/Physics/RigidBody/RigidCircle.h"
 #include "Class/Object/Physics/RigidBody/RigidPolygon.h"
-#include "Class/Object/Physics/Softody/SoftBody.h"
-#include "Class/Object/Physics/Softody/SpringMass.h"
-#include "Class/Object/Physics/Softody/Wire.h"
+#include "Class/Object/Physics/SoftBody/SoftBody.h"
+#include "Class/Object/Physics/SoftBody/SpringMass.h"
+#include "Class/Object/Physics/SoftBody/Wire.h"
 #include "Class/Object/Physics/Hinge/Hinge.h"
 #include "Class/Render/Shape/Shape.h"
 

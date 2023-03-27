@@ -168,6 +168,15 @@ bool Object::Light::Directional::Directional::testMouseCollisions(float x, float
 	return false;
 }
 
+void Object::Light::Directional::Directional::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	directional.position2.x += deltaX;
+	directional.position2.y += deltaY;
+	initializeVisualizer();
+}
+
 glm::vec2 Object::Light::Directional::Directional::returnPosition()
 {
 	return data.position;
@@ -192,12 +201,13 @@ void DataClass::Data_Directional::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&light_data, sizeof(Object::Light::LightData));
 }
 
-DataClass::Data_Directional::Data_Directional()
+DataClass::Data_Directional::Data_Directional(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::LIGHT;
 	object_identifier[1] = Object::Light::DIRECTIONAL;
 	object_identifier[2] = 0;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_Directional::info(Editor::ObjectInfo& object_info)
@@ -213,6 +223,15 @@ void DataClass::Data_Directional::info(Editor::ObjectInfo& object_info)
 DataClass::Data_Object* DataClass::Data_Directional::makeCopy()
 {
 	return new Data_Directional(*this);
+}
+
+void DataClass::Data_Directional::updateSelectedPosition(float deltaX, float deltaY)
+{
+	light_data.position.x += deltaX;
+	light_data.position.y += deltaY;
+	directional.position2.x += deltaX;
+	directional.position2.y += deltaY;
+	updateSelectedPositionsHelper(deltaX, deltaY);
 }
 
 Object::Light::Directional::DirectionalData& DataClass::Data_Directional::getDirectionalData()

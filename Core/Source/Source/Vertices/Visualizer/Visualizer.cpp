@@ -39,7 +39,7 @@ void Vertices::Visualizer::visualizePoint(float xPos, float yPos, float size, gl
 
 	// Generate Vertices
 	float vertices[42];
-	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, size, size, color, vertices);
+	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -0.4f, size, size, color, vertices);
 
 	// Bind Buffers
 	glBindVertexArray(VAO);

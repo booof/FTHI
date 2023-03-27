@@ -27,6 +27,13 @@ bool Object::Mask::Right::RightMaskLine::testCollisions(glm::vec2 test_position,
 	return false;
 }
 
+void Object::Mask::Right::RightMaskLine::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	initializeVisualizer(VAO, VBO, model, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+}
+
 void Object::Mask::Right::RightMaskLine::returnMaterial(int& material)
 {
 	material = data.material;
@@ -96,12 +103,13 @@ void DataClass::Data_RightMaskVerticalLine::readObjectData(std::ifstream& object
 	object_file.read((char*)&data, sizeof(Object::Mask::VerticalLineData));
 }
 
-DataClass::Data_RightMaskVerticalLine::Data_RightMaskVerticalLine()
+DataClass::Data_RightMaskVerticalLine::Data_RightMaskVerticalLine(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::RIGHT_WALL;
 	object_identifier[2] = Object::Mask::VERTICAL_LINE;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_RightMaskVerticalLine::info(Editor::ObjectInfo& object_info)

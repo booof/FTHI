@@ -51,6 +51,7 @@ namespace Editor
 
 		// Extra Options
 		float option_camera_speed = 1.0f;
+		float option_alt_camera_speed = 0.2f;
 		float option_shift_speed = 1.0f;
 		float option_scroll_speed = 3.0f;
 		float option_object_info_max_width_percent = 1.0f;

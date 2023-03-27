@@ -132,6 +132,13 @@ bool Object::Light::Point::Point::testMouseCollisions(float x, float y)
 	return false;
 }
 
+void Object::Light::Point::Point::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	initializeVisualizer();
+}
+
 glm::vec2 Object::Light::Point::Point::returnPosition()
 {
 	return data.position;
@@ -156,12 +163,13 @@ void DataClass::Data_Point::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&light_data, sizeof(Object::Light::LightData));
 }
 
-DataClass::Data_Point::Data_Point()
+DataClass::Data_Point::Data_Point(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::LIGHT;
 	object_identifier[1] = Object::Light::POINT;
 	object_identifier[2] = 0;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_Point::info(Editor::ObjectInfo& object_info)
@@ -176,6 +184,13 @@ void DataClass::Data_Point::info(Editor::ObjectInfo& object_info)
 DataClass::Data_Object* DataClass::Data_Point::makeCopy()
 {
 	return new Data_Point(*this);
+}
+
+void DataClass::Data_Point::updateSelectedPosition(float deltaX, float deltaY)
+{
+	light_data.position.x += deltaX;
+	light_data.position.x += deltaY;
+	updateSelectedPositionsHelper(deltaX, deltaY);
 }
 
 Object::Light::Point::PointData& DataClass::Data_Point::getPointData()

@@ -56,9 +56,9 @@
     <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidRectangle.cpp" />
     <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidTrapezoid.cpp" />
     <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidTriangle.cpp" />
-    <ClCompile Include="Source\Class\Object\Physics\Softody\SoftBody.cpp" />
-    <ClCompile Include="Source\Class\Object\Physics\Softody\SpringMass.cpp" />
-    <ClCompile Include="Source\Class\Object\Physics\Softody\Wire.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\SoftBody\SoftBody.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\SoftBody\SpringMass.cpp" />
+    <ClCompile Include="Source\Class\Object\Physics\SoftBody\Wire.cpp" />
     <ClCompile Include="Source\Class\Object\Terrain\TerrainBase.cpp" />
     <ClCompile Include="Source\Class\Render\Camera\Camera.cpp" />
     <ClCompile Include="Source\Class\Render\Editor\Debugger.cpp" />
@@ -81,6 +81,8 @@
     <ClCompile Include="Source\Class\Render\Objects\Level.cpp" />
     <ClCompile Include="Source\Class\Render\Objects\SubLevel.cpp" />
     <ClCompile Include="Source\Class\Render\Objects\TextureHandler.cpp" />
+    <ClCompile Include="Source\Class\Render\Objects\UnsavedBase.cpp" />
+    <ClCompile Include="Source\Class\Render\Objects\UnsavedGroup.cpp" />
     <ClCompile Include="Source\Class\Render\Objects\UnsavedLevel.cpp" />
     <ClCompile Include="Source\Class\Render\Shader\Shader.cpp" />
     <ClCompile Include="Source\Class\Render\Shape\Circle.cpp" />
@@ -159,9 +161,9 @@
     <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidRectangle.h" />
     <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidTrapezoid.h" />
     <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidTriangle.h" />
-    <ClInclude Include="Source\Class\Object\Physics\Softody\SoftBody.h" />
-    <ClInclude Include="Source\Class\Object\Physics\Softody\SpringMass.h" />
-    <ClInclude Include="Source\Class\Object\Physics\Softody\Wire.h" />
+    <ClInclude Include="Source\Class\Object\Physics\SoftBody\SoftBody.h" />
+    <ClInclude Include="Source\Class\Object\Physics\SoftBody\SpringMass.h" />
+    <ClInclude Include="Source\Class\Object\Physics\SoftBody\Wire.h" />
     <ClInclude Include="Source\Class\Object\Terrain\Backdrop.h" />
     <ClInclude Include="Source\Class\Object\Terrain\Background.h" />
     <ClInclude Include="Source\Class\Object\Terrain\Foreground.h" />
@@ -202,6 +204,9 @@
     <ClInclude Include="Source\Class\Render\Objects\Scripts\ObjectScripts.h" />
     <ClInclude Include="Source\Class\Render\Objects\SubLevel.h" />
     <ClInclude Include="Source\Class\Render\Objects\TextureHandler.h" />
+    <ClInclude Include="Source\Class\Render\Objects\UnsavedBase.h" />
+    <ClInclude Include="Source\Class\Render\Objects\UnsavedComplex.h" />
+    <ClInclude Include="Source\Class\Render\Objects\UnsavedGroup.h" />
     <ClInclude Include="Source\Class\Render\Objects\UnsavedLevel.h" />
     <ClInclude Include="Source\Class\Render\Shader\Shader.h" />
     <ClInclude Include="Source\Class\Render\Shape\Circle.h" />

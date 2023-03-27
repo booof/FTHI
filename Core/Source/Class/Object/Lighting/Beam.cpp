@@ -159,6 +159,15 @@ bool Object::Light::Beam::Beam::testMouseCollisions(float x, float y)
 	return false;
 }
 
+void Object::Light::Beam::Beam::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	beam.position2.x += deltaX;
+	beam.position2.y += deltaY;
+	initializeVisualizer();
+}
+
 glm::vec2 Object::Light::Beam::Beam::returnPosition()
 {
 	return data.position;
@@ -183,12 +192,13 @@ void DataClass::Data_Beam::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&light_data, sizeof(Object::Light::LightData));
 }
 
-DataClass::Data_Beam::Data_Beam()
+DataClass::Data_Beam::Data_Beam(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::LIGHT;
 	object_identifier[1] = Object::Light::BEAM;
 	object_identifier[2] = 0;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_Beam::info(Editor::ObjectInfo& object_info)
@@ -203,6 +213,15 @@ void DataClass::Data_Beam::info(Editor::ObjectInfo& object_info)
 DataClass::Data_Object* DataClass::Data_Beam::makeCopy()
 {
 	return new Data_Beam(*this);
+}
+
+void DataClass::Data_Beam::updateSelectedPosition(float deltaX, float deltaY)
+{
+	light_data.position.x += deltaX;
+	light_data.position.y += deltaY;
+	beam.position2.x += deltaX;
+	beam.position2.y += deltaY;
+	updateSelectedPositionsHelper(deltaX, deltaY);
 }
 
 Object::Light::Beam::BeamData& DataClass::Data_Beam::getBeamData()

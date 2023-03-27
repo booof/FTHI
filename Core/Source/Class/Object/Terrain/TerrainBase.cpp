@@ -9,6 +9,8 @@
 #include "Foreground.h"
 #include "Formerground.h"
 
+#include "Render/Objects/UnsavedGroup.h"
+
 // Initialize Terrain
 Object::Terrain::TerrainBase::TerrainBase(Shape::Shape* shape_, ObjectData data_)
 {
@@ -159,16 +161,23 @@ bool DataClass::Data_Terrain::testIfBackground()
 		object_identifier[1] == Object::Terrain::BACKGROUND_3;
 }
 
-DataClass::Data_Terrain::Data_Terrain(uint8_t layer_identifier, uint8_t shape_identifier)
+DataClass::Data_Terrain::Data_Terrain(uint8_t layer_identifier, uint8_t shape_identifier, uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::TERRAIN;
 	object_identifier[1] = layer_identifier;
 	object_identifier[2] = shape_identifier;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_Terrain::info(Editor::ObjectInfo& object_info)
 {
+	static int num_of_children;
+	if (group_object == nullptr)
+		num_of_children = 0;
+	else
+		num_of_children = group_object->getNumberOfChildren();
+
 	// Map to Shape Names
 	static std::string shape_name_map[] = { "Rectangle", "Trapezoid", "Triangle", "Circle", "Polygon" };
 
@@ -178,7 +187,10 @@ void DataClass::Data_Terrain::info(Editor::ObjectInfo& object_info)
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addTextValue("Shape: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &shape_name_map[shape->shape], glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addSingleValue("Num of Children: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &num_of_children, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
+	object_info.addSingleValue("Group Layer: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &group_layer, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 	shape->selectInfo(object_info);
+	object_info.addSingleValue("Index: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object_index, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 }
 
 DataClass::Data_Object* DataClass::Data_Terrain::makeCopy()

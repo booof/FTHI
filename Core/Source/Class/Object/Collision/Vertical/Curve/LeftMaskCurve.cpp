@@ -32,6 +32,13 @@ bool Object::Mask::Left::LeftMaskCurve::testCollisions(glm::vec2 test_position, 
     return false;
 }
 
+void Object::Mask::Left::LeftMaskCurve::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	initializeVisualizer(VAO, VBO, model, glm::vec4(1.0f, 0.4f, 0.0f, 1.0f), -1);
+}
+
 void Object::Mask::Left::LeftMaskCurve::returnMaterial(int& material)
 {
 	material = data.material;
@@ -99,12 +106,13 @@ void DataClass::Data_LeftMaskCurve::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&data, sizeof(Object::Mask::CurveData));
 }
 
-DataClass::Data_LeftMaskCurve::Data_LeftMaskCurve()
+DataClass::Data_LeftMaskCurve::Data_LeftMaskCurve(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::LEFT_WALL;
 	object_identifier[2] = Object::Mask::VERTICAL_CURVE;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_LeftMaskCurve::info(Editor::ObjectInfo& object_info)

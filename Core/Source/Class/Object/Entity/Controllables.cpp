@@ -30,12 +30,13 @@ void DataClass::Data_Controllable::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&data, sizeof(Object::ObjectData));
 }
 
-DataClass::Data_Controllable::Data_Controllable()
+DataClass::Data_Controllable::Data_Controllable(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::ENTITY;
 	object_identifier[1] = Object::Entity::ENTITY_CONTROLLABLE;
 	object_identifier[2] = 0;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_Controllable::info(Editor::ObjectInfo& object_info)

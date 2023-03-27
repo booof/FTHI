@@ -63,7 +63,7 @@ bool operator<(DataClass::Data_Object& l, DataClass::Data_Object& r)
 		return l.getObjectIdentifier()[0] < r.getObjectIdentifier()[0];
 	if (l.getObjectIdentifier()[1] != r.getObjectIdentifier()[1])
 		return l.getObjectIdentifier()[1] < r.getObjectIdentifier()[1];
-	return l.getObjectIdentifier()[2] <= r.getObjectIdentifier()[2];
+	return l.getObjectIdentifier()[2] < r.getObjectIdentifier()[2];
 }
 
 // Override for Greater Than for Object Identifiers
@@ -73,7 +73,7 @@ bool operator>(DataClass::Data_Object& l, DataClass::Data_Object& r)
 		return l.getObjectIdentifier()[0] > r.getObjectIdentifier()[0];
 	if (l.getObjectIdentifier()[1] != r.getObjectIdentifier()[1])
 		return l.getObjectIdentifier()[1] > r.getObjectIdentifier()[1];
-	return l.getObjectIdentifier()[2] >= r.getObjectIdentifier()[2];
+	return l.getObjectIdentifier()[2] > r.getObjectIdentifier()[2];
 }
 
 // Override for Less Than or Equal to for Object Identifiers

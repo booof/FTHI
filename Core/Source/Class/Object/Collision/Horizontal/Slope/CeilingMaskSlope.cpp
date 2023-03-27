@@ -37,6 +37,13 @@ bool Object::Mask::Ceiling::CeilingMaskSlope::testCollisions(glm::vec2 test_posi
 	return false;
 }
 
+void Object::Mask::Ceiling::CeilingMaskSlope::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	initializeVisualizer(VAO, VBO, model, glm::vec4(0.0f, 0.0f, 0.45f, 1.0f));
+}
+
 void Object::Mask::Ceiling::CeilingMaskSlope::returnMaterial(int& material)
 {
 	material = data.material;
@@ -104,12 +111,13 @@ void DataClass::Data_CeilingMaskSlope::readObjectData(std::ifstream& object_file
 	object_file.read((char*)&data, sizeof(Object::Mask::SlopeData));
 }
 
-DataClass::Data_CeilingMaskSlope::Data_CeilingMaskSlope()
+DataClass::Data_CeilingMaskSlope::Data_CeilingMaskSlope(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::CEILING;
 	object_identifier[2] = Object::Mask::HORIZONTAL_SLOPE;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_CeilingMaskSlope::info(Editor::ObjectInfo& object_info)

@@ -71,3 +71,10 @@ void DataClass::Data_VerticalLine::generateInitialValues(glm::vec2& position, fl
 	data.script = 0;
 	data.material = 0;
 }
+
+void DataClass::Data_VerticalLine::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	updateSelectedPositionsHelper(deltaX, deltaY);
+}

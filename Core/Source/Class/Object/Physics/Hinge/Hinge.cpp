@@ -15,8 +15,8 @@
 #include "Object/Physics/RigidBody/RigidTriangle.h"
 #include "Object/Physics/RigidBody/RigidCircle.h"
 #include "Object/Physics/RigidBody/RigidPolygon.h"
-#include "Object/Physics/Softody/SpringMass.h"
-#include "Object/Physics/Softody/Wire.h"
+#include "Object/Physics/SoftBody/SpringMass.h"
+#include "Object/Physics/SoftBody/Wire.h"
 #include "Object/Physics/Hinge/Anchor.h"
 
 // Shapes
@@ -608,6 +608,12 @@ bool Object::Physics::Hinge::Hinge::testMouseCollisions(float x, float y)
 	return false;
 }
 
+void Object::Physics::Hinge::Hinge::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+}
+
 glm::vec2 Object::Physics::Hinge::Hinge::returnPosition()
 {
 	return data.position;
@@ -865,12 +871,13 @@ void DataClass::Data_Hinge::readObjectData(std::ifstream& object_file)
 	object_file.read(&file_name[0], file_name_size);
 }
 
-DataClass::Data_Hinge::Data_Hinge()
+DataClass::Data_Hinge::Data_Hinge(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::PHYSICS;
 	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::HINGE_BASE;
 	object_identifier[2] = (uint8_t)Object::Physics::HINGES::HINGE;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_Hinge::info(Editor::ObjectInfo& object_info)
@@ -886,6 +893,13 @@ void DataClass::Data_Hinge::info(Editor::ObjectInfo& object_info)
 DataClass::Data_Object* DataClass::Data_Hinge::makeCopy()
 {
 	return new Data_Hinge(*this);
+}
+
+void DataClass::Data_Hinge::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	updateSelectedPositionsHelper(deltaX, deltaY);
 }
 
 int& DataClass::Data_Hinge::getScript()

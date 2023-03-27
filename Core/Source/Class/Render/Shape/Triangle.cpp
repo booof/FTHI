@@ -83,5 +83,13 @@ Shape::Shape* Shape::Triangle::makeCopy()
 	return new Triangle(*this);
 }
 
+void Shape::Triangle::updateSelectedPosition(float deltaX, float deltaY)
+{
+	position2.x += deltaX;
+	position2.y += deltaY;
+	position3.x += deltaX;
+	position3.y += deltaY;
+}
+
 #endif
 

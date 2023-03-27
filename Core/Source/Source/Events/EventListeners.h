@@ -49,16 +49,17 @@ namespace Source::Listeners
 
 	// Handles Inputs that Update Every Frame for Editor Loop
 	//void SmoothKeyCallback_Editor(Render::Camera::Camera& camera, Editor::Selector& selector, Render::Objects::Level& level, glm::vec4& acceleration_timer);
-	void SmoothKeyCallback_Editor(Camera& camera, Selector& selector, Level& level, glm::vec4& acceleration_timer);
+	void SmoothKeyCallback_Editor(Camera& camera, Selector& selector, Level& level, glm::i16vec4& acceleration_timer);
 
 	// Simplified Smooth Key Callback for Editor (Minimal Inputs)
-	void smoothKeyCallbackEditorSimplified(Camera& camera, glm::vec4& acceleration_timer);
+	void smoothKeyCallbackEditorSimplified(Camera& camera, Selector* selector, glm::i16vec4& acceleration_timer);
 
 //#endif
 
 	//void SmoothKeyBack(Render::Camera::Camera& camera, int h);
 
-
+	// Update the Direction Camera is Moving in the Editor
+	void updateEditorCameraMovement(Camera& camera, Selector* selector, unsigned char direction, int16_t& acceleration_timer, int16_t& inverse_acceleration_timer, float& camera_acceleration);
 }
 
 #endif

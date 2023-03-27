@@ -220,6 +220,9 @@ namespace Editor
 
 			// Change Color of Object
 			void outlineChangeColor(float* colors);
+
+			// Update Group Objects of a Selected Object
+			void updateSelectedPositions(DataClass::Data_Object* data_object, float deltaX, float deltaY);
 		};
 
 		class Selected_Rectangle : public Selected_Object
@@ -792,6 +795,21 @@ namespace Editor
 
 		// Retrieves the Rotation Flag
 		bool& retrieveRotation();
+
+		// Returns True if There is Only One Object Selected. No More, No Less
+		bool selectedOnlyOne();
+
+		// Adds a Child Object to the Only Selected Object
+		void addChildToOnlyOne(DataClass::Data_Object* data_object);
+
+		// Returns the Data Object of the Only Selected Object
+		DataClass::Data_Object* getOnlyOne();
+
+		// Make a Copy of the Selected Only One
+		void copyOnlyOne();
+
+		// Update Parent of Selected Objects
+		void updateParentofSelected(DataClass::Data_Object* new_parent);
 	};
 }
 

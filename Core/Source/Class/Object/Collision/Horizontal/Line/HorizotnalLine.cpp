@@ -1,5 +1,7 @@
 #include "HorizotnalLine.h"
 #include "Render/Struct/DataClasses.h"
+#include "FloorMaskLine.h"
+#include "CeilingMaskLine.h"
 
 Object::Mask::HorizontalLine::HorizontalLine(HorizontalLineData& data_)
 {
@@ -76,4 +78,11 @@ void DataClass::Data_HorizontalLine::generateInitialValues(glm::vec2& position, 
 	data.width = size;
 	data.script = 0;
 	data.material = 0;
+}
+
+void DataClass::Data_HorizontalLine::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	updateSelectedPositionsHelper(deltaX, deltaY);
 }

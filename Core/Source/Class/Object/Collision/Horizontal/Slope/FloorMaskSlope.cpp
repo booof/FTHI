@@ -49,6 +49,13 @@ bool Object::Mask::Floor::FloorMaskSlope::testCollisions(glm::vec2 test_position
 	return false;
 }
 
+void Object::Mask::Floor::FloorMaskSlope::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	initializeVisualizer(VAO, VBO, model, glm::vec4(0.04f, 0.24f, 1.0f, 1.0f));
+}
+
 void Object::Mask::Floor::FloorMaskSlope::getLeftRightEdgeVertices(glm::vec2& left, glm::vec2& right)
 {
 	left = glm::vec2(data.position.x - abs(data.width), data.position.y - data.height);
@@ -119,12 +126,13 @@ void DataClass::Data_FloorMaskSlope::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&platform, sizeof(bool));
 }
 
-DataClass::Data_FloorMaskSlope::Data_FloorMaskSlope()
+DataClass::Data_FloorMaskSlope::Data_FloorMaskSlope(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::FLOOR;
 	object_identifier[2] = Object::Mask::HORIZONTAL_SLOPE;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_FloorMaskSlope::info(Editor::ObjectInfo& object_info)

@@ -33,12 +33,13 @@ void DataClass::Data_Dynamic::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&dynamic, sizeof(Object::Entity::DynamicData));
 }
 
-DataClass::Data_Dynamic::Data_Dynamic()
+DataClass::Data_Dynamic::Data_Dynamic(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::ENTITY;
 	object_identifier[1] = Object::Entity::ENTITY_DYNAMIC;
 	object_identifier[2] = 0;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_Dynamic::info(Editor::ObjectInfo& object_info)

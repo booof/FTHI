@@ -27,6 +27,13 @@ bool Object::Mask::Left::LeftMaskLine::testCollisions(glm::vec2 test_position, f
 	return false;
 }
 
+void Object::Mask::Left::LeftMaskLine::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	initializeVisualizer(VAO, VBO, model, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+}
+
 void Object::Mask::Left::LeftMaskLine::returnMaterial(int& material)
 {
 	material = data.material;
@@ -44,8 +51,7 @@ Object::Mask::Left::LeftMaskLine::LeftMaskLine(VerticalLineData& data_) : Vertic
 
 #ifdef EDITOR
 
-	// Initialize Visualizer
-	initializeVisualizer(VAO, VBO, model, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+	// Initialize Visualizer`
 	number_of_vertices = 2;
 
 	// Only Attach Scripts if in Gameplay Mode
@@ -96,12 +102,13 @@ void DataClass::Data_LeftMaskVerticalLine::readObjectData(std::ifstream& object_
 	object_file.read((char*)&data, sizeof(Object::Mask::VerticalLineData));
 }
 
-DataClass::Data_LeftMaskVerticalLine::Data_LeftMaskVerticalLine()
+DataClass::Data_LeftMaskVerticalLine::Data_LeftMaskVerticalLine(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::LEFT_WALL;
 	object_identifier[2] = Object::Mask::VERTICAL_LINE;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_LeftMaskVerticalLine::info(Editor::ObjectInfo& object_info)

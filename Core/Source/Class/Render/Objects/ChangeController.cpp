@@ -1,5 +1,6 @@
 #include "ChangeController.h"
 #include "UnsavedLevel.h"
+#include "UnsavedGroup.h"
 #include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Camera/Camera.h"
 #include "Class/Render/Struct/DataClasses.h"
@@ -76,11 +77,16 @@ Render::Objects::UnsavedLevel* Render::Objects::ChangeController::generateUnsave
 	new_unsaved_level->saved = testIfSaved(identifier);
 
 	// Store Object in Unsaved Levels Vector
-	new_unsaved_level->unsaved_level_index = (uint8_t)unsaved_levels.size();
+	new_unsaved_level->unsaved_object_index = (uint8_t)unsaved_levels.size();
 	unsaved_levels.push_back(new_unsaved_level);
 
 	// Return New Unsaved Level
 	return new_unsaved_level;
+}
+
+void Render::Objects::ChangeController::storeUnsavedGroup(UnsavedGroup* new_group)
+{
+	unsaved_groups.push_back(new_group);
 }
 
 void Render::Objects::ChangeController::transferObject(DataClass::Data_Object* data_object, int16_t x, int16_t y, int8_t z)
@@ -111,16 +117,36 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 	// Add All Data Objects
 	for (DataClass::Data_Object* data_object : selector->data_objects)
 	{
-		// Get Position of Object in Terms of Level
-		glm::vec2 object_level_position;
-		updateLevelPos(data_object->getPosition(), object_level_position);
+		// Set Parent in Object's Data Group
+		UnsavedGroup* data_group = data_object->getGroup();
+		if (data_group != nullptr)
+			data_group->setParent(data_object, false);
 
-		// Get Unsaved Level of Where Object is Now
-		UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
-		temp_unsaved_level->createChangeAppend(data_object);
+		// Object Has a Parent
+		DataClass::Data_Object* parent = data_object->getParent();
+		if (parent != nullptr)
+		{
+			// Create a Change in the Group Object to Add the Object
+			parent->getGroup()->createChangeAppend(data_object);
+
+			// Disable Move With Parent in the Event A Parent Was Also Changed
+			parent->getGroup()->disableMoveWithParent(data_object);
+		}
+
+		// Object is in the Level
+		else
+		{
+			// Get Position of Object in Terms of Level
+			glm::vec2 object_level_position;
+			updateLevelPos(data_object->getPosition(), object_level_position);
+
+			// Get Unsaved Level of Where Object is Now
+			UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
+			temp_unsaved_level->createChangeAppend(data_object);
+		}
 	}
 
-	// Finalize Changes
+	// Finalize Changes in Unsaved Levels
 	for (int i = 0; i < unsaved_levels.size(); i++)
 	{
 		UnsavedLevel& level = *unsaved_levels.at(i);
@@ -128,11 +154,19 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 			current_instance->stack_indicies.push_back(unsaved_levels.at(i));
 	}
 
+	// Finalize Changes in Unsaved Groups
+	for (int i = 0; i < unsaved_groups.size(); i++)
+	{
+		UnsavedGroup& group = *unsaved_groups.at(i);
+		if (group.finalizeChangeList())
+			current_instance->stack_indicies.push_back(unsaved_groups.at(i));
+	}
+
 	// Reload Objects
 	level->reloadAll();
 }
 
-void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Data_Object* data_object)
+void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Data_Object* data_object, bool reload_all)
 {
 	// Get Position of Object in Terms of Level
 	glm::vec2 object_level_position;
@@ -142,8 +176,21 @@ void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Da
 	UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
 	temp_unsaved_level->createChangeAppend(data_object);
 
+	// Reset Group Variables
+	data_object->setParent(nullptr);
+	data_object->setGroupLayer(0);
+
+	// Recursively set Group Layer
+	UnsavedGroup* data_group = data_object->getGroup();
+	if (data_group != nullptr)
+	{
+		data_group->setParent(data_object, false);
+		data_group->recursiveSetGroupLayer(1);
+	}
+
 	// TODO: Find a Way to Make Returned Object Show Up in Level Without Reloading All
-	level->reloadAll();
+	if (reload_all)
+		level->reloadAll();
 }
 
 void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* selector)
@@ -162,14 +209,29 @@ void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* s
 	// Store Camera Position in Current Instance
 	current_instance->camera_pos = glm::vec2(level->camera->Position.x, level->camera->Position.y);
 
+	// Remove Parent from All Groups of Selected Objects
+	for (DataClass::Data_Object* data_object : selector->data_objects)
+	{
+		if (data_object->getGroup() != nullptr)
+			data_object->getGroup()->makeOrphans();
+	}
+
 	// As Deletion Change Has Already Been Made when Selecting, Simply Finalize the Changes
 
-	// Finalize Changes
+	// Finalize Changes in Unsaved Levels
 	for (int i = 0; i < unsaved_levels.size(); i++)
 	{
 		UnsavedLevel& level = *unsaved_levels.at(i);
 		if (level.finalizeChangeList())
 			current_instance->stack_indicies.push_back(unsaved_levels.at(i));
+	}
+
+	// Finalize Changes in Unsaved Groups
+	for (int i = 0; i < unsaved_groups.size(); i++)
+	{
+		UnsavedGroup& group = *unsaved_groups.at(i);
+		if (group.finalizeChangeList())
+			current_instance->stack_indicies.push_back(unsaved_groups.at(i));
 	}
 
 	// Reload Objects
@@ -271,8 +333,12 @@ void Render::Objects::ChangeController::MasterStack::deleteInstance(uint8_t inde
 
 	// For Each Unsaved Level in this Instance, Move the Slave Stack Back
 	// By 1 and Delete Any Changes in that Slave Stack Instance
-	for (UnsavedLevel* unsaved_level : current_instance.stack_indicies)
+	for (UnsavedBase* unsaved_level : current_instance.stack_indicies)
 		unsaved_level->removeChainListInstance();
+
+	// Should be Done in Reverse Order to Delete Grouping Objects First
+	//for (int i = current_instance.stack_indicies.size() - 1; i >= 0; i--)
+	//	current_instance.stack_indicies[i]->removeChainListInstance();
 
 	// Reset Size of Vector
 	current_instance.stack_indicies.clear();
@@ -306,8 +372,11 @@ bool Render::Objects::ChangeController::MasterStack::traverseForwards()
 
 	// Make Changes in the Current Stack Index
 	ChainMember& chain_member = stack_array[stack_index];
-	for (UnsavedLevel* unsaved_level : chain_member.stack_indicies)
+	for (UnsavedBase* unsaved_level : chain_member.stack_indicies)
 		unsaved_level->traverseChangeList(false);
+
+	// Move Children of Group Objects
+	Objects::UnsavedGroup::finalizeParentMovement();
 
 	return true;
 }
@@ -320,8 +389,14 @@ bool Render::Objects::ChangeController::MasterStack::traverseBackwards()
 
 	// Make Inverse Changes in Current Stack Index
 	ChainMember& chain_member = stack_array[stack_index];
-	for (UnsavedLevel* unsaved_level : chain_member.stack_indicies)
+
+	//for (UnsavedBase* unsaved_level : chain_member.stack_indicies)
+
+	for (UnsavedBase* unsaved_level : chain_member.stack_indicies)
 		unsaved_level->traverseChangeList(true);
+
+	// Move Children of Group Objects
+	Objects::UnsavedGroup::finalizeParentMovement();
 
 	// If At Beginning of Array, Circle Back to End of Array
 	if (stack_index == 0)

@@ -45,6 +45,9 @@ namespace Object::Light::Directional
 		// Test if Mouse Intersects Object
 		bool testMouseCollisions(float x, float y);
 
+		// Update Selected Position of Object
+		void updateSelectedPosition(float deltaX, float deltaY);
+
 		// Return Position of Object
 		glm::vec2 returnPosition();
 

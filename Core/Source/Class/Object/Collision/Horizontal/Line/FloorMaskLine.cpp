@@ -32,10 +32,17 @@ bool Object::Mask::Floor::FloorMaskLine::testCollisions(glm::vec2 test_position,
 	return false;
 }
 
+void Object::Mask::Floor::FloorMaskLine::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+}
+
 void Object::Mask::Floor::FloorMaskLine::getLeftRightEdgeVertices(glm::vec2& left, glm::vec2& right)
 {
 	left = glm::vec2(x_left, data.position.y);
 	right = glm::vec2(x_right, data.position.y);
+	initializeVisualizer(VAO, VBO, model, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 }
 
 void Object::Mask::Floor::FloorMaskLine::returnMaterial(int& material)
@@ -104,12 +111,13 @@ void DataClass::Data_FloorMaskHorizontalLine::readObjectData(std::ifstream& obje
 	object_file.read((char*)&platform, sizeof(bool));
 }
 
-DataClass::Data_FloorMaskHorizontalLine::Data_FloorMaskHorizontalLine()
+DataClass::Data_FloorMaskHorizontalLine::Data_FloorMaskHorizontalLine(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::FLOOR;
 	object_identifier[2] = Object::Mask::HORIZONTAL_LINE;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_FloorMaskHorizontalLine::info(Editor::ObjectInfo& object_info)

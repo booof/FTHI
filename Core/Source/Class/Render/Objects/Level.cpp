@@ -30,6 +30,8 @@
 
 #include "Class/Render/Struct/DataClasses.h"
 
+#include "UnsavedGroup.h"
+
 void Render::Objects::Level::updateLevelPos(glm::vec2 position, glm::vec2& level)
 {
 	level.x = floor(position.x / 128);
@@ -906,6 +908,10 @@ void Render::Objects::Level::drawContainer()
 	//glUniformMatrix4fv(Global::matrixLocObject, 1, GL_FALSE, glm::value_ptr(matrix));
 	glDrawArrays(GL_TRIANGLES, number_of_vertices[5], number_of_vertices[6]);
 	glBindVertexArray(0);
+
+	// Draw Visualizers for Groups
+	for (int i = 0; i < container.total_object_count; i++)
+		container.object_array[i]->drawGroupVisualizer();
 }
 
 #ifdef EDITOR
@@ -1564,20 +1570,88 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Type*** object_list, uint16
 		// If Left Click, Select Object
 		if (Global::LeftClick)
 		{
-			// Activate Selector
-			selector.active = true;
+			// Disable Left Click
+			Global::LeftClick = false;
 
-			// Store Level of Origin
-			storeLevelOfOrigin(selector, object.returnPosition());
+			// If Attempting to Add a Child Object, Attempt to Add Object as a Child
+			if (selector.selectedOnlyOne() && (Global::Keys[GLFW_KEY_LEFT_ALT] || Global::Keys[GLFW_KEY_RIGHT_ALT]))
+			{
+				// Get Selected Object
+				DataClass::Data_Object* selected_object = selector.getOnlyOne();
 
-			// Remove Object From Global Objects List
-			removeMarkedFromList(temp_list[index]);
+				// Get Parent of Selector
+				DataClass::Data_Object* selected_parent = selected_object->getParent();
 
-			// Reset Object Info
-			object_info.clearAll();
+				// Object Already Belongs to a Parent
+				if (object.data_object->getParent() != nullptr)
+				{
+					// Remove Child from Current Group
+					object.data_object->getParent()->getGroup()->createChangePop(object.data_object);
+					object.data_object->getParent()->getObjectIdentifier()[3]--;
 
-			// Make a Copy of the Data Class
-			selector.unadded_data_objects.push_back(selector.highlighted_object->makeCopy());
+					// If Attempting to Add To Its Current Parent, Remove Object From Being a Child
+					if (object.data_object->getParent()->getObjectIndex() == selected_object->getObjectIndex())
+						change_controller->handleSingleSelectorReturn(object.data_object->makeCopySelected(selector), true);
+
+					// Else, Swap Parents
+					else
+						selector.addChildToOnlyOne(object.data_object);
+				}
+
+				// If Attempting to Add a Parent to its Child, Prevent That From Happening
+				// For Now, This Will Cause a Deselection, Might Do Something Else in the Future
+				else if (selected_parent != nullptr && selected_parent->getObjectIndex() == object.data_object->getObjectIndex())
+				{
+					// Remove Child from Current Group
+					object.data_object->getObjectIdentifier()[3]--;
+
+					// Set Parent of Selected Object to Nothing
+					selected_object->setParent(nullptr);
+
+					// Set Group Layer to 0
+					selected_object->setGroupLayer(0);
+
+					// Recursively Set Group Layer
+					UnsavedGroup* data_group = selected_object->getGroup();
+					if (data_group != nullptr)
+						data_group->recursiveSetGroupLayer(1);
+				}
+
+				// Else, Add Object as a New Child
+				else
+				{
+					// Add Child to Parent
+					selector.addChildToOnlyOne(object.data_object);
+
+					// Store Level of Origin
+					storeLevelOfOrigin(selector, object.returnPosition());
+				}
+
+			}
+
+			// Else, Add to Selector
+			else
+			{
+				// Activate Selector
+				selector.active = true;
+
+				// Store Level of Origin if Originated From Level
+				if (object.parent == nullptr)
+					storeLevelOfOrigin(selector, object.returnPosition());
+
+				// If Originated From Group, Remove from Group
+				else
+					object.data_object->getParent()->getGroup()->createChangePop(object.data_object);
+
+				// Remove Object From Global Objects List
+				removeMarkedFromList(temp_list[index]);
+
+				// Reset Object Info
+				object_info.clearAll();
+
+				// Make a Copy of the Data Class
+				selector.unadded_data_objects.push_back(selector.highlighted_object->makeCopySelected(selector));
+			}
 
 			return 2;
 		}
@@ -1643,7 +1717,7 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 				object_info.clearAll();
 
 				// Make a Copy of the Data Class
-				selector.unadded_data_objects.push_back(selector.highlighted_object->makeCopy());
+				selector.unadded_data_objects.push_back(selector.highlighted_object->makeCopySelected(selector));
 
 				return true;
 			}
@@ -1742,7 +1816,7 @@ void Render::Objects::Level::returnObject(Object::Object* new_object, float obje
 void Render::Objects::Level::reloadAll(float new_x, float new_y)
 {
 	// Store Camera Poition
-	camera->setPosition(glm::vec3(new_x, new_y, 0.0f));
+	//camera->setPosition(glm::vec3(new_x, new_y, 0.0f));
 
 	reloadAll();
 }

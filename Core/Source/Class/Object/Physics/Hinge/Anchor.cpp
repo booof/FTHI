@@ -117,6 +117,12 @@ bool Object::Physics::Hinge::Anchor::testMouseCollisions(float x, float y)
 	return false;
 }
 
+void Object::Physics::Hinge::Anchor::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+}
+
 glm::vec2 Object::Physics::Hinge::Anchor::returnPosition()
 {
 	return data.position;
@@ -139,12 +145,13 @@ void DataClass::Data_Anchor::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&data, sizeof(Object::Physics::Hinge::HingeData));
 }
 
-DataClass::Data_Anchor::Data_Anchor()
+DataClass::Data_Anchor::Data_Anchor(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::PHYSICS;
 	object_identifier[1] = (uint8_t)Object::Physics::PHYSICS_BASES::HINGE_BASE;
 	object_identifier[2] = (uint8_t)Object::Physics::HINGES::ANCHOR;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_Anchor::info(Editor::ObjectInfo& object_info)
@@ -159,6 +166,13 @@ void DataClass::Data_Anchor::info(Editor::ObjectInfo& object_info)
 DataClass::Data_Object* DataClass::Data_Anchor::makeCopy()
 {
 	return new Data_Anchor(*this);
+}
+
+void DataClass::Data_Anchor::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	updateSelectedPositionsHelper(deltaX, deltaY);
 }
 
 int& DataClass::Data_Anchor::getScript()

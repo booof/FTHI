@@ -77,3 +77,12 @@ void DataClass::Data_Slant::generateInitialValues(glm::vec2& position, float& si
 	data.script = 0;
 	data.material = 0;
 }
+
+void DataClass::Data_Slant::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	data.position2.x += deltaX;
+	data.position2.y += deltaY;
+	updateSelectedPositionsHelper(deltaX, deltaY);
+}

@@ -38,12 +38,13 @@ void DataClass::Data_Interactable::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&interactable, sizeof(Object::Entity::InteractableData));
 }
 
-DataClass::Data_Interactable::Data_Interactable()
+DataClass::Data_Interactable::Data_Interactable(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::ENTITY;
 	object_identifier[1] = Object::Entity::ENTITY_INTERACTABLE;
 	object_identifier[2] = 0;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_Interactable::info(Editor::ObjectInfo& object_info)

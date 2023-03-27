@@ -3345,7 +3345,7 @@ void Editor::EditorWindow::generateNewObject()
 			// Horizontal Line
 			case Object::Mask::HORIZONTAL_LINE:
 			{
-				DataClass::Data_HorizontalLine* new_horizontal_line = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_HorizontalLine*>(new DataClass::Data_FloorMaskHorizontalLine()) : static_cast<DataClass::Data_HorizontalLine*>(new DataClass::Data_CeilingMaskHorizontalLine());
+				DataClass::Data_HorizontalLine* new_horizontal_line = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_HorizontalLine*>(new DataClass::Data_FloorMaskHorizontalLine(0)) : static_cast<DataClass::Data_HorizontalLine*>(new DataClass::Data_CeilingMaskHorizontalLine(0));
 				new_horizontal_line->generateInitialValues(new_position, new_size);
 				new_data_object = new_horizontal_line;
 
@@ -3355,7 +3355,7 @@ void Editor::EditorWindow::generateNewObject()
 			// Slant
 			case Object::Mask::HORIZONTAL_SLANT:
 			{
-				DataClass::Data_Slant* new_slant = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_Slant*>(new DataClass::Data_FloorMaskSlant()) : static_cast<DataClass::Data_Slant*>(new DataClass::Data_CeilingMaskSlant());
+				DataClass::Data_Slant* new_slant = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_Slant*>(new DataClass::Data_FloorMaskSlant(0)) : static_cast<DataClass::Data_Slant*>(new DataClass::Data_CeilingMaskSlant(0));
 				new_slant->generateInitialValues(new_position, new_size);
 				new_data_object = new_slant;
 
@@ -3365,7 +3365,7 @@ void Editor::EditorWindow::generateNewObject()
 			// Slope
 			case Object::Mask::HORIZONTAL_SLOPE:
 			{
-				DataClass::Data_Slope* new_slope = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_Slope*>(new DataClass::Data_FloorMaskSlope()) : static_cast<DataClass::Data_Slope*>(new DataClass::Data_CeilingMaskSlope());
+				DataClass::Data_Slope* new_slope = (new_object_identifier[1] == 0) ? static_cast<DataClass::Data_Slope*>(new DataClass::Data_FloorMaskSlope(0)) : static_cast<DataClass::Data_Slope*>(new DataClass::Data_CeilingMaskSlope(0));
 				new_slope->generateInitialValues(new_position, new_size);
 				new_data_object = new_slope;
 
@@ -3387,7 +3387,7 @@ void Editor::EditorWindow::generateNewObject()
 			// Vertical Line
 			case Object::Mask::VERTICAL_LINE:
 			{
-				DataClass::Data_VerticalLine* new_vertical_line = (new_object_identifier[1] == 1) ? static_cast<DataClass::Data_VerticalLine*>(new DataClass::Data_LeftMaskVerticalLine()) : static_cast<DataClass::Data_VerticalLine*>(new DataClass::Data_RightMaskVerticalLine());
+				DataClass::Data_VerticalLine* new_vertical_line = (new_object_identifier[1] == 1) ? static_cast<DataClass::Data_VerticalLine*>(new DataClass::Data_LeftMaskVerticalLine(0)) : static_cast<DataClass::Data_VerticalLine*>(new DataClass::Data_RightMaskVerticalLine(0));
 				new_vertical_line->generateInitialValues(new_position, new_size);
 				new_data_object = new_vertical_line;
 
@@ -3397,7 +3397,7 @@ void Editor::EditorWindow::generateNewObject()
 			// Curve
 			case Object::Mask::VERTICAL_CURVE:
 			{
-				DataClass::Data_Curve* new_curve = (new_object_identifier[1] == 1) ? static_cast<DataClass::Data_Curve*>(new DataClass::Data_LeftMaskCurve()) : static_cast<DataClass::Data_Curve*>(new DataClass::Data_RightMaskCurve());
+				DataClass::Data_Curve* new_curve = (new_object_identifier[1] == 1) ? static_cast<DataClass::Data_Curve*>(new DataClass::Data_LeftMaskCurve(0)) : static_cast<DataClass::Data_Curve*>(new DataClass::Data_RightMaskCurve(0));
 				new_curve->generateInitialValues(new_position, new_size);
 				new_data_object = new_curve;
 
@@ -3412,7 +3412,7 @@ void Editor::EditorWindow::generateNewObject()
 		// Trigger Masks
 		case Object::Mask::TRIGGER:
 		{
-			DataClass::Data_TriggerMask* new_trigger = new DataClass::Data_TriggerMask();
+			DataClass::Data_TriggerMask* new_trigger = new DataClass::Data_TriggerMask(0);
 			new_trigger->generateInitialValues(new_position, new_size);
 			new_data_object = new_trigger;
 
@@ -3432,7 +3432,7 @@ void Editor::EditorWindow::generateNewObject()
 		new_object_identifier[1] = layer_map[new_object_identifier[1]];
 
 		// Generate Object Data
-		DataClass::Data_Terrain* new_terrain = new DataClass::Data_Terrain(new_object_identifier[1], new_object_identifier[2]);
+		DataClass::Data_Terrain* new_terrain = new DataClass::Data_Terrain(new_object_identifier[1], new_object_identifier[2], 0);
 		new_terrain->generateInitialValues(new_position, terrain_layer_colors[new_object_identifier[1]], generateNewShape(new_size));
 		new_data_object = new_terrain;
 
@@ -3448,7 +3448,7 @@ void Editor::EditorWindow::generateNewObject()
 		// Directional Lights
 		case Object::Light::DIRECTIONAL:
 		{
-			DataClass::Data_Directional* new_directional = new DataClass::Data_Directional();
+			DataClass::Data_Directional* new_directional = new DataClass::Data_Directional(0);
 			new_directional->generateInitialValues(new_position, new_size);
 			new_data_object = new_directional;
 
@@ -3458,7 +3458,7 @@ void Editor::EditorWindow::generateNewObject()
 		// Point Lights
 		case Object::Light::POINT:
 		{
-			DataClass::Data_Point* new_point = new DataClass::Data_Point();
+			DataClass::Data_Point* new_point = new DataClass::Data_Point(0);
 			new_point->generateInitialValues(new_position);
 			new_data_object = new_point;
 
@@ -3468,7 +3468,7 @@ void Editor::EditorWindow::generateNewObject()
 		// Spot Lights
 		case Object::Light::SPOT:
 		{
-			DataClass::Data_Spot* new_spot = new DataClass::Data_Spot();
+			DataClass::Data_Spot* new_spot = new DataClass::Data_Spot(0);
 			new_spot->generateInitialValues(new_position);
 			new_data_object = new_spot;
 
@@ -3478,7 +3478,7 @@ void Editor::EditorWindow::generateNewObject()
 		// Beam Lights
 		case Object::Light::BEAM:
 		{
-			DataClass::Data_Beam* new_beam = new DataClass::Data_Beam();
+			DataClass::Data_Beam* new_beam = new DataClass::Data_Beam(0);
 			new_beam->generateInitialValues(new_position, new_size);
 			new_data_object = new_beam;
 
@@ -3499,7 +3499,7 @@ void Editor::EditorWindow::generateNewObject()
 		// Rigid Body
 		case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
 		{
-			DataClass::Data_RigidBody* new_rigid = new DataClass::Data_RigidBody(new_object_identifier[2]);
+			DataClass::Data_RigidBody* new_rigid = new DataClass::Data_RigidBody(new_object_identifier[2], 0);
 			new_rigid->generateInitialValues(new_position, generateNewShape(new_size));
 			new_data_object = new_rigid;
 
@@ -3517,7 +3517,7 @@ void Editor::EditorWindow::generateNewObject()
 			// SpringMass
 			case (int)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS:
 			{
-				DataClass::Data_SpringMass* new_springmass = new DataClass::Data_SpringMass();
+				DataClass::Data_SpringMass* new_springmass = new DataClass::Data_SpringMass(0);
 				new_springmass->generateInitialValues(new_position);
 				new_data_object = new_springmass;
 
@@ -3527,7 +3527,7 @@ void Editor::EditorWindow::generateNewObject()
 			// Wire
 			case (int)Object::Physics::SOFT_BODY_TYPES::WIRE:
 			{
-				DataClass::Data_Wire* new_wire = new DataClass::Data_Wire();
+				DataClass::Data_Wire* new_wire = new DataClass::Data_Wire(0);
 				new_wire->generateInitialValues(new_position, new_size);
 				new_data_object = new_wire;
 
@@ -3546,7 +3546,7 @@ void Editor::EditorWindow::generateNewObject()
 			// Anchor
 			case (int)Object::Physics::HINGES::ANCHOR:
 			{
-				DataClass::Data_Anchor* new_anchor = new DataClass::Data_Anchor();
+				DataClass::Data_Anchor* new_anchor = new DataClass::Data_Anchor(0);
 				new_anchor->generateInitialValues(new_position);
 				new_data_object = new_anchor;
 
@@ -3556,7 +3556,7 @@ void Editor::EditorWindow::generateNewObject()
 			// Hinge
 			case (int)Object::Physics::HINGES::HINGE:
 			{
-				DataClass::Data_Hinge* new_hinge = new DataClass::Data_Hinge();
+				DataClass::Data_Hinge* new_hinge = new DataClass::Data_Hinge(0);
 				new_hinge->generateInitialValues(new_position);
 				new_data_object = new_hinge;
 
@@ -3580,7 +3580,7 @@ void Editor::EditorWindow::generateNewObject()
 		// NPC
 		case Object::Entity::ENTITY_NPC:
 		{
-			DataClass::Data_NPC* new_npc = new DataClass::Data_NPC();
+			DataClass::Data_NPC* new_npc = new DataClass::Data_NPC(0);
 			new_npc->generateInitialData(position);
 			new_data_object = new_npc;
 
@@ -3590,7 +3590,7 @@ void Editor::EditorWindow::generateNewObject()
 		// Contollable Entity
 		case Object::Entity::ENTITY_CONTROLLABLE:
 		{
-			DataClass::Data_Controllable* new_controllable = new DataClass::Data_Controllable();
+			DataClass::Data_Controllable* new_controllable = new DataClass::Data_Controllable(0);
 			new_controllable->generateInitialData(position);
 			new_data_object = new_controllable;
 
@@ -3600,7 +3600,7 @@ void Editor::EditorWindow::generateNewObject()
 		// Interactable Entity
 		case Object::Entity::ENTITY_INTERACTABLE:
 		{
-			DataClass::Data_Interactable* new_interactable = new DataClass::Data_Interactable();
+			DataClass::Data_Interactable* new_interactable = new DataClass::Data_Interactable(0);
 			new_interactable->generateInitialData(position);
 			new_data_object = new_interactable;
 
@@ -3610,7 +3610,7 @@ void Editor::EditorWindow::generateNewObject()
 		// Dynamic Entity
 		case Object::Entity::ENTITY_DYNAMIC:
 		{
-			DataClass::Data_Dynamic* new_dynamic = new DataClass::Data_Dynamic();
+			DataClass::Data_Dynamic* new_dynamic = new DataClass::Data_Dynamic(0);
 			new_dynamic->generateInitialData(position);
 			new_data_object = new_dynamic;
 

@@ -73,6 +73,9 @@ namespace Object::Mask::Trigger
 		// Test Basic Collisions
 		bool testCollisions(glm::vec2 test_position, float error);
 
+		// Update Selected Position of Object
+		void updateSelectedPosition(float deltaX, float deltaY);
+
 		// Retrun Null Material
 		void returnMaterial(int& material);
 

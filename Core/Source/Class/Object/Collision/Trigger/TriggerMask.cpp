@@ -68,6 +68,13 @@ bool Object::Mask::Trigger::TriggerMask::testCollisions(glm::vec2 test_position,
 	return false;
 }
 
+void Object::Mask::Trigger::TriggerMask::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	initializeVisualizer();
+}
+
 void Object::Mask::Trigger::TriggerMask::returnMaterial(int& material)
 {
 	// Do Absolutly Nothing
@@ -124,12 +131,13 @@ void DataClass::Data_TriggerMask::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&data, sizeof(Object::Mask::Trigger::TriggerData));
 }
 
-DataClass::Data_TriggerMask::Data_TriggerMask()
+DataClass::Data_TriggerMask::Data_TriggerMask(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::TRIGGER;
 	object_identifier[2] = 0;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_TriggerMask::info(Editor::ObjectInfo& object_info)
@@ -145,6 +153,13 @@ void DataClass::Data_TriggerMask::info(Editor::ObjectInfo& object_info)
 DataClass::Data_Object* DataClass::Data_TriggerMask::makeCopy()
 {
 	return new Data_TriggerMask(*this);
+}
+
+void DataClass::Data_TriggerMask::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	updateSelectedPositionsHelper(deltaX, deltaY);
 }
 
 Object::Mask::Trigger::TriggerData& DataClass::Data_TriggerMask::getTriggerData()

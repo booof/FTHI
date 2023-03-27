@@ -9,7 +9,7 @@
 #include "Render/GUI/VerticalScrollBar.h"
 #include "Render/GUI/ColorWheel.h"
 
-#include "Object/Physics/Softody/SoftBody.h"
+#include "Object/Physics/SoftBody/SoftBody.h"
 #include "Render/Struct/Texture.h"
 
 // Externals

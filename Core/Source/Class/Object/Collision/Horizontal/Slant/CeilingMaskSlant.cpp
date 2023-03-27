@@ -34,6 +34,15 @@ bool Object::Mask::Ceiling::CeilingMaskSlant::testCollisions(glm::vec2 test_posi
 	return false;
 }
 
+void Object::Mask::Ceiling::CeilingMaskSlant::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaX;
+	data.position2.x += deltaX;
+	data.position2.y += deltaY;
+	initializeVisualizer(VAO, VBO, model, glm::vec4(0.28f, 0.0f, 0.34f, 1.0f));
+}
+
 void Object::Mask::Ceiling::CeilingMaskSlant::returnMaterial(int& material)
 {
 	material = data.material;
@@ -102,12 +111,13 @@ void DataClass::Data_CeilingMaskSlant::readObjectData(std::ifstream& object_file
 	object_file.read((char*)&data, sizeof(Object::Mask::SlantData));
 }
 
-DataClass::Data_CeilingMaskSlant::Data_CeilingMaskSlant()
+DataClass::Data_CeilingMaskSlant::Data_CeilingMaskSlant(uint8_t children_size)
 {
 	// Set Object Identifier
 	object_identifier[0] = Object::MASK;
 	object_identifier[1] = Object::Mask::CEILING;
 	object_identifier[2] = Object::Mask::HORIZONTAL_SLANT;
+	object_identifier[3] = children_size;
 }
 
 void DataClass::Data_CeilingMaskSlant::info(Editor::ObjectInfo& object_info)

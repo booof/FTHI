@@ -582,13 +582,13 @@
     <ClCompile Include="Source\Class\Object\Physics\RigidBody\RigidPolygon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Class\Object\Physics\Softody\SoftBody.cpp">
+    <ClCompile Include="Source\Class\Object\Physics\SoftBody\SoftBody.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Class\Object\Physics\Softody\SpringMass.cpp">
+    <ClCompile Include="Source\Class\Object\Physics\SoftBody\SpringMass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Class\Object\Physics\Softody\Wire.cpp">
+    <ClCompile Include="Source\Class\Object\Physics\SoftBody\Wire.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Class\Object\Physics\Hinge\Anchor.cpp">
@@ -624,6 +624,12 @@
     <ClCompile Include="Source\Source\Main\Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Class\Render\Objects\UnsavedBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\Objects\UnsavedGroup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Class\Object\Physics\PhysicsBase.h">
@@ -638,7 +644,7 @@
     <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidBody.h">
       <Filter>Header Files\Class\Objects\Physics\Rigid Body</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Class\Object\Physics\Softody\SoftBody.h">
+    <ClInclude Include="Source\Class\Object\Physics\SoftBody\SoftBody.h">
       <Filter>Header Files\Class\Objects\Physics\Soft Body</Filter>
     </ClInclude>
     <ClInclude Include="Source\Class\Render\Struct\Struct.h">
@@ -965,10 +971,10 @@
     <ClInclude Include="Source\Class\Object\Physics\RigidBody\RigidPolygon.h">
       <Filter>Header Files\Class\Objects\Physics\Rigid Body</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Class\Object\Physics\Softody\SpringMass.h">
+    <ClInclude Include="Source\Class\Object\Physics\SoftBody\SpringMass.h">
       <Filter>Header Files\Class\Objects\Physics\Soft Body</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Class\Object\Physics\Softody\Wire.h">
+    <ClInclude Include="Source\Class\Object\Physics\SoftBody\Wire.h">
       <Filter>Header Files\Class\Objects\Physics\Soft Body</Filter>
     </ClInclude>
     <ClInclude Include="Source\Class\Object\Physics\Hinge\Anchor.h">
@@ -1005,6 +1011,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Class\Render\GUI\GUIController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\UnsavedGroup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\UnsavedComplex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Objects\UnsavedBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

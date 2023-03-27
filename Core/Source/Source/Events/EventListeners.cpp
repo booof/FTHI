@@ -229,6 +229,10 @@ void Source::Listeners::KeyCallback(GLFWwindow* window, int key, int scancode, i
 					// Enable Debugging if Shift is Held
 					if (!Global::editing && (Global::Keys[GLFW_KEY_LEFT_SHIFT] || Global::Keys[GLFW_KEY_RIGHT_SHIFT]))
 					{
+						// NOTE: For Future Reference, DO NOT EXECUTE THIS FUNCTION WHILE DEBUGGING THE ENGINE
+						// The Ability to Debug Multiple Visual Studio Instances is Locked Behind a Pay Wall
+						// Until There is a Workaround, Execute This ONLY While Running the Build from a Terminal
+						// And NOT From Visual Studio, Otherwise, The Engine Will Crash Here
 						typedef void(__stdcall* attachProssess)(std::string, std::string, int);
 						(attachProssess(GetProcAddress(Global::framework_handle, "attachProcess")))(Global::project_solution_path, Global::project_symbols_path, GetCurrentProcessId());
 						Global::debugging = true;
@@ -704,6 +708,7 @@ void APIENTRY Source::Listeners::MessageCallback(GLenum source, GLenum type, GLu
 	case GL_DEBUG_SEVERITY_LOW:           string_severity = "GL_DEBUG_SEVERITY_LOW";          break;
 	case GL_DEBUG_SEVERITY_NOTIFICATION:  string_severity = "GL_DEBUG_SEVERITY_NOTIFICATION"; break;
 	}
+	return;
 
 	// Pring Message
 	std::cout << "\n" << "OPENGL ERROR:\n"
@@ -714,13 +719,26 @@ void APIENTRY Source::Listeners::MessageCallback(GLenum source, GLenum type, GLu
 		<< message << "\n \n";
 }
 
-void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera, Editor::Selector& selector, Render::Objects::Level& level, glm::vec4& acceleration_timer)
+void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera, Editor::Selector& selector, Render::Objects::Level& level, glm::i16vec4& acceleration_timer)
 {
+	// Perform All Keybind Operations Used in Minimal Editing First
+	smoothKeyCallbackEditorSimplified(camera, &selector, acceleration_timer);
+
 	// ALT Modifiers
 	if (Global::Keys[GLFW_KEY_LEFT_ALT] || Global::Keys[GLFW_KEY_RIGHT_ALT])
 	{
 		// WASD Moves by Very Small Amount Determined in Editor Window
 		// No Acceleration Timer
+
+		// Force a Reload on Levels
+		if (Global::Keys[GLFW_KEY_R])
+		{
+			// For Performance, This Should be a One and Done Operation
+			Global::Keys[GLFW_KEY_R] = false;
+
+			// Force the Reload by Reloading All on Level Object
+			level.reloadAll();
+		}
 
 		return;
 	}
@@ -728,10 +746,9 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 	// CTRL Modifiers
 	if (Global::Keys[GLFW_KEY_LEFT_CONTROL] || Global::Keys[GLFW_KEY_RIGHT_CONTROL])
 	{
-		// WASD Moves By X Levels Where X is Defined as Level Stride in Editor Options
+		// WASD Moves By a Single Level
 		// No Acceleration Timer
-
-		// Edit Level Stride Will be Placed in Scene Manager Instead
+		// WASD Key Will be Set to False
 
 		// Undo Change
 		if (Global::Keys[GLFW_KEY_Z])
@@ -782,8 +799,8 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 	// SHIFT Modifiers
 	if (Global::Keys[GLFW_KEY_LEFT_SHIFT] || Global::Keys[GLFW_KEY_RIGHT_SHIFT])
 	{
-		// WASD Moves By a Single Level
-		// No Acceleration Timer
+		// WASD Keys will Immediately Jump to Maximum Acceleration
+
 
 		// Open ScriptWizard
 		if (Global::Keys[GLFW_KEY_Y])
@@ -837,9 +854,7 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 
 		// Stop Editing Object
 		else if (selector.active)
-		{
 			selector.deselectObject();
-		}
 
 		// Otherwise, Toggle Editor Options GUI
 		else
@@ -857,9 +872,7 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 	{
 		// Stop Editing Object
 		if (selector.editing)
-		{
 			selector.deselectObject();
-		}
 
 		// Initialize Selector
 		selector.active = true;
@@ -877,169 +890,23 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 
 	// Delete Object
 	if ((Global::Keys[GLFW_KEY_BACKSPACE] || Global::Keys[GLFW_KEY_DELETE]) && selector.editing)
-	{
 		selector.clear();
-	}
-
-	// Move Camera North if W is Held
-	if (Global::Keys[GLFW_KEY_W])
-	{
-		// Normal Speed
-		if (acceleration_timer.x < 150)
-		{
-			camera.accelerationY = 1.0f;
-			acceleration_timer.x++;
-
-			// Reset Southern Timer
-			acceleration_timer.y = 0;
-		}
-
-		// Double Speed
-		else if (acceleration_timer.x < 300)
-		{
-			camera.accelerationY = 2.0f;
-			acceleration_timer.x++;
-		}
-
-		// 5x Speed
-		else
-		{
-			camera.accelerationY = 5.0f;
-		}
-
-		camera.moveCamera(Render::Camera::NORTH);
-
-		if (selector.editing)
-		{
-			selector.moveWithCamera(camera, Editor::NORTH);
-		}
-	}
-
-	// Move Camera South if S is Held
-	if (Global::Keys[GLFW_KEY_S])
-	{
-		// Normal Speed
-		if (acceleration_timer.y < 150)
-		{
-			camera.accelerationY = 1.0f;
-			acceleration_timer.y++;
-
-			// Reset Southern Timer
-			acceleration_timer.x = 0;
-		}
-
-		// Double Speed
-		else if (acceleration_timer.y < 300)
-		{
-			camera.accelerationY = 2.0f;
-			acceleration_timer.y++;
-		}
-
-		// 5x Speed
-		else
-		{
-			camera.accelerationY = 5.0f;
-		}
-
-		camera.moveCamera(Render::Camera::SOUTH);
-
-		if (selector.editing)
-		{
-			selector.moveWithCamera(camera, Editor::SOUTH);
-		}
-	}
-
-	// Move Camera East if D is Held
-	if (Global::Keys[GLFW_KEY_D])
-	{
-		// Normal Speed
-		if (acceleration_timer.z < 150)
-		{
-			camera.accelerationR = 1.0f;
-			acceleration_timer.z++;
-
-			// Reset Southern Timer
-			acceleration_timer.w = 0;
-		}
-
-		// Double Speed
-		else if (acceleration_timer.z < 300)
-		{
-			camera.accelerationR = 2.0f;
-			acceleration_timer.z++;
-		}
-
-		// 5x Speed
-		else
-		{
-			camera.accelerationR = 5.0f;
-		}
-
-		camera.moveCamera(Render::Camera::EAST);
-
-		if (selector.editing)
-		{
-			selector.moveWithCamera(camera, Editor::EAST);
-		}
-	}
-
-	// Move Camera West if A is Held
-	if (Global::Keys[GLFW_KEY_A])
-	{
-		// Normal Speed
-		if (acceleration_timer.w < 150)
-		{
-			camera.accelerationL = 1.0f;
-			acceleration_timer.w++;
-
-			// Reset Southern Timer
-			acceleration_timer.z = 0;
-		}
-
-		// Double Speed
-		else if (acceleration_timer.w < 300)
-		{
-			camera.accelerationL = 2.0f;
-			acceleration_timer.w++;
-		}
-
-		// 5x Speed
-		else
-		{
-			camera.accelerationL = 5.0f;
-		}
-
-		camera.moveCamera(Render::Camera::WEST);
-
-		if (selector.editing)
-		{
-			selector.moveWithCamera(camera, Editor::WEST);
-		}
-	}
 
 	// Shift Up
 	if (Global::Keys[GLFW_KEY_UP])
-	{
 		selector.moveWithArrowKeys(Editor::NORTH);
-	}
 
 	// Shift Down
 	if (Global::Keys[GLFW_KEY_DOWN])
-	{
 		selector.moveWithArrowKeys(Editor::SOUTH);
-	}
 
 	// Shift Left
 	if (Global::Keys[GLFW_KEY_LEFT])
-	{
 		selector.moveWithArrowKeys(Editor::WEST);
-	}
 
 	// Shift Right
 	if (Global::Keys[GLFW_KEY_RIGHT])
-	{
 		selector.moveWithArrowKeys(Editor::EAST);
-	}
 
 	// Print Location at Mouse Position
 	if (Global::Keys[GLFW_KEY_Q])
@@ -1138,123 +1005,92 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 	}
 }
 
-void Source::Listeners::smoothKeyCallbackEditorSimplified(Camera& camera, glm::vec4& acceleration_timer)
+void Source::Listeners::smoothKeyCallbackEditorSimplified(Camera& camera, Selector* selector, glm::i16vec4& acceleration_timer)
 {
 	// Move Camera North if W is Held
 	if (Global::Keys[GLFW_KEY_W])
-	{
-		// Normal Speed
-		if (acceleration_timer.x < 150)
-		{
-			camera.accelerationY = 1.0f;
-			acceleration_timer.x++;
-
-			// Reset Southern Timer
-			acceleration_timer.y = 0;
-		}
-
-		// Double Speed
-		else if (acceleration_timer.x < 300)
-		{
-			camera.accelerationY = 2.0f;
-			acceleration_timer.x++;
-		}
-
-		// 5x Speed
-		else
-		{
-			camera.accelerationY = 5.0f;
-		}
-
-		camera.moveCamera(Render::Camera::NORTH);
-	}
+		updateEditorCameraMovement(camera, selector, Render::Camera::NORTH, acceleration_timer.x, acceleration_timer.y, camera.accelerationY);
 
 	// Move Camera South if S is Held
 	if (Global::Keys[GLFW_KEY_S])
-	{
-		// Normal Speed
-		if (acceleration_timer.y < 150)
-		{
-			camera.accelerationY = 1.0f;
-			acceleration_timer.y++;
-
-			// Reset Southern Timer
-			acceleration_timer.x = 0;
-		}
-
-		// Double Speed
-		else if (acceleration_timer.y < 300)
-		{
-			camera.accelerationY = 2.0f;
-			acceleration_timer.y++;
-		}
-
-		// 5x Speed
-		else
-		{
-			camera.accelerationY = 5.0f;
-		}
-
-		camera.moveCamera(Render::Camera::SOUTH);
-	}
+		updateEditorCameraMovement(camera, selector, Render::Camera::SOUTH, acceleration_timer.y, acceleration_timer.x, camera.accelerationY);
 
 	// Move Camera East if D is Held
 	if (Global::Keys[GLFW_KEY_D])
-	{
-		// Normal Speed
-		if (acceleration_timer.z < 150)
-		{
-			camera.accelerationR = 1.0f;
-			acceleration_timer.z++;
-
-			// Reset Southern Timer
-			acceleration_timer.w = 0;
-		}
-
-		// Double Speed
-		else if (acceleration_timer.z < 300)
-		{
-			camera.accelerationR = 2.0f;
-			acceleration_timer.z++;
-		}
-
-		// 5x Speed
-		else
-		{
-			camera.accelerationR = 5.0f;
-		}
-
-		camera.moveCamera(Render::Camera::EAST);
-	}
+		updateEditorCameraMovement(camera, selector, Render::Camera::EAST, acceleration_timer.z, acceleration_timer.w, camera.accelerationR);
 
 	// Move Camera West if A is Held
 	if (Global::Keys[GLFW_KEY_A])
+		updateEditorCameraMovement(camera, selector, Render::Camera::WEST, acceleration_timer.w, acceleration_timer.z, camera.accelerationL);
+}
+
+void Source::Listeners::updateEditorCameraMovement(Camera& camera, Selector* selector, unsigned char direction, int16_t& acceleration_timer, int16_t& inverse_acceleration_timer, float& camera_acceleration)
+{
+	// If ALT is Pressed, Set Acceleration Timers to 0 and Give Small Speed Multiplier
+	// Small Speed Multiplier is Determined by the Editor Options Config
+	if (Global::Keys[GLFW_KEY_LEFT_ALT] || Global::Keys[GLFW_KEY_RIGHT_ALT])
+	{
+		acceleration_timer = 0;
+		inverse_acceleration_timer = 0;
+		camera_acceleration = Global::editor_options->option_alt_camera_speed;
+	}
+
+	// If SHIFT is Pressed, Immediately Set Acceleration Timer to Max
+	else if (Global::Keys[GLFW_KEY_LEFT_SHIFT] || Global::Keys[GLFW_KEY_RIGHT_SHIFT])
+	{
+		acceleration_timer = 300;
+		inverse_acceleration_timer = 0;
+		camera_acceleration = 5.0f;
+	}
+
+	// If CTRL is Pressed, Jump by 1 Level and Disable Key Press
+	// Level Jump Distance Will be Determined by Scene Manager Level Stride
+	// TO BE IMPLEMENTED LATER
+	else if (Global::Keys[GLFW_KEY_LEFT_CONTROL] || Global::Keys[GLFW_KEY_RIGHT_CONTROL])
+	{
+		// Find a Way to Jump a Singular Level
+
+		// Disable the Key That Was Pressed
+		switch (direction)
+		{
+		case Render::Camera::Directions::NORTH: Global::Keys[GLFW_KEY_W] = false; break;
+		case Render::Camera::Directions::SOUTH: Global::Keys[GLFW_KEY_S] = false; break;
+		case Render::Camera::Directions::EAST:  Global::Keys[GLFW_KEY_D] = false; break;
+		case Render::Camera::Directions::WEST:  Global::Keys[GLFW_KEY_A] = false; break;
+		}
+	}
+
+	// Unmodified Incremental Speed Increase
+	else
 	{
 		// Normal Speed
-		if (acceleration_timer.w < 150)
+		if (acceleration_timer < 150)
 		{
-			camera.accelerationL = 1.0f;
-			acceleration_timer.w++;
+			camera_acceleration = 1.0f;
+			acceleration_timer++;
 
-			// Reset Southern Timer
-			acceleration_timer.z = 0;
+			// Reset Inverse Timer
+			inverse_acceleration_timer = 0;
 		}
 
 		// Double Speed
-		else if (acceleration_timer.w < 300)
+		else if (acceleration_timer < 300)
 		{
-			camera.accelerationL = 2.0f;
-			acceleration_timer.w++;
+			camera_acceleration = 2.0f;
+			acceleration_timer++;
 		}
 
 		// 5x Speed
 		else
-		{
-			camera.accelerationL = 5.0f;
-		}
-
-		camera.moveCamera(Render::Camera::WEST);
+			camera_acceleration = 5.0f;
 	}
+
+	// Move Camera
+	camera.moveCamera(direction);
+
+	// If an Object is Selected, Move Object As Well
+	if (selector != nullptr && selector->editing)
+		selector->moveWithCamera(camera, direction);
 }
 
 #endif

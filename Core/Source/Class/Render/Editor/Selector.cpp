@@ -44,8 +44,8 @@
 #include "Object/Lighting/Spot.h"
 #include "Object/Lighting/Beam.h"
 #include "Object/Physics/RigidBody/RigidBody.h"
-#include "Object/Physics/Softody/SpringMass.h"
-#include "Object/Physics/Softody/Wire.h"
+#include "Object/Physics/SoftBody/SpringMass.h"
+#include "Object/Physics/SoftBody/Wire.h"
 #include "Object/Physics/Hinge/Anchor.h"
 #include "Object/Physics/Hinge/Hinge.h"
 #include "Object/Entity/NPC.h"
@@ -63,6 +63,8 @@
 #include "Class/Render/Editor/Notification.h"
 
 #include "Render/Struct/DataClasses.h"
+
+#include "Render/Objects/UnsavedGroup.h"
 
 // Comparison Operation for Node Data
 bool operator== (const Object::Physics::Soft::NodeData& node1, const Object::Physics::Soft::NodeData& node2)
@@ -273,6 +275,13 @@ void Editor::Selector::blitzSelector()
 		glBindVertexArray(group_selector.outlineVAO);
 		glDrawArrays(GL_LINES, 0, 8);
 		glBindVertexArray(0);
+	}
+
+	// Draw Visualizers for Groups
+	for (Selected_Object* selected_object : selected_objects)
+	{
+		selected_object->data_object->drawGroupVisualizer();
+		selected_object->data_object->drawParentConnection();
 	}
 }
 
@@ -606,9 +615,14 @@ void Editor::Selector::clear()
 	active = false;
 	highlighting = false;
 
-	// If Originated From Level, Remove From Unsaved Level
-	if (originated_from_level)
-		change_controller->handleSelectorDelete(this);
+	// Remove Objects from Unsaved Objects
+	change_controller->handleSelectorDelete(this);
+
+	// Reset Arrays
+	data_objects.clear();
+	for (Selected_Object* selected_object : selected_objects)
+		delete selected_object;
+	selected_objects.clear();
 
 	// Reset Some Variables
 	originated_from_level = false;
@@ -649,6 +663,58 @@ void Editor::Selector::storeLimbPointers(int index, Object::Physics::Soft::Sprin
 bool& Editor::Selector::retrieveRotation()
 {
 	return Selected_Object::rotating;
+}
+
+bool Editor::Selector::selectedOnlyOne()
+{
+	return selected_objects.size() == 1;
+}
+
+void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object)
+{
+	// Add Child to Selected Object
+	DataClass::Data_Object* only_one = selected_objects.at(0)->data_object;
+	only_one->addChildViaSelection(data_object);
+
+	// Update Number of Children Object Has
+	only_one->getObjectIdentifier()[3] = only_one->getGroup()->getNumberOfChildren();
+
+	// Link Selected Object as Parent
+	data_object->setParent(only_one);
+
+	// Set Group Layer
+	uint8_t new_layer = selected_objects.at(0)->data_object->getGroupLayer() + 1;
+	data_object->setGroupLayer(new_layer);
+
+	// Set Group Layer Recursively
+	Render::Objects::UnsavedGroup* data_group = data_object->getGroup();
+	if (data_group != nullptr)
+		data_group->recursiveSetGroupLayer(new_layer + 1);
+}
+
+DataClass::Data_Object* Editor::Selector::getOnlyOne()
+{
+	return selected_objects.at(0)->data_object;
+}
+
+void Editor::Selector::copyOnlyOne()
+{
+	data_objects[0] = data_objects[0]->makeCopy();
+	selected_objects.at(0)->data_object = data_objects[0];
+}
+
+void Editor::Selector::updateParentofSelected(DataClass::Data_Object* new_parent)
+{
+	// Get Object Index of Parent
+	uint32_t parent_index = new_parent->getObjectIndex();
+
+	for (DataClass::Data_Object* child : data_objects)
+	{
+		// If Index of Child Parent Matches New Parent, Set Parent to New Parent
+		DataClass::Data_Object* test_parent = child->getParent();
+		if (test_parent != nullptr && test_parent->getObjectIndex() == parent_index)
+			child->setParent(new_parent);
+	}
 }
 
 void Editor::Selector::initializeSelector()
@@ -3341,7 +3407,7 @@ void Editor::Selector::editObject()
 
 						// Return Normal Object
 						else
-							change_controller->handleSingleSelectorReturn(data_objects.at(i));
+							change_controller->handleSingleSelectorReturn(data_objects.at(i), true);
 
 						// Delete the Selected Object
 						delete selected_objects.at(i);
@@ -3893,7 +3959,7 @@ void Editor::Selector::addSpringMassNode(Selected_SpringMassObject* selected_obj
 
 	// Generate New Node Object
 	Selected_SpringMassNode* new_selected_node = new Selected_SpringMassNode();
-	DataClass::Data_SpringMassNode* new_data_node = new DataClass::Data_SpringMassNode();
+	DataClass::Data_SpringMassNode* new_data_node = new DataClass::Data_SpringMassNode(0);
 	Object::Physics::Soft::NodeData& node_data = new_data_node->getNodeData();
 	int node_count = 0;
 	node_data.mass = 1.0f;
@@ -4089,7 +4155,7 @@ void Editor::Selector::addSpringMassSpring(Selected_SpringMassObject* selected_o
 			temp_file.close();
 
 			// Establish Spring Data
-			DataClass::Data_SpringMassSpring* new_data_spring = new DataClass::Data_SpringMassSpring();
+			DataClass::Data_SpringMassSpring* new_data_spring = new DataClass::Data_SpringMassSpring(0);
 			Object::Physics::Soft::Spring& spring_data = new_data_spring->getSpringData();
 			spring_data.Node1 = new_selected_spring->node_list[0].name;
 			spring_data.Node2 = new_selected_spring->node_list[1].name;
@@ -5114,6 +5180,16 @@ void Editor::Selector::Selected_Object::outlineChangeColor(float* colors)
 	glBindVertexArray(0);
 }
 
+void Editor::Selector::Selected_Object::updateSelectedPositions(DataClass::Data_Object* data_object, float deltaX, float deltaY)
+{
+	// Only Execute if Group Object is Not NULL
+	if (data_object->getGroup() != nullptr)
+	{
+		for (DataClass::Data_Object* child : data_object->getGroup()->getChildren())
+			child->updateSelectedPosition(deltaX, deltaY);
+	}
+}
+
 uint8_t Editor::Selector::Selected_Rectangle::updateObject()
 {
 	// The Result of the Object Interaction
@@ -5197,6 +5273,8 @@ void Editor::Selector::Selected_Rectangle::updateGroup(Group_Selector& group_sel
 void Editor::Selector::Selected_Rectangle::moveObject()
 {
 	bool enable_negative = false;
+	float new_x = *object_x;
+	float new_y = *object_y;
 
 	// Shift Horizontal
 	if (change_horizontal != 0)
@@ -5214,10 +5292,10 @@ void Editor::Selector::Selected_Rectangle::moveObject()
 		// Calculate New xPos by Taking the Average of the x Position of the Unchanging (opposite) Side and the x Position of the Mouse
 		if (!group_selector->resizing)
 		{
-			*object_x = (Global::mouseRelativeX + offset_x + (*object_x - ((*object_width * 0.5f) * change_horizontal))) * 0.5f;
+			new_x = (Global::mouseRelativeX + offset_x + (*object_x - ((*object_width * 0.5f) * change_horizontal))) * 0.5f;
 
 			// Calculate New Width by Multiplying the Distance Between the Mouse and xPos by 2
-			*object_width = 2 * (Global::mouseRelativeX + offset_x - *object_x) * change_horizontal;
+			*object_width = 2 * (Global::mouseRelativeX + offset_x - new_x) * change_horizontal;
 
 			// Prevent Size from Going Negative
 			if (*object_width <= 0.1f && !enable_negative)
@@ -5255,10 +5333,10 @@ void Editor::Selector::Selected_Rectangle::moveObject()
 		// Calculate New yPos by Taking the Average of the y Position of the Unchanging (opposite) Side and the y Position of the Mouse
 		if (!group_selector->resizing)
 		{
-			*object_y = (Global::mouseRelativeY + offset_y + (*object_y - ((*object_height * 0.5f) * change_vertical))) * 0.5f;
+			new_y = (Global::mouseRelativeY + offset_y + (*object_y - ((*object_height * 0.5f) * change_vertical))) * 0.5f;
 
 			// Calculate New Height by Multiplying the Distance Between the Mouse and yPos by 2
-			*object_height = 2 * (Global::mouseRelativeY + offset_y - *object_y) * change_vertical;
+			*object_height = 2 * (Global::mouseRelativeY + offset_y - new_y) * change_vertical;
 
 			// Prevent Size from Going Negative
 			if (*object_height <= 0.1f && !enable_negative)
@@ -5283,15 +5361,22 @@ void Editor::Selector::Selected_Rectangle::moveObject()
 	// Move if Size Doesn't Change
 	if (moving && !(change_vertical || change_horizontal))
 	{
-		Global::Selected_Cursor = Global::CURSORS::HAND;
-		*object_x = (float)(Global::mouseRelativeX + offset_x);
-		*object_y = (float)(Global::mouseRelativeY + offset_y);
+		new_x = (float)(Global::mouseRelativeX + offset_x);
+		new_y = (float)(Global::mouseRelativeY + offset_y);
+		updateSelectedPositions(data_object, new_x - *object_x, new_y - *object_y);
+		*object_x = new_x;
+		*object_y = new_y;
 		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
 	}
 
 	// Else Update Vertices and Buffer Objects
 	else
+	{
+		updateSelectedPositions(data_object, new_x - *object_x, new_y - *object_y);
+		*object_x = new_x;
+		*object_y = new_y;
 		genSelectorVertices(data_object, vertex_objects);
+	}
 }
 
 void Editor::Selector::Selected_Rectangle::testResizeRectangle(bool enable_horizontal, bool enable_vertical)
@@ -5493,6 +5578,9 @@ void Editor::Selector::Selected_Trapezoid::updateGroup(Group_Selector& group_sel
 
 void Editor::Selector::Selected_Trapezoid::moveObject()
 {
+	float new_x = *object_x;
+	float new_y = *object_y;
+
 	// Shift Horizontal
 	if (change_horizontal)
 	{
@@ -5512,11 +5600,11 @@ void Editor::Selector::Selected_Trapezoid::moveObject()
 				if (!Global::editor_options->option_disable_pass_through || temp_Size2 > 0.1f)
 				{
 					// Apply Change
-					*object_x -= change;
+					new_x -= change;
 					*object_width_modifier += change;
 
 					// Apply Calculated Size Change
-					*object_y = temp_yPos;
+					new_y = temp_yPos;
 					*object_height = temp_Size2;
 				}
 			}
@@ -5553,7 +5641,7 @@ void Editor::Selector::Selected_Trapezoid::moveObject()
 				{
 					// Apply Calculated Size Change
 					*object_width_modifier = temp_SizeOffset1;
-					*object_y = temp_yPos;
+					new_y = temp_yPos;
 					*object_height = temp_Size2;
 				}
 			}
@@ -5598,7 +5686,7 @@ void Editor::Selector::Selected_Trapezoid::moveObject()
 				{
 					// Apply Calculated Size Change
 					*object_height_modifier = temp_SizeOffset2;
-					*object_x = temp_xPos;
+					new_x = temp_xPos;
 					*object_width = temp_Size1;
 				}
 			}
@@ -5634,11 +5722,11 @@ void Editor::Selector::Selected_Trapezoid::moveObject()
 				if (!Global::editor_options->option_disable_pass_through || temp_Size1 > 0.1f)
 				{
 					// Apply Change
-					*object_y -= change;
+					new_y -= change;
 					*object_height_modifier += change;
 
 					// Apply Calculated Size Change
-					*object_x = temp_xPos;
+					new_x = temp_xPos;
 					*object_width = temp_Size1;
 				}
 			}
@@ -5666,14 +5754,22 @@ void Editor::Selector::Selected_Trapezoid::moveObject()
 	// Move if Size Doesn't Change
 	if (!(change_vertical || change_horizontal))
 	{
-		*object_x = (float)(Global::mouseRelativeX + offset_x);
-		*object_y = (float)(Global::mouseRelativeY + offset_y);
+		new_x = (float)(Global::mouseRelativeX + offset_x);
+		new_y = (float)(Global::mouseRelativeY + offset_y);
+		updateSelectedPositions(data_object, new_x - *object_x, new_y - *object_y);
+		*object_x = new_x;
+		*object_y = new_y;
 		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
 	}
 
 	// Else Update Vertices and Buffer Objects
 	else
+	{
+		updateSelectedPositions(data_object, new_x - *object_x, new_y - *object_y);
+		*object_x = new_x;
+		*object_y = new_y;
 		genSelectorVertices(data_object, vertex_objects);
+	}
 }
 
 void Editor::Selector::Selected_Trapezoid::testResizeTrapezoid()
@@ -5887,6 +5983,9 @@ void Editor::Selector::Selected_Triangle::updateGroupHelper(Group_Selector& grou
 
 void Editor::Selector::Selected_Triangle::moveObject()
 {
+	float new_x = *object_x;
+	float new_y = *object_y;
+
 	if (group_selector->resizing)
 	{
 		if (change_horizontal > 0)
@@ -6040,6 +6139,7 @@ void Editor::Selector::Selected_Triangle::moveObject()
 		// Move Highest Vertex
 		if (selected_vertex == 1)
 		{
+			updateSelectedPositions(data_object, Global::mouseRelativeX - coords1.x, Global::mouseRelativeY - coords1.y);
 			coords1.x = Global::mouseRelativeX;
 			coords1.y = Global::mouseRelativeY;
 		}
@@ -6073,8 +6173,11 @@ void Editor::Selector::Selected_Triangle::moveObject()
 		// Calclate New Coordinates
 		glm::vec2 delta_coords2 = coords2 - coords1;
 		glm::vec2 delta_coords3 = coords3 - coords1;
-		coords1.x = (float)(Global::mouseRelativeX + offset_x);
-		coords1.y = (float)(Global::mouseRelativeY + offset_y);
+		new_x = (float)(Global::mouseRelativeX + offset_x);
+		new_y = (float)(Global::mouseRelativeY + offset_y);
+		updateSelectedPositions(data_object, new_x - *object_x, new_y - *object_y);
+		coords1.x = new_x;
+		coords1.y = new_y;
 		coords2 = delta_coords2 + coords1;
 		coords3 = delta_coords3 + coords1;
 
@@ -6209,6 +6312,9 @@ void Editor::Selector::Selected_Circle::updateGroup(Group_Selector& group_select
 
 void Editor::Selector::Selected_Circle::moveObject()
 {
+	float new_x = *object_x;
+	float new_y = *object_y;
+
 	// Group Resizing
 	if (group_selector->resizing)
 	{
@@ -6252,8 +6358,12 @@ void Editor::Selector::Selected_Circle::moveObject()
 	// Move if Size Doesn't Change
 	if (!selected_vertex)
 	{
-		*object_x = (float)(Global::mouseRelativeX + offset_x);
-		*object_y = (float)(Global::mouseRelativeY + offset_y);
+
+		new_x = (float)(Global::mouseRelativeX + offset_x);
+		new_y = (float)(Global::mouseRelativeY + offset_y);
+		updateSelectedPositions(data_object, new_x - *object_x, new_y - *object_y);
+		*object_x = new_x;
+		*object_y = new_y;
 		vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*object_x, *object_y, 0.0f));
 	}
 
@@ -6548,6 +6658,9 @@ void Editor::Selector::Selected_Line::updateGroupHelper(Group_Selector& group_se
 
 void Editor::Selector::Selected_Line::moveObject()
 {
+	float new_x = *object_x;
+	float new_y = *object_y;
+
 	if (group_selector->resizing)
 	{
 		if (change_horizontal > 0.0f)

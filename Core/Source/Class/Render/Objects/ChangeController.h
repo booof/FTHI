@@ -28,7 +28,9 @@ namespace Editor
 
 namespace Render::Objects
 {
+	class UnsavedBase;
 	class UnsavedLevel;
+	class UnsavedGroup;
 
 	class Level;
 
@@ -48,8 +50,8 @@ namespace Render::Objects
 		// Struct for Chain Instance
 		struct ChainMember
 		{
-			// Stack Index of Each Unsaved Level 
-			std::vector<UnsavedLevel*> stack_indicies;
+			// Stack Index of Each Unsaved Object
+			std::vector<UnsavedBase*> stack_indicies;
 
 			// Position of Camera to move to
 			glm::vec2 camera_pos;
@@ -121,6 +123,9 @@ namespace Render::Objects
 		// Vector of Unsaved Levels
 		std::vector<UnsavedLevel*> unsaved_levels;
 
+		// Vector of Unsaved Groups
+		std::vector<UnsavedGroup*> unsaved_groups;
+
 		// Master Stack
 		MasterStack* master_stack = nullptr;
 
@@ -159,6 +164,9 @@ namespace Render::Objects
 		// Generate a New Unsaved Level
 		UnsavedLevel* generateUnsavedLevel(int16_t x, int16_t y, int8_t z);
 
+		// Stores an Unsaved Group
+		void storeUnsavedGroup(UnsavedGroup* new_group);
+
 		// Transfer An Object Between Levels
 		void transferObject(DataClass::Data_Object* data_object, int16_t x, int16_t y, int8_t z);
 
@@ -166,7 +174,7 @@ namespace Render::Objects
 		void handleSelectorReturn(Editor::Selector* selector);
 
 		// Handle the Return of a Single Object From Selector
-		void handleSingleSelectorReturn(DataClass::Data_Object* data_object);
+		void handleSingleSelectorReturn(DataClass::Data_Object* data_object, bool reload_all);
 
 		// Hangle Deletion of an Object From Selector
 		void handleSelectorDelete(Editor::Selector* selector);

@@ -21,8 +21,8 @@
 #include "Object/Lighting/Spot.h"
 #include "Object/Lighting/Beam.h"
 #include "Object/Physics/RigidBody/RigidBody.h"
-#include "Object/Physics/Softody/SpringMass.h"
-#include "Object/Physics/Softody/Wire.h"
+#include "Object/Physics/SoftBody/SpringMass.h"
+#include "Object/Physics/SoftBody/Wire.h"
 #include "Object/Physics/Hinge/Anchor.h"
 #include "Object/Physics/Hinge/Hinge.h"
 #include "Object/Entity/NPC.h"
@@ -37,6 +37,11 @@
 namespace Shape
 {
 	class Shape;
+}
+
+// Declaration for Unsaved Objects
+namespace Render::Objects {
+	class UnsavedGroup;
 }
 
 namespace DataClass
@@ -60,7 +65,7 @@ namespace DataClass
 	protected:
 
 		// Identifier for the Object
-		uint8_t object_identifier[3] = { NULL };
+		uint8_t object_identifier[4] = { NULL };
 
 		// Editor Data
 		EditorData editor_data;
@@ -72,13 +77,40 @@ namespace DataClass
 		uint32_t object_index = 0;
 
 		// Lambdas to Read a Shape
-		std::function<Shape::Shape* (std::ifstream& object_file)> shapes[5] = {
+		const std::function<Shape::Shape* (std::ifstream& object_file)> shapes[5] = {
 			[](std::ifstream& object_file)->Shape::Shape* {return new Shape::Rectangle(object_file); },
 			[](std::ifstream& object_file)->Shape::Shape* {return new Shape::Trapezoid(object_file); },
 			[](std::ifstream& object_file)->Shape::Shape* {return new Shape::Triangle(object_file); },
 			[](std::ifstream& object_file)->Shape::Shape* {return new Shape::Circle(object_file); },
 			[](std::ifstream& object_file)->Shape::Shape* {return new Shape::Polygon(object_file); }
 		};
+
+		// The Pointer to the Unsaved Group
+		Render::Objects::UnsavedGroup* group_object = nullptr;
+
+		// The Pointer to the Current Parent DataClass
+		Data_Object* parent = nullptr;
+
+		// Determines if the Object Should Move With Its Parent
+		bool move_with_parent = true;
+
+		// The Colors Used to Visualize Parent-Child Relationships
+		const glm::vec4 visualizer_colors[5] = {
+			glm::vec4(0.0f, 0.0f, 0.8f, 1.0f), // Blue
+			glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), // Red
+			glm::vec4(0.0f, 0.8f, 0.0f, 1.0f), // Green
+			glm::vec4(0.8f, 0.0f, 0.8f, 1.0f), // Pink
+			glm::vec4(0.0f, 0.8f, 0.8f, 1.0f)  // Turquoise
+		};
+
+		// The Layer the Object is in In a Group
+		uint8_t group_layer = 0;
+
+		// The Pointer to the Object the DataClass Represents
+		Object::Object* object_pointer = nullptr;
+
+		// Helper Function to Update Selected Positions
+		void updateSelectedPositionsHelper(float deltaX, float deltaY);
 
 		// Read Editor Data in Generated Object
 		void readEditorData(std::ifstream& editor_file);
@@ -105,6 +137,45 @@ namespace DataClass
 
 		// Read Object
 		void readObject(std::ifstream& object_file, std::ifstream& editor_file);
+
+		// Function to Add a Child to a Data Object
+		void addChild(DataClass::Data_Object* data_object);
+
+		// Function to Add a Child to a Data Object Via Selection
+		void addChildViaSelection(DataClass::Data_Object* data_object);
+
+		// Function to Draw Group Visualizers
+		void drawGroupVisualizer();
+
+		// Function to Draw Group Visualizer With Parent
+		void drawParentConnection();
+
+		// Returns the Group Object
+		Render::Objects::UnsavedGroup* getGroup();
+
+		// Set the Parent Object
+		void setParent(Data_Object* new_parent);
+
+		// Get the Parent Object
+		Data_Object* getParent();
+
+		// Disable the Move With Parent Feature
+		void disableMoveWithParent();
+
+		// Re-Enable the Move With Parent Feature
+		void enableMoveWithParent();
+
+		// Get the Move With Parent Flag
+		bool getMoveWithParent();
+
+		// Set the Layer the Object is in a Group
+		void setGroupLayer(uint8_t new_layer);
+
+		// Get the Group Layer
+		uint8_t& getGroupLayer();
+
+		// Get the Pointer to the Real Object
+		Object::Object* getObject();
 
 		// Generate Object
 		Object::Object* generateObject();
@@ -133,8 +204,14 @@ namespace DataClass
 		// Create a Copy of the Object
 		virtual Data_Object* makeCopy() = 0;
 
+		// Make a Copy of the Object for Selecting
+		Data_Object* makeCopySelected(Editor::Selector& selector);
+
 		// Make a Unique Copy of the Object
 		Data_Object* makeCopyUnique();
+
+		// Update the Selected Position of an Object
+		virtual void updateSelectedPosition(float deltaX, float deltaY) = 0;
 	};
 
 	// Sub Object Data Class
@@ -153,6 +230,9 @@ namespace DataClass
 		int& getScript();
 
 		glm::vec2& getPosition();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 	};
 
 	// Horizontal Line
@@ -172,6 +252,9 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, float& size);
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 	};
 
 	// Slant
@@ -191,6 +274,9 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, float& size);
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 	};
 
 	// Slope
@@ -210,6 +296,9 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, float& size);
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 	};
 
 	// Floor Mask
@@ -241,7 +330,7 @@ namespace DataClass
 	public:
 
 		// Floor Mask Horizontal Line Data 
-		Data_FloorMaskHorizontalLine();
+		Data_FloorMaskHorizontalLine(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -265,7 +354,7 @@ namespace DataClass
 	public:
 
 		// Floor Mask Slant Data
-		Data_FloorMaskSlant();
+		Data_FloorMaskSlant(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -289,7 +378,7 @@ namespace DataClass
 	public:
 
 		// Floor Mask Slope Data
-		Data_FloorMaskSlope();
+		Data_FloorMaskSlope(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -313,7 +402,7 @@ namespace DataClass
 	public:
 
 		// Ceiling Mask Horizontal Line Data
-		Data_CeilingMaskHorizontalLine();
+		Data_CeilingMaskHorizontalLine(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -337,7 +426,7 @@ namespace DataClass
 	public:
 
 		// Ceiling Mask Slant Data
-		Data_CeilingMaskSlant();
+		Data_CeilingMaskSlant(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -361,7 +450,7 @@ namespace DataClass
 	public:
 
 		// Ceiling Mask Slope Data
-		Data_CeilingMaskSlope();
+		Data_CeilingMaskSlope(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -387,6 +476,9 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, float& size);
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 	};
 
 	// Curve
@@ -406,6 +498,9 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, float& size);
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 	};
 
 	// Left Mask Vertical Line
@@ -423,7 +518,7 @@ namespace DataClass
 	public:
 
 		// Left Mask Vertical Line Data
-		Data_LeftMaskVerticalLine();
+		Data_LeftMaskVerticalLine(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -447,7 +542,7 @@ namespace DataClass
 	public:
 
 		// Left Mask Curve Data
-		Data_LeftMaskCurve();
+		Data_LeftMaskCurve(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -471,7 +566,7 @@ namespace DataClass
 	public:
 
 		// Right Mask Vertical Line Data
-		Data_RightMaskVerticalLine();
+		Data_RightMaskVerticalLine(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -495,7 +590,7 @@ namespace DataClass
 	public:
 
 		// Right Mask Curve Data
-		Data_RightMaskCurve();
+		Data_RightMaskCurve(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -521,13 +616,16 @@ namespace DataClass
 	public:
 
 		// Trigger Mask Data
-		Data_TriggerMask();
+		Data_TriggerMask(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 
 		Object::Mask::Trigger::TriggerData& getTriggerData();
 
@@ -573,7 +671,7 @@ namespace DataClass
 	public:
 
 		// Terrain Data
-		Data_Terrain(uint8_t layer_identifier, uint8_t shape_identifier);
+		Data_Terrain(uint8_t layer_identifier, uint8_t shape_identifier, uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -627,13 +725,16 @@ namespace DataClass
 	public:
 
 		// Directional Light Data
-		Data_Directional();
+		Data_Directional(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 
 		Object::Light::Directional::DirectionalData& getDirectionalData();
 
@@ -658,13 +759,16 @@ namespace DataClass
 	public:
 
 		// Point Light Data
-		Data_Point();
+		Data_Point(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 
 		Object::Light::Point::PointData& getPointData();
 
@@ -689,13 +793,16 @@ namespace DataClass
 	public:
 
 		// Spot Light Data
-		Data_Spot();
+		Data_Spot(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 
 		Object::Light::Spot::SpotData& getSpotData();
 
@@ -720,13 +827,16 @@ namespace DataClass
 	public:
 
 		// Beam Light Data
-		Data_Beam();
+		Data_Beam(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 
 		Object::Light::Beam::BeamData& getBeamData();
 
@@ -767,7 +877,7 @@ namespace DataClass
 	public:
 
 		// Rigid Body Data
-		Data_RigidBody(uint8_t shape_identifier);
+		Data_RigidBody(uint8_t shape_identifier, uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -798,7 +908,7 @@ namespace DataClass
 	public:
 
 		// SpringMass Data
-		Data_SpringMass();
+		Data_SpringMass(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -835,10 +945,13 @@ namespace DataClass
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
+
 	public:
 
 		// SpringMass Node Data
-		Data_SpringMassNode();
+		Data_SpringMassNode(uint8_t children_size);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -883,10 +996,13 @@ namespace DataClass
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
+
 	public:
 
 		// SpringMass Spring Data
-		Data_SpringMassSpring();
+		Data_SpringMassSpring(uint8_t children_size);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -925,13 +1041,16 @@ namespace DataClass
 	public:
 
 		// Wire Data
-		Data_Wire();
+		Data_Wire(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 
 		void generateInitialValues(glm::vec2& position, float& size);
 
@@ -956,13 +1075,16 @@ namespace DataClass
 	public:
 
 		// Anchor Data
-		Data_Anchor();
+		Data_Anchor(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 
 		int& getScript();
 
@@ -994,13 +1116,16 @@ namespace DataClass
 	public:
 
 		// Hinge Data
-		Data_Hinge();
+		Data_Hinge(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 
 		int& getScript();
 
@@ -1047,7 +1172,7 @@ namespace DataClass
 	public:
 
 		// NPC Data
-		Data_NPC();
+		Data_NPC(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -1071,7 +1196,7 @@ namespace DataClass
 	public:
 
 		// Controllable Entity Data
-		Data_Controllable();
+		Data_Controllable(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -1098,7 +1223,7 @@ namespace DataClass
 	public:
 
 		// Interactable Entity Data
-		Data_Interactable();
+		Data_Interactable(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -1125,7 +1250,7 @@ namespace DataClass
 	public:
 
 		// Dynamic Entity Data
-		Data_Dynamic();
+		Data_Dynamic(uint8_t children_size);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);

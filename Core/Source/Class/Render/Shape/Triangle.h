@@ -56,6 +56,9 @@ public:
 	// Make a Copy of the Shape
 	Shape* makeCopy();
 
+	// Update the Selected Position of the Shape
+	void updateSelectedPosition(float deltaX, float deltaY);
+
 #endif
 
 };

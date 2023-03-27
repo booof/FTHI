@@ -25,6 +25,9 @@ namespace Object::Mask
 
 		// Test Collisions of Object
 		bool testCollisions(glm::vec2 test_position, float error, bool fallthrough);
+
+		// Update Selected Position of Object
+		void updateSelectedPosition(float deltaX, float deltaY);
 		
 		// Get the Left and Right Edge Vertices
 		void getLeftRightEdgeVertices(glm::vec2& left, glm::vec2& right);

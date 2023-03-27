@@ -86,3 +86,10 @@ void DataClass::Data_Curve::generateInitialValues(glm::vec2& position, float& si
 	data.material = 0;
 }
 
+void DataClass::Data_Curve::updateSelectedPosition(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	updateSelectedPositionsHelper(deltaX, deltaY);
+}
+
