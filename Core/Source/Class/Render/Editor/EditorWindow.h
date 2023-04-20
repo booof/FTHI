@@ -372,6 +372,10 @@ namespace Editor
 		// Boxes = 1, Text = 1
 		void genBoxesAI(uint8_t& box_offset, uint8_t&  text_offset, float height_offset);
 
+		// Gen Group Boxes
+		// Boxes = 1, Text = 1
+		void genBoxesGroup(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
+
 		// Assign Color Wheel
 		void assignColorWheel(ColorWheel* wheel_, uint8_t& box_offset, uint8_t& text_offset, unsigned int* color, float height_offset);
 

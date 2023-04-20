@@ -225,13 +225,13 @@ DataClass::Data_Object* DataClass::Data_Directional::makeCopy()
 	return new Data_Directional(*this);
 }
 
-void DataClass::Data_Directional::updateSelectedPosition(float deltaX, float deltaY)
+void DataClass::Data_Directional::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
 {
 	light_data.position.x += deltaX;
 	light_data.position.y += deltaY;
 	directional.position2.x += deltaX;
 	directional.position2.y += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY);
+	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }
 
 Object::Light::Directional::DirectionalData& DataClass::Data_Directional::getDirectionalData()

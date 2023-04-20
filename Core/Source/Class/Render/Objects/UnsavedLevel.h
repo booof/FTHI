@@ -50,9 +50,6 @@ namespace Render::Objects
 		// Path to Editor Configuration Data
 		std::string editor_path = "";
 
-		// The Lambdas that Generate and Return a Data Class Based on Object Identifier
-		DataClass::Data_Object* lambdaDataObject(uint8_t object_identifier[4]);
-
 		// Construct Unmodified Data Helper
 		void constructUnmodifiedDataHelper(ObjectsInstance& instance);
 
@@ -60,7 +57,7 @@ namespace Render::Objects
 		void buildObjectsHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, ObjectsInstance& instance);
 
 		// Generator to Build Objects
-		void buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Object** active_array, uint16_t& active_index, Object::Object* parent);
+		void buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Object** active_array, uint16_t& active_index, Object::Object* parent, glm::vec2 position_offset);
 
 		// Return Pointer to Shape Data
 		Shape::Shape* getShapePointer(Editor::Selector* selector);
@@ -114,6 +111,9 @@ namespace Render::Objects
 
 		// Return Object Header Helper
 		void returnObjectHeaderHelper(DataClass::Data_Object* dobject);
+
+		// Tests if an Object can be Successfully Added to the Object
+		bool testValidSelection(DataClass::Data_Object* parent, DataClass::Data_Object* test_child);
 
 		// Draw Object State Visualizer
 		void drawVisualizer();

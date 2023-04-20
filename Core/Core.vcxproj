@@ -42,6 +42,7 @@
     <ClCompile Include="Source\Class\Object\Entity\EntityBase.cpp" />
     <ClCompile Include="Source\Class\Object\Entity\Interactables.cpp" />
     <ClCompile Include="Source\Class\Object\Entity\NPC.cpp" />
+    <ClCompile Include="Source\Class\Object\Group\GroupObject.cpp" />
     <ClCompile Include="Source\Class\Object\Lighting\Beam.cpp" />
     <ClCompile Include="Source\Class\Object\Lighting\Directional.cpp" />
     <ClCompile Include="Source\Class\Object\Lighting\LightBase.cpp" />
@@ -82,6 +83,8 @@
     <ClCompile Include="Source\Class\Render\Objects\SubLevel.cpp" />
     <ClCompile Include="Source\Class\Render\Objects\TextureHandler.cpp" />
     <ClCompile Include="Source\Class\Render\Objects\UnsavedBase.cpp" />
+    <ClCompile Include="Source\Class\Render\Objects\UnsavedCollection.cpp" />
+    <ClCompile Include="Source\Class\Render\Objects\UnsavedComplex.cpp" />
     <ClCompile Include="Source\Class\Render\Objects\UnsavedGroup.cpp" />
     <ClCompile Include="Source\Class\Render\Objects\UnsavedLevel.cpp" />
     <ClCompile Include="Source\Class\Render\Shader\Shader.cpp" />
@@ -146,6 +149,7 @@
     <ClInclude Include="Source\Class\Object\Entity\EntityBase.h" />
     <ClInclude Include="Source\Class\Object\Entity\Interactables.h" />
     <ClInclude Include="Source\Class\Object\Entity\NPC.h" />
+    <ClInclude Include="Source\Class\Object\Group\GroupObject.h" />
     <ClInclude Include="Source\Class\Object\Lighting\Beam.h" />
     <ClInclude Include="Source\Class\Object\Lighting\Directional.h" />
     <ClInclude Include="Source\Class\Object\Lighting\LightBase.h" />
@@ -205,6 +209,7 @@
     <ClInclude Include="Source\Class\Render\Objects\SubLevel.h" />
     <ClInclude Include="Source\Class\Render\Objects\TextureHandler.h" />
     <ClInclude Include="Source\Class\Render\Objects\UnsavedBase.h" />
+    <ClInclude Include="Source\Class\Render\Objects\UnsavedCollection.h" />
     <ClInclude Include="Source\Class\Render\Objects\UnsavedComplex.h" />
     <ClInclude Include="Source\Class\Render\Objects\UnsavedGroup.h" />
     <ClInclude Include="Source\Class\Render\Objects\UnsavedLevel.h" />

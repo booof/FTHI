@@ -31,9 +31,9 @@ void Source::Rendering::Editing::edit(Render::Objects::Level* level, Editor::Sel
 			Source::Listeners::SmoothKeyCallback_Editor(*level->camera, *selector, *level, accelerationTimer);
 
 		// If Selector is Inactive, Perform Selecting
-		if ((!selector->active && !selector->editing) || 
-			( (Global::Keys[GLFW_KEY_LEFT_CONTROL] || Global::Keys[GLFW_KEY_RIGHT_CONTROL])
-			^ (selector->selectedOnlyOne() && (Global::Keys[GLFW_KEY_LEFT_ALT] || Global::Keys[GLFW_KEY_RIGHT_ALT])) ) 
+		if ((!selector->active && !selector->editing) ||
+			((Global::Keys[GLFW_KEY_LEFT_CONTROL] || Global::Keys[GLFW_KEY_RIGHT_CONTROL])
+				^ (selector->selectedOnlyOne() && (Global::Keys[GLFW_KEY_LEFT_ALT] || Global::Keys[GLFW_KEY_RIGHT_ALT])))
 			)
 			level->testSelector(*selector, *object_info);
 

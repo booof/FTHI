@@ -31,6 +31,7 @@
 #include "Class/Render/Struct/DataClasses.h"
 
 #include "UnsavedGroup.h"
+#include "UnsavedComplex.h"
 
 void Render::Objects::Level::updateLevelPos(glm::vec2 position, glm::vec2& level)
 {
@@ -115,10 +116,7 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 	{
 		// Deconstruct Level Objects
 		for (int i = 0; i < 9; i++)
-		{
-			//sublevels[i]->~SubLevel();
 			delete sublevels[i];
-		}
 
 		// Reset Physics
 		physics_list.erase();
@@ -132,7 +130,6 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 		{
 			for (int level_x = -1; level_x < 2; level_x++)
 			{
-
 				new_level = new SubLevel((int)level_new.x + level_x, (int)level_new.y + level_y);
 				new_level->addHeader(total_object_count_new);
 				sublevels[iterater] = new_level;
@@ -319,7 +316,7 @@ void Render::Objects::Level::segregateObjects()
 	uint8_t container_index = 0;
 
 	// The Map for Container Index to Container Storage Type
-	uint8_t storage_map[10] = { Object::FLOOR_COUNT, Object::LEFT_COUNT, Object::RIGHT_COUNT, Object::CEILING_COUNT, Object::TRIGGER_COUNT, Object::TERRAIN_COUNT, Object::DIRECTIONAL_COUNT, Object::POINT_COUNT, Object::SPOT_COUNT, Object::BEAM_COUNT };
+	uint8_t storage_map[11] = { Object::FLOOR_COUNT, Object::LEFT_COUNT, Object::RIGHT_COUNT, Object::CEILING_COUNT, Object::TRIGGER_COUNT, Object::TERRAIN_COUNT, Object::DIRECTIONAL_COUNT, Object::POINT_COUNT, Object::SPOT_COUNT, Object::BEAM_COUNT, Object::GROUP_COUNT };
 
 	// Segregate Objects
 	Object::Object* current_object = nullptr;
@@ -421,6 +418,11 @@ void Render::Objects::Level::reallocateAll(bool del, uint32_t size)
 	// Test if Memory Has Previously Been Allocated
 	if (del)
 	{
+		// Delete Objects in Container
+		for (int i = 0; i < container.total_object_count; i++)
+			delete container.object_array[i];
+
+		// Delete Containers
 		delete[] container.object_array;
 		physics_list.erase();
 		entity_list.erase();
@@ -654,6 +656,121 @@ void Render::Objects::Level::loadLights()
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	// Remember to Set up Material and View Pos in Object Frag Shader
+}
+
+void Render::Objects::Level::getObjectIndicies(DataClass::Data_Object* parent, uint32_t** indicies, int& indicies_size)
+{
+	// Only Execute if Group is Not Nullptr Not Complex
+	if (parent->getGroup() != nullptr && parent->getGroup()->getCollectionType() != UNSAVED_COLLECTIONS::COMPLEX)
+	{
+		// Get Vector of Children
+		std::vector<DataClass::Data_Object*>& children = parent->getGroup()->getChildren();
+
+		// Only Execute if There Are Children
+		if (children.size() > 0)
+		{
+			// Dereference the Old Array
+			uint32_t* old_array = *indicies;
+
+			// Generate an Array to Hold the New Children
+			uint32_t* children_indicies = new uint32_t[children.size()];
+
+			// Copy Children Indicies Into Children Indicies Array
+			for (int i = 0; i < children.size(); i++)
+				children_indicies[i] = children[i]->getObjectIndex();
+
+			// Sort Children Indicies (Selection Sort)
+			int min_index = 0;
+			for (int i = 0; i < children.size() - 1; i++)
+			{
+				min_index = i;
+				for (int j = i; j < children.size(); j++)
+				{
+					if (children_indicies[j] < children_indicies[min_index])
+						min_index = j;
+				}
+				uint32_t temp = children_indicies[min_index];
+				children_indicies[min_index] = children_indicies[i];
+				children_indicies[i] = temp;
+			}
+
+			// Determine the New Size of the Array
+			int new_size = indicies_size + children.size();
+
+			// Allocate Memory for the New Array
+			uint32_t* new_array = new uint32_t[new_size];
+
+			// Perform a Merge on the Old Array With New Children
+			int left = 0;
+			int right = 0;
+			int count = 0;
+			while (count < new_size)
+			{
+				if (left < indicies_size && right < children.size())
+				{
+					if (old_array[left] < children_indicies[right])
+					{
+						new_array[count] = old_array[left];
+						left++;
+					}
+
+					else
+					{
+						new_array[count] = children_indicies[right];
+						right++;
+					}
+				}
+
+				else if (left < indicies_size)
+				{
+					new_array[count] = old_array[left];
+					left++;
+				}
+
+				else
+				{
+					new_array[count] = children_indicies[right];
+					right++;
+				}
+
+				count++;
+			}
+
+			// Delete Old and Temp Arrays
+			if (indicies_size != 0)
+				delete[] old_array;
+			delete[] children_indicies;
+
+			// Store Updated Array Values
+			(*indicies) = new_array;
+			indicies_size = new_size;
+
+			// Recursively Add Children Indicies
+			for (DataClass::Data_Object* child : children)
+				getObjectIndicies(child, indicies, indicies_size);
+		}
+	}
+}
+
+bool Render::Objects::Level::searchObjectIndicies(uint32_t* indicies, int left, int right, uint32_t test_value)
+{
+	// If Code Reaches Here, Value Was Not Found
+	if (left > right)
+		return false;
+
+	// Calculate Midpoint in Array
+	int midpoint = (left + right) >> 1;
+
+	// If Test Value is at Midpoint, Return True
+	if (indicies[midpoint] == test_value)
+		return true;
+
+	// If Test Value is Less Than Midpoint Value, Test Lower Half
+	if (test_value < indicies[midpoint])
+		return searchObjectIndicies(indicies, left, midpoint - 1, test_value);
+
+	// If Test Value is Greater Than Midpoint Value, Test Upper Half
+	return searchObjectIndicies(indicies, midpoint + 1, right, test_value);
 }
 
 template<class Type>
@@ -908,10 +1025,6 @@ void Render::Objects::Level::drawContainer()
 	//glUniformMatrix4fv(Global::matrixLocObject, 1, GL_FALSE, glm::value_ptr(matrix));
 	glDrawArrays(GL_TRIANGLES, number_of_vertices[5], number_of_vertices[6]);
 	glBindVertexArray(0);
-
-	// Draw Visualizers for Groups
-	for (int i = 0; i < container.total_object_count; i++)
-		container.object_array[i]->drawGroupVisualizer();
 }
 
 #ifdef EDITOR
@@ -924,6 +1037,9 @@ void Render::Objects::Level::drawVisualizers()
 	// Draw Level Visualizers
 	for (int i = 0; i < 9; i++)
 		sublevels[i]->drawVisualizer();
+
+	// Draw Complex Object Visualizers
+	change_controller->drawVisualizers();
 
 	// Draw Floor Masks
 	for (int i = 0; i < container.floor_size; i++)
@@ -945,6 +1061,10 @@ void Render::Objects::Level::drawVisualizers()
 	for (int i = 0; i < container.trigger_size; i++)
 		container.trigger_start[i]->blitzLine();
 
+	// Draw Visualizer for Group Objects
+	for (int i = 0; i < container.group_size; i++)
+		container.group_start[i]->drawObject();
+
 	// Bind Texture Shader
 	Global::texShaderStatic.Use();
 	glUniform1i(Global::staticLocTexture, 0);
@@ -965,6 +1085,10 @@ void Render::Objects::Level::drawVisualizers()
 	// Draw Beam Lights
 	for (int i = 0; i < container.beam_size; i++)
 		container.beam_start[i]->blitzObject();
+
+	// Draw Visualizers for Groups
+	for (int i = 0; i < container.total_object_count; i++)
+		container.object_array[i]->drawGroupVisualizer();
 }
 
 void Render::Objects::Level::testSelector(Editor::Selector& selector, Editor::ObjectInfo& object_info)
@@ -985,6 +1109,9 @@ void Render::Objects::Level::testSelector(Editor::Selector& selector, Editor::Ob
 
 	// Test Selector On Formerground Terrain
 	if (testSelectorTerrain(5, selector, object_info)) { return; }
+
+	// Test Selector On Group Objects
+	if (testSelectorGroup(selector, object_info)) { return; }
 
 	// Test Selector On Entities
 	if (testSelectorEntity(selector, object_info)) { return; }
@@ -1248,7 +1375,7 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						selector.highlighted_object = object.data_springs[i];
 						selector.temp_connection_pos_left = node_pos_1;
 						selector.temp_connection_pos_right = node_pos_2;
-						selector.activateHighlighter();
+						selector.activateHighlighter(glm::vec2(0.0f, 0.0f));
 						selector.highlighting = true;
 						object_info.clearAll();
 						object_info.setObjectType("SpringMass Spring", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -1381,7 +1508,7 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 					//selector.node_data.name = object.nodes[i].Name;
 					selector.object_index = 0;
 					selector.highlighted_object = object.data_nodes[i];
-					selector.activateHighlighter();
+					selector.activateHighlighter(glm::vec2(0.0f, 0.0f));
 					selector.highlighting = true;
 					object_info.clearAll();
 					object_info.setObjectType("SpringMass Node", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -1480,6 +1607,17 @@ bool Render::Objects::Level::testSelectorEntity(Editor::Selector& selector, Edit
 	return testSelectorOnList(entity_list, selector, object_info);
 }
 
+bool Render::Objects::Level::testSelectorGroup(Editor::Selector& selector, Editor::ObjectInfo& object_info)
+{
+	for (int i = 0; i < container.group_size; i++)
+	{
+		if (testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.group_start), container.group_size, selector, i, object_info))
+			return true;
+	}
+
+	return false;
+}
+
 bool Render::Objects::Level::testSelectorMasks(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	// Test Floor Masks
@@ -1530,12 +1668,11 @@ bool Render::Objects::Level::testSelectorMasks(Editor::Selector& selector, Edito
 	return false;
 }
 
-template<class Type>
-uint8_t Render::Objects::Level::testSelectorOnObject(Type*** object_list, uint16_t& count, Editor::Selector& selector, int index, Editor::ObjectInfo& object_info)
+uint8_t Render::Objects::Level::testSelectorOnObject(Object::Object*** object_list, uint16_t& count, Editor::Selector& selector, int index, Editor::ObjectInfo& object_info)
 {
 	// Get Reference of List and Object
-	Type** temp_list = *object_list;
-	Type& object = *(temp_list[index]);
+	Object::Object** temp_list = *object_list;
+	Object::Object& object = *(temp_list[index]);
 
 	// Test if Object is Locked or Marked to Pass Over
 	if (object.lock || object.skip_selection)
@@ -1564,8 +1701,15 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Type*** object_list, uint16
 
 		// If Object is Not Currently Selected, Set Highlighter Visualizer
 		if (selector.object_index != object.object_index)
-			temp_list[index]->select(selector, object_info);
-		selector.highlighting = true;
+		{
+			// If Select Was Unsuccessful, Test Next Object
+			if (!temp_list[index]->select(selector, object_info))
+			{
+				selector.highlighting = false;
+				object_info.active = false;
+				return 0;
+			}
+		}
 
 		// If Left Click, Select Object
 		if (Global::LeftClick)
@@ -1582,51 +1726,74 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Type*** object_list, uint16
 				// Get Parent of Selector
 				DataClass::Data_Object* selected_parent = selected_object->getParent();
 
-				// Object Already Belongs to a Parent
-				if (object.data_object->getParent() != nullptr)
-				{
-					// Remove Child from Current Group
-					object.data_object->getParent()->getGroup()->createChangePop(object.data_object);
-					object.data_object->getParent()->getObjectIdentifier()[3]--;
-
-					// If Attempting to Add To Its Current Parent, Remove Object From Being a Child
-					if (object.data_object->getParent()->getObjectIndex() == selected_object->getObjectIndex())
-						change_controller->handleSingleSelectorReturn(object.data_object->makeCopySelected(selector), true);
-
-					// Else, Swap Parents
-					else
-						selector.addChildToOnlyOne(object.data_object);
-				}
-
 				// If Attempting to Add a Parent to its Child, Prevent That From Happening
 				// For Now, This Will Cause a Deselection, Might Do Something Else in the Future
-				else if (selected_parent != nullptr && selected_parent->getObjectIndex() == object.data_object->getObjectIndex())
+				// For This object.data_object is calling the function, Test is the selected_parent->getObjectIndex();
+				if (selected_parent != nullptr && object.data_object->testIsParent(selected_parent))
 				{
+					// If Selected Object Cannot be Returned to Level, Don't Deselect
+					if (!change_controller->getUnsavedLevelObject(selected_object)->testValidSelection(object.data_object, selected_object))
+						return 1;
+
 					// Remove Child from Current Group
 					object.data_object->getObjectIdentifier()[3]--;
 
 					// Set Parent of Selected Object to Nothing
 					selected_object->setParent(nullptr);
 
+					// Clear Parent of Selected Object in Selector
+					selector.clearOnlyOneComplexParent();
+
 					// Set Group Layer to 0
 					selected_object->setGroupLayer(0);
 
 					// Recursively Set Group Layer
-					UnsavedGroup* data_group = selected_object->getGroup();
+					UnsavedCollection* data_group = selected_object->getGroup();
 					if (data_group != nullptr)
 						data_group->recursiveSetGroupLayer(1);
+				}
+
+				// Object Already Belongs to a Parent
+				else if (object.data_object->getParent() != nullptr)
+				{
+					// Determine if the Specified Operation is Valid
+					bool adding_to_current_parent = selected_object->testIsParent(object.data_object->getParent());
+					if (adding_to_current_parent) {
+						if (!change_controller->getUnsavedLevelObject(object.data_object)->testValidSelection(selected_object, object.data_object))
+							return 1;
+					}
+					else {
+						if (!selected_object->getGroup()->testValidSelection(selected_object, object.data_object))
+							return 1;
+					}
+						
+					// Remove Child from Current Group
+					object.data_object->getParent()->getGroup()->createChangePop(object.data_object, true);
+					object.data_object->getParent()->getObjectIdentifier()[3]--;
+
+					// If Attempting to Add To Its Current Parent, Remove Object From Being a Child
+					// For This, Selected Object DataObject is Calling the Function, Test is the object.data_object->getParent()->getObjectIndex();
+					if (adding_to_current_parent)
+						change_controller->handleSingleSelectorReturn(object.data_object->makeCopySelected(selector), object.data_object, true);
+
+					// Else, Swap Parents
+					else
+						selector.addChildToOnlyOne(object.data_object->makeCopySelected(selector), object);
 				}
 
 				// Else, Add Object as a New Child
 				else
 				{
+					// Test if Object can be Placed in Group
+					if (!selected_object->getGroup()->testValidSelection(selected_object, object.data_object))
+						return 1;
+
+					// Remove Child From Level
+					storeLevelOfOrigin(selector, object.returnPosition(), true);
+
 					// Add Child to Parent
-					selector.addChildToOnlyOne(object.data_object);
-
-					// Store Level of Origin
-					storeLevelOfOrigin(selector, object.returnPosition());
+					selector.addChildToOnlyOne(object.data_object->makeCopySelected(selector), object);
 				}
-
 			}
 
 			// Else, Add to Selector
@@ -1635,22 +1802,95 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Type*** object_list, uint16
 				// Activate Selector
 				selector.active = true;
 
+				// Possible Offset Created if From Complex Object
+				glm::vec2 complex_offset = glm::vec2(0.0f, 0.0f);
+
 				// Store Level of Origin if Originated From Level
 				if (object.parent == nullptr)
-					storeLevelOfOrigin(selector, object.returnPosition());
+				{
+					// If Object is a Complex Object, Store Values for Complex Parent
+					if (object.group_object != nullptr && object.data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+					{
+						// Get the Root Parent Object of Object's Group
+						DataClass::Data_Object* complex_version = static_cast<Render::Objects::UnsavedComplex*>(object.data_object->getGroup())->getComplexParent();
+
+						// If Inactive, Set Position Offset
+						if (!static_cast<DataClass::Data_ComplexParent*>(complex_version)->isActive())
+						{
+							// Store Root Parent in Root Data Object
+							static_cast<DataClass::Data_ComplexParent*>(complex_version)->storeRootParent(&object);
+
+							// Store Offset in Root Data Object
+							static_cast<DataClass::Data_ComplexParent*>(complex_version)->setPositionOffset(object.returnPosition());
+
+							// Activate Root Data Object
+							static_cast<DataClass::Data_ComplexParent*>(complex_version)->setActive();
+						}
+
+						// If Not Active, DO NOT SELECT
+						else
+							return 1;
+					}
+
+					// Pop Object From Level
+					storeLevelOfOrigin(selector, object.returnPosition(), false);
+				}
 
 				// If Originated From Group, Remove from Group
-				else
-					object.data_object->getParent()->getGroup()->createChangePop(object.data_object);
+				else if (object.data_object->getParent() != nullptr)
+				{
+					// Get the Root Parent of Objects
+					DataClass::Data_Object* root_parent = object.data_object->getParent();
+					while (root_parent->getParent() != nullptr)
+						root_parent = root_parent->getParent();
+
+					// Test if Root Parent of Group is A Complex Object
+					if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+					{
+						// Get the Parent Object
+						Object::Object* root_parent_object = object.parent;
+						while (root_parent_object->parent != nullptr)
+							root_parent_object = root_parent_object->parent;
+
+						// If Root Parent Object is a Temp Object, DO NOT SELECT
+						if (root_parent_object->storage_type == Object::STORAGE_TYPES::NULL_TEMP)
+							return 1;
+
+						// If Inactive, Set Position Offset
+						if (!static_cast<DataClass::Data_ComplexParent*>(root_parent)->isActive())
+						{
+							// Store Root Parent in Root Data Object
+							static_cast<DataClass::Data_ComplexParent*>(root_parent)->storeRootParent(root_parent_object);
+
+							// Store Offset in Root Data Object
+							static_cast<DataClass::Data_ComplexParent*>(root_parent)->setPositionOffset(root_parent_object->returnPosition());
+
+							// Activate Root Data Object
+							static_cast<DataClass::Data_ComplexParent*>(root_parent)->setActive();
+						}
+
+						// Remove Group Object Offset
+						complex_offset = static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+					}
+
+					// For All Group Objects, Simply Pop From Current Object
+					object.data_object->getParent()->getGroup()->createChangePop(object.data_object, false);
+				}
+
+				// Make a Copy of the Data Class
+				DataClass::Data_Object* dataclass_copy = selector.highlighted_object->makeCopySelected(selector);
 
 				// Remove Object From Global Objects List
-				removeMarkedFromList(temp_list[index]);
+				removeMarkedFromList(temp_list[index], &dataclass_copy->getPosition());
 
 				// Reset Object Info
 				object_info.clearAll();
 
-				// Make a Copy of the Data Class
-				selector.unadded_data_objects.push_back(selector.highlighted_object->makeCopySelected(selector));
+				// Apply Possible Complex Offset
+				dataclass_copy->getPosition() += complex_offset;
+
+				// Select the Object
+				selector.unadded_data_objects.push_back(dataclass_copy);
 			}
 
 			return 2;
@@ -1708,7 +1948,7 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 				selector.active = true;
 
 				// Store Level of Origin
-				storeLevelOfOrigin(selector, object.returnPosition());
+				storeLevelOfOrigin(selector, object.returnPosition(), false);
 
 				// Remove Object From List
 				object_list.removeObject(object_list.it);
@@ -1729,32 +1969,68 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 	return false;
 }
 
-void Render::Objects::Level::removeMarkedFromList(Object::Object* marked_object)
+void Render::Objects::Level::removeMarkedFromList(Object::Object* marked_object, glm::vec2* new_selected_position)
 {
+	// Note: This Function is Guarenteed to Remove 1 Object From the List, However,
+	// For the Case Where the Object is From a Complex Object, More Than 1 Objects
+	// With the Same Index May be Removed. The Final Array Size Will be Equal to the
+	// Old Object Count - 1, However, The Container Total Object Count May be Decremented
+	// Multiple Times for Any Repeated Indicies. The Excess and Unused Elements in the New
+	// Array Will Not be Used and Will be Ignored Until Next Build of the Array
+
+	// First, Reset DataClass Objects Array
+	marked_object->data_object->clearObjects();
+
+	// Retrieve the Object Index of the Marked Object
+	uint32_t marked_index = marked_object->object_index;
+
 	// Retrieve the Total Object Count and Array
-	uint16_t new_object_count = container.total_object_count - 1;
+	uint16_t old_object_count = container.total_object_count;
 	Object::Object** old_object_array = container.object_array;
 
 	// Reset Container
 	container = { 0 };
 
 	// Store Values Back in Container
-	container.total_object_count = new_object_count;
+	container.total_object_count = old_object_count;
 	container.object_array = old_object_array;
 
 	// Create New Array of Objects
-	Object::Object** new_list = new Object::Object*[container.total_object_count];
+	Object::Object** new_list = new Object::Object*[old_object_count - 1];
 
-	// Coppy Objects From Old List to New List, Skipping Marked Object
+	// Coppy Objects From Old List to New List, Skipping Marked Object(s)
 	short new_list_index = 0;
-	for (uint32_t i = 0; i < container.total_object_count + 1; i++)
+	for (uint32_t i = 0; i < old_object_count; i++)
 	{
 		// Test if Object is Marked
-		//if (container.object_array[i]->marked)
-		if (container.object_array[i] == marked_object)
+		if (container.object_array[i]->object_index == marked_index)
 		{
+			// Get the Object
+			Object::Object* object = container.object_array[i];
+
+			// Generate the Temp Object
+			Object::TempObject* temp_object = new Object::TempObject(object, new_selected_position);
+			temp_objects.push_back(temp_object);
+
+			// Store Temp Object in Place of Parent, If Object Has a Group
+			if (object->group_object != nullptr)
+			{
+				// If Object is Complex, Add as an Instance to Complex Object
+				if (object->group_object->getCollectionType() == Objects::UNSAVED_COLLECTIONS::COMPLEX)
+					static_cast<Objects::UnsavedComplex*>(object->group_object)->addComplexInstance(temp_object);
+
+				// Store Temp Object as Parent
+				Object::Object** children = object->children;
+				for (int i = 0; i < object->children_size; i++)
+					children[i]->parent = temp_object;
+			}
+
 			// Delete Object
-			delete container.object_array[i];
+			delete object;
+
+			// Also, Decrement Total Object Count
+			container.total_object_count--;
+
 			continue;
 		}
 
@@ -1771,6 +2047,41 @@ void Render::Objects::Level::removeMarkedFromList(Object::Object* marked_object)
 
 	// Segregate Objects
 	segregateObjects();
+}
+
+void Render::Objects::Level::removeMarkedChildrenFromList(DataClass::Data_Object* marked_parent)
+{
+	// Note: Array Will NOT be Reduced, Since it WILL be Reduced After Parent is Returned
+	
+	// Get the Array of Indicies to Remove
+	uint32_t* indices = new uint32_t[1];
+	indices[0] = marked_parent->getObjectIndex();
+	int indices_size = 1;
+	getObjectIndicies(marked_parent, &indices, indices_size);
+
+	// If There Were No Children to Remove, No Need to Iterate
+	if (indices_size == 0)
+		return;
+
+	// Remove Any Indices Found in the Array
+	int old_object_count = container.total_object_count;
+	int placement_index = 0;
+	for (int i = 0; i < old_object_count; i++)
+	{
+		// Match Was Found
+		if (searchObjectIndicies(indices, 0, indices_size, container.object_array[i]->object_index))
+		{
+			delete container.object_array[i];
+			container.total_object_count--;
+		}
+
+		// No Match Was Found
+		else
+		{
+			container.object_array[placement_index] = container.object_array[i];
+			placement_index++;
+		}
+	}
 }
 
 void Render::Objects::Level::resetObjectPassOver()
@@ -1853,13 +2164,64 @@ void Render::Objects::Level::reloadAll()
 	reallocatePhysics();
 }
 
+void Render::Objects::Level::incorperatNewObjects(Object::Object** new_objects, int new_objects_size)
+{
+	// Generate a New Object Container Array That Can Fit New Objects
+	int new_container_size = container.total_object_count + new_objects_size;
+	Object::Object** new_object_array = new Object::Object*[new_container_size];
+
+	// Copy Current Objects Into New Container Array
+	for (int i = 0; i < container.total_object_count; i++)
+		new_object_array[i] = container.object_array[i];
+
+	// Copy New Objects Into New Container Array
+	for (int i = container.total_object_count, j = 0; i < new_container_size; i++, j++)
+		new_object_array[i] = new_objects[j];
+
+	// Delete the Old Object Array
+	delete[] container.object_array;
+
+	// Reset the Container
+	container = { 0 };
+
+	// Store New Container Array and Size in Container Object
+	container.total_object_count = new_container_size;
+	container.object_array = new_object_array;
+
+	// Segregate Some Objects Into Seperate Arrays
+	segregateObjects();
+
+	// Load Textures
+	reallocateTextures();
+
+	// Build Terrain Vertices
+	constructTerrain();
+
+	// Store Lights in Shader
+	loadLights();
+
+	// Update Physics for Rendering
+	reallocatePhysics();
+}
+
+void Render::Objects::Level::clearTemps()
+{
+	// Delete ALL Temp Objects
+	for (Object::Object* temp : temp_objects)
+		delete temp;
+		//delete static_cast<Object::TempObject*>(temp);
+
+	// Clear Temp Object Vector
+	temp_objects.clear();
+}
+
 glm::mat4 Render::Objects::Level::returnProjectionViewMatrix(uint8_t layer)
 {
 	projection[layer] = Global::projection;
 	return projection[layer] * camera->view;
 }
 
-void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position)
+void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, bool disable_move)
 {
 	// Get Level Coords of Object
 	glm::vec2 coords;
@@ -1869,7 +2231,7 @@ void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm:
 	selector.level_of_origin = change_controller->getUnsavedLevel((int)coords.x, (int)coords.y, 0);
 
 	// Remove Object from Unsaved Level
-	selector.level_of_origin->createChangePop(selector.highlighted_object);
+	selector.level_of_origin->createChangePop(selector.highlighted_object, disable_move);
 
 	// Set Originated From Level Flag to True
 	selector.originated_from_level = true;

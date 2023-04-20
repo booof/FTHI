@@ -173,6 +173,9 @@ namespace Editor
 		// Toggle Between Editor and Gameplay
 		void toggleEngineMode();
 
+		// Force a Reload of the Currently Loaded Project
+		void forceProjectReload();
+
 		// Return the Singleton
 		static ProjectSelector* get();
 	};

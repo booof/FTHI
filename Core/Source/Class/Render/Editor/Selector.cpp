@@ -65,6 +65,8 @@
 #include "Render/Struct/DataClasses.h"
 
 #include "Render/Objects/UnsavedGroup.h"
+#include "Render/Objects/UnsavedCollection.h"
+#include "Render/Objects/UnsavedComplex.h"
 
 // Comparison Operation for Node Data
 bool operator== (const Object::Physics::Soft::NodeData& node1, const Object::Physics::Soft::NodeData& node2)
@@ -137,15 +139,19 @@ Editor::Selector::Selector()
 	Selected_Object::genSelectorVertices = [this](DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)->void { genSelectorVertices(data_object, vertex_objects); };
 	Selected_Object::sortVertices = [this](bool enable_rotation, Selected_Object* selected_object)->void { sortVertices(enable_rotation, selected_object); };
 	Selected_Object::storeTempConnectionPos = [this](glm::vec2& left, glm::vec2& right)->void {setTempConnectionPos(left, right); };
+	Selected_Object::updateSelectedPositions = [this](DataClass::Data_Object* data_object, float deltaX, float deltaY)->void {updateSelectedPositions(data_object, deltaX, deltaY); };
 }
 
-void Editor::Selector::activateHighlighter()
+void Editor::Selector::activateHighlighter(glm::vec2 offset)
 {
 	// Allocate Memory for Selector Vertices
 	allocateSelectorVertices(highlighted_object, highlighted_vertex_objects);
 
 	// Generate Selector Vertices
 	genSelectorVertices(highlighted_object, highlighted_vertex_objects);
+
+	// Apply Offset, If Needed
+	highlighted_vertex_objects.model = glm::translate(highlighted_vertex_objects.model, glm::vec3(offset.x, offset.y, 0.0f));
 
 	// Bind Outline Vertex Objects
 	glBindVertexArray(highlighted_vertex_objects.outlineVAO);
@@ -183,6 +189,11 @@ void Editor::Selector::blitzSelector()
 		// Get Rendering Data
 		Selected_VertexObjects& vertex_objects = selected_object->vertex_objects;
 
+		// Determine Delta Pos, If Needed
+		glm::vec3 delta_pos = glm::vec3(0.0f, 0.0f, 0.0f);
+		if (selected_object->complex_root != nullptr)
+			delta_pos = glm::vec3(*selected_object->object_x - selected_object->complex_root->pointerToPosition()->x, *selected_object->object_y - selected_object->complex_root->pointerToPosition()->y, 0.0f);
+
 		// Object is a Object With Color and Texture
 		if (selected_object->vertex_objects.visualize_object)
 		{
@@ -200,6 +211,12 @@ void Editor::Selector::blitzSelector()
 			// Draw Object
 			glBindVertexArray(vertex_objects.objectVAO);
 			glDrawArrays(GL_TRIANGLES, 0, vertex_objects.object_vertex_count);
+
+			// If Belonging to a Complex Root, Draw Other Instances
+			if (selected_object->complex_root != nullptr)
+				static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelected(vertex_objects.object_vertex_count, GL_TRIANGLES, Global::modelLocObjectStatic, delta_pos, selected_object->complex_root);
+
+			// Unbind Object
 			glBindVertexArray(0);
 		}
 
@@ -213,6 +230,12 @@ void Editor::Selector::blitzSelector()
 			// Draw Object
 			glBindVertexArray(vertex_objects.objectVAO);
 			glDrawArrays(GL_LINES, 0, vertex_objects.object_vertex_count);
+
+			// If Belonging to a Complex Root, Draw Other Instances
+			if (selected_object->complex_root != nullptr)
+				static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelected(vertex_objects.object_vertex_count, GL_LINES, Global::modelLocColorStatic, delta_pos, selected_object->complex_root);
+
+			// Unbind Object
 			glBindVertexArray(0);
 		}
 
@@ -230,6 +253,12 @@ void Editor::Selector::blitzSelector()
 			// Draw Object
 			glBindVertexArray(vertex_objects.objectVAO);
 			glDrawArrays(GL_TRIANGLES, 0, vertex_objects.object_vertex_count);
+
+			// If Belonging to a Complex Root, Draw Other Instances
+			if (selected_object->complex_root != nullptr)
+				static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelected(vertex_objects.object_vertex_count, GL_TRIANGLES, Global::modelLocTextureStatic, delta_pos, selected_object->complex_root);
+
+			// Unbind Object
 			glBindVertexArray(0);
 		}
 
@@ -243,6 +272,12 @@ void Editor::Selector::blitzSelector()
 			// Draw Object
 			glBindVertexArray(vertex_objects.objectVAO);
 			glDrawArrays(GL_TRIANGLES, 0, vertex_objects.object_vertex_count);
+
+			// If Belonging to a Complex Root, Draw Other Instances
+			if (selected_object->complex_root != nullptr)
+				static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelected(vertex_objects.object_vertex_count, GL_TRIANGLES, Global::modelLocColorStatic, delta_pos, selected_object->complex_root);
+
+			// Unbind Object
 			glBindVertexArray(0);
 		}
 
@@ -280,8 +315,35 @@ void Editor::Selector::blitzSelector()
 	// Draw Visualizers for Groups
 	for (Selected_Object* selected_object : selected_objects)
 	{
-		selected_object->data_object->drawGroupVisualizer();
-		selected_object->data_object->drawParentConnection();
+		// Determine Delta Pos, If Needed
+		//glm::vec2 delta_pos = glm::vec3(0.0f, 0.0f, 0.0f);
+		//if (selected_object->complex_root != nullptr)
+		//	delta_pos = glm::vec2(selected_object->complex_root->pointerToPosition()->x, selected_object->complex_root->pointerToPosition()->y);
+
+		// If This is a Complex Object, Draw As if From Complex Object
+		if (selected_object->data_object->getGroup() != nullptr && selected_object->data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+			selected_object->data_object->drawSelectedGroupVisualizer(glm::vec2(*selected_object->object_x, *selected_object->object_y));
+
+		// For Children of Normal Group Objects, Draw Parent Connection
+		else if (selected_object->complex_root == nullptr)
+		{
+			// Draw Visualizers to Children
+			selected_object->data_object->drawSelectedGroupVisualizer(glm::vec2(0.0f, 0.0f));
+
+			// Draw Visualizer to Parent
+			selected_object->data_object->drawParentConnection();
+		}
+			
+		// For Children of Complex Objects, Draw Connection for All Instances
+		else
+		{
+			// Get Delta Position of Selected Object
+			//glm::vec2 delta_pos = glm::vec2(*selected_object->object_x, *selected_object->object_y) - *selected_object->complex_root->pointerToPosition();
+			glm::vec2 delta_pos = *selected_object->complex_root->pointerToPosition();
+
+			// Draw Connection for All Instances
+			static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelectedConnection(selected_object->data_object, delta_pos);
+		}
 	}
 }
 
@@ -561,9 +623,17 @@ void Editor::Selector::moveWithCamera(Render::Camera::Camera& camera, uint8_t di
 	// The Distance to Move the Object
 	float distance = Constant::SPEED * Global::deltaTime;
 
+	// Old Positions
+	float old_x = 0.0f;
+	float old_y = 0.0f;
+
 	// Update for Each Selected Object
 	for (Selected_Object* selected_object : selected_objects)
 	{
+		// Store Old Positions
+		old_x = *selected_object->object_x;
+		old_y = *selected_object->object_y;
+
 		// Process Movements
 		if (direction == NORTH) { *selected_object->object_y += distance * camera.accelerationY; }
 		if (direction == SOUTH) { *selected_object->object_y -= distance * camera.accelerationY; }
@@ -572,6 +642,9 @@ void Editor::Selector::moveWithCamera(Render::Camera::Camera& camera, uint8_t di
 
 		// Update Model Matrix
 		selected_object->vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_object->object_x, *selected_object->object_y, 0.0f));
+
+		// Update Children Positions
+		updateSelectedPositions(selected_object->data_object, *selected_object->object_x - old_x, *selected_object->object_y - old_y);
 	}
 }
 
@@ -588,9 +661,17 @@ void Editor::Selector::moveWithArrowKeys(uint8_t direction)
 	// The Distance to Move the Object
 	float distance = Global::editor_options->option_shift_speed * Global::deltaTime;
 
+	// Old Positions
+	float old_x = 0.0f;
+	float old_y = 0.0f;
+
 	// Update for Each Selected Object
 	for (Selected_Object* selected_object : selected_objects)
 	{
+		// Store Old Positions
+		old_x = *selected_object->object_x;
+		old_y = *selected_object->object_y;
+
 		// Process Movements
 		if (direction == NORTH) { *selected_object->object_y += distance; }
 		if (direction == SOUTH) { *selected_object->object_y -= distance; }
@@ -599,6 +680,9 @@ void Editor::Selector::moveWithArrowKeys(uint8_t direction)
 
 		// Update Model Matrix
 		selected_object->vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_object->object_x, *selected_object->object_y, 0.0f));
+
+		// Update Children Positions
+		updateSelectedPositions(selected_object->data_object, *selected_object->object_x - old_x, *selected_object->object_y - old_y);
 	}
 }
 
@@ -670,26 +754,125 @@ bool Editor::Selector::selectedOnlyOne()
 	return selected_objects.size() == 1;
 }
 
-void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object)
+void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Object::Object& origin_object)
 {
-	// Add Child to Selected Object
+	// Get the Selected Object
 	DataClass::Data_Object* only_one = selected_objects.at(0)->data_object;
-	only_one->addChildViaSelection(data_object);
+
+	// Determine if Object is Leaving a Complex Object
+	if (origin_object.parent != nullptr)
+	{
+		Object::Object* root_parent = origin_object.parent;
+		while (root_parent->parent != nullptr)
+			root_parent = root_parent->parent;
+		if (root_parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+		{
+			// Add Offset to Objects and Children
+			glm::vec2& offset = *root_parent->pointerToPosition();
+			data_object->updateSelectedPosition(offset.x, offset.y, false);
+		}
+	}
+
+	// Determine if Data Object is Being Added to a Complex Object
+	Object::Object* root_object = selected_objects.at(0)->complex_root;
+	DataClass::Data_Object* root_data_object = nullptr;
+	if (only_one->getGroup() != nullptr && only_one->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+		root_data_object = static_cast<Render::Objects::UnsavedComplex*>(only_one->getGroup())->getComplexParent();
+
+	// Object is Being Added to a Lower Object
+	if (root_object != nullptr)
+	{
+		// Remove Offset From Objects and Children
+		glm::vec2& offset = *root_object->pointerToPosition();
+		data_object->updateSelectedPosition(-offset.x, -offset.y, false);
+
+		// Remove Children From Level
+		level->removeMarkedChildrenFromList(data_object);
+	}
+
+	// Object is Being Added Directly
+	else if (root_data_object != nullptr)
+	{
+		// Remove Offset From Objects and Children
+		glm::vec2* offset = static_cast<Render::Objects::UnsavedComplex*>(root_data_object->getGroup())->getSelectedPosition();
+		if (offset == nullptr)
+			offset = &root_data_object->getPosition();
+		data_object->updateSelectedPosition(-offset->x, -offset->y, false);
+
+		// Remove Children From Level
+		level->removeMarkedChildrenFromList(data_object);
+	}
+
+	// Add Child to Selected Object
+	only_one->addChildViaSelection(data_object, true);
 
 	// Update Number of Children Object Has
 	only_one->getObjectIdentifier()[3] = only_one->getGroup()->getNumberOfChildren();
 
 	// Link Selected Object as Parent
-	data_object->setParent(only_one);
+	// If Selected Object is Complex, Set Complex Version as Parent
+	if (root_data_object != nullptr)
+		data_object->setParent(root_data_object);
+	else
+		data_object->setParent(only_one);
 
 	// Set Group Layer
 	uint8_t new_layer = selected_objects.at(0)->data_object->getGroupLayer() + 1;
 	data_object->setGroupLayer(new_layer);
 
 	// Set Group Layer Recursively
-	Render::Objects::UnsavedGroup* data_group = data_object->getGroup();
+	Render::Objects::UnsavedCollection* data_group = data_object->getGroup();
 	if (data_group != nullptr)
 		data_group->recursiveSetGroupLayer(new_layer + 1);
+
+	// If Going to a Complex Object, Add Children to Each Individual 
+	if (root_object != nullptr || root_data_object != nullptr)
+	{
+		// Get List of Parent Instances
+		std::vector<Object::Object*> parents; 
+		if (root_object != nullptr)
+			parents = data_object->getParent()->getObjects();
+		else
+			parents = static_cast<Render::Objects::UnsavedComplex*>(root_data_object->getGroup())->getInstances();
+
+		// Allocate to Store All Object Instances and Their Offsets, No Children
+		Object::Object** object_list = new Object::Object*[parents.size()];
+		glm::vec2* offsets = new glm::vec2[parents.size()];
+		int list_size = 0;
+
+		// Iterate Through Each Parent Instance to Link Parents Correctly and Get Correct Offset
+		for (Object::Object* parent : parents)
+		{
+			// Find the Parent's Complex Offset
+			Object::Object* parent_parent = parent;
+			while (parent_parent->parent != nullptr)
+				parent_parent = parent_parent->parent;
+			if (parent_parent->storage_type == Object::STORAGE_TYPES::NULL_TEMP)
+				offsets[list_size] = *static_cast<Object::TempObject*>(parent_parent)->pointerToSelectedPosition();
+			else
+				offsets[list_size] = parent_parent->returnPosition();
+
+			// If the Parent Was Assigned a New Group Object, Store it Here
+			parent->group_object = only_one->getGroup();
+
+			// Generate Object With Correct Offset
+			object_list[list_size] = data_object->generateObject();
+			object_list[list_size]->parent = parent;
+			*object_list[list_size]->pointerToPosition() += offsets[list_size];
+			list_size++;
+		}
+
+		// Generate Children for Each Object With the Correct Offset
+		for (int i = 0; i < parents.size(); i++)
+			data_object->genChildrenRecursive(&object_list, list_size, object_list[i], offsets[i]);
+
+		// Free the Offsets List
+		delete[] offsets;
+
+		// Store New Objects in Level
+		level->incorperatNewObjects(object_list, list_size);
+		delete[] object_list;
+	}
 }
 
 DataClass::Data_Object* Editor::Selector::getOnlyOne()
@@ -715,6 +898,57 @@ void Editor::Selector::updateParentofSelected(DataClass::Data_Object* new_parent
 		if (test_parent != nullptr && test_parent->getObjectIndex() == parent_index)
 			child->setParent(new_parent);
 	}
+}
+
+void Editor::Selector::clearOnlyOneComplexParent()
+{
+	// Get the Selected Object
+	Selected_Object& selected_object = *selected_objects.at(0);
+
+	// If Complex Parent is Not Null, Perform Offset Correction on All Children
+	if (selected_object.complex_root)
+	{
+		// Retrieve the Data Object
+		DataClass::Data_Object* data_object = selected_object.data_object;
+
+		// Get the Offset of the Complex Root
+		glm::vec2 offset = selected_object.complex_root->returnPosition();
+
+		// Update All Children of Object
+		std::vector<DataClass::Data_Object*>& children = selected_object.data_object->getGroup()->getChildren();
+		for (DataClass::Data_Object* child : children)
+			child->updateSelectedPosition(offset.x, offset.y, false);
+
+		// Remove Children From Level
+		level->removeMarkedChildrenFromList(data_object);
+
+		// Get the Temp Object Representing the Selected Object
+		Object::Object* temp_object = nullptr;
+		for (Object::Object* possible_temp : data_object->getObjects())
+		{
+			temp_object = possible_temp->parent;
+			while (temp_object->group_object->getCollectionType() != Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+				temp_object = temp_object->parent;
+			if (temp_object == selected_object.complex_root)
+			{
+				temp_object = possible_temp;
+				break;
+			}
+		}
+
+		// Recursively Generate the New Children for Object
+		Object::Object** object_list = new Object::Object*[1];
+		int list_size = 0;
+		offset = glm::vec2(0.0f, 0.0f);
+		data_object->genChildrenRecursive(&object_list, list_size, temp_object, offset);
+
+		// Add Children Into Level
+		level->incorperatNewObjects(object_list, list_size);
+		delete[] object_list;
+	}
+
+	// Clear the Complex Root
+	selected_object.complex_root = nullptr;
 }
 
 void Editor::Selector::initializeSelector()
@@ -744,6 +978,19 @@ void Editor::Selector::initializeSelector()
 		Selected_Object* selected_object = storeSelectorData(data_object);
 		selected_object->vertex_objects = vertex_objects;
 		selected_objects.push_back(selected_object);
+
+		// Test if Object Belongs to a Parent to Test for Complex Origin
+		if (data_object->getParent() != nullptr)
+		{
+			// Get the Root Parent of Objects
+			DataClass::Data_Object* root_parent = data_object->getParent();
+			while (root_parent->getParent() != nullptr)
+				root_parent = root_parent->getParent();
+
+			// Test if Root Parent of Group is A Complex Object. If So, Store Root Parent Object
+			if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+				selected_object->complex_root = static_cast<DataClass::Data_ComplexParent*>(root_parent)->getRootParent();
+		}
 
 		// Bind Object Vertex Objects
 		glBindVertexArray(vertex_objects.objectVAO);
@@ -918,6 +1165,13 @@ void Editor::Selector::allocateSelectorVertices(DataClass::Data_Object* data_obj
 		break;
 	}
 
+	// Groups
+	case Object::GROUP:
+	{
+		alocateSelectorVerticesGroup(data_object, vertex_objects);
+		break;
+	}
+
 	}
 
 	// Unbind VAO
@@ -1023,6 +1277,13 @@ void Editor::Selector::genSelectorVertices(DataClass::Data_Object* data_object, 
 		break;
 	}
 
+	// Groups
+	case Object::GROUP:
+	{
+		genSelectorVerticesGroup(data_object, vertex_objects);
+		break;
+	}
+
 	}
 
 	// Unbind VAO
@@ -1124,6 +1385,13 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorData(DataClass
 	// Effects
 	case Object::EFFECT:
 	{
+		break;
+	}
+
+	// Groups
+	case Object::GROUP:
+	{
+		selected_object = storeSelectorDataGroup(data_object);
 		break;
 	}
 
@@ -1346,6 +1614,9 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataHorizontal
 		new_selected_horizontal_line.object_width = &horizontal_line_data.width;
 		new_selected_horizontal_line.data_object = data_object;
 
+		// Enable Resize
+		new_selected_horizontal_line.enable_resize = true;
+
 		break;
 	}
 
@@ -1392,13 +1663,13 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataHorizontal
 		new_selected_rectangle.object_height = &slope_data.height;
 		new_selected_rectangle.data_object = data_object;
 
+		// Enable Resize
+		new_selected_rectangle.enable_resize = true;
+
 		break;
 	}
 
 	}
-
-	// Enable Resize
-	enable_resize = true;
 
 	// Return Selected Object
 	return selected_object;
@@ -1571,6 +1842,9 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataVerticalMa
 		new_selected_vertical_line.object_height = &vertical_line_data.height;
 		new_selected_vertical_line.data_object = data_object;
 
+		// Enable Resize
+		new_selected_vertical_line.enable_resize = true;
+
 		break;
 	}
 
@@ -1593,13 +1867,13 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataVerticalMa
 		new_selected_rectangle.object_height = &curve_data.height;
 		new_selected_rectangle.data_object = data_object;
 
+		// Enable Resize
+		new_selected_rectangle.enable_resize = true;
+
 		break;
 	}
 
 	}
-
-	// Enable Resize
-	enable_resize = true;
 
 	// Return Selected Object
 	return selected_object;
@@ -1978,6 +2252,9 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataShapes(int
 		new_selected_rectangle.object_height = rectangle_data.pointerToHeight();
 		new_selected_rectangle.data_object = data_object;
 
+		// Enable Resize
+		new_selected_rectangle.enable_resize = true;
+
 		break;
 	}
 
@@ -1998,6 +2275,9 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataShapes(int
 		new_selected_trapezoid.object_width_modifier = trapezoid_data.pointerToWidthOffset();
 		new_selected_trapezoid.object_height_modifier = trapezoid_data.pointerToHeightOffset();
 		new_selected_trapezoid.data_object = data_object;
+
+		// Enable Resize
+		new_selected_trapezoid.enable_resize = true;
 
 		break;
 	}
@@ -2065,9 +2345,6 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataShapes(int
 	// Store Initial Position Data
 	selected_object->object_x = &data_object->getPosition().x;
 	selected_object->object_y = &data_object->getPosition().y;
-
-	// Enable Resize
-	enable_resize = true;
 
 	// Return Selected Object
 	return selected_object;
@@ -2353,9 +2630,6 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 		glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
 		glBindBuffer(GL_COPY_READ_BUFFER, 0);
 
-		// Enable Resize
-		enable_resize = true;
-
 		break;
 	}
 
@@ -2413,7 +2687,7 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 		glBindBuffer(GL_COPY_READ_BUFFER, 0);
 
 		// Disable Resize
-		enable_resize = false;
+		new_selected_rectangle.enable_resize = false;
 
 		break;
 	}
@@ -2472,7 +2746,7 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 		glBindBuffer(GL_COPY_READ_BUFFER, 0);
 
 		// Disable Resize
-		enable_resize = false;
+		new_selected_rectangle.enable_resize = false;
 
 		break;
 	}
@@ -2530,9 +2804,6 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 		// Unbind Buffers
 		glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
 		glBindBuffer(GL_COPY_READ_BUFFER, 0);
-
-		// Enable Resize
-		enable_resize = true;
 
 		break;
 	}
@@ -3006,9 +3277,6 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataSoftBody(D
 
 	}
 
-	// Disable Resize
-	enable_resize = false;
-
 	// Return Selected Object
 	return selected_object;
 }
@@ -3141,6 +3409,9 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataHinge(Data
 		new_selected_rectangle.object_x = &anchor_data.position.x;
 		new_selected_rectangle.object_y = &anchor_data.position.y;
 
+		// Disable Resize
+		new_selected_rectangle.enable_resize = false;
+
 		break;
 	}
 
@@ -3154,6 +3425,9 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataHinge(Data
 		new_selected_rectangle.object_x = &hinge_data.position.x;
 		new_selected_rectangle.object_y = &hinge_data.position.y;
 
+		// Disable Resize
+		new_selected_rectangle.enable_resize = false;
+
 		break;
 	}
 
@@ -3163,9 +3437,6 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataHinge(Data
 	new_selected_rectangle.object_width = &temp_width;
 	new_selected_rectangle.object_height = &temp_height;
 	new_selected_rectangle.data_object = data_object;
-
-	// Disable Resize
-	enable_resize = false;
 
 	// Return Selected Object
 	return selected_object;
@@ -3264,7 +3535,103 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataEntity(Dat
 	new_selected_rectangle.object_y = &object_data.position.y;
 
 	// Disable Resize
-	enable_resize = false;
+	new_selected_rectangle.enable_resize = false;
+
+	// Return Selected Object
+	return selected_object;
+}
+
+void Editor::Selector::alocateSelectorVerticesGroup(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
+{
+	// Bind Object VAO
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
+
+	// Allocate Memory for Object Vertices
+	glBufferData(GL_ARRAY_BUFFER, 168, NULL, GL_DYNAMIC_DRAW);
+	vertex_objects.object_vertex_count = 6;
+
+	// Bind Outline VAO
+	glBindVertexArray(vertex_objects.outlineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
+
+	// Allocate Memory for Outline Vertices
+	glBufferData(GL_ARRAY_BUFFER, 224, NULL, GL_DYNAMIC_DRAW);
+	vertex_objects.outline_vertex_count = 8;
+
+	// Object Consists of Color Only
+	vertex_objects.visualize_object = false;
+
+	// Object is Compose of Triangles
+	vertex_objects.visualize_lines = false;
+
+	// Object Only Has Color
+	vertex_objects.visualize_texture = false;
+
+	// Unbind Highlighter VAO
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void Editor::Selector::genSelectorVerticesGroup(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
+{
+	// Get Group Data
+	Object::Group::GroupData& group_data = static_cast<DataClass::Data_GroupObject*>(data_object)->getGroupData();
+
+	// Bind Object VAO
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
+
+	// Generate and Store Object Vertices
+	float object_vertices[42];
+	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, 2.0f, 2.0f, glm::vec4(0.0f, 0.8f, 0.6f, 0.9f), object_vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
+
+	// Bind Outline VAO
+	glBindVertexArray(vertex_objects.outlineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
+
+	// Generate and Store Outline Vertices
+	float outline_vertices[56];
+	Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, 2.0f, 2.0f, outline_vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
+
+	// Set Initial Position Model Matrix
+	vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(group_data.position.x, group_data.position.y, 0.0f));
+
+	// Unbind Highlighter VAO
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataGroup(DataClass::Data_Object* data_object)
+{
+	// Selected Object
+	Selected_Object* selected_object = nullptr;
+
+	static float full_width, full_height;
+
+	// Get Group Data
+	Object::Group::GroupData& group_data = static_cast<DataClass::Data_GroupObject*>(data_object)->getGroupData();
+
+	// Shape is a Rectangle
+	selected_object = new Selected_Rectangle();
+	Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+	selected_object->editing_shape = RECTANGLE;
+
+	// Store Object Data
+	full_width = 2.0f;
+	full_height = 2.0f;
+	new_selected_rectangle.object_width = &full_width;
+	new_selected_rectangle.object_height = &full_height;
+	new_selected_rectangle.data_object = data_object;
+
+	// Store Initial Position Data
+	new_selected_rectangle.object_x = &group_data.position.x;
+	new_selected_rectangle.object_y = &group_data.position.y;
+
+	// Disable Resize
+	new_selected_rectangle.enable_resize = false;
 
 	// Return Selected Object
 	return selected_object;
@@ -3343,6 +3710,33 @@ void Editor::Selector::updateGroupSelector()
 	}
 }
 
+void Editor::Selector::updateSelectedPositions(DataClass::Data_Object* data_object, float deltaX, float deltaY)
+{
+	// Only Execute if Group Object is Not NULL
+	if (data_object->getGroup() != nullptr)
+	{
+		// If Group Object, Update Selected Positions of Child Data Objects
+		if (data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
+		{
+			for (DataClass::Data_Object* child : data_object->getGroup()->getChildren())
+				child->updateSelectedPosition(deltaX, deltaY, true);
+		}
+
+		// If Complex Object, Only Update Visual Positions of Children
+		else
+		{
+			for (DataClass::Data_Object* child : data_object->getGroup()->getChildren())
+			{
+				for (Object::Object* instance : child->getObjects())
+				{
+					if (instance->parent->object_index == data_object->getObjectIndex())
+						instance->updateSelectedComplexPosition(deltaX, deltaY);
+				}
+			}
+		}
+	}
+}
+
 void Editor::Selector::editObject()
 {
 	// Idea: update_functions should return an int that determinses if a Selected Object
@@ -3407,7 +3801,7 @@ void Editor::Selector::editObject()
 
 						// Return Normal Object
 						else
-							change_controller->handleSingleSelectorReturn(data_objects.at(i), true);
+							change_controller->handleSingleSelectorReturn(data_objects.at(i), nullptr, true);
 
 						// Delete the Selected Object
 						delete selected_objects.at(i);
@@ -5180,16 +5574,6 @@ void Editor::Selector::Selected_Object::outlineChangeColor(float* colors)
 	glBindVertexArray(0);
 }
 
-void Editor::Selector::Selected_Object::updateSelectedPositions(DataClass::Data_Object* data_object, float deltaX, float deltaY)
-{
-	// Only Execute if Group Object is Not NULL
-	if (data_object->getGroup() != nullptr)
-	{
-		for (DataClass::Data_Object* child : data_object->getGroup()->getChildren())
-			child->updateSelectedPosition(deltaX, deltaY);
-	}
-}
-
 uint8_t Editor::Selector::Selected_Rectangle::updateObject()
 {
 	// The Result of the Object Interaction
@@ -5209,7 +5593,8 @@ uint8_t Editor::Selector::Selected_Rectangle::updateObject()
 			Global::Selected_Cursor = Global::CURSORS::HAND;
 
 			// Test if Rectangle Should Resize
-			testResizeRectangle(true, true);
+			if (enable_resize)
+				testResizeRectangle(true, true);
 
 			// Test if Color of Outline Should Change to Moving
 			if (!mouse_intersects_object || (resizing && !(change_vertical || change_horizontal)))
@@ -7103,5 +7488,6 @@ bool Editor::Selector::Selected_Object::rotating;
 std::function<void(DataClass::Data_Object*, Editor::Selector::Selected_VertexObjects&)> Editor::Selector::Selected_Object::genSelectorVertices;
 std::function<void(bool, Editor::Selector::Selected_Object*)> Editor::Selector::Selected_Object::sortVertices;
 std::function<void(glm::vec2&, glm::vec2&)> Editor::Selector::Selected_Object::storeTempConnectionPos;
+std::function<void(DataClass::Data_Object*, float, float)> Editor::Selector::Selected_Object::updateSelectedPositions;
 Editor::Selector::Group_Selector* Editor::Selector::Selected_Object::group_selector;
 

@@ -206,6 +206,12 @@ void Editor::ProjectSelector::toggleEngineMode()
     Global::reload_all = true;
 }
 
+void Editor::ProjectSelector::forceProjectReload()
+{
+    // Load the Project
+    loadProject();
+}
+
 void Editor::ProjectSelector::loadDLL()
 {
     // Wait Until Compilation is Complete

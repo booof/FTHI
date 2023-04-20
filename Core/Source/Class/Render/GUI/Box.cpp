@@ -421,7 +421,7 @@ void GUI::Box::blitzText(float offset)
 	updateText();
 
 	// Draw Text
-	Source::Fonts::renderTextAdvanced(data.button_text, text_x, text_y + offset, data.width - 0.2f, 0.1f, data.text_color, data.centered);
+	Source::Fonts::renderTextAdvanced(data.button_text, text_x, text_y + offset, data.width - 1.5f, 0.1f, data.text_color, true);
 }
 
 void GUI::Box::blitzOffsetText()
@@ -430,7 +430,7 @@ void GUI::Box::blitzOffsetText()
 	updateText();
 
 	// Draw Text
-	Source::Fonts::renderTextOffset(data.button_text, text_x, text_y, 0.1f, data.text_color);
+	Source::Fonts::renderTextOffset(data.button_text, text_x, text_y, 0.1f, data.text_color, data.width - 1.5f, data.centered);
 }
 
 void GUI::Box::blitzGlobalText()

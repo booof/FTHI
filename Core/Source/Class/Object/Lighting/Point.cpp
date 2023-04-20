@@ -186,11 +186,11 @@ DataClass::Data_Object* DataClass::Data_Point::makeCopy()
 	return new Data_Point(*this);
 }
 
-void DataClass::Data_Point::updateSelectedPosition(float deltaX, float deltaY)
+void DataClass::Data_Point::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
 {
 	light_data.position.x += deltaX;
 	light_data.position.x += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY);
+	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }
 
 Object::Light::Point::PointData& DataClass::Data_Point::getPointData()

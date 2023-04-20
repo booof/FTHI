@@ -31,6 +31,7 @@ namespace Render::Objects
 	class UnsavedBase;
 	class UnsavedLevel;
 	class UnsavedGroup;
+	class UnsavedComplex;
 
 	class Level;
 
@@ -126,6 +127,9 @@ namespace Render::Objects
 		// Vector of Unsaved Groups
 		std::vector<UnsavedGroup*> unsaved_groups;
 
+		// Vector of Unsaved Complex Objects
+		std::vector<UnsavedComplex*> unsaved_complex;
+
 		// Master Stack
 		MasterStack* master_stack = nullptr;
 
@@ -161,8 +165,14 @@ namespace Render::Objects
 		// Return Unsaved Level at Coords. If DNE, Create New Unsaved Level
 		UnsavedLevel* getUnsavedLevel(int16_t x, int16_t y, int8_t z);
 
+		// Returns Unsaved Level at WorldSpace Coords.
+		UnsavedLevel* getUnsavedLevelObject(DataClass::Data_Object* object);
+
 		// Generate a New Unsaved Level
 		UnsavedLevel* generateUnsavedLevel(int16_t x, int16_t y, int8_t z);
+
+		// Return Unsaved Complex of Corrisponding File. If DNE, Create New Unsaved Complex
+		UnsavedComplex* getUnsavedComplex(std::string& file_path);
 
 		// Stores an Unsaved Group
 		void storeUnsavedGroup(UnsavedGroup* new_group);
@@ -174,7 +184,7 @@ namespace Render::Objects
 		void handleSelectorReturn(Editor::Selector* selector);
 
 		// Handle the Return of a Single Object From Selector
-		void handleSingleSelectorReturn(DataClass::Data_Object* data_object, bool reload_all);
+		void handleSingleSelectorReturn(DataClass::Data_Object* data_object, DataClass::Data_Object* original_object, bool reload_all);
 
 		// Hangle Deletion of an Object From Selector
 		void handleSelectorDelete(Editor::Selector* selector);
@@ -199,6 +209,9 @@ namespace Render::Objects
 
 		// Reset Change Controller
 		void reset();
+
+		// Draw Visualizers for Unsaved Objects
+		void drawVisualizers();
 	};
 }
 

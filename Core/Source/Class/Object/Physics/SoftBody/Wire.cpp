@@ -157,13 +157,13 @@ DataClass::Data_Object* DataClass::Data_Wire::makeCopy()
 	return new Data_Wire(*this);
 }
 
-void DataClass::Data_Wire::updateSelectedPosition(float deltaX, float deltaY)
+void DataClass::Data_Wire::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
 {
 	data.position.x += deltaX;
 	data.position.y += deltaY;
 	wire.position2.x += deltaX;
 	wire.position2.y += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY);
+	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }
 
 void DataClass::Data_Wire::generateInitialValues(glm::vec2& position, float& size)

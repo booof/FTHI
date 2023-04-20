@@ -15,6 +15,11 @@
 // This is to Easily Incorporate the Player and Dynamic Entities Such as Bullets
 // This Global Level is Only Accessable and Modifiable From the Editor Window
 
+namespace DataClass
+{
+	class Data_Object;
+}
+
 namespace Editor 
 {
 	class Selector;
@@ -35,6 +40,7 @@ namespace Render::Camera
 namespace Object
 {
 	class Object;
+	class TempObject;
 
 	namespace Mask
 	{
@@ -101,6 +107,11 @@ namespace Object
 	{
 		class EntityBase;
 	}
+
+	namespace Group
+	{
+		class GroupObject;
+	}
 }
 
 namespace Render::Objects
@@ -119,6 +130,7 @@ namespace Render::Objects
 		uint16_t point_size = 0;
 		uint16_t spot_size = 0;
 		uint16_t beam_size = 0;
+		uint16_t group_size = 0;
 
 		Object::Object** object_array = nullptr; // The Array of All Objects Together
 		Object::Mask::Floor::FloorMask** floor_start = nullptr;
@@ -131,6 +143,7 @@ namespace Render::Objects
 		Object::Light::Point::Point** point_start = nullptr;
 		Object::Light::Spot::Spot** spot_start = nullptr;
 		Object::Light::Beam::Beam** beam_start = nullptr;
+		Object::Group::GroupObject** group_start = nullptr;
 	};
 
 	// Container for All Objects Currently Being Rendered and Processed
@@ -184,6 +197,9 @@ namespace Render::Objects
 		// Temporary Index Holder for Adding New Objects
 		uint32_t temp_index_holder = 0;
 
+		// Array of Temporary Removed Objects
+		std::vector<Object::TempObject*> temp_objects;
+
 		// Test if SubLevels Should be Reloaded
 		void testReload();
 
@@ -216,6 +232,12 @@ namespace Render::Objects
 
 		// Load Lights Into Shader
 		void loadLights();
+
+		// Helper Function to Build a Sorted List of Object Indicies
+		void getObjectIndicies(DataClass::Data_Object* parent, uint32_t** indicies, int& indicies_size);
+
+		// Perform Binary Search on a List of Object Indicies
+		bool searchObjectIndicies(uint32_t* indicies, int left, int right, uint32_t test_value);
 
 	public:
 
@@ -266,17 +288,23 @@ namespace Render::Objects
 		// Test Selector on Entity Objects
 		bool testSelectorEntity(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
+		// Test Selector on Group Objects
+		bool testSelectorGroup(Editor::Selector& selector, Editor::ObjectInfo& object_info);
+
 		// Test Selector on Collision Mask Objects
 		bool testSelectorMasks(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test Selector on an Individual Object
-		template <class Type> uint8_t testSelectorOnObject(Type*** object_list, uint16_t& count, Editor::Selector& selector, int index, Editor::ObjectInfo& object_info);
+		uint8_t testSelectorOnObject(Object::Object*** object_list, uint16_t& count, Editor::Selector& selector, int index, Editor::ObjectInfo& object_info);
 
 		// Test Selector on an Object List
 		template <class Type> bool testSelectorOnList(Struct::List<Type>& object_list, Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Remove Object From Primary Object List
-		void removeMarkedFromList(Object::Object* marked_object);
+		void removeMarkedFromList(Object::Object* marked_object, glm::vec2* new_selected_position);
+
+		// Remove Marked Children From List Without Causing a Reload
+		void removeMarkedChildrenFromList(DataClass::Data_Object* marked_parent);
 
 		// Reset the Object Pass Over Flag
 		void resetObjectPassOver();
@@ -291,11 +319,17 @@ namespace Render::Objects
 		void reloadAll(float new_x, float new_y);
 		void reloadAll();
 
+		// Incorporate a List of Objects Into Loaded Level
+		void incorperatNewObjects(Object::Object** new_objects, int new_objects_size);
+
+		// Clear All Temporary Objects Created During Selection
+		void clearTemps();
+
 		// Return Projection-View Matrix
 		glm::mat4 returnProjectionViewMatrix(uint8_t layer);
 
 		// Store Level of Origin
-		void storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position);
+		void storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, bool disable_move);
 
 		// Return Size of Directional Light Buffer
 		GLuint returnDirectionalBufferSize();

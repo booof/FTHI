@@ -146,6 +146,132 @@ bool Render::Objects::UnsavedBase::AddChildrenStack::addChild(DataClass::Data_Ob
 	return true;
 }
 
+DataClass::Data_Object* Render::Objects::UnsavedBase::lambdaDataObject(uint8_t object_identifier[4])
+{
+
+#define ENABLE_LAG2
+
+#ifdef ENABLE_LAG2
+
+	auto readFloors = [&object_identifier]()->DataClass::Data_Object* {
+		switch (object_identifier[2])
+		{
+		case (Object::Mask::HORIZONTAL_LINE): return new DataClass::Data_FloorMaskHorizontalLine(object_identifier[3]);
+		case (Object::Mask::HORIZONTAL_SLANT): return new DataClass::Data_FloorMaskSlant(object_identifier[3]);
+		case (Object::Mask::HORIZONTAL_SLOPE): return new DataClass::Data_FloorMaskSlope(object_identifier[3]);
+		default: return nullptr;
+		}
+	};
+
+	auto readLeftWalls = [&object_identifier]()->DataClass::Data_Object* {
+		switch (object_identifier[2])
+		{
+		case (Object::Mask::VERTICAL_LINE): return new DataClass::Data_LeftMaskVerticalLine(object_identifier[3]);
+		case (Object::Mask::VERTICAL_CURVE): return new DataClass::Data_LeftMaskCurve(object_identifier[3]);
+		default: return nullptr;
+		}
+	};
+
+	auto readRightWalls = [&object_identifier]()->DataClass::Data_Object* {
+		switch (object_identifier[2])
+		{
+		case (Object::Mask::VERTICAL_LINE): return new DataClass::Data_RightMaskVerticalLine(object_identifier[3]);
+		case (Object::Mask::VERTICAL_CURVE): return new DataClass::Data_RightMaskCurve(object_identifier[3]);
+		default: return nullptr;
+		}
+	};
+
+	auto readCeilings = [&object_identifier]()->DataClass::Data_Object* {
+		switch (object_identifier[2])
+		{
+		case (Object::Mask::HORIZONTAL_LINE): return new DataClass::Data_CeilingMaskHorizontalLine(object_identifier[3]);
+		case (Object::Mask::HORIZONTAL_SLANT): return new DataClass::Data_CeilingMaskSlant(object_identifier[3]);
+		case (Object::Mask::HORIZONTAL_SLOPE): return new DataClass::Data_CeilingMaskSlope(object_identifier[3]);
+		default: return nullptr;
+		}
+	};
+
+	auto readTriggers = [&object_identifier]()->DataClass::Data_Object* {
+		return new DataClass::Data_TriggerMask(object_identifier[3]);
+	};
+
+	auto readMasks = [&object_identifier, &readFloors, &readLeftWalls, &readRightWalls, &readCeilings, &readTriggers]()->DataClass::Data_Object* {
+		std::function<DataClass::Data_Object* ()> masks[5] = { readFloors, readLeftWalls, readRightWalls, readCeilings, readTriggers };
+		return masks[object_identifier[1]]();
+	};
+
+	auto readTerrain = [&object_identifier]()->DataClass::Data_Object* {
+		return new DataClass::Data_Terrain(object_identifier[1], object_identifier[2], object_identifier[3]);
+	};
+
+	auto readLights = [&object_identifier]()->DataClass::Data_Object* {
+		switch (object_identifier[1])
+		{
+		case (Object::Light::DIRECTIONAL): return new DataClass::Data_Directional(object_identifier[3]);
+		case (Object::Light::POINT): return new DataClass::Data_Point(object_identifier[3]);
+		case (Object::Light::SPOT): return new DataClass::Data_Spot(object_identifier[3]);
+		case (Object::Light::BEAM): return new DataClass::Data_Beam(object_identifier[3]);
+		default: return nullptr;
+		}
+	};
+
+	auto readRigid = [&object_identifier]()->DataClass::Data_Object* {
+		return new DataClass::Data_RigidBody(object_identifier[2], object_identifier[3]);
+	};
+
+	auto readSoft = [&object_identifier]()->DataClass::Data_Object* {
+		switch (object_identifier[2])
+		{
+		case ((int)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS): return new DataClass::Data_SpringMass(object_identifier[3]);
+		case ((int)Object::Physics::SOFT_BODY_TYPES::WIRE): return new DataClass::Data_Wire(object_identifier[3]);
+		default: return nullptr;
+		}
+	};
+
+	auto readHinge = [&object_identifier]()->DataClass::Data_Object* {
+		switch (object_identifier[2])
+		{
+		case ((int)Object::Physics::HINGES::ANCHOR): return new DataClass::Data_Anchor(object_identifier[3]);
+		case ((int)Object::Physics::HINGES::HINGE): return new DataClass::Data_Hinge(object_identifier[3]);
+		default: return nullptr;
+		}
+	};
+
+	auto readPhysics = [&object_identifier, &readRigid, &readSoft, &readHinge]()->DataClass::Data_Object* {
+		std::function<DataClass::Data_Object* ()> physics[3] = { readRigid, readSoft, readHinge };
+		return physics[object_identifier[1]]();
+	};
+
+	auto readEntities = [&object_identifier]()->DataClass::Data_Object* {
+		switch (object_identifier[1])
+		{
+		case ((int)Object::Entity::ENTITY_NPC): return new DataClass::Data_NPC(object_identifier[3]);
+		case ((int)Object::Entity::ENTITY_CONTROLLABLE): return new DataClass::Data_Controllable(object_identifier[3]);
+		case ((int)Object::Entity::ENTITY_INTERACTABLE): return new DataClass::Data_Interactable(object_identifier[3]);
+		case ((int)Object::Entity::ENTITY_DYNAMIC): return new DataClass::Data_Dynamic(object_identifier[3]);
+		default: return nullptr;
+		}
+	};
+
+	auto readEffects = []()->DataClass::Data_Object* {
+		return nullptr;
+	};
+
+	auto readGroups = []()->DataClass::Data_Object* {
+		return new DataClass::Data_GroupObject();
+	};
+
+	std::function<DataClass::Data_Object* ()> objects[7] = { readMasks, readTerrain, readLights, readPhysics, readEntities, readEffects, readGroups };
+	return objects[object_identifier[0]]();
+
+#else
+
+	return nullptr;
+
+#endif
+
+}
+
 void Render::Objects::UnsavedBase::generateChangeList()
 {
 	if (!making_changes)
@@ -217,7 +343,7 @@ void Render::Objects::UnsavedBase::moveBackwardsThroughChanges(Changes* changes)
 	}
 }
 
-void Render::Objects::UnsavedBase::createChangeAppend(DataClass::Data_Object* data_object)
+void Render::Objects::UnsavedBase::createChangeAppend(DataClass::Data_Object* data_object, bool disable_move)
 {
 	// Generate Change List if Not Generated Already
 	generateChangeList();
@@ -225,6 +351,7 @@ void Render::Objects::UnsavedBase::createChangeAppend(DataClass::Data_Object* da
 	// Generate the New Change
 	Change* change = new Change;
 	change->change_type = CHANGE_TYPES::ADD;
+	change->move_with_parent = !disable_move;
 
 	// Store Data Object in Change
 	change->data = data_object;
@@ -241,7 +368,7 @@ void Render::Objects::UnsavedBase::createChangeAppend(DataClass::Data_Object* da
 	changeToModified();
 }
 
-void Render::Objects::UnsavedBase::createChangePop(DataClass::Data_Object* data_object_to_remove)
+void Render::Objects::UnsavedBase::createChangePop(DataClass::Data_Object* data_object_to_remove, bool disable_move)
 {
 	// Generate Change List if Not Generated Already
 	generateChangeList();
@@ -249,6 +376,7 @@ void Render::Objects::UnsavedBase::createChangePop(DataClass::Data_Object* data_
 	// Generate the New Change
 	Change* change = new Change;
 	change->change_type = CHANGE_TYPES::REMOVE;
+	change->move_with_parent = !disable_move;
 
 	// Find Data Object in the List of Data Objects, Remove it, and Store it in Change
 	for (int i = 0; i < instance_with_changes.data_objects.size(); i++)
@@ -266,6 +394,9 @@ void Render::Objects::UnsavedBase::createChangePop(DataClass::Data_Object* data_
 
 	// Store Change in Change List
 	current_change_list->changes.push_back(change);
+
+	// Clear Objects List in Data Object
+	data_object_to_remove->clearObjects();
 
 	// Level Has Been Modified
 	selected_unmodified = false;

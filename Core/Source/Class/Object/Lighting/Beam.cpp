@@ -215,13 +215,13 @@ DataClass::Data_Object* DataClass::Data_Beam::makeCopy()
 	return new Data_Beam(*this);
 }
 
-void DataClass::Data_Beam::updateSelectedPosition(float deltaX, float deltaY)
+void DataClass::Data_Beam::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
 {
 	light_data.position.x += deltaX;
 	light_data.position.y += deltaY;
 	beam.position2.x += deltaX;
 	beam.position2.y += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY);
+	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }
 
 Object::Light::Beam::BeamData& DataClass::Data_Beam::getBeamData()

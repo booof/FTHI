@@ -80,9 +80,9 @@ void DataClass::Data_HorizontalLine::generateInitialValues(glm::vec2& position, 
 	data.material = 0;
 }
 
-void DataClass::Data_HorizontalLine::updateSelectedPosition(float deltaX, float deltaY)
+void DataClass::Data_HorizontalLine::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
 {
 	data.position.x += deltaX;
 	data.position.y += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY);
+	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }

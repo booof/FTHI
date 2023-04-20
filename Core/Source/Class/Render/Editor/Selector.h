@@ -149,6 +149,9 @@ namespace Editor
 			// Pointer to Data Object
 			DataClass::Data_Object* data_object = nullptr;
 
+			// Pointer to Root Complex Object, If it Exists
+			Object::Object* complex_root = nullptr;
+
 			// Position of the Object
 			float* object_x = nullptr;
 			float* object_y = nullptr;
@@ -191,6 +194,9 @@ namespace Editor
 			// Pointer to the Function to Assign the Temp Connection Positions
 			static std::function<void(glm::vec2&, glm::vec2&)> storeTempConnectionPos;
 
+			// Pointer to the Function to Update Group Objects of a Selected Object
+			static std::function<void(DataClass::Data_Object*, float, float)> updateSelectedPositions;
+
 			// Function to Update the Object
 			virtual uint8_t updateObject() = 0;
 
@@ -220,9 +226,6 @@ namespace Editor
 
 			// Change Color of Object
 			void outlineChangeColor(float* colors);
-
-			// Update Group Objects of a Selected Object
-			void updateSelectedPositions(DataClass::Data_Object* data_object, float deltaX, float deltaY);
 		};
 
 		class Selected_Rectangle : public Selected_Object
@@ -634,6 +637,15 @@ namespace Editor
 		// Store Data for Entities
 		Selected_Object* storeSelectorDataEntity(DataClass::Data_Object* data_object);
 
+		// Allocate Memory for Groups
+		void alocateSelectorVerticesGroup(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects);
+
+		// Generate Selector Vertices for Groups
+		void genSelectorVerticesGroup(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects);
+
+		// Store Data for Groups
+		Selected_Object* storeSelectorDataGroup(DataClass::Data_Object* data_object);
+
 		
 		// End of Storing Data Functions
 
@@ -646,6 +658,8 @@ namespace Editor
 
 		// Update the Group Selector
 		void updateGroupSelector();
+
+		void updateSelectedPositions(DataClass::Data_Object* data_object, float deltaX, float deltaY);
 
 		// Edit Object
 		void editObject();
@@ -752,7 +766,7 @@ namespace Editor
 		Selector();
 
 		// Activate the Highlighter for Selector
-		void activateHighlighter();
+		void activateHighlighter(glm::vec2 offset);
 
 		// Update Object
 		void updateSelector();
@@ -800,7 +814,7 @@ namespace Editor
 		bool selectedOnlyOne();
 
 		// Adds a Child Object to the Only Selected Object
-		void addChildToOnlyOne(DataClass::Data_Object* data_object);
+		void addChildToOnlyOne(DataClass::Data_Object* data_object, Object::Object& origin_object);
 
 		// Returns the Data Object of the Only Selected Object
 		DataClass::Data_Object* getOnlyOne();
@@ -810,6 +824,9 @@ namespace Editor
 
 		// Update Parent of Selected Objects
 		void updateParentofSelected(DataClass::Data_Object* new_parent);
+
+		// Clear Complex Parent of Selected Object
+		void clearOnlyOneComplexParent();
 	};
 }
 

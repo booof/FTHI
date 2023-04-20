@@ -2,7 +2,7 @@
 #ifndef UNSAVED_GROUP_H
 #define UNSAVED_GROUP_H
 
-#include "UnsavedBase.h"
+#include "UnsavedCollection.h"
 
 // This File Will Handle the Storage of Changes Made to Objects
 // That Have a Parent-Child Relationship. Since These Parent-Child
@@ -49,7 +49,7 @@
 
 namespace Render::Objects
 {
-	class UnsavedGroup : public UnsavedBase
+	class UnsavedGroup : public UnsavedCollection
 	{
 
 	private:
@@ -79,12 +79,14 @@ namespace Render::Objects
 			void moveParents();
 		};
 
-		// Instance of the Parent Queue for All Group Objects
-		static ParentQueue parent_queue;
-
 		// The Pointer to the Parent of Children
 		// Should be Updated With Every Selector Operation and Change Traversal
+		// Since There Are Multiple Complex Objects Using the Same Group, They
+		// Will Not Use a Parent Pointer, Unlike Traditional Group Objects
 		DataClass::Data_Object* parent_pointer = nullptr;
+
+		// Instance of the Parent Queue for All Group Objects
+		static ParentQueue parent_queue;
 
 		// Set Group Layer of a Child and Sub-Children
 		void setChildLayer(DataClass::Data_Object* data_object, uint8_t new_layer);
@@ -101,40 +103,31 @@ namespace Render::Objects
 		// Remove Instance in Change List
 		void removeChainListInstance();
 
+		// Tests if an Object can be Successfully Added to the Object
+		bool testValidSelection(DataClass::Data_Object* parent, DataClass::Data_Object* test_child);
+
 	public:
 
 		// Contructor for Object
 		UnsavedGroup(uint8_t initial_size);
 
-		// Get the Number of Children in Group
-		uint8_t getNumberOfChildren();
-
-		// Get the Children Vector
-		std::vector<DataClass::Data_Object*>& getChildren();
-
-		// Function to Add a Child Object to Group
-		void addChild(DataClass::Data_Object* new_child);
-
 		// Recursively Set the Group Layer
 		void recursiveSetGroupLayer(uint8_t layer);
-
-		// Make All Children Orphans
-		void makeOrphans();
-
-		// Set Parent Object
-		void setParent(DataClass::Data_Object* new_parent, bool move);
 
 		// Function to Set the Parent Pointer of All Children
 		void updateParentofChildren();
 
-		// Disable Move With Parent of Objects
-		void disableMoveWithParent(DataClass::Data_Object* data_object);
+		// Set Parent Object
+		void setParent(DataClass::Data_Object* new_parent, bool move);
 
 		// Add Parent From Level to Parent Queue
 		static void enqueueLevelParent(DataClass::Data_Object* data_object);
 
 		// Finalize Movement With Parent
 		static void finalizeParentMovement();
+
+		// Determines What the Collection Type is
+		UNSAVED_COLLECTIONS getCollectionType();
 	};
 }
 

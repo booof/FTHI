@@ -29,6 +29,7 @@
 #include "Object/Entity/Controllables.h"
 #include "Object/Entity/Interactables.h"
 #include "Object/Entity/Dynamics.h"
+#include "Object/Group/GroupObject.h"
 
 // This File Contains the Classes that Only Contain the Data for Engine Objects With Some Helper Functions
 // This is to be Used for the Improved Unsaved Level and Allow for Multiple Objects to be Selected at Once
@@ -41,7 +42,7 @@ namespace Shape
 
 // Declaration for Unsaved Objects
 namespace Render::Objects {
-	class UnsavedGroup;
+	class UnsavedCollection;
 }
 
 namespace DataClass
@@ -85,8 +86,8 @@ namespace DataClass
 			[](std::ifstream& object_file)->Shape::Shape* {return new Shape::Polygon(object_file); }
 		};
 
-		// The Pointer to the Unsaved Group
-		Render::Objects::UnsavedGroup* group_object = nullptr;
+		// The Pointer to the Unsaved Group (Or Unsaved Complex)
+		Render::Objects::UnsavedCollection* group_object = nullptr;
 
 		// The Pointer to the Current Parent DataClass
 		Data_Object* parent = nullptr;
@@ -106,11 +107,12 @@ namespace DataClass
 		// The Layer the Object is in In a Group
 		uint8_t group_layer = 0;
 
-		// The Pointer to the Object the DataClass Represents
-		Object::Object* object_pointer = nullptr;
+		// The Array of Objects This DataClass Represents
+		// This Array is Unique to Each Object Index
+		std::vector<Object::Object*>* object_pointers = nullptr;
 
 		// Helper Function to Update Selected Positions
-		void updateSelectedPositionsHelper(float deltaX, float deltaY);
+		void updateSelectedPositionsHelper(float deltaX, float deltaY, bool update_real);
 
 		// Read Editor Data in Generated Object
 		void readEditorData(std::ifstream& editor_file);
@@ -133,7 +135,7 @@ namespace DataClass
 	public:
 
 		// Write Object
-		void writeObject(std::ofstream& object_file, std::ofstream& editor_file);
+		virtual void writeObject(std::ofstream& object_file, std::ofstream& editor_file);
 
 		// Read Object
 		void readObject(std::ifstream& object_file, std::ifstream& editor_file);
@@ -142,16 +144,19 @@ namespace DataClass
 		void addChild(DataClass::Data_Object* data_object);
 
 		// Function to Add a Child to a Data Object Via Selection
-		void addChildViaSelection(DataClass::Data_Object* data_object);
+		void addChildViaSelection(DataClass::Data_Object* data_object, bool disable_move);
 
 		// Function to Draw Group Visualizers
-		void drawGroupVisualizer();
+		void drawGroupVisualizer(glm::vec2 current_offset);
+
+		// Function to Draw Group Visualizers Specifically for Selector
+		void drawSelectedGroupVisualizer(glm::vec2 new_offset);
 
 		// Function to Draw Group Visualizer With Parent
 		void drawParentConnection();
 
 		// Returns the Group Object
-		Render::Objects::UnsavedGroup* getGroup();
+		Render::Objects::UnsavedCollection* getGroup();
 
 		// Set the Parent Object
 		void setParent(Data_Object* new_parent);
@@ -174,8 +179,14 @@ namespace DataClass
 		// Get the Group Layer
 		uint8_t& getGroupLayer();
 
-		// Get the Pointer to the Real Object
-		Object::Object* getObject();
+		// Get the List of the Real Objects
+		std::vector<Object::Object*>& getObjects();
+
+		// Remove an Object from Real Object List
+		void removeObject(Object::Object* object);
+
+		// Clear the Pointers to the Real Objects
+		void clearObjects();
 
 		// Generate Object
 		Object::Object* generateObject();
@@ -207,11 +218,17 @@ namespace DataClass
 		// Make a Copy of the Object for Selecting
 		Data_Object* makeCopySelected(Editor::Selector& selector);
 
-		// Make a Unique Copy of the Object
+		// Make a Unique Copy of the Object  
 		Data_Object* makeCopyUnique();
 
 		// Update the Selected Position of an Object
-		virtual void updateSelectedPosition(float deltaX, float deltaY) = 0;
+		virtual void updateSelectedPosition(float deltaX, float deltaY, bool update_real) = 0;
+
+		// Generate Children Recursively
+		void genChildrenRecursive(Object::Object*** object_list, int& list_size, Object::Object* parent, glm::vec2& offset);
+
+		// Tests if an Object Index is a Parent of the Object
+		bool testIsParent(DataClass::Data_Object* parent);
 	};
 
 	// Sub Object Data Class
@@ -232,7 +249,7 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 	};
 
 	// Horizontal Line
@@ -254,7 +271,7 @@ namespace DataClass
 		void generateInitialValues(glm::vec2& position, float& size);
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 	};
 
 	// Slant
@@ -276,7 +293,7 @@ namespace DataClass
 		void generateInitialValues(glm::vec2& position, float& size);
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 	};
 
 	// Slope
@@ -298,7 +315,7 @@ namespace DataClass
 		void generateInitialValues(glm::vec2& position, float& size);
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 	};
 
 	// Floor Mask
@@ -478,7 +495,7 @@ namespace DataClass
 		void generateInitialValues(glm::vec2& position, float& size);
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 	};
 
 	// Curve
@@ -500,7 +517,7 @@ namespace DataClass
 		void generateInitialValues(glm::vec2& position, float& size);
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 	};
 
 	// Left Mask Vertical Line
@@ -625,7 +642,7 @@ namespace DataClass
 		Data_Object* makeCopy();
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		Object::Mask::Trigger::TriggerData& getTriggerData();
 
@@ -734,7 +751,7 @@ namespace DataClass
 		Data_Object* makeCopy();
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		Object::Light::Directional::DirectionalData& getDirectionalData();
 
@@ -768,7 +785,7 @@ namespace DataClass
 		Data_Object* makeCopy();
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		Object::Light::Point::PointData& getPointData();
 
@@ -802,7 +819,7 @@ namespace DataClass
 		Data_Object* makeCopy();
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		Object::Light::Spot::SpotData& getSpotData();
 
@@ -836,7 +853,7 @@ namespace DataClass
 		Data_Object* makeCopy();
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		Object::Light::Beam::BeamData& getBeamData();
 
@@ -946,7 +963,7 @@ namespace DataClass
 		Data_Object* makeCopy();
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 	public:
 
@@ -997,7 +1014,7 @@ namespace DataClass
 		Data_Object* makeCopy();
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 	public:
 
@@ -1050,7 +1067,7 @@ namespace DataClass
 		Data_Object* makeCopy();
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		void generateInitialValues(glm::vec2& position, float& size);
 
@@ -1084,7 +1101,7 @@ namespace DataClass
 		Data_Object* makeCopy();
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		int& getScript();
 
@@ -1125,7 +1142,7 @@ namespace DataClass
 		Data_Object* makeCopy();
 
 		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY);
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		int& getScript();
 
@@ -1257,6 +1274,132 @@ namespace DataClass
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
+	};
+
+	// Group Objects
+	class Data_GroupObject : public Data_Object
+	{
+		// Group Data
+		Object::Group::GroupData data;
+
+		// File Name
+		std::string file_name;
+
+		// File Path
+		std::string file_path;
+
+		// Function to Read Data and Create an Object
+		Object::Object* genObject();
+
+		// Function to Write Data to File
+		void writeObjectData(std::ofstream& object_file);
+
+		// Function to Read Data From File
+		void readObjectData(std::ifstream& object_file);
+
+		// Get the Script of an Object
+		int& getScript();
+
+		// Get the Position of an Object
+		glm::vec2& getPosition();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+
+
+	public:
+
+		// Group Object Data
+		Data_GroupObject();
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
+		// Get Group Data
+		Object::Group::GroupData& getGroupData();
+
+		void generateInitialData(glm::vec2& position);
+
+		// Write Object
+		void writeObject(std::ofstream& object_file, std::ofstream& editor_file);
+
+		// Get the File Path
+		std::string& getFilePath();
+	};
+
+	// DataClass for Complex Object While Editing
+	// Used as Parent of Data Classes When Editing a Complex Object
+	// Will Be Created and Used Only While Editing, Will be Deleted After
+	class Data_ComplexParent : public Data_Object
+	{
+		// A Null Value
+		static int null_value;
+
+		// Determines if the Object is Active
+		bool active = false;
+
+		// Position Offset for Object
+		glm::vec2 position_offset = glm::vec2(0.0f, 0.0f);
+
+		// Root Parent of Object
+		// Will be Set When Activated
+		Object::Object* root_parent = nullptr;
+
+		// Function to Read Data and Create an Object
+		Object::Object* genObject();
+
+		// Function to Write Data to File
+		void writeObjectData(std::ofstream& object_file);
+
+		// Function to Read Data From File
+		void readObjectData(std::ifstream& object_file);
+
+		// Get the Script of an Object
+		int& getScript();
+
+		// Get the Position of an Object
+		glm::vec2& getPosition();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
+	public:
+
+		// Default Constructor for Object
+		Data_ComplexParent() {}
+
+		// Initialize Object
+		void setGroup(Render::Objects::UnsavedComplex* complex_group);
+
+		// Set the Position Offset of Object
+		void setPositionOffset(glm::vec2 new_offset);
+
+		// Returns the Position Offset of Object
+		glm::vec2 getPositionOffset();
+
+		// Store the Root Parent
+		void storeRootParent(Object::Object* parent);
+
+		// Get the Root Parent
+		Object::Object* getRootParent();
+
+		// Determines if the Object is Active
+		bool isActive();
+
+		// Sets the Object to be Active
+		void setActive();
+
+		// Disables the Object
+		void setInactive();
 	};
 }
 

@@ -6,124 +6,6 @@
 #include "Render/Struct/DataClasses.h"
 #include "UnsavedGroup.h"
 
-DataClass::Data_Object* Render::Objects::UnsavedLevel::lambdaDataObject(uint8_t object_identifier[4])
-{  
-
-#define ENABLE_LAG2
-
-#ifdef ENABLE_LAG2
-
-	auto readFloors = [&object_identifier]()->DataClass::Data_Object* {
-		switch (object_identifier[2])
-		{
-		case (Object::Mask::HORIZONTAL_LINE): return new DataClass::Data_FloorMaskHorizontalLine(object_identifier[3]);
-		case (Object::Mask::HORIZONTAL_SLANT): return new DataClass::Data_FloorMaskSlant(object_identifier[3]);
-		case (Object::Mask::HORIZONTAL_SLOPE): return new DataClass::Data_FloorMaskSlope(object_identifier[3]);
-		default: return nullptr;
-		}
-	};
-
-	auto readLeftWalls = [&object_identifier]()->DataClass::Data_Object* {
-		switch (object_identifier[2])
-		{
-		case (Object::Mask::VERTICAL_LINE): return new DataClass::Data_LeftMaskVerticalLine(object_identifier[3]);
-		case (Object::Mask::VERTICAL_CURVE): return new DataClass::Data_LeftMaskCurve(object_identifier[3]);
-		default: return nullptr;
-		}
-	};
-
-	auto readRightWalls = [&object_identifier]()->DataClass::Data_Object* {
-		switch (object_identifier[2])
-		{
-		case (Object::Mask::VERTICAL_LINE): return new DataClass::Data_RightMaskVerticalLine(object_identifier[3]);
-		case (Object::Mask::VERTICAL_CURVE): return new DataClass::Data_RightMaskCurve(object_identifier[3]);
-		default: return nullptr;
-		}
-	};
-
-	auto readCeilings = [&object_identifier]()->DataClass::Data_Object* {
-		switch (object_identifier[2])
-		{
-		case (Object::Mask::HORIZONTAL_LINE): return new DataClass::Data_CeilingMaskHorizontalLine(object_identifier[3]);
-		case (Object::Mask::HORIZONTAL_SLANT): return new DataClass::Data_CeilingMaskSlant(object_identifier[3]);
-		case (Object::Mask::HORIZONTAL_SLOPE): return new DataClass::Data_CeilingMaskSlope(object_identifier[3]);
-		default: return nullptr;
-		}
-	};
-
-	auto readTriggers = [&object_identifier]()->DataClass::Data_Object* {
-		return new DataClass::Data_TriggerMask(object_identifier[3]);
-	};
-
-	auto readMasks = [&object_identifier, &readFloors, &readLeftWalls, &readRightWalls, &readCeilings, &readTriggers]()->DataClass::Data_Object* {
-		std::function<DataClass::Data_Object*()> masks[5] = { readFloors, readLeftWalls, readRightWalls, readCeilings, readTriggers };
-		return masks[object_identifier[1]]();
-	};
-
-	auto readTerrain = [&object_identifier]()->DataClass::Data_Object* {
-		return new DataClass::Data_Terrain(object_identifier[1], object_identifier[2], object_identifier[3]);
-	};
-
-	auto readLights = [&object_identifier]()->DataClass::Data_Object* {
-		switch (object_identifier[1])
-		{
-		case (Object::Light::DIRECTIONAL): return new DataClass::Data_Directional(object_identifier[3]);
-		case (Object::Light::POINT): return new DataClass::Data_Point(object_identifier[3]);
-		case (Object::Light::SPOT): return new DataClass::Data_Spot(object_identifier[3]);
-		case (Object::Light::BEAM): return new DataClass::Data_Beam(object_identifier[3]);
-		default: return nullptr;
-		}
-	};
-
-	auto readRigid = [&object_identifier]()->DataClass::Data_Object* {
-		return new DataClass::Data_RigidBody(object_identifier[2], object_identifier[3]);
-	};
-
-	auto readSoft = [&object_identifier]()->DataClass::Data_Object* {
-		switch (object_identifier[2])
-		{
-		case ((int)Object::Physics::SOFT_BODY_TYPES::SPRING_MASS): return new DataClass::Data_SpringMass(object_identifier[3]);
-		case ((int)Object::Physics::SOFT_BODY_TYPES::WIRE): return new DataClass::Data_Wire(object_identifier[3]);
-		default: return nullptr;
-		}
-	};
-
-	auto readHinge = [&object_identifier]()->DataClass::Data_Object* {
-		switch (object_identifier[2])
-		{
-		case ((int)Object::Physics::HINGES::ANCHOR): return new DataClass::Data_Anchor(object_identifier[3]);
-		case ((int)Object::Physics::HINGES::HINGE): return new DataClass::Data_Hinge(object_identifier[3]);
-		default: return nullptr;
-		}
-	};
-
-	auto readPhysics = [&object_identifier, &readRigid, &readSoft, &readHinge]()->DataClass::Data_Object* {
-		std::function<DataClass::Data_Object*()> physics[3] = { readRigid, readSoft, readHinge };
-		return physics[object_identifier[1]]();
-	};
-
-	auto readEntities = [&object_identifier]()->DataClass::Data_Object* {
-		switch (object_identifier[1])
-		{
-		case ((int)Object::Entity::ENTITY_NPC): return new DataClass::Data_NPC(object_identifier[3]);
-		case ((int)Object::Entity::ENTITY_CONTROLLABLE): return new DataClass::Data_Controllable(object_identifier[3]);
-		case ((int)Object::Entity::ENTITY_INTERACTABLE): return new DataClass::Data_Interactable(object_identifier[3]);
-		case ((int)Object::Entity::ENTITY_DYNAMIC): return new DataClass::Data_Dynamic(object_identifier[3]);
-		default: return nullptr;
-		}
-	};
-
-	std::function<DataClass::Data_Object*()> objects[5] = {readMasks, readTerrain, readLights, readPhysics, readEntities};
-	return objects[object_identifier[0]]();
-
-#else
-
-	return nullptr;
-
-#endif
-
-}
-
 void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(ObjectsInstance& instance)
 {
 	// Temporary Holder for Object Identifier
@@ -231,17 +113,24 @@ void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects,
 	uint16_t active_index = 0;
 
 	// Generate Objects
-	buildObjectsGenerator(instance.data_objects, objects, index, physics, entities, active_array, active_index, nullptr);
+	buildObjectsGenerator(instance.data_objects, objects, index, physics, entities, active_array, active_index, nullptr, glm::vec2(0.0f, 0.0f));
 }
 
-void Render::Objects::UnsavedLevel::buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Object** active_array, uint16_t& active_index, Object::Object* parent)
+void Render::Objects::UnsavedLevel::buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Object** active_array, uint16_t& active_index, Object::Object* parent, glm::vec2 position_offset)
 {
 	for (DataClass::Data_Object* data_object : data_object_array)
 	{
 		// Generate Object and Attach Data Object
 		Object::Object* new_object = data_object->generateObject();
-		new_object->data_object = data_object;
+		*new_object->pointerToPosition() += position_offset;
 		new_object->parent = parent;
+
+		// If Parent != Nullptr, Add to Parent's Children Array
+		if (parent != nullptr)
+		{
+			parent->children[parent->children_size] = new_object;
+			parent->children_size++;
+		}
 
 		// If Move With Parent is Ever Set to False, ReEnable it Here
 		data_object->enableMoveWithParent();
@@ -276,11 +165,20 @@ void Render::Objects::UnsavedLevel::buildObjectsGenerator(std::vector<DataClass:
 		}
 
 		// Generate Children, if Applicable
-		UnsavedGroup* group = data_object->getGroup();
+		UnsavedCollection* group = data_object->getGroup();
 		if (group != nullptr)
 		{
+			// Generate the Children Array in Object
+			new_object->children = new Object::Object*[group->getChildren().size()];
+
+			// Get the Potential Offset of the Object
 			new_object->group_object = group;
-			buildObjectsGenerator(group->getChildren(), objects, index, physics, entities, active_array, active_index, new_object);
+			glm::vec2 new_offset = position_offset;
+			if (group->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
+				new_offset += new_object->returnPosition();
+
+			// Recursively Generate Children
+			buildObjectsGenerator(group->getChildren(), objects, index, physics, entities, active_array, active_index, new_object, new_offset);
 		}
 	}
 }
@@ -329,7 +227,7 @@ Shape::Shape* Render::Objects::UnsavedLevel::getShapePointer(Editor::Selector* s
 void Render::Objects::UnsavedLevel::addWhileTraversing(DataClass::Data_Object* data_object, bool move_with_parent)
 {
 	instance_with_changes.data_objects.push_back(data_object);
-	UnsavedGroup* data_group = data_object->getGroup();
+	UnsavedCollection* data_group = data_object->getGroup();
 	if (data_group != nullptr)
 		UnsavedGroup::enqueueLevelParent(data_object);
 }
@@ -352,6 +250,13 @@ void Render::Objects::UnsavedLevel::removeChainListInstance()
 {
 	// Unsaved Levels Only Need to Remove Instance and Delete Data Objects
 	slave_stack.removeRecentInstance();
+}
+
+bool Render::Objects::UnsavedLevel::testValidSelection(DataClass::Data_Object* parent, DataClass::Data_Object* test_child)
+{
+	// Don't Allow Connector Objects and Softbody Objects in Level
+
+	return true;
 }
 
 Render::Objects::UnsavedLevel::UnsavedLevel()

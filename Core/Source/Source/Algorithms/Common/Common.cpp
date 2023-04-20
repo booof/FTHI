@@ -170,4 +170,63 @@ bool Source::Algorithms::Common::WGLExtensionSupported(const char* extension_nam
 	return true;
 }
 
+bool Source::Algorithms::Common::testIN(char character, const char* string)
+{
+	char test = 0;
+	while ((test = *string) != '\0')
+	{
+		string++;
+		if (test == character)
+			return true;
+	}
+	return false;
+}
+
+std::string Source::Algorithms::Common::getFileName(std::string& file_path, bool include_file_type)
+{
+	// The File Name
+	std::string file_name = "";
+
+	// Index in File Path
+	int index2 = file_path.size();
+	int index = index2 - 1;
+	if (index < 1)
+		return file_name;
+
+	// Iterate Until Either '.' , '\', or '/' is found first
+	while (index >= 0 && !testIN(file_path[index], ".\\/"))
+		index--;
+
+	// If Index is 0, Return ""
+	if (!index)
+		return file_name;
+
+	// If '.' Was Found, Find Next '/' or '\\'
+	if (file_path[index] == '.')
+	{
+		// If File Path Shouldn't be Included, Set Index2 to Where '.' is
+		if (!include_file_type)
+			index2 = index;
+
+		// Iterate Until '//' or '/' is Found
+		while (index >= 0 && !testIN(file_path[index], "\\/"))
+			index--;
+
+		// If Index is 0, Return ""
+		if (!index)
+			return file_name;
+	}
+
+	// Resize The String to Contain the Correct Amount of Data
+	file_name.resize(index2 - index - 1);
+	
+	// Copy File Name From Path Into String
+	int i = 0;
+	index++;
+	while (index < index2)
+		file_name[i++] = file_path[index++];
+
+	return file_name;
+}
+
 

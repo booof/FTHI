@@ -29,6 +29,12 @@ namespace Source::Algorithms::Common
 
 	// Enable OpenGL Extensions
 	bool WGLExtensionSupported(const char* extension_name);
+
+	// Tests if a Character is In a String
+	bool testIN(char character, const char* string);
+
+	// Isolates the Name of a File from File Path
+	std::string getFileName(std::string& file_path, bool include_file_type);
 }
 
 #endif

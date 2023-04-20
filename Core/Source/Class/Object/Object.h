@@ -18,7 +18,7 @@ namespace DataClass {
 }
 
 namespace Render::Objects {
-	class UnsavedGroup;
+	class UnsavedCollection;
 }
 
 namespace Object
@@ -31,13 +31,15 @@ namespace Object
 		LIGHT,
 		PHYSICS,
 		ENTITY,
-		EFFECT
+		EFFECT,
+		GROUP
 	};
 
 	// Enumerated Index for Header Counts
 	enum STORAGE_TYPES : uint8_t
 	{
-		FLOOR_COUNT = 1,
+		NULL_TEMP = 0,
+		FLOOR_COUNT,
 		LEFT_COUNT,
 		RIGHT_COUNT,
 		CEILING_COUNT,
@@ -48,7 +50,8 @@ namespace Object
 		SPOT_COUNT,
 		BEAM_COUNT,
 		PHYSICS_COUNT,
-		ENTITY_COUNT
+		ENTITY_COUNT,
+		GROUP_COUNT
 	};
 
 	// Definition for Basic Object Initializer For Reading From File
@@ -86,6 +89,10 @@ namespace Object
 
 	public:
 
+		// I Hope This Works
+		// Update: Why The Fuck Does This Work
+		virtual ~Object();
+
 #ifdef EDITOR
 
 		// Pointer to the Data Class
@@ -99,7 +106,7 @@ namespace Object
 		bool skip_selection = false;     // If True, Object is Skipped for Selection Until Mouse is Moved
 
 		// The Pointer to the Unsaved Group Object
-		Render::Objects::UnsavedGroup* group_object = nullptr;
+		Render::Objects::UnsavedCollection* group_object = nullptr;
 
 #endif
 
@@ -119,10 +126,13 @@ namespace Object
 		void (*del)(Object*) = nullptr;
 
 		// The Pointer to the Parent Object
-		Object* parent;
+		Object* parent = nullptr;
 
 		// The Pointer to Child Objects
-		Object** children;
+		Object** children = nullptr;
+
+		// The Number of Children of the Object
+		int children_size = 0;
 
 		// The External Data Used by the Object (Used for Individual Object Specific Data in Scripts)
 		void* external_data = nullptr;
@@ -136,7 +146,7 @@ namespace Object
 #ifdef EDITOR
 
 		// Select Object
-		void select(Editor::Selector& selector, Editor::ObjectInfo& object_info);
+		bool select(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test if Mouse Intersects Object
 		virtual bool testMouseCollisions(float x, float y) = 0;
@@ -146,6 +156,9 @@ namespace Object
 
 		// Update Selected Position of Object
 		virtual void updateSelectedPosition(float deltaX, float deltaY) = 0;
+
+		// Update Selected Position of Object From Complex Parent
+		void updateSelectedComplexPosition(float deltaX, float deltaY);
 
 		// Temp Debug Function
 		void debug_funct();
@@ -172,6 +185,42 @@ namespace Object
 
 		// Update Selected Position of Object
 		void updateSelectedPosition(float deltaX, float deltaY);
+	};
+
+	// Temp Object Class that Only Contains a Position for When Parents Are Deleted
+	class TempObject : public Object
+	{
+		// Position of the Object
+		glm::vec2 position = glm::vec2(0.0f, 0.0f);
+
+		// Position Being Modified by the Selector
+		glm::vec2* selected_position = nullptr;
+
+	public:
+
+		// Constructor
+		TempObject(Object* object, glm::vec2* new_position_ptr);
+
+		// Deconstructor
+		~TempObject();
+
+		// Update the Object
+		void updateObject() {}
+
+		// Return Pointer to Position
+		glm::vec2* pointerToPosition();
+
+		// Test if Mouse Intersects Object
+		bool testMouseCollisions(float x, float y);
+
+		// Return Position of Object
+		glm::vec2 returnPosition();
+
+		// Update Selected Position of Object
+		void updateSelectedPosition(float deltaX, float deltaY);
+
+		// Return Pointer to Selected Position
+		glm::vec2* pointerToSelectedPosition();
 	};
 
 	// List of Objects

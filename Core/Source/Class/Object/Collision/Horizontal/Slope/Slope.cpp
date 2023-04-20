@@ -90,10 +90,10 @@ void DataClass::Data_Slope::generateInitialValues(glm::vec2& position, float& si
 	data.material = 0;
 }
 
-void DataClass::Data_Slope::updateSelectedPosition(float deltaX, float deltaY)
+void DataClass::Data_Slope::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
 {
 	data.position.x += deltaX;
 	data.position.y += deltaX;
-	updateSelectedPositionsHelper(deltaX, deltaY);
+	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }
 

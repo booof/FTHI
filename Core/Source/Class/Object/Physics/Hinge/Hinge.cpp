@@ -895,11 +895,10 @@ DataClass::Data_Object* DataClass::Data_Hinge::makeCopy()
 	return new Data_Hinge(*this);
 }
 
-void DataClass::Data_Hinge::updateSelectedPosition(float deltaX, float deltaY)
+void DataClass::Data_Hinge::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
 {
 	data.position.x += deltaX;
 	data.position.y += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY);
 }
 
 int& DataClass::Data_Hinge::getScript()

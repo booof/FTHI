@@ -470,6 +470,7 @@ void Editor::EditorWindow::genBoxesCommon(uint8_t& box_offset, uint8_t& text_off
 	temp_box_data.width = 3.0f;
 	temp_box_data.height = 3.0f;
 	temp_box_data.zpos = -1.0f;
+	temp_box_data.centered = true;
 
 	// Clamp Box
 	temp_box_data.position = glm::vec2(32.0f * scale, windowTop - 5.0f);
@@ -1844,6 +1845,25 @@ void Editor::EditorWindow::genBoxesAI(uint8_t& box_offset, uint8_t& text_offset,
 {
 }
 
+void Editor::EditorWindow::genBoxesGroup(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
+{
+	// File Box
+	temp_box_data.width = 70.0f * scale;
+	temp_box_data.height = 5.0f;
+	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset - 2);
+	temp_box_data.button_text = static_cast<DataClass::Data_GroupObject*>(data_object)->getFilePath();
+	temp_box_data.mode = GUI::GENERAL_TEXT_BOX;
+	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset]->setDataPointer(&static_cast<DataClass::Data_GroupObject*>(data_object)->getFilePath());
+	box_offset++;
+
+	// File Text
+	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 3.0f);
+	temp_text_data.text = " File:";
+	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	text_offset++;
+}
+
 void Editor::EditorWindow::assignColorWheel(ColorWheel* wheel_, uint8_t& box_offset, uint8_t& text_offset, unsigned int* color, float height_offset)
 {
 	// Move Color Wheel
@@ -1952,6 +1972,10 @@ void Editor::EditorWindow::displayText()
 
 		// Draw Effect Label
 		Source::Fonts::renderText("Effects", -48.0f, initial_height, 0.13f, glm::vec4(0.0f, 0.8f, 0.8f, 1.0f), true);
+		initial_height -= change_in_height;
+
+		// Draw Group Label
+		Source::Fonts::renderText("Effects", -48.0f, initial_height, 0.13f, glm::vec4(0.0f, 0.8f, 0.6f, 1.0f), true);
 
 		break;
 	}
@@ -2604,7 +2628,7 @@ void Editor::EditorWindow::changeNewObject()
 
 		// Enable VBO and Bind Nullified Vertices
 		glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 252, NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 294, NULL, GL_DYNAMIC_DRAW);
 
 		// Collision Mask Vertices
 		Vertices::Line::genLineColor(-10.0f * scale, 30.0f * scale, distance, distance, -1.1f, 1 * scale, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), vertices);
@@ -2638,6 +2662,12 @@ void Editor::EditorWindow::changeNewObject()
 
 		// Effect Vertices
 		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+		offset += 42;
+		distance -= 15 * scale;
+
+		// Group Vertices
+		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 10 * scale, 10 * scale, glm::vec4(0.0f, 0.8f, 0.6f, 1.0f), vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
 		offset += 42;
 
@@ -2866,6 +2896,13 @@ void Editor::EditorWindow::changeNewObject()
 			// Finalize Vertices
 			finalizeNewObjectVertices(distance);
 
+			break;
+		}
+
+		// Group Selections
+		case Object::GROUP:
+		{
+			generateNewObject();
 			break;
 		}
 
@@ -3628,6 +3665,16 @@ void Editor::EditorWindow::generateNewObject()
 		break;
 	}
 
+	// Group Objects
+	case Object::GROUP:
+	{
+		DataClass::Data_GroupObject* new_group = new DataClass::Data_GroupObject();
+		new_group->generateInitialData(position);
+		new_data_object = new_group;
+
+		break;
+	}
+
 	}
 
 	// Store New Data Object
@@ -3925,13 +3972,13 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	glm::vec2& position = current_data_object->getPosition();
 
 	// Collision Masks
-	if (object_identifier[0] == 0)
+	if (object_identifier[0] == Object::ObjectList::MASK)
 	{
 		// Floor Mask
-		if (object_identifier[1] == 0)
+		if (object_identifier[1] == Object::Mask::MASKS::FLOOR)
 		{
 			// Horizontal Line
-			if (object_identifier[2] == 0)
+			if (object_identifier[2] == Object::Mask::HORIZONTAL_SHAPES::HORIZONTAL_LINE)
 			{
 				resetBoxes(9, 8);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
@@ -3943,7 +3990,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			}
 
 			// Horizontal Slant
-			else if (object_identifier[2] == 1)
+			else if (object_identifier[2] == Object::Mask::HORIZONTAL_SHAPES::HORIZONTAL_SLANT)
 			{
 				resetBoxes(10, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
@@ -3955,7 +4002,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			}
 
 			// Horizontal Slope
-			else if (object_identifier[2] == 2)
+			else if (object_identifier[2] == Object::Mask::HORIZONTAL_SHAPES::HORIZONTAL_SLOPE)
 			{
 				resetBoxes(10, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
@@ -3968,10 +4015,10 @@ void Editor::EditorWindow::genObjectEditorWindow()
 		}
 
 		// Left Mask
-		else if (object_identifier[1] == 1)
+		else if (object_identifier[1] == Object::Mask::MASKS::LEFT_WALL)
 		{
 			// Vertical Line
-			if (object_identifier[2] == 0)
+			if (object_identifier[2] == Object::Mask::VERTICAL_SHAPES::VERTICAL_LINE)
 			{
 				resetBoxes(8, 8);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
@@ -3982,7 +4029,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			}
 
 			// Curve
-			else if (object_identifier[2] == 1)
+			else if (object_identifier[2] == Object::Mask::VERTICAL_SHAPES::VERTICAL_CURVE)
 			{
 				resetBoxes(9, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
@@ -3994,10 +4041,10 @@ void Editor::EditorWindow::genObjectEditorWindow()
 		}
 
 		// Right Mask
-		else if (object_identifier[1] == 2)
+		else if (object_identifier[1] == Object::Mask::MASKS::RIGHT_WALL)
 		{
 			// Vertical Line
-			if (object_identifier[2] == 0)
+			if (object_identifier[2] == Object::Mask::VERTICAL_SHAPES::VERTICAL_LINE)
 			{
 				resetBoxes(8, 8);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
@@ -4008,7 +4055,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			}
 
 			// Curve
-			else if (object_identifier[2] == 1)
+			else if (object_identifier[2] == Object::Mask::VERTICAL_SHAPES::VERTICAL_CURVE)
 			{
 				resetBoxes(9, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
@@ -4020,10 +4067,10 @@ void Editor::EditorWindow::genObjectEditorWindow()
 		}
 
 		// Ceiling Mask
-		else if (object_identifier[1] == 3)
+		else if (object_identifier[1] == Object::Mask::MASKS::CEILING)
 		{
 			// Horizontal Line
-			if (object_identifier[2] == 0)
+			if (object_identifier[2] == Object::Mask::HORIZONTAL_SHAPES::HORIZONTAL_LINE)
 			{
 				resetBoxes(8, 8);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
@@ -4034,7 +4081,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			}
 
 			// Horizontal Slant
-			else if (object_identifier[2] == 1)
+			else if (object_identifier[2] == Object::Mask::HORIZONTAL_SHAPES::HORIZONTAL_SLANT)
 			{
 				resetBoxes(9, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
@@ -4045,7 +4092,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 			}
 
 			// Horizontal Slope
-			else if (object_identifier[2] == 2)
+			else if (object_identifier[2] == Object::Mask::HORIZONTAL_SHAPES::HORIZONTAL_SLOPE)
 			{
 				resetBoxes(9, 9);
 				getStringFromStringMap(STRING_MAPS::SCRIPT, script);
@@ -4057,14 +4104,14 @@ void Editor::EditorWindow::genObjectEditorWindow()
 		}
 
 		// Trigger Mask
-		else if (object_identifier[1] == 4)
+		else if (object_identifier[1] == Object::Mask::MASKS::TRIGGER)
 		{
 
 		}
 	}
 
 	// Terrain Object
-	else if (object_identifier[0] == 1)
+	else if (object_identifier[0] == Object::ObjectList::TERRAIN)
 	{
 		// Allocate Memory
 		resetBoxes(16 + shape_box_adders[object_identifier[2]], 17 + shape_text_adders[object_identifier[2]]);
@@ -4122,12 +4169,12 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	}
 
 	// Lighting Object
-	else if (object_identifier[0] == 2)
+	else if (object_identifier[0] == Object::ObjectList::LIGHT)
 	{
 		getStringFromStringMap(STRING_MAPS::SCRIPT, script);
 
 		// Directional
-		if (object_identifier[1] == 0)
+		if (object_identifier[1] == Object::Light::DIRECTIONAL)
 		{
 			// Allocate Memory
 			resetBoxes(21, 24);
@@ -4145,7 +4192,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 		}
 
 		// Point
-		else if (object_identifier[1] == 1)
+		else if (object_identifier[1] == Object::Light::POINT)
 		{
 			// Allocate Memory
 			resetBoxes(21, 24);
@@ -4163,7 +4210,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 		}
 
 		// Spot
-		else if (object_identifier[1] == 2)
+		else if (object_identifier[1] == Object::Light::SPOT)
 		{
 			// Allocate Memory
 			resetBoxes(26, 30);
@@ -4181,7 +4228,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 		}
 
 		// Beam
-		else if (object_identifier[1] == 3)
+		else if (object_identifier[1] == Object::Light::BEAM)
 		{
 			// Allocate Memory
 			resetBoxes(23, 26);
@@ -4200,7 +4247,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	}
 
 	// Physics Object
-	else if (object_identifier[0] == 3)
+	else if (object_identifier[0] == Object::ObjectList::PHYSICS)
 	{
 		// Rigid Body
 		if (object_identifier[1] == 0)
@@ -4329,7 +4376,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	}
 
 	// Entity Object
-	else if (object_identifier[0] == 4)
+	else if (object_identifier[0] == Object::ObjectList::ENTITY)
 	{
 		getStringFromStringMap(STRING_MAPS::SCRIPT, script);
 
@@ -4378,13 +4425,28 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	}
 
 	// Effect Object
-	else if (object_identifier[0] == 5)
+	else if (object_identifier[0] == Object::ObjectList::EFFECT)
 	{
 		// Particle Generator
 		if (object_identifier[1] == 0)
 		{
 
 		}
+	}
+
+	// Group Object
+	else if (object_identifier[0] == Object::ObjectList::GROUP)
+	{
+		// Allocate Memory
+		resetBoxes(7, 7);
+
+		// Create Common Boxes
+		genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+
+		// Generate Group Data
+		genBoxesGroup(box_offset, text_offset, windowTop - 60.0f, current_data_object);
+
+		editorHeightFull = 65.0f;
 	}
 
 	// Create ScrollBar

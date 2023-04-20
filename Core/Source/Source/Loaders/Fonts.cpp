@@ -115,14 +115,55 @@ float Source::Fonts::renderText(std::string text, GLfloat x, GLfloat y, GLfloat 
 
 float Source::Fonts::renderTextAdvanced(std::string text, GLfloat x, GLfloat y, GLfloat maxLength, GLfloat scale, glm::vec4 color, bool centered)
 {
-	// The Character in Text
-	std::string::const_iterator c;
-
 	// Send Static Projection Matrix to Shader
 	glUniformMatrix4fv(Global::projectionLocFont, 1, GL_FALSE, glm::value_ptr(Global::projectionStatic));
 
 	// Send Colors to Shader
 	glUniform3f(Global::texcolorLocFont, color.x, color.y, color.z);
+
+	// Center the Text
+	text = centerTextHelper(text, x, scale, maxLength, centered);
+
+	// Draw Text
+	return renderTextHelper(text, x, y, scale);
+}
+
+float Source::Fonts::renderTextOffset(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color, GLfloat maxLength, bool centered)
+{
+	// Send Projection Matrix to Shader
+	glUniformMatrix4fv(Global::projectionLocRelativeFont, 1, GL_FALSE, glm::value_ptr(Global::projectionStatic));
+
+	// Send Colors to Shader
+	glUniform3f(Global::texcolorLocRelativeFont, color.x, color.y, color.z);
+
+	// Apply Max Length and Center if Needed
+	if (maxLength != 0.0f || centered)
+		text = centerTextHelper(text, x, scale, maxLength, centered);
+
+	// Draw Text
+	return renderTextHelper(text, x, y, scale);
+}
+
+float Source::Fonts::renderTextGlobal(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color)
+{
+	// Enable Shader
+	//Global::fontGlobalShader.Use();
+
+	// Send Matricies to Shader
+	glUniformMatrix4fv(Global::projectionLocGlobalFont, 1, GL_FALSE, glm::value_ptr(Global::projection));
+	glUniformMatrix4fv(Global::viewLocGlobalFont, 1, GL_FALSE, glm::value_ptr(Global::view));
+
+	// Send Colors to Shader
+	glUniform3f(Global::textcolorLocGlobalFont, color.x, color.y, color.z);
+
+	// Draw Text
+	return renderTextHelper(text, x, y, scale);
+}
+
+std::string Source::Fonts::centerTextHelper(std::string text, GLfloat& x, GLfloat scale, GLfloat maxLength, bool centered)
+{
+	// The Character in Text
+	std::string::const_iterator c;
 
 	// Temporary Width of Decimal Points at End of Text
 	float DecimalPointWidth = (Global::Current_Font[46].Advance >> 6) * scale * 2;
@@ -143,7 +184,7 @@ float Source::Fonts::renderTextAdvanced(std::string text, GLfloat x, GLfloat y, 
 		newText += *c;
 
 		// Prevent Text From Going Past Max Length
-		if (TextLength + DecimalPointWidth >= maxLength)
+		if (maxLength != 0.0f && TextLength + DecimalPointWidth >= maxLength)
 		{
 			TextLength += DecimalPointWidth;
 			newText += "..";
@@ -157,36 +198,7 @@ float Source::Fonts::renderTextAdvanced(std::string text, GLfloat x, GLfloat y, 
 		x -= TextLength / 2;
 	}
 
-	// Draw Text
-	return renderTextHelper(text, x, y, scale);
-}
-
-float Source::Fonts::renderTextOffset(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color)
-{
-	// Send Projection Matrix to Shader
-	glUniformMatrix4fv(Global::projectionLocRelativeFont, 1, GL_FALSE, glm::value_ptr(Global::projectionStatic));
-
-	// Send Colors to Shader
-	glUniform3f(Global::texcolorLocRelativeFont, color.x, color.y, color.z);
-
-	// Draw Text
-	return renderTextHelper(text, x, y, scale);
-}
-
-float Source::Fonts::renderTextGlobal(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color)
-{
-	// Enable Shader
-	//Global::fontGlobalShader.Use();
-
-	// Send Matricies to Shader
-	glUniformMatrix4fv(Global::projectionLocGlobalFont, 1, GL_FALSE, glm::value_ptr(Global::projection));
-	glUniformMatrix4fv(Global::viewLocGlobalFont, 1, GL_FALSE, glm::value_ptr(Global::view));
-
-	// Send Colors to Shader
-	glUniform3f(Global::textcolorLocGlobalFont, color.x, color.y, color.z);
-
-	// Draw Text
-	return renderTextHelper(text, x, y, scale);
+	return newText;
 }
 
 float Source::Fonts::renderTextHelper(std::string text, GLfloat x, GLfloat y, GLfloat scale)

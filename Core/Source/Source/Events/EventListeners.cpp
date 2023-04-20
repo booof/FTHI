@@ -733,11 +733,27 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 		// Force a Reload on Levels
 		if (Global::Keys[GLFW_KEY_R])
 		{
+			// Print Message
+			std::cout << "Reloading All\n";
+
 			// For Performance, This Should be a One and Done Operation
 			Global::Keys[GLFW_KEY_R] = false;
 
 			// Force the Reload by Reloading All on Level Object
 			level.reloadAll();
+		}
+
+		// Force a Reload on Project
+		if (Global::Keys[GLFW_KEY_E])
+		{
+			// Print Message
+			std::cout << "Reloading Project\n";
+
+			// Disable Repeat Reloading of Project
+			Global::Keys[GLFW_KEY_E] = false;
+
+			// Reload the Project
+			project_selector->forceProjectReload();
 		}
 
 		return;

@@ -185,6 +185,9 @@ namespace Render::Objects
 
 		bool selected_unmodified = true;
 
+		// The Lambdas that Generate and Return a Data Class Based on Object Identifier
+		DataClass::Data_Object* lambdaDataObject(uint8_t object_identifier[4]);
+
 		// Creates a New Change List
 		void generateChangeList();
 
@@ -229,10 +232,10 @@ namespace Render::Objects
 		Object::Object*** active_objects = nullptr;
 
 		// Create a New Change by Appending a New Object
-		void createChangeAppend(DataClass::Data_Object* data_object);
+		void createChangeAppend(DataClass::Data_Object* data_object, bool disable_move);
 
 		// Create a New Change by Removing an Object
-		void createChangePop(DataClass::Data_Object* data_object_to_remove);
+		void createChangePop(DataClass::Data_Object* data_object_to_remove, bool disable_move);
 
 		// Reset a Change List in the Event it is Canceled
 		void resetChangeList();
@@ -242,6 +245,9 @@ namespace Render::Objects
 
 		// Remove Instance in Change List
 		virtual void removeChainListInstance() = 0;
+
+		// Tests if an Object can be Successfully Added to the Object
+		virtual bool testValidSelection(DataClass::Data_Object* parent, DataClass::Data_Object* test_child) = 0;
 
 		// Finalize a New Change List. Returns True if a Change List was Created
 		bool finalizeChangeList();
