@@ -10,6 +10,9 @@
 #include "Source/Events/EventListeners.h"
 #include "Source/Loaders/Fonts.h"
 
+// Selected Text Object
+#include "SelectedText.h"
+
 // Vertices
 #include "Source/Vertices/Rectangle/RectangleVertices.h"
 
@@ -77,7 +80,7 @@ void GUI::Box::updateText()
 		case ALPHABETICAL_TEXT_BOX:
 		{
 			std::string* string_pointer = static_cast<std::string*>(data_pointer);
-			data.button_text = *string_pointer;
+			data.button_text.setString(*string_pointer);
 			break;
 		}
 
@@ -86,7 +89,7 @@ void GUI::Box::updateText()
 		case ABSOLUTE_NUMERICAL_TEXT_BOX:
 		{
 			float* float_pointer = static_cast<float*>(data_pointer);
-			data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*float_pointer));
+			data.button_text.setString(Source::Algorithms::Common::removeTrailingZeros(std::to_string(*float_pointer)));
 			break;
 		}
 
@@ -95,7 +98,7 @@ void GUI::Box::updateText()
 		case ABSOLUTE_INTEGER_TEXT_BOX:
 		{
 			int* int_pointer = static_cast<int*>(data_pointer);
-			data.button_text = std::to_string(*int_pointer);
+			data.button_text.setString(std::to_string(*int_pointer));
 			break;
 		}
 
@@ -107,6 +110,9 @@ GUI::Box::Box(BoxData& data_)
 {
 	// Store Box Data
 	data = data_;
+
+	// Store Data in Advanced String
+	data.button_text.setAdvancedValues(data.width - 1.5f, 0.1f, data.centered);
 
 	// Store Positions of Object
 	storePositions();
@@ -160,7 +166,7 @@ void GUI::Box::setDataPointer(void* data_pointer_)
 	if (data.mode < 2)
 	{
 		std::string* string_pointer = static_cast<std::string*>(data_pointer);
-		data.button_text = *string_pointer;
+		data.button_text.setString(*string_pointer);
 	}
 }
 
@@ -193,8 +199,6 @@ bool GUI::Box::updateElement()
 	highlighted = false;
 
 	// Get Mouse Positions
-	//float mouseX = Global::mouseX / Global::zoom_scale;
-	//float mouseY = Global::mouseY / Global::zoom_scale;
 	float mouseX = gui_mouse_position.x;
 	float mouseY = gui_mouse_position.y;
 
@@ -212,16 +216,55 @@ bool GUI::Box::updateElement()
 			// If Left-Click, Set Flag to True
 			if (Global::LeftClick)
 			{
+				// Disable Left Click
+				Global::LeftClick = false;
+
 				// If Null Box, Return
 				if (data.mode == NULL_BOX)
 					return true;
 
-				// Reset Text
-				if (Global::texting)
-					Global::text_box->setFalse();
+				// If This Object is Texting, Return
+				if (texting)
+				{
+					// If File Box, Open File Explorer if Double Click
+					if (data.mode == FILE_PATH_BOX && Global::DoubleClick)
+					{
+						// Disable Double Click
+						Global::DoubleClick = false;
 
-				// Disable Left Click
-				Global::LeftClick = false;
+						// Generate Open File Dialogue
+						OPENFILENAME file_dialogue = { 0 };
+						TCHAR szFile[260] = { 0 };
+						TCHAR szTitle[260] = { 0 };
+						file_dialogue.lStructSize = sizeof(OPENFILENAME);
+						file_dialogue.lpstrFile = szFile;
+						file_dialogue.nMaxFile = sizeof(szFile);
+						file_dialogue.lpstrFilter = ("Engine Data File\0*.DAT");
+						file_dialogue.nFilterIndex = 1;
+						file_dialogue.lpstrFileTitle = szTitle;
+						file_dialogue.lpstrTitle = "Select A Valid Data File (.dat)";
+						file_dialogue.nMaxFileTitle = sizeof(szTitle);
+						file_dialogue.lpstrInitialDir = selected_text->getString().c_str();
+						file_dialogue.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+						// Open the File Explorer
+						if (GetSaveFileName(&file_dialogue) == TRUE)
+						{
+							// Get the File Path Without Extension
+							std::string new_path = file_dialogue.lpstrFile;
+							Source::Algorithms::Common::eraseFileExtension(new_path);
+
+							// Update Selected Text
+							selected_text->forceUpdateText(new_path);
+						}
+					}
+
+					return true;
+				}
+
+				// Reset Text
+				if (selected_text->isActive())
+					selected_text->stopSelecting();
 
 				// Perform State Change
 				if (!state) { setTrue(); }
@@ -241,6 +284,7 @@ void GUI::Box::setTrue()
 	// Set Box to True
 	switch (data.mode)
 	{
+
 	// Basic Text Box
 	case GENERAL_TEXT_BOX:
 	// Alphabetical Text Box
@@ -253,13 +297,11 @@ void GUI::Box::setTrue()
 	case INTEGER_TEXT_BOX:
 	// Absolute Integer Box
 	case ABSOLUTE_INTEGER_TEXT_BOX:
+	// File Box
+	case FILE_PATH_BOX:
 	{
 		glfwSetKeyCallback(Global::window, Source::Listeners::TypeCallback);
-		Global::text = &data.button_text;
-		Global::initial_text = data.button_text;
-		Global::textModifier = data.mode;
-		Global::text_box = this;
-		Global::texting = true;
+		selected_text->assignText(&data.button_text, glm::vec2(text_x, text_y), data.mode, this);
 		state = true;
 		texting = true;
 		break;
@@ -300,74 +342,78 @@ void GUI::Box::setFalse()
 	case GENERAL_TEXT_BOX:
 	{
 		state = false;
-		Global::texting = false;
 		texting = false;
 		glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
 		std::string* string_pointer = static_cast<std::string*>(data_pointer);
-		*string_pointer = data.button_text;
+		*string_pointer = data.button_text.getString();
 		break;
 	}
 	// Alphabetical Text Box
 	case ALPHABETICAL_TEXT_BOX:
 	{
 		state = false;
-		Global::texting = false;
 		texting = false;
 		glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
 		std::string* string_pointer = static_cast<std::string*>(data_pointer);
-		*string_pointer = data.button_text;
+		*string_pointer = data.button_text.getString();
 		break;
 	}
 	// Numerical Box
 	case NUMERICAL_TEXT_BOX:
 	{
 		state = false;
-		Global::texting = false;
 		texting = false;
 		glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
-		if (data.button_text == "" || data.button_text == "-" || data.button_text == ".")
-			data.button_text = "0";
+		if (data.button_text.getString() == "" || data.button_text.getString() == "-" || data.button_text.getString() == ".")
+			data.button_text.getString() = "0";
 		float* number_pointer = static_cast<float*>(data_pointer);
-		*number_pointer = Source::Algorithms::Common::convertStringToFloat(data.button_text);
+		*number_pointer = Source::Algorithms::Common::convertStringToFloat(data.button_text.getString());
 		break;
 	}
 	// Absolute Numerical Box
 	case ABSOLUTE_NUMERICAL_TEXT_BOX:
 	{
 		state = false;
-		Global::texting = false;
 		texting = false;
 		glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
-		if (data.button_text == "" || data.button_text == ".")
-			data.button_text = "0";
+		if (data.button_text.getString() == "" || data.button_text.getString() == ".")
+			data.button_text.getString() = "0";
 		float* number_pointer = static_cast<float*>(data_pointer);
-		*number_pointer = Source::Algorithms::Common::convertStringToFloat(data.button_text);
+		*number_pointer = Source::Algorithms::Common::convertStringToFloat(data.button_text.getString());
 		break;
 	}
 	// Integer Box
 	case INTEGER_TEXT_BOX:
 	{
 		state = false;
-		Global::texting = false;
 		texting = false;
 		glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
-		if (data.button_text == "" || data.button_text == "-")
-			data.button_text = "0";
+		if (data.button_text.getString() == "" || data.button_text.getString() == "-")
+			data.button_text.getString() = "0";
 		int* int_pointer = static_cast<int*>(data_pointer);
-		*int_pointer = Source::Algorithms::Common::convertStringToInt(data.button_text);
+		*int_pointer = Source::Algorithms::Common::convertStringToInt(data.button_text.getString());
 		break;
 	}
 	// Absolute Integer Box
 	case ABSOLUTE_INTEGER_TEXT_BOX:
 	{
 		state = false;
-		Global::texting = false;
 		texting = false;
 		glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
-		if (data.button_text == "")
-			data.button_text = "0";
+		if (data.button_text.getString() == "")
+			data.button_text.getString() = "0";
 		int* int_pointer = static_cast<int*>(data_pointer);
-		*int_pointer = Source::Algorithms::Common::convertStringToInt(data.button_text);
+		*int_pointer = Source::Algorithms::Common::convertStringToInt(data.button_text.getString());
+		break;
+	}
+	// File Path Box
+	case FILE_PATH_BOX:
+	{
+		state = false;
+		texting = false;
+		glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
+		std::string* string_pointer = static_cast<std::string*>(data_pointer);
+		*string_pointer = data.button_text.getString();
 		break;
 	}
 	// Toggle Box
@@ -400,7 +446,7 @@ bool GUI::Box::getState()
 
 std::string GUI::Box::getText()
 {
-	return data.button_text;
+	return data.button_text.getString();
 }
 
 void GUI::Box::blitzElement()
@@ -421,7 +467,7 @@ void GUI::Box::blitzText(float offset)
 	updateText();
 
 	// Draw Text
-	Source::Fonts::renderTextAdvanced(data.button_text, text_x, text_y + offset, data.width - 1.5f, 0.1f, data.text_color, true);
+	Source::Fonts::renderText(data.button_text.getRenderString(), text_x + data.button_text.getOffset(), text_y + offset, 0.1f, data.text_color, true);
 }
 
 void GUI::Box::blitzOffsetText()
@@ -430,7 +476,7 @@ void GUI::Box::blitzOffsetText()
 	updateText();
 
 	// Draw Text
-	Source::Fonts::renderTextOffset(data.button_text, text_x, text_y, 0.1f, data.text_color, data.width - 1.5f, data.centered);
+	Source::Fonts::renderTextOffset(data.button_text.getRenderString(), text_x + data.button_text.getOffset(), text_y, 0.1f, data.text_color);
 }
 
 void GUI::Box::blitzGlobalText()
@@ -439,5 +485,5 @@ void GUI::Box::blitzGlobalText()
 	updateText();
 
 	// Draw Text
-	Source::Fonts::renderTextGlobal(data.button_text, text_x, text_y, 0.1f, data.text_color);
+	Source::Fonts::renderTextGlobal(data.button_text.getRenderString(), text_x + data.button_text.getOffset(), text_y, 0.1f, data.text_color);
 }

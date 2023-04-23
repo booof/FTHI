@@ -164,8 +164,12 @@ Render::Objects::UnsavedComplex::UnsavedComplex()
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
+	// Default Vertices for Object
+	float vertices[56];
+	Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.0f, 5.0f, 5.0f, vertices);
+
 	// Allocate Buffer Data
-	glBufferData(GL_ARRAY_BUFFER, 56 * sizeof(GL_FLOAT), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	// Enable Position Data
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(0));
@@ -221,8 +225,6 @@ void Render::Objects::UnsavedComplex::constructUnmodifiedData(std::string file_p
 {
 	// Store File Path
 	file_path = file_path_;
-
-	file_path = Global::project_resources_path + "\\Models\\Groups\\NULL";
 
 	// Read Unmodified Data
 	constructUnmodifiedDataHelper(instance_with_changes);
@@ -408,6 +410,21 @@ void Render::Objects::UnsavedComplex::drawSelectedConnection(DataClass::Data_Obj
 			}
 		}
 	}
+}
+
+// Get the File Path
+std::string& DataClass::Data_Complex::getFilePath()
+{
+	return file_path;
+}
+
+void DataClass::Data_Complex::setGroup(Render::Objects::UnsavedComplex* new_group)
+{
+	// Store the New Group Object
+	group_object = reinterpret_cast<Render::Objects::UnsavedCollection*>(new_group);
+
+	// Force Get the New File Name
+	file_name = Source::Algorithms::Common::getFileName(file_path, false);
 }
 
 Object::Object* DataClass::Data_ComplexParent::genObject()

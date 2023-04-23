@@ -16,6 +16,9 @@
 #include "Source/Vertices/Rectangle/RectangleVertices.h"
 #include "Source/Vertices/Line/LineVertices.h"
 
+#include "Render/GUI/AdvancedString.h"
+#include "Render/GUI/SelectedText.h"
+
 Editor::EditorOptions::EditorOptions()
 {
 	// Read File
@@ -1002,15 +1005,15 @@ void Editor::EditorOptions::generateMultipleBoxes(uint8_t stride, float* x_offse
 std::string& Editor::EditorOptions::querry(std::string message, std::string input, int typing_mode)
 {
 	// Reset User Input String
-	Global::text = &input;
+	GUI::AdvancedString string = input;
+	selected_text->assignText(&string, glm::vec2(0.0f, 0.0f), typing_mode, nullptr);
 
 	// Enable Typing Mode
-	Global::textModifier = typing_mode;
-	glfwSetKeyCallback(Global::window, Source::Listeners::TypeCallback);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// While Loop That Propmts User for Input
-	while (!Global::Keys[GLFW_KEY_ENTER] || input == "")
+	//while (!Global::Keys[GLFW_KEY_ENTER] || input == "")
+	while (selected_text->isActive())
 	{
 		// Clear Window
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1027,14 +1030,13 @@ std::string& Editor::EditorOptions::querry(std::string message, std::string inpu
 		// Draw Text
 		Global::fontShader.Use();
 		Source::Fonts::renderText(message, -Global::halfScalarX / 2 + 5.0f * Scale, 60.0f, 0.15f * Scale, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
-		Source::Fonts::renderText(input, -Global::halfScalarX / 2 + 12.0f * Scale, 28.0f, 0.15f * Scale, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
+		Source::Fonts::renderText(string.getString(), -Global::halfScalarX / 2 + 12.0f * Scale, 28.0f, 0.15f * Scale, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 
 		// Update Window
 		glfwSwapBuffers(Global::window);
 	}
 
 	// Disable Typing Mode
-	glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
 	Global::Keys[GLFW_KEY_ENTER] = false;
 
 	// Return Text

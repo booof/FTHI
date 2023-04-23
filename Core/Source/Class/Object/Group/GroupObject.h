@@ -24,7 +24,7 @@ namespace Object::Group
 		int script = 0;
 
 		// Size of File Name
-		uint8_t file_name_size = 0;
+		uint8_t file_path_size = 0;
 	};
 
 	class GroupObject : public Object

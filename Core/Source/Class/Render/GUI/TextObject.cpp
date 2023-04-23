@@ -18,7 +18,7 @@ void GUI::TextObject::blitzText()
 void GUI::TextObject::blitzOffsetText()
 {
 	// Draw Text
-	Source::Fonts::renderTextOffset(data.text, data.position.x, data.position.y, data.scale, data.color, 0, false);
+	Source::Fonts::renderTextOffsetAdvanced(data.text, data.position.x, data.position.y, data.scale, data.color, 0, false);
 }
 
 void GUI::TextObject::blitzGlobalText()

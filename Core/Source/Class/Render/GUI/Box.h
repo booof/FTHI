@@ -3,6 +3,7 @@
 #define BOX_H
 
 #include "Element.h"
+#include "AdvancedString.h"
 
 namespace GUI
 {
@@ -17,6 +18,7 @@ namespace GUI
 		ABSOLUTE_NUMERICAL_TEXT_BOX,
 		INTEGER_TEXT_BOX,
 		ABSOLUTE_INTEGER_TEXT_BOX,
+		FILE_PATH_BOX,
 		TOGGLE_BOX,
 		GROUPED_BOX,
 		FUNCTION_BOX,
@@ -50,7 +52,7 @@ namespace GUI
 		bool centered = true;
 
 		// Text
-		std::string button_text = "";
+		AdvancedString button_text;
 
 		// Background Color
 		glm::vec4 background_color = glm::vec4(1.0f);

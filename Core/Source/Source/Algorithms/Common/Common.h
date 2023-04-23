@@ -35,6 +35,9 @@ namespace Source::Algorithms::Common
 
 	// Isolates the Name of a File from File Path
 	std::string getFileName(std::string& file_path, bool include_file_type);
+
+	// Erases the File Extension of a File Path
+	void eraseFileExtension(std::string& file_path);
 }
 
 #endif

@@ -252,6 +252,27 @@ namespace DataClass
 		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 	};
 
+	// A Helper Class Specifically for Complex Object to Hold Files
+	class Data_Complex : public Data_Object
+	{
+
+	protected:
+
+		// File Name
+		std::string file_name;
+
+		// File Path
+		std::string file_path;
+
+	public:
+
+		// Get the File Path
+		std::string& getFilePath();
+
+		// Set the Group Object
+		void setGroup(Render::Objects::UnsavedComplex* new_group);
+	};
+
 	// Horizontal Line
 	class Data_HorizontalLine : public Data_Object
 	{
@@ -1277,16 +1298,10 @@ namespace DataClass
 	};
 
 	// Group Objects
-	class Data_GroupObject : public Data_Object
+	class Data_GroupObject : public Data_Complex
 	{
 		// Group Data
 		Object::Group::GroupData data;
-
-		// File Name
-		std::string file_name;
-
-		// File Path
-		std::string file_path;
 
 		// Function to Read Data and Create an Object
 		Object::Object* genObject();
@@ -1325,9 +1340,6 @@ namespace DataClass
 
 		// Write Object
 		void writeObject(std::ofstream& object_file, std::ofstream& editor_file);
-
-		// Get the File Path
-		std::string& getFilePath();
 	};
 
 	// DataClass for Complex Object While Editing

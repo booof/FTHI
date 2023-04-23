@@ -8,6 +8,7 @@
 #include "Class/Render/Editor/EditorOptions.h"
 #include "Class/Render/Editor/Debugger.h"
 #include "Class/Render/Editor/ObjectInfo.h"
+#include "Class/Render/GUI/SelectedText.h"
 
 void Source::Rendering::Editing::edit(Render::Objects::Level* level, Editor::Selector* selector, Editor::ObjectInfo* object_info)
 {
@@ -27,7 +28,7 @@ void Source::Rendering::Editing::edit(Render::Objects::Level* level, Editor::Sel
 	else if (!Global::editor_options->Active)
 	{
 		// Perform Editor Key Callback
-		if (!Global::texting)
+		if (!selected_text->isActive())
 			Source::Listeners::SmoothKeyCallback_Editor(*level->camera, *selector, *level, accelerationTimer);
 
 		// If Selector is Inactive, Perform Selecting
@@ -95,6 +96,9 @@ void Source::Rendering::Editing::renderEditor(Render::Objects::Level* level, Edi
 		debugger->drawCompilerStatus();
 		object_info->drawInfo();
 	}
+
+	// Draw Selected Text Icon, If it is Being Used
+	selected_text->renderCursor();
 }
 
 void Source::Rendering::Editing::drawLevelBoarders(Render::Camera::Camera* camera)

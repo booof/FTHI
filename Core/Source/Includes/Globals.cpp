@@ -62,15 +62,6 @@ namespace Global
 	// List of Keys and Their States
 	bool Keys[1024];
 
-	// The Text Object Used for Typing
-	std::string* text;
-	std::string initial_text = "";
-	int textModifier = 0;
-	unsigned int textIndex = 0;
-	GUI::Box* text_box;
-	bool texting = false;
-	bool stoped_texting = false;
-
 	// The ScrollBar Object Used for Scrolling
 	GUI::ScrollBar* scroll_bar = nullptr;
 
@@ -102,6 +93,7 @@ namespace Global
 	// Mouse Button Variables
 	bool LeftClick = false;
 	bool RightClick = false;
+	bool DoubleClick = false;
 
 	// Boolean to Visualize Level Boarder
 	bool level_border = true;

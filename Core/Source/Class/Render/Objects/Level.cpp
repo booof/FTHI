@@ -1760,10 +1760,13 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Object::Object*** object_li
 					bool adding_to_current_parent = selected_object->testIsParent(object.data_object->getParent());
 					if (adding_to_current_parent) {
 						if (!change_controller->getUnsavedLevelObject(object.data_object)->testValidSelection(selected_object, object.data_object))
-							return 1;
-					}
+							return 1; }
 					else {
-						if (!selected_object->getGroup()->testValidSelection(selected_object, object.data_object))
+						// Note: If Object Does Not Have a Group, It is a Standard Group Object
+						if (selected_object->getGroup() == nullptr) {
+							if (!Render::Objects::UnsavedGroup::testValidSelectionStatic(selected_object, object.data_object))
+								return 1; }
+						else if (!selected_object->getGroup()->testValidSelection(selected_object, object.data_object))
 							return 1;
 					}
 						
@@ -1785,7 +1788,12 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Object::Object*** object_li
 				else
 				{
 					// Test if Object can be Placed in Group
-					if (!selected_object->getGroup()->testValidSelection(selected_object, object.data_object))
+					// Note: If Object Does Not Have a Group, It is a Standard Group Object
+					if (selected_object->getGroup() == nullptr) {
+						if (!Render::Objects::UnsavedGroup::testValidSelectionStatic(selected_object, object.data_object))
+							return 1;
+					}
+					else if (!selected_object->getGroup()->testValidSelection(selected_object, object.data_object))
 						return 1;
 
 					// Remove Child From Level

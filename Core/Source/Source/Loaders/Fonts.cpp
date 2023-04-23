@@ -128,7 +128,7 @@ float Source::Fonts::renderTextAdvanced(std::string text, GLfloat x, GLfloat y, 
 	return renderTextHelper(text, x, y, scale);
 }
 
-float Source::Fonts::renderTextOffset(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color, GLfloat maxLength, bool centered)
+float Source::Fonts::renderTextOffset(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color)
 {
 	// Send Projection Matrix to Shader
 	glUniformMatrix4fv(Global::projectionLocRelativeFont, 1, GL_FALSE, glm::value_ptr(Global::projectionStatic));
@@ -136,9 +136,20 @@ float Source::Fonts::renderTextOffset(std::string text, GLfloat x, GLfloat y, GL
 	// Send Colors to Shader
 	glUniform3f(Global::texcolorLocRelativeFont, color.x, color.y, color.z);
 
-	// Apply Max Length and Center if Needed
-	if (maxLength != 0.0f || centered)
-		text = centerTextHelper(text, x, scale, maxLength, centered);
+	// Draw Text
+	return renderTextHelper(text, x, y, scale);
+}
+
+float Source::Fonts::renderTextOffsetAdvanced(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color, GLfloat maxLength, bool centered)
+{
+	// Send Projection Matrix to Shader
+	glUniformMatrix4fv(Global::projectionLocRelativeFont, 1, GL_FALSE, glm::value_ptr(Global::projectionStatic));
+
+	// Send Colors to Shader
+	glUniform3f(Global::texcolorLocRelativeFont, color.x, color.y, color.z);
+
+	// Center the Text
+	text = centerTextHelper(text, x, scale, maxLength, centered);
 
 	// Draw Text
 	return renderTextHelper(text, x, y, scale);

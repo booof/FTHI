@@ -70,11 +70,13 @@
     <ClCompile Include="Source\Class\Render\Editor\ProjectSelector.cpp" />
     <ClCompile Include="Source\Class\Render\Editor\ScriptWizard.cpp" />
     <ClCompile Include="Source\Class\Render\Editor\Selector.cpp" />
+    <ClCompile Include="Source\Class\Render\GUI\AdvancedString.cpp" />
     <ClCompile Include="Source\Class\Render\GUI\Box.cpp" />
     <ClCompile Include="Source\Class\Render\GUI\ColorWheel.cpp" />
     <ClCompile Include="Source\Class\Render\GUI\HorizontalScrollBar.cpp" />
     <ClCompile Include="Source\Class\Render\GUI\MasterElement.cpp" />
     <ClCompile Include="Source\Class\Render\GUI\ScrollBar.cpp" />
+    <ClCompile Include="Source\Class\Render\GUI\SelectedText.cpp" />
     <ClCompile Include="Source\Class\Render\GUI\TextObject.cpp" />
     <ClCompile Include="Source\Class\Render\GUI\ToggleGroup.cpp" />
     <ClCompile Include="Source\Class\Render\GUI\VerticalScrollBar.cpp" />
@@ -187,6 +189,7 @@
     <ClInclude Include="Source\Class\Render\Editor\ScriptWizard.h" />
     <ClInclude Include="Source\Class\Render\Editor\Selector.h" />
     <ClInclude Include="Source\Class\Render\Editor\TextureWizard.h" />
+    <ClInclude Include="Source\Class\Render\GUI\AdvancedString.h" />
     <ClInclude Include="Source\Class\Render\GUI\Box.h" />
     <ClInclude Include="Source\Class\Render\GUI\ColorWheel.h" />
     <ClInclude Include="Source\Class\Render\GUI\Element.h" />
@@ -196,6 +199,7 @@
     <ClInclude Include="Source\Class\Render\GUI\HorizontalScrollBar.h" />
     <ClInclude Include="Source\Class\Render\GUI\MasterElement.h" />
     <ClInclude Include="Source\Class\Render\GUI\ScrollBar.h" />
+    <ClInclude Include="Source\Class\Render\GUI\SelectedText.h" />
     <ClInclude Include="Source\Class\Render\GUI\TextObject.h" />
     <ClInclude Include="Source\Class\Render\GUI\ToggleGroup.h" />
     <ClInclude Include="Source\Class\Render\GUI\VerticalScrollBar.h" />

@@ -15,6 +15,7 @@
 #include "Class/Render/Editor/ProjectSelector.h"
 #include "Class/Render/Editor/Debugger.h"
 #include "Render/Struct/DataClasses.h"
+#include "Render/GUI/SelectedText.h"
 
 void Source::Listeners::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -210,7 +211,7 @@ void Source::Listeners::KeyCallback(GLFWwindow* window, int key, int scancode, i
 
 			}
 
-			if (!Global::paused && !Global::texting)
+			if (!Global::paused && !selected_text->isActive())
 			{
 				// Switch Between Gameplay and Editor
 				if (key == GLFW_KEY_F1)
@@ -304,21 +305,15 @@ void Source::Listeners::TypeCallback(GLFWwindow* window, int key, int scancode, 
 	// If Escape is Pressed, Revert to Original Text and Stop Texting
 	if (key == GLFW_KEY_ESCAPE)
 	{
-		*Global::text = Global::initial_text;
-		Global::texting = false;
-		glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
-		Global::text_box->setFalse();
-		Global::stoped_texting = true;
+		selected_text->setBackup();
+		selected_text->stopSelecting();
 		return;
 	}
 	
 	// If Enter is Pressed, Stop Texting
 	if (key == GLFW_KEY_ENTER)
 	{
-		Global::texting = false;
-		glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
-		Global::text_box->setFalse();
-		Global::stoped_texting = true;
+		selected_text->stopSelecting();
 		return;
 	}
 
@@ -331,39 +326,32 @@ void Source::Listeners::TypeCallback(GLFWwindow* window, int key, int scancode, 
 		// Test if Index is to be Shifted to the Left
 		if (key == GLFW_KEY_LEFT)
 		{
-			// Prevent Index from Goint Negative
-			if (Global::textIndex != 0)
-			{
-				Global::textIndex--;
-			}
+			selected_text->moveLeft();
 		}
 
 		// Test if Index is to be Shited to the Right
 		else if (key == GLFW_KEY_RIGHT)
 		{
-			// Prevent Index from Going Past Length of String
-			if (Global::textIndex < Global::text->size())
-			{
-				Global::textIndex++;
-			}
+			selected_text->moveRight();
 		}
 
 		// Test if Index is Supposed to be First
 		else if (key == GLFW_KEY_UP)
 		{
-			Global::textIndex = 0;
+			selected_text->moveToTop();
 		}
 
 		// Test if Index is Supposed to be Last
 		else if (key == GLFW_KEY_DOWN)
 		{
-			Global::textIndex = (int)Global::text->size();
+			selected_text->moveToBottom();
 		}
 
 		// Enter Key is Pressed
 		else if (key == GLFW_KEY_ENTER)
 		{
 			Global::Keys[GLFW_KEY_ENTER] = true;
+			selected_text->stopSelecting();
 		}
 
 		// Makes Shure Certain Modifers and / or Keys Dont Affect Text
@@ -375,7 +363,7 @@ void Source::Listeners::TypeCallback(GLFWwindow* window, int key, int scancode, 
 				// Clears Text if Shift and Backspace are Held
 				if (key == GLFW_KEY_BACKSPACE)
 				{
-					Global::text->clear();
+					selected_text->clearText();
 					return;
 				}
 
@@ -404,12 +392,7 @@ void Source::Listeners::TypeCallback(GLFWwindow* window, int key, int scancode, 
 				// Deletes Previous Character if Backspace is Held
 				if (key == GLFW_KEY_BACKSPACE)
 				{
-					// Delete Character Only if There is a Character to Delete
-					if (!Global::text->empty())
-					{
-						Global::text->pop_back();
-					}
-
+					selected_text->removeCharacter();
 					return;
 				}
 
@@ -426,110 +409,8 @@ void Source::Listeners::TypeCallback(GLFWwindow* window, int key, int scancode, 
 				}
 			}
 
-			// Append Character Based on Current Mode
-			switch (Global::textModifier)
-			{
-
-			// All Characters
-			case 0:
-			{
-				*Global::text += character;
-				break;
-			}
-
-			// Alphabetical
-			case 1:
-			{
-				// Character is a Capitol or Lowercase Letter
-				if ((character > 64 && character < 91) || (character > 96 && character < 123))
-				{
-					*Global::text += character;
-				}
-
-				break;
-			}
-
-			// Numerical
-			case 2:
-			{
-				// Character is a Number or Decimal
-				if ((character > 47 && character < 58) || character == 46)
-				{
-					*Global::text += character;
-				}
-
-				// Character is a Sign
-				else if (character == 45)
-				{
-					// Remove Sign if it Exists
-					if (!Global::text->empty() && Global::text->at(0) == '-')
-					{
-						Global::text->erase(0, 1);
-					}
-
-					// Add Sign if it Doesn't Exist
-					else
-					{
-						Global::text->insert(0, "-");
-					}
-				}
-
-				break;
-			}
-
-			// Absolute Numerical
-			case 3:
-			{
-				// Character is Number or Decimal
-				if ((character > 47 && character < 58) || character == 46)
-				{
-					*Global::text += character;
-				}
-
-				break;
-			}
-
-			// Integer
-			case 4:
-			{
-				// Character is Number
-				if (character > 47 && character < 58)
-				{
-					*Global::text += character;
-				}
-
-				// Character is a Sign
-				else if (character == 45)
-				{
-					// Remove Sign if it Exists
-					if (!Global::text->empty() && Global::text->at(0) == '-')
-					{
-						Global::text->erase(0, 1);
-					}
-
-					// Add Sign if it Doesn't Exist
-					else
-					{
-						Global::text->insert(0, "-");
-					}
-				}
-
-				break;
-			}
-
-			// Absolute Integer
-			case 5:
-			{
-				// Character is Number
-				if (character > 47 && character < 58)
-				{
-					*Global::text += character;
-				}
-
-				break;
-			}
-
-			}
+			// Add Character to Selected Text
+			selected_text->insertCharacter(character);
 		}
 	}
 }
@@ -584,11 +465,17 @@ void Source::Listeners::ScrollBarCallback(GLFWwindow* window, double offsetX, do
 
 void Source::Listeners::MouseCallback(GLFWwindow* window, int button, int action, int mods)
 {
+	const  double double_click_threshold = 0.75;
+	static double last_left_click = 0;
+
 	if (action == GLFW_PRESS)
 	{
 		if (button == 0)
 		{
 			Global::LeftClick = true;
+			if (glfwGetTime() - last_left_click < double_click_threshold)
+				Global::DoubleClick = true;
+			last_left_click = glfwGetTime();
 		}
 
 		if (button == 1)

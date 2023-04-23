@@ -9,6 +9,7 @@
 #include "Source/Rendering/PreRender.h"
 #include "Class/Render/Objects/ChangeController.h"
 #include "Class/Render/Editor/Notification.h"
+#include "Render/GUI/SelectedText.h"
 #include "Class/Render/Editor/ScriptWizard.h"
 #include "Source/Loaders/Audio.h"
 #include "Class/Render/Editor/ProjectSelector.h"
@@ -698,6 +699,9 @@ bool Source::Render::Initialize::initialize()
 
 	// Generate Notification GUI
 	notification_->initializeNotification();
+
+	// Generate Selected Text Object
+	selected_text->initializeSelectedText();
 
 	// Generate ScriptWizard
 	script_wizard->initializeScriptWizard();

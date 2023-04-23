@@ -427,6 +427,12 @@ namespace Editor
 		// Update Color Wheels
 		void updateColorWheels(ColorWheel& wheel_, glm::vec4& color, unsigned int* wheel_color_, double mouseStaticX, double mouseStaticY, int offsetx, bool update);
 
+		// Selected Text Closer
+		void textCloser();
+
+		// Invalid File Helper Function
+		void closerInvalidFile(std::string& file_good, std::string& file_bad);
+
 	public:
 
 		// Current Editing Mode of Window

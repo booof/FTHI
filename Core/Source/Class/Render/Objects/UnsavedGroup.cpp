@@ -61,6 +61,12 @@ void Render::Objects::UnsavedGroup::removeChainListInstance()
 
 bool Render::Objects::UnsavedGroup::testValidSelection(DataClass::Data_Object* parent, DataClass::Data_Object* test_child)
 {
+	// Functionality is Diverted to Static Version
+	return testValidSelectionStatic(parent, test_child);
+}
+
+bool Render::Objects::UnsavedGroup::testValidSelectionStatic(DataClass::Data_Object* parent, DataClass::Data_Object* test_child)
+{
 	// Only Standard Objects and Complex Root Objects Can be Selected
 	// Hinge Connectors and Softbody Objects Are Not Allowed
 

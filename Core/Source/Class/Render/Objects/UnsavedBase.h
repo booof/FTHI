@@ -13,6 +13,53 @@
 // Copy the Slave Stack Between All Groups to Reduce Code
 // Duplication
 
+
+
+// Ideas for the Data File Standardization
+// This Will be the Same for Both .DAT and .EDT Files
+// File Header Should be Usable as a Structure
+// Usable For Both Level and Complex Files
+
+// HEADER:
+// 3 Bytes: File Signiture (Will be "DAT" for .DAT or "EDT" for .EDT)
+// 3 Bytes: File Mode (LVL for Levels, CPX for Group Objects, HNG for Hinges, SBD for Soft Bodies)
+// 1 Byte:  Development Mode (D for Development, R for Release, Release and Development Files Will Probably Differ)
+// 5 Bytes: Project Hash (Will be a Char and Floating Point Value. Mostly for LVL Types)
+// 4 Bytes: int, number of Objects in the File
+// 4 Bytes: int, number of Bytes in the File
+// 4 Bytes: short, Checksum (Will Probably Implement, Used to Prevent Tampering of File)
+
+// DATA:
+// N Bytes Determined by "Number of Bytes in the File" Value
+
+// TAIL:
+// 4 Bytes: ENDF
+
+// Idea for Project Hash
+// First Byte is the Number of Characters in the Project Name
+// Next Values are a Floating Point Hash Value of the Project Name
+// Value Will be Determined by a Hash Function
+// Should Try to Make the Hash Unique to Each Project Name
+// If a Project Encounters a Mismatched Hash in a File, That File Will
+// Be Marked as Invalid, and the User Will be Prompted to 
+
+// Note: I Believe Making a Single Dynamic Memory Call With the Number
+// Of Bytes in the File Is More Efficient Than Allocating Dynamic Memory
+// For Each Individual Object, If my 357 Knowledge is Sufficient. In Doing
+// So, The Call Will Return a Single Buffer That Can Fit All Objects in
+// the File. When Reading from the File, Instead of Calling New on Each
+// Object, Each Object is Created on This Buffer at the Next Available 
+// Object Space, Until All Objects are Read. A Counter Will be Used to
+// Place These Objects, Incremented After Each Objects using sizeof()
+// 
+// Should Attempt the Same for Sublevels and Generating of Objects
+
+// Checksum:
+// Will Essentially be the All of the Bytes, Except the Checksum, Added
+// Together, With Overflow Enabled. Will Definitely be Checked in Development
+// Files, Maybe Not in Release Files. Invalid Checksums Result in Immediate
+// Deallocation of Resources and Throws an Error
+
 namespace Editor
 {
 	class Selector;
@@ -36,6 +83,20 @@ namespace Object
 
 namespace Render::Objects
 {
+	// File Header
+	struct DataHeader
+	{
+		char         signiture[3];
+		char         mode[3];
+		char         development;
+		uint8_t      project_size;
+		float        project_hash;
+		unsigned int object_count;
+		unsigned int byte_count;
+		unsigned int checksum;
+	};
+
+	// Unsaved Base Object
 	class UnsavedBase
 	{
 

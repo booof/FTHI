@@ -18,6 +18,9 @@
 // Marco for Accessing the Notification Singleton
 #define notification_ Editor::Notification::get()
 
+// Macro for Accessing the Selected Text Singleton
+#define selected_text GUI::SelectedText::get()
+
 // Macro for Accessing the Project Selector Singleton
 #define project_selector Editor::ProjectSelector::get()
 

@@ -7,6 +7,7 @@
 #include "Class/Render/Editor/ScriptWizard.h"
 #include "Class/Render/Editor/Debugger.h"
 #include "Class/Render/Objects/ChangeController.h"
+#include "Class/Render/GUI/SelectedText.h"
 
 inline bool anoying_function1()
 {
@@ -34,6 +35,9 @@ void Source::Render::Exit::exitProgram()
 
 	// Delete Project Selector
 	project_selector->uninitializeProjectSelector();
+
+	// Delete Selected Text
+	selected_text->deleteSelectedText();
 
 	// Delete Script Wizard
 	//script_wizard->

@@ -8,6 +8,7 @@
 #include "Source/Loaders/Fonts.h"
 #include "Source/Rendering/Initialize.h"
 #include "Render/Editor/ProjectSelector.h"
+#include "Render/GUI/AdvancedString.h"
 
 void Editor::Debugger::readErrorLog()
 {
@@ -283,7 +284,7 @@ void Editor::Debugger::initializeDebugger()
 
 	// Compile Box
 	temp_box_data.position.x = 48.0f;
-	temp_box_data.button_text = "Compile";
+	temp_box_data.button_text = GUI::AdvancedString("Compile");
 	box_recompile_project = GUI::Box(temp_box_data);
 
 	// Exit Box

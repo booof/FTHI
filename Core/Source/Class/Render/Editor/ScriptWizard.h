@@ -93,6 +93,10 @@ namespace Editor
 		// Highlight Vertex Object
 		GLuint highlightVAO = NULL, highlightVBO = NULL;
 
+		// Seleted Row and Column of the Object
+		int selected_row = -1;
+		int selected_column = -1;
+
 		// Master Element
 		GUI::MasterElement master;
 
@@ -220,6 +224,9 @@ namespace Editor
 
 		// Return the Singleton
 		static ScriptWizard* get();
+
+		// The Closer Function for Selected Text
+		void textCloser();
 
 		// Determines if Object was Modified
 		bool modified = false;

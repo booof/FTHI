@@ -107,6 +107,8 @@ namespace Render::Objects
 		bool testValidSelection(DataClass::Data_Object* parent, DataClass::Data_Object* test_child);
 
 	public:
+		
+		static bool testValidSelectionStatic(DataClass::Data_Object* parent, DataClass::Data_Object* test_child);
 
 		// Contructor for Object
 		UnsavedGroup(uint8_t initial_size);

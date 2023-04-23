@@ -98,15 +98,6 @@ namespace Global
 	// List of Keys and Their States
 	extern bool Keys[1024];
 
-	// The Text Object Used for Typing
-	extern std::string* text;
-	extern std::string initial_text;
-	extern int textModifier;
-	extern unsigned int textIndex;
-	extern GUI::Box* text_box;
-	extern bool texting;
-	extern bool stoped_texting;
-
 	// The ScrollBar Object Used for Scrolling
 	extern GUI::ScrollBar* scroll_bar;
 
@@ -140,6 +131,7 @@ namespace Global
 	// Mouse Button Variables
 	extern bool LeftClick;
 	extern bool RightClick;
+	extern bool DoubleClick;
 
 	// Boolean to Visualize Level Boarder
 	extern bool level_border;

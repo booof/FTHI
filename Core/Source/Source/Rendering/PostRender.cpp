@@ -5,15 +5,21 @@
 #include "Class/Render/Editor/EditorOptions.h"
 #include "Source/Loaders/Fonts.h"
 #include "Source/Loaders/Textures.h"
+#include "Source/Events/EventListeners.h"
+#include "Render/GUI/SelectedText.h"
 
 void Source::Rendering::Post::postRender()
 {
+	// If Texting and Left Click, Disable Texting
+	if (selected_text->isActive() && Global::LeftClick)
+		selected_text->stopSelecting();
+
 	// Disable Loop Flags
 	Global::framebufferResize = false;
 	Global::zoom = false;
 	Global::cursor_Move = false;
 	Global::reload_all = false;
-	Global::stoped_texting = false;
+	Global::DoubleClick = false;
 
 	glFlush();
 

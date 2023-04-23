@@ -11,6 +11,8 @@
 #include "Render/Editor/Debugger.h"
 #include "Source/Rendering/Exit.h"
 #include "Render/Objects/ChangeController.h"
+#include "Render/GUI/AdvancedString.h"
+#include "Render/GUI/SelectedText.h"
 
 #include <strsafe.h>
 //#include <shobjidl.h> 
@@ -883,22 +885,22 @@ void Editor::ProjectSelector::initializeProjectSelector()
 
     // Generate Open Project Directory Box
     temp_box_data.position.y = 10.0f;
-    temp_box_data.button_text = "Open Directory";
+    temp_box_data.button_text = GUI::AdvancedString("Open Directory");
     box_open_project_directory = GUI::Box(temp_box_data);
 
     // Generate Remove Project Box
     temp_box_data.position.y = 0.0f;
-    temp_box_data.button_text = "Remove Project";
+    temp_box_data.button_text = GUI::AdvancedString("Remove Project");
     box_remove_project = GUI::Box(temp_box_data);
 
     // Generate Create Project Box
     temp_box_data.position.y = -10.0f;
-    temp_box_data.button_text = "Create Project";
+    temp_box_data.button_text = GUI::AdvancedString("Create Project");
     box_create_project = GUI::Box(temp_box_data);
 
     // Generate Add Project Box
     temp_box_data.position.y = -20.0f;
-    temp_box_data.button_text = "Add Project";
+    temp_box_data.button_text = GUI::AdvancedString("Add Project");
     box_add_project = GUI::Box(temp_box_data);
 
     // Generate Add Project Box
@@ -1009,16 +1011,8 @@ void Editor::ProjectSelector::select_project()
         }
 
         // Edit Text of Object if a TextBox is Selected
-        if (Global::texting)
-        {
-            // If Left Click, Stop Texting
-            if (Global::LeftClick)
-            {
-                Global::texting = false;
-                glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
-                Global::text_box->setFalse();
-            }
-        }
+        if (selected_text->isActive())
+            continue;
 
         // Test Mouse on ScrollBar
         else if (!scrolling && project_selection_bar.TestColloisions())

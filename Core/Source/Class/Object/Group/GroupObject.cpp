@@ -4,6 +4,7 @@
 #include "Vertices/Rectangle/RectangleVertices.h"
 #include "Render/Objects/ChangeController.h"
 #include "Render/Objects/UnsavedComplex.h"
+#include "Source/Algorithms/Common/Common.h"
 #include "Globals.h"
 
 void Object::Group::GroupObject::initializeVisualizer()
@@ -49,14 +50,14 @@ glm::vec2* Object::Group::GroupObject::pointerToPosition()
 	return &data.position;
 }
 
-Object::Group::GroupObject::GroupObject(GroupData& data_, std::string file_name_, Render::Objects::UnsavedComplex* complex_object)
+Object::Group::GroupObject::GroupObject(GroupData& data_, std::string file_path_, Render::Objects::UnsavedComplex* complex_object)
 {
 	// Store Group Data
 	data = data_;
 
 	// Store File Name and Path to File
-	file_name = file_name_;
-	path = Global::project_resources_path + "/Models/SoftBodies/" + file_name;
+	path = file_path_;
+	file_name = Source::Algorithms::Common::getFileName(path, false);
 
 	// For Editing, Add This Instance to Complex Object Instances
 	complex_object->addComplexInstance(this);
@@ -130,23 +131,22 @@ void Object::Group::GroupObject::drawObject()
 
 Object::Object* DataClass::Data_GroupObject::genObject()
 {
-	return new Object::Group::GroupObject(data, file_name, static_cast<Render::Objects::UnsavedComplex*>(group_object));
+	return new Object::Group::GroupObject(data, file_path, static_cast<Render::Objects::UnsavedComplex*>(group_object));
 }
 
 void DataClass::Data_GroupObject::writeObjectData(std::ofstream& object_file)
 {
-	data.file_name_size = file_name.size();
+	data.file_path_size = file_path.size();
 	object_file.write((char*)&data, sizeof(Object::Group::GroupData));
-	object_file.write(file_name.c_str(), sizeof(data.file_name_size));
+	object_file.write(file_path.c_str(), data.file_path_size);
 }
 
 void DataClass::Data_GroupObject::readObjectData(std::ifstream& object_file)
 {
 	object_file.read((char*)&data, sizeof(Object::Group::GroupData));
-	file_name.resize(data.file_name_size);
-	object_file.read(&file_name[0], sizeof(data.file_name_size));
-	file_name = "NULL";
-	file_path = Global::project_resources_path + "\\Models\\Groups\\" + file_name;
+	file_path.resize(data.file_path_size);
+	object_file.read(&file_path[0], data.file_path_size);
+	file_name = Source::Algorithms::Common::getFileName(file_path, false);
 
 	// Get Unsaved Complex Object
 	group_object = reinterpret_cast<Render::Objects::UnsavedCollection*>(change_controller->getUnsavedComplex(file_path));
@@ -200,11 +200,11 @@ Object::Group::GroupData& DataClass::Data_GroupObject::getGroupData()
 
 void DataClass::Data_GroupObject::generateInitialData(glm::vec2& position)
 {
-	data.position = position;
-	data.script = 0;
-	data.file_name_size = 4;
 	file_name = "NULL";
 	file_path = Global::project_resources_path + "\\Models\\Groups\\NULL";
+	data.position = position;
+	data.script = 0;
+	data.file_path_size = sizeof(file_path);
 	group_object = reinterpret_cast<Render::Objects::UnsavedCollection*>(change_controller->getUnsavedComplex(file_path));
 }
 
@@ -218,9 +218,4 @@ void DataClass::Data_GroupObject::writeObject(std::ofstream& object_file, std::o
 	// Children Will Not be Written Here, Will Instead
 	// Be Written In Write Function in Change Controller
 	// Alongside the Writing of the Levels
-}
-
-std::string& DataClass::Data_GroupObject::getFilePath()
-{
-	return file_path;
 }

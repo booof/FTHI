@@ -178,7 +178,7 @@ void Editor::Notification::initializeNotification()
     box_ok = GUI::Box(temp_box_data);
 
     // Generate Cancel Box
-    temp_box_data.button_text = "Cancel";
+    temp_box_data.button_text = GUI::AdvancedString("Cancel");
     box_cancel = GUI::Box(temp_box_data);
 
     // Generate Error Image

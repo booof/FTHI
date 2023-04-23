@@ -9,6 +9,8 @@
 #include "Source/Rendering/Initialize.h"
 #include "Render/Editor/Notification.h"
 #include "Source/Events/EventListeners.h"
+#include "Render/GUI/AdvancedString.h"
+#include "Render/GUI/SelectedText.h"
 
 // Replaces Backslashes With Forwardslashes
 std::string backToForwardShash(std::string& input)
@@ -230,26 +232,26 @@ void Editor::ScriptWizard::initializeScriptWizard()
 
     // Generate Remove Instance Box
     temp_box_data.position.x += 23.0f;
-    temp_box_data.button_text = "Remove";
+    temp_box_data.button_text = GUI::AdvancedString("Remove");
     box_remove_instance = GUI::Box(temp_box_data);
 
     // Generate Load Instance Box
     temp_box_data.position.x += 23.0f;
-    temp_box_data.button_text = "Load";
+    temp_box_data.button_text = GUI::AdvancedString("Load");
     box_load_instance = GUI::Box(temp_box_data);
 
     // Generate Modify Instance Box
-    temp_box_data.button_text = "Modify";
+    temp_box_data.button_text = GUI::AdvancedString("Modify");
     box_modify_instance = GUI::Box(temp_box_data);
 
     // Generate Move Instance Box
     temp_box_data.position.x += 23.0f;
-    temp_box_data.button_text = "Move";
+    temp_box_data.button_text = GUI::AdvancedString("Move");
     box_move_instance = GUI::Box(temp_box_data);
 
     // Generate Open Instance Box
     temp_box_data.position.x += 23.0f;
-    temp_box_data.button_text = "Open";
+    temp_box_data.button_text = GUI::AdvancedString("Open");
     box_open_instance = GUI::Box(temp_box_data);
 
     // Generate Exit Box
@@ -265,8 +267,8 @@ void Editor::ScriptWizard::updateScriptWizard()
 {
 	// Loop Vars
 	int numbers_size = 1;
-	int selected_row = -1;
-	int selected_column = -1;
+    selected_row = -1;
+	selected_column = -1;
     int highlighter_index = -1;
     glm::mat4 highlighter_offset = glm::mat4(1.0f);
 
@@ -309,6 +311,7 @@ void Editor::ScriptWizard::updateScriptWizard()
 	glUniform1i(Global::staticLocColor, 1);
 	glm::mat4 temp = glm::mat4(1.0f);
 	bool looping = true;
+    selected_text->assignCloser([this]()->void { this->textCloser(); });
 	while (!glfwWindowShouldClose(Global::window) && looping)
 	{
 		// Clear Window
@@ -400,48 +403,8 @@ void Editor::ScriptWizard::updateScriptWizard()
         box_exit.blitzElement();
 
 		// Edit Text of Object if a TextBox is Selected
-		if (Global::texting || Global::stoped_texting)
+		if (selected_text->isActive())
 		{
-			// If Left Click, Stop Texting
-			if (Global::LeftClick || Global::stoped_texting)
-			{
-                // Disable Testing
-				Global::texting = false;
-                Global::LeftClick = false;
-                Global::stoped_texting = false;
-				glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
-                Global::text_box->setFalse();
-
-                // If Value is a File Path, Test if Path is Unique
-                if (current_loop == 0)
-                {
-                    //highlighter_index == 3;
-                }
-
-                // If Value is a Object Script Name, Test if Name is Unique
-                if (current_loop == 2 && selected_column == 0)
-                {
-                    std::string& test_text = objects[selected_row].name;
-                    for (int i = 0; i < objects_size; i++)
-                    {
-                        // If Rows Match, Continue
-                        if (selected_row == i)
-                            continue;
-
-                        // If Values Math, Throw Error
-                        if (test_text == objects[i].name)
-                        {
-                            test_text = Global::initial_text;
-                            std::string message = "REDEFINITION ERROR DETECTED\nValue Is Already Defined\n\nPlease Choose A Different Value\n\nThe Variable Has Been Reverted To Its\nPrevious Value";
-                            notification_->notificationMessage(Editor::NOTIFICATION_MESSAGES::NOTIFICATION_ERROR, message);
-                            Global::colorShaderStatic.Use();
-                            glUniform1i(Global::staticLocColor, 1);
-                            break;
-                        }
-                    }
-                }
-			}
-
             // Set Modified Flag
             modified = true;
 		}
@@ -759,7 +722,7 @@ void Editor::ScriptWizard::updateScriptWizard()
         box_open_instance.blitzText();
 
         // If Texting, Draw Text Box
-        if (Global::texting)
+        if (selected_text->isActive())
         {
             Global::colorShaderStatic.Use();
             box_edit_value.blitzElement();
@@ -781,6 +744,9 @@ void Editor::ScriptWizard::updateScriptWizard()
 
     // Reset Scroll Callback
     glfwSetScrollCallback(Global::window, Source::Listeners::ScrollCallback);
+
+    // Clear Closer
+    selected_text->assignCloser(nullptr);
 }
 
 void Editor::ScriptWizard::loadScriptData()
@@ -1064,6 +1030,38 @@ void Editor::ScriptWizard::genCMakeList()
 Editor::ScriptWizard* Editor::ScriptWizard::get()
 {
     return &instance;
+}
+
+void Editor::ScriptWizard::textCloser()
+{
+    // If Value is a File Path, Test if Path is Unique
+    if (current_loop == 0)
+    {
+        //highlighter_index == 3;
+    }
+
+    // If Value is a Object Script Name, Test if Name is Unique
+    if (current_loop == 2 && selected_column == 0)
+    {
+        std::string& test_text = objects[selected_row].name;
+        for (int i = 0; i < objects_size; i++)
+        {
+            // If Rows Match, Continue
+            if (selected_row == i)
+                continue;
+
+            // If Values Math, Throw Error
+            if (test_text == objects[i].name)
+            {
+                test_text = selected_text->getBackup();
+                std::string message = "REDEFINITION ERROR DETECTED\nValue Is Already Defined\n\nPlease Choose A Different Value\n\nThe Variable Has Been Reverted To Its\nPrevious Value";
+                notification_->notificationMessage(Editor::NOTIFICATION_MESSAGES::NOTIFICATION_ERROR, message);
+                Global::colorShaderStatic.Use();
+                glUniform1i(Global::staticLocColor, 1);
+                break;
+            }
+        }
+    }
 }
 
 void Editor::ScriptWizard::sortScriptHeader(std::string* raw_array, int& raw_array_size)

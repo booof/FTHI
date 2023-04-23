@@ -639,6 +639,12 @@
     <ClCompile Include="Source\Class\Render\Objects\UnsavedCollection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Class\Render\GUI\AdvancedString.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Class\Render\GUI\SelectedText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Class\Object\Physics\PhysicsBase.h">
@@ -1035,6 +1041,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Class\Render\Objects\UnsavedCollection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\AdvancedString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\GUI\SelectedText.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

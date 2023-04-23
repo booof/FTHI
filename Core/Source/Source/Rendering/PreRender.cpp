@@ -39,6 +39,10 @@ void Source::Rendering::Pre::preRender()
 	//glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	glScissor(0, 0, (GLsizei)Global::screenWidth, (GLsizei)Global::screenHeight);
+
+	// Set Selected Cursor to the Default if Mouse Moved
+	if (Global::cursor_Move)
+		Global::Selected_Cursor = Global::Default_Cursor;
 }
 
 void Source::Rendering::Pre::Error_Log()

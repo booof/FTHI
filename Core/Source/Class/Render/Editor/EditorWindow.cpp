@@ -24,8 +24,12 @@
 #include "Notification.h"
 #include "Source/Collisions/Point Collisions/PointCollisions.h"
 #include "Source/Loaders/Fonts.h"
+#include "Render/GUI/AdvancedString.h"
 
 #include "Render/Struct/DataClasses.h"
+#include "Render/GUI/SelectedText.h"
+#include "Render/Objects/UnsavedComplex.h"
+#include "Render/Objects/ChangeController.h"
 
 void Editor::EditorWindow::initializeWindow()
 {
@@ -474,7 +478,7 @@ void Editor::EditorWindow::genBoxesCommon(uint8_t& box_offset, uint8_t& text_off
 
 	// Clamp Box
 	temp_box_data.position = glm::vec2(32.0f * scale, windowTop - 5.0f);
-	temp_box_data.button_text = "";
+	temp_box_data.button_text = GUI::AdvancedString("");
 	temp_box_data.mode = GUI::TOGGLE_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_object->getEditorData().clamp);
@@ -666,7 +670,7 @@ void Editor::EditorWindow::genBoxesPlatform(uint8_t& box_offset, uint8_t& text_o
 	temp_box_data.width = 20.0f * scale;
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-42.0f * scale, height_offset);
-	temp_box_data.button_text = "Platform?";
+	temp_box_data.button_text = GUI::AdvancedString("Platform?");
 	temp_box_data.mode = GUI::TOGGLE_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
 	boxes[box_offset]->setDataPointer(floor_mask_platform);
@@ -1530,7 +1534,7 @@ void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_
 	// Fluid Box
 	temp_box_data.width = 5.0f * scale;
 	temp_box_data.position = glm::vec2(5.0f * scale, height_offset - 20.0f);
-	temp_box_data.button_text = "";
+	temp_box_data.button_text = GUI::AdvancedString("");
 	temp_box_data.mode = GUI::TOGGLE_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().fluid);
@@ -1583,7 +1587,7 @@ void Editor::EditorWindow::genBoxesSpringMass(uint8_t& box_offset, uint8_t& text
 	// Generate Generate New Component Box
 	temp_box_data.width = 50.0f;
 	temp_box_data.position = glm::vec2(0.0f, height_offset - 7.0f);
-	temp_box_data.button_text = "Generate Object";
+	temp_box_data.button_text = GUI::AdvancedString("Generate Object");
 	temp_box_data.mode = GUI::FUNCTION_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
 	boxes[box_offset]->setFunctionPointer([this]()->void {this->initializeSpringMassSelection(); });
@@ -1852,7 +1856,7 @@ void Editor::EditorWindow::genBoxesGroup(uint8_t& box_offset, uint8_t& text_offs
 	temp_box_data.height = 5.0f;
 	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset - 2);
 	temp_box_data.button_text = static_cast<DataClass::Data_GroupObject*>(data_object)->getFilePath();
-	temp_box_data.mode = GUI::GENERAL_TEXT_BOX;
+	temp_box_data.mode = GUI::FILE_PATH_BOX;
 	boxes[box_offset] = new GUI::Box(temp_box_data);
 	boxes[box_offset]->setDataPointer(&static_cast<DataClass::Data_GroupObject*>(data_object)->getFilePath());
 	box_offset++;
@@ -3728,6 +3732,9 @@ void Editor::EditorWindow::updateEditorMode()
 	mouseStaticX = (float)Global::mouseX / Global::zoom_scale;
 	mouseStaticY = (float)Global::mouseY / Global::zoom_scale - (editorHeightFull - editorHeight) * bar1.percent;
 
+	// Set Closing Function of Selected Text
+	selected_text->assignCloser([this]()->void { textCloser(); });
+
 	// Update Index
 	if (!Global::LeftClick)
 		index = 0;
@@ -3789,6 +3796,9 @@ void Editor::EditorWindow::updateEditorMode()
 			}
 		}
 	}
+
+	// Clear the Selected Text Closer
+	selected_text->assignCloser(nullptr);
 
 	// If Editing Mode Changed, Return
 	if (editing_mode == EDITING_MODES::NEW_SPRINGMASS || editing_mode == EDITING_MODES::NEW_HINGE)
@@ -3902,6 +3912,94 @@ void Editor::EditorWindow::updateColorWheels(ColorWheel& wheel_, glm::vec4& colo
 		color.a = wheel_color_[3] / 255.0f;
 		wheel_.FindColors(color);
 	}
+}
+
+void Editor::EditorWindow::textCloser()
+{
+	// Get the Current Data Object
+	DataClass::Data_Object* data_object = data_objects.at(0);
+
+	// If Object is a Complex Object, Reload the Complex Group if File Changed
+	if (data_object->getGroup() != nullptr && data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+	{
+		// Get the Group's File
+		std::string& group_file = static_cast<Render::Objects::UnsavedComplex*>(data_object->getGroup())->getFilePath();
+
+		// Get the Data Object's File
+		std::string& object_file = static_cast<DataClass::Data_Complex*>(data_object)->getFilePath();
+
+		// Erase File Extension
+		Source::Algorithms::Common::eraseFileExtension(object_file);
+
+		// Compare the File Paths
+		if (group_file.compare(object_file))
+		{
+			// If File Name is Null, Don't Change the File
+			if (!Source::Algorithms::Common::getFileName(object_file, false).compare("NULL"))
+			{
+				// Revert Path to Original Value
+				object_file = group_file;
+				selected_text->getString() = group_file;
+
+				// Send Error Message
+				std::string message = "ERROR: INVALID INPUT DETECTED\n\nThe Names of Files Cannot be \"NULL\"\n\nPlease Change the File Name To Something\nOther Than \"NULL\"";
+				notification_->notificationMessage(NOTIFICATION_MESSAGES::NOTIFICATION_ERROR, message);
+
+				return;
+			}
+
+			// Test if the File name Exists
+			try 
+			{
+				// If Exists Returns 0, File Does Not Exist
+				if (!std::filesystem::exists(object_file + ".dat"))
+				{
+					// Prompt User If They Want to Create the File
+					std::string message = "File Does Not Yet Exist\n\nWould You Like to Create It?";
+					bool result = notification_->notificationCancelOption(NOTIFICATION_MESSAGES::NOTIFICATION_MESSAGE, message);
+
+					// If User Does Not Want to Create the File, Revert Path
+					if (!result)
+					{
+						object_file = group_file;
+						selected_text->getString() = group_file;
+						return;
+					}
+
+					// Create Both the Dat and Edt Files Here
+					std::ofstream fstream;
+					fstream.open(object_file + ".dat");
+					fstream.close();
+					fstream.open(object_file + ".edt");
+					fstream.close();
+				}
+			}
+
+			// Catch Illegal File Names Here
+			catch (std::filesystem::filesystem_error const& ex)
+			{
+				// Revert Path to Original Value
+				object_file = group_file;
+				selected_text->getString() = group_file;
+
+				// Send Error Message
+				std::string message = "ERROR: ILLEGAL FILE PATH DETECTED\n\nThe Requested File Path Contains a File Name\nor a Directory Name That is Reserved by The\nOperating System\n\nPlease Select A Different Path";
+				notification_->notificationMessage(NOTIFICATION_MESSAGES::NOTIFICATION_ERROR, message);
+
+				return;
+			}
+
+			// Store New Complex Group Object
+			static_cast<DataClass::Data_Complex*>(data_object)->setGroup(change_controller->getUnsavedComplex(object_file));
+		}
+
+		return;
+	}
+}
+
+void Editor::EditorWindow::closerInvalidFile(std::string& file_good, std::string& file_bad)
+{
+
 }
 
 void Editor::EditorWindow::genNewObjectWindow()
@@ -4477,21 +4575,8 @@ bool Editor::EditorWindow::traverseBackNewObject()
 
 void Editor::EditorWindow::updateWindow()
 {
-	// Edit Text of Object if a TextBox is Selected
-	if (Global::texting)
-	{
-		// If Left Click, Stop Texting
-		if (Global::LeftClick)
-		{
-			Global::texting = false;
-			glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
-			Global::text_box->setFalse();
-		}
-	}
-
 	// Update Object if Mouse Moved or Left Click
-	//else if (Global::cursor_Move || Global::LeftClick)
-	if (true)
+	if (Global::cursor_Move || Global::LeftClick)
 	{
 		// Move Object
 		updateScrollBars();

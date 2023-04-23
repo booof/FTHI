@@ -229,4 +229,14 @@ std::string Source::Algorithms::Common::getFileName(std::string& file_path, bool
 	return file_name;
 }
 
+void Source::Algorithms::Common::eraseFileExtension(std::string& file_path)
+{
+	int start_index = file_path.size() - 1;
+	while (start_index != 0 && file_path.at(start_index) != '.')
+		start_index--;
+	if (start_index == 0)
+		return;
+	file_path.erase(file_path.begin() + start_index, file_path.end());
+}
+
 

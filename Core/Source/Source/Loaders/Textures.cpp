@@ -513,7 +513,4 @@ void Source::Textures::ChangeCursor(GLFWwindow* window)
 
 	// Store Current Cursor
 	current_cursor = Global::Selected_Cursor;
-
-	// Set Selected Cursor to the Default
-	Global::Selected_Cursor = Global::Default_Cursor;
 }
