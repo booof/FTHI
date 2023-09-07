@@ -24,3 +24,10 @@ Core/EngineLibs/Code/out
 
 # Ignore NuGet Packages
 Packages
+/Core/EngineLibs/Code/Build/Debug/enginecode.lib
+/Core/EngineLibs/Code/Build/Debug/enginecode.pdb
+/Core/EngineLibs/Code/Build/enginecode.dir/Debug/enginecode.tlog/CL.read.1.tlog
+/Core/EngineLibs/Code/Build/enginecode.dir/Debug/Camera.obj
+/Core/EngineLibs/Code/Build/x64/Debug/ZERO_CHECK/ZERO_CHECK.tlog/CustomBuild.read.1.tlog
+/Core/x64/Debug/Core.tlog/CL.command.1.tlog
+/Core/x64/Debug/Core.tlog/CL.read.1.tlog
