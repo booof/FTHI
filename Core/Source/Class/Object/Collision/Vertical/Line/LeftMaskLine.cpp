@@ -39,7 +39,7 @@ void Object::Mask::Left::LeftMaskLine::returnMaterial(int& material)
 	material = data.material;
 }
 
-Object::Mask::Left::LeftMaskLine::LeftMaskLine(VerticalLineData& data_) : VerticalLine(data_)
+Object::Mask::Left::LeftMaskLine::LeftMaskLine(VerticalLineData& data_, glm::vec2& offset) : VerticalLine(data_, offset)
 {
 	// Store Type
 	type = VERTICAL_LINE;
@@ -51,7 +51,8 @@ Object::Mask::Left::LeftMaskLine::LeftMaskLine(VerticalLineData& data_) : Vertic
 
 #ifdef EDITOR
 
-	// Initialize Visualizer`
+	// Initialize Visualizer
+	initializeVisualizer(VAO, VBO, model, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
 	number_of_vertices = 2;
 
 	// Only Attach Scripts if in Gameplay Mode
@@ -87,9 +88,9 @@ void Object::Mask::Left::LeftMaskLine::getTopAndBottomEdgeVertices(glm::vec2& to
 	bottom = data.position;
 }
 
-Object::Object* DataClass::Data_LeftMaskVerticalLine::genObject()
+Object::Object* DataClass::Data_LeftMaskVerticalLine::genObject(glm::vec2& offset)
 {
-	return new Object::Mask::Left::LeftMaskLine(data);
+	return new Object::Mask::Left::LeftMaskLine(data, offset);
 }
 
 void DataClass::Data_LeftMaskVerticalLine::writeObjectData(std::ofstream& object_file)

@@ -24,7 +24,7 @@ namespace Object::Entity
 	public:
 
 		// Initialize Object
-		NPC(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, uint16_t& ai);
+		NPC(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, uint16_t& ai, glm::vec2& offset);
 
 		// Update Object
 		void updateObject();

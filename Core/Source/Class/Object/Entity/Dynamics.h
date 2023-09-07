@@ -39,7 +39,7 @@ namespace Object::Entity
 	public:
 
 		// Initialize Object
-		Dynamics(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, DynamicData& dynamic_);
+		Dynamics(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, DynamicData& dynamic_, glm::vec2& offset);
 
 		// Update Object
 		void updateObject();

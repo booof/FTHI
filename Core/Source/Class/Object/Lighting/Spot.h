@@ -36,7 +36,7 @@ namespace Object::Light::Spot
 		SpotData spot;
 
 		// Initialize Object
-		Spot(SpotData& spot_, LightData& light_);
+		Spot(SpotData& spot_, LightData& light_, glm::vec2& offset);
 
 		// Load Light Into Shader
 		void loadLight();

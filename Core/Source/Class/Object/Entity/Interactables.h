@@ -36,7 +36,7 @@ namespace Object::Entity
 	public:
 
 		// Initialize Object
-		Interactables(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, InteractableData& interactable_);
+		Interactables(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, InteractableData& interactable_, glm::vec2& offset);
 
 		// Update Object
 		void updateObject();

@@ -33,34 +33,34 @@
 #include "UnsavedGroup.h"
 #include "UnsavedComplex.h"
 
-void Render::Objects::Level::updateLevelPos(glm::vec2 position, glm::vec2& level)
+void Render::Objects::Level::updateLevelPos(glm::vec2 position, glm::i16vec2& level)
 {
 	level.x = floor(position.x / 128);
 	level.y = floor(position.y / 64);
 }
 
-int8_t Render::Objects::Level::index_from_level(glm::vec2 level_coords)
+int8_t Render::Objects::Level::index_from_level(glm::i16vec2 level_coords)
 {
 	if (abs(level_coords.x - level_position.x) > 1 || abs(level_coords.y - level_position.y) > 1) { return -1; }
-	return ((uint8_t)4 + (uint8_t)floor(level_coords.x - level_position.x) - (uint8_t)((level_coords.y - level_position.y) * 3));
+	return ((uint16_t)4 + (uint16_t)floor(level_coords.x - level_position.x) - (uint16_t)((level_coords.y - level_position.y) * 3));
 }
 
-glm::vec2 Render::Objects::Level::level_from_index(int8_t index)
+glm::i16vec2 Render::Objects::Level::level_from_index(int8_t index)
 {
 	// If Index is Outside Level Range, Retrun 0,0
 	if (index > 8 || index < 0)
-		return glm::vec2(0, 0);
+		return glm::i16vec2(0, 0);
 
-	glm::vec2 coords;
+	glm::i16vec2 coords;
 	coords.x = level_position.x + (index % 3) - 1;
-	coords.y = level_position.y + int8_t(index < 3) - int8_t(index > 5);
+	coords.y = level_position.y + int16_t(index < 3) - int16_t(index > 5);
 	return coords;
 }
 
 void Render::Objects::Level::testReload()
 {
 	// Get Level Coordinates of Camera
-	glm::vec2 new_level;
+	glm::i16vec2 new_level;
 	updateLevelPos(camera->Position, new_level);
 
 	// Test if Reloading Of Level is Needed
@@ -97,7 +97,7 @@ void Render::Objects::Level::testReload()
 	}
 }
 
-void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level_new, bool reload_all)
+void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2& level_new, bool reload_all)
 {
 	// Pointer to New Level
 	SubLevel* new_level;
@@ -111,12 +111,18 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 	// Variable for New Object Count
 	uint32_t total_object_count_new = 0;
 
+	// Array of Sublevels That Need to be Deleted After Reallocation
+	SubLevel* used_sublevels[9] = { 0 };
+
+	// Index to Insert Into Used Sublevels Array
+	int used_index = 0;
+
 	// Test if Handler Should do a Complete Map Reset
 	if ((abs(level_old.x - level_new.x) > 1 || abs(level_old.y - level_new.y) > 1) || (level_old == level_new) || reload_all)
 	{
-		// Deconstruct Level Objects
+		// Move Old Levels Into Unused Array
 		for (int i = 0; i < 9; i++)
-			delete sublevels[i];
+			used_sublevels[i] = sublevels[i];
 
 		// Reset Physics
 		physics_list.erase();
@@ -141,6 +147,14 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 		reallocateAll(initialized, total_object_count_new);
 		initialized = true;
 
+		// Delete the Old Levels
+		for (int i = 0; i < 9; i++)
+			delete used_sublevels[i];
+
+		// Reset the Sublevel Counts
+		for (int i = 0; i < 9; i++)
+			sublevels[i]->resetCounts();
+
 #ifdef SHOW_LEVEL_LOADING
 		std::cout << "reloaded all\n";
 #endif
@@ -157,7 +171,8 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 		for (int i = 2; i < 9; i += 3)
 		{
 			sublevels[i]->subtractHeader(container.total_object_count);
-			delete sublevels[i];
+			sublevels[i]->deactivateObjects();
+			used_sublevels[used_index++] = sublevels[i];
 		}
 
 		// Shift Loaded Levels to the Right
@@ -191,7 +206,8 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 		for (int i = 0; i < 9; i += 3)
 		{
 			sublevels[i]->subtractHeader(container.total_object_count);
-			delete sublevels[i];
+			sublevels[i]->deactivateObjects();
+			used_sublevels[used_index++] = sublevels[i];
 		}
 
 		// Shift Loaded Levels to the Left
@@ -225,7 +241,8 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 		for (int i = 6; i < 9; i++)
 		{
 			sublevels[i]->subtractHeader(container.total_object_count);
-			delete sublevels[i];
+			sublevels[i]->deactivateObjects();
+			used_sublevels[used_index++] = sublevels[i];
 		}
 
 		// Shift Loaded Levels to the South
@@ -259,7 +276,8 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 		for (int i = 0; i < 3; i++)
 		{
 			sublevels[i]->subtractHeader(container.total_object_count);
-			delete sublevels[i];
+			sublevels[i]->deactivateObjects();
+			used_sublevels[used_index++] = sublevels[i];
 		}
 
 		// Shift Loaded Levels to the North
@@ -292,6 +310,14 @@ void Render::Objects::Level::reloadLevels(glm::vec2& level_old, glm::vec2& level
 
 	// Reallocate Memory of Pointers
 	reallocatePostReload(total_object_count_old);
+
+	// Delete the Now Useless Sublevels
+	for (int i = 0; i < used_index; i++)
+		delete used_sublevels[i];
+
+	// Reset the Sublevel Counts
+	for (int i = 0; i < 9; i++)
+		sublevels[i]->resetCounts();
 }
 
 void Render::Objects::Level::segregateObjects()
@@ -302,8 +328,6 @@ void Render::Objects::Level::segregateObjects()
 	// to Sort. If any tie, go to the Second then Third Identifier. Ties Between Unique Objects Have no
 	// Importance. There will be a Data Structure That Contains the Start/End Indicies for Each Important
 	// Object Group i.e. Terrain, Lights, Masks
-
-	// EDIT: Sorting Will Instead be Done Through Quick Sort
 
 	// Sort the Objects Through Quick Sort
 	Algorithms::Sorting::quickIdentifierSort(container.object_array, container.total_object_count);
@@ -393,9 +417,8 @@ void Render::Objects::Level::reallocatePostReload(uint32_t old_object_count)
 		for (uint16_t i = 0; i < old_object_count; i++)
 		{
 			// Copy Pointer of Active Object Into Array, If Object is Active
-			if (container.object_array[i]->active)
+			if (container.object_array[i]->active_ptr->active)
 			{
-				//new_list[temp_index_holder.total_object_count] = objects[i];
 				new_list[temp_index_holder] = container.object_array[i];
 				temp_index_holder++;
 			}
@@ -526,6 +549,10 @@ void Render::Objects::Level::constructTerrain()
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+	// Update Model Matrix for Group Visualizers
+	for (int i = 0; i < container.group_size; i++)
+		container.group_start[i]->updateModelMatrix();
 }
 
 void Render::Objects::Level::loadLights()
@@ -655,13 +682,16 @@ void Render::Objects::Level::loadLights()
 	// Unbind Buffer
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+	// Set Flag to Reload Selected Lights
+	Global::reload_lights = true;
+
 	// Remember to Set up Material and View Pos in Object Frag Shader
 }
 
 void Render::Objects::Level::getObjectIndicies(DataClass::Data_Object* parent, uint32_t** indicies, int& indicies_size)
 {
 	// Only Execute if Group is Not Nullptr Not Complex
-	if (parent->getGroup() != nullptr && parent->getGroup()->getCollectionType() != UNSAVED_COLLECTIONS::COMPLEX)
+	if (parent->getGroup() != nullptr)
 	{
 		// Get Vector of Children
 		std::vector<DataClass::Data_Object*>& children = parent->getGroup()->getChildren();
@@ -1091,7 +1121,7 @@ void Render::Objects::Level::drawVisualizers()
 		container.object_array[i]->drawGroupVisualizer();
 }
 
-void Render::Objects::Level::testSelector(Editor::Selector& selector, Editor::ObjectInfo& object_info)
+uint8_t Render::Objects::Level::testSelector(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	// If Mouse Moved, Reset Object Pass Over Flag
 	if (Global::cursor_Move)
@@ -1101,62 +1131,68 @@ void Render::Objects::Level::testSelector(Editor::Selector& selector, Editor::Ob
 	selector.highlighting = false;
 	object_info.active = false;
 
+	// The Result of Selection
+	uint8_t result = 0;
+
 	// Test Selector On Formerground Lighting
-	if (testSelectorLights(5, selector, object_info)) { return; }
+	if (result = testSelectorLights(5, selector, object_info)) { return result; }
 
 	// Test Selector On Formerground Effects
-	if (testSelectorEffects(5, selector, object_info)) { return; }
+	if (result = testSelectorEffects(5, selector, object_info)) { return result; }
 
 	// Test Selector On Formerground Terrain
-	if (testSelectorTerrain(5, selector, object_info)) { return; }
+	if (result = testSelectorTerrain(5, selector, object_info)) { return result; }
 
 	// Test Selector On Group Objects
-	if (testSelectorGroup(selector, object_info)) { return; }
+	if (result = testSelectorGroup(selector, object_info)) { return result; }
 
 	// Test Selector On Entities
-	if (testSelectorEntity(selector, object_info)) { return; }
+	if (result = testSelectorEntity(selector, object_info)) { return result; }
 
 	// Test Selector On Physics Objects
-	if (testSelectorPhysics(selector, object_info)) { return; }
+	if (result = testSelectorPhysics(selector, object_info)) { return result; }
 
 	// Test Selector On Collision Masks
-	if (testSelectorMasks(selector, object_info)) { return; }
+	if (result = testSelectorMasks(selector, object_info)) { return result; }
 
 	// Test Selector On Foreground Lighting
-	if (testSelectorLights(4, selector, object_info)) { return; }
+	if (result = testSelectorLights(4, selector, object_info)) { return result; }
 
 	// Test Selector On Foreground Terrain
-	if (testSelectorTerrain(4, selector, object_info)) { return; }
+	if (result = testSelectorTerrain(4, selector, object_info)) { return result; }
 
 	// Test Selector On Backgrond1 Lighting
-	if (testSelectorLights(3, selector, object_info)) { return; }
+	if (result = testSelectorLights(3, selector, object_info)) { return result; }
 
 	// Test Selector On Background1 Terrain
-	if (testSelectorTerrain(3, selector, object_info)) { return; }
+	if (result = testSelectorTerrain(3, selector, object_info)) { return result; }
 
 	// Test Selector On Background2 Lighting
-	if (testSelectorLights(2, selector, object_info)) { return; }
+	if (result = testSelectorLights(2, selector, object_info)) { return result; }
 
 	// Test Selector On Background2 Terrain
-	if (testSelectorTerrain(2, selector, object_info)) { return; }
+	if (result = testSelectorTerrain(2, selector, object_info)) { return result; }
 
 	// Test Selector On Background3 Lighting
-	if (testSelectorLights(1, selector, object_info)) { return; }
+	if (result = testSelectorLights(1, selector, object_info)) { return result; }
 
 	// Test Selector On Background3 Terrain
-	if (testSelectorTerrain(1, selector, object_info)) { return; }
+	if (result = testSelectorTerrain(1, selector, object_info)) { return result; }
 
 	// Test Selector On Backdrop Lighting
-	if (testSelectorLights(0, selector, object_info)) { return; }
+	if (result = testSelectorLights(0, selector, object_info)) { return result; }
 
 	// Test Selector On Backdrop Terrain
-	if (testSelectorTerrain(0, selector, object_info)) { return; }
+	if (result = testSelectorTerrain(0, selector, object_info)) { return result; }
 
 	// If We Ever Get To This Point, Reset the Pass Over Flag for All Objects
 	resetObjectPassOver();
+
+	// Return 0 Since There was no Selection
+	return 0;
 }
 
-bool Render::Objects::Level::testSelectorTerrain(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info)
+uint8_t Render::Objects::Level::testSelectorTerrain(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	for (int i = terrain_seperators[index]; i < terrain_seperators[index + 1]; i++)
 	{
@@ -1165,14 +1201,14 @@ bool Render::Objects::Level::testSelectorTerrain(short index, Editor::Selector& 
 		{
 			if (returned_value == 2)
 				constructTerrain();
-			return true;
+			return returned_value;
 		}
 	}
 
-	return false;
+	return 0;
 }
 
-bool Render::Objects::Level::testSelectorLights(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info)
+uint8_t Render::Objects::Level::testSelectorLights(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	uint8_t returned_value = 0;
 
@@ -1184,7 +1220,7 @@ bool Render::Objects::Level::testSelectorLights(short index, Editor::Selector& s
 		{
 			if (returned_value == 2)
 				loadLights();
-			return true;
+			return returned_value;
 		}
 	}
 	
@@ -1196,19 +1232,19 @@ bool Render::Objects::Level::testSelectorLights(short index, Editor::Selector& s
 		{
 			if (returned_value == 2)
 				loadLights();
-			return true;
+			return returned_value;
 		}
 	}
 
 	// Spot Light
 	for (int i = spot_seperators[index]; i < spot_seperators[index + 1]; i++)
 	{
-		returned_value = testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.point_size), container.spot_size, selector, i, object_info);
+		returned_value = testSelectorOnObject(reinterpret_cast<Object::Object***>(&container.spot_start), container.spot_size, selector, i, object_info);
 		if (returned_value)
 		{
 			if (returned_value == 2)
 				loadLights();
-			return true;
+			return returned_value;
 		}
 	}
 
@@ -1220,23 +1256,23 @@ bool Render::Objects::Level::testSelectorLights(short index, Editor::Selector& s
 		{
 			if (returned_value == 2)
 				loadLights();
-			return true;
+			return returned_value;
 		}
 	}
 
-	return false;
+	return 0;
 }
 
-bool Render::Objects::Level::testSelectorEffects(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info)
+uint8_t Render::Objects::Level::testSelectorEffects(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
-	return false;
+	return 0;
 }
 
-bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Editor::ObjectInfo& object_info)
+uint8_t Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	// Test Selector on Base Objects
 	if (testSelectorOnList(physics_list, selector, object_info))
-		return true;
+		return 2;
 
 	// Test Selector on Hinge Objects
 	for (physics_list.it = physics_list.beginStatic(); physics_list.it != physics_list.endStatic(); physics_list.it++)
@@ -1370,12 +1406,13 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						selector.add_child_object = Editor::CHILD_OBJECT_TYPES::SPRINGMASS_SPRING;
 						//selector.spring_data.Node1 = object.nodes[object.springs[i].Node1].Name;
 						//selector.spring_data.Node2 = object.nodes[object.springs[i].Node2].Name;
-						selector.object_index = 0;
+						//selector.object_index = 0;
+						selector.moused_object = nullptr;
 						//selector.data_objects.push_back(object_pointer->data_object);
 						selector.highlighted_object = object.data_springs[i];
 						selector.temp_connection_pos_left = node_pos_1;
 						selector.temp_connection_pos_right = node_pos_2;
-						selector.activateHighlighter(glm::vec2(0.0f, 0.0f));
+						selector.activateHighlighter(glm::vec2(0.0f, 0.0f), Editor::SelectedHighlight::SELECTABLE);
 						selector.highlighting = true;
 						object_info.clearAll();
 						object_info.setObjectType("SpringMass Spring", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -1468,7 +1505,7 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 							//return true;
 						}
 
-						return true;
+						return 2;
 					}
 				}
 			}
@@ -1506,9 +1543,10 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 					//selector.node_data.material = object.nodes[i].material;
 					//selector.node_data.radius = object.nodes[i].Radius;
 					//selector.node_data.name = object.nodes[i].Name;
-					selector.object_index = 0;
+					//selector.object_index = 0;
+					selector.moused_object = nullptr;
 					selector.highlighted_object = object.data_nodes[i];
-					selector.activateHighlighter(glm::vec2(0.0f, 0.0f));
+					selector.activateHighlighter(glm::vec2(0.0f, 0.0f), Editor::SelectedHighlight::SELECTABLE);
 					selector.highlighting = true;
 					object_info.clearAll();
 					object_info.setObjectType("SpringMass Node", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -1593,21 +1631,21 @@ bool Render::Objects::Level::testSelectorPhysics(Editor::Selector& selector, Edi
 						//selector.unadded_data_objects.push_back(selector.highlighted_object);
 					}
 
-					return true;
+					return 2;
 				}
 			}
 		}
 	}
 
-	return false;
+	return 0;
 }
 
-bool Render::Objects::Level::testSelectorEntity(Editor::Selector& selector, Editor::ObjectInfo& object_info)
+uint8_t Render::Objects::Level::testSelectorEntity(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	return testSelectorOnList(entity_list, selector, object_info);
 }
 
-bool Render::Objects::Level::testSelectorGroup(Editor::Selector& selector, Editor::ObjectInfo& object_info)
+uint8_t Render::Objects::Level::testSelectorGroup(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	for (int i = 0; i < container.group_size; i++)
 	{
@@ -1618,7 +1656,7 @@ bool Render::Objects::Level::testSelectorGroup(Editor::Selector& selector, Edito
 	return false;
 }
 
-bool Render::Objects::Level::testSelectorMasks(Editor::Selector& selector, Editor::ObjectInfo& object_info)
+uint8_t Render::Objects::Level::testSelectorMasks(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	// Test Floor Masks
 	for (int i = 0; i < container.floor_size; i++)
@@ -1696,20 +1734,22 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Object::Object*** object_li
 		selector.highlighting = true;
 		object_info.active = true;
 
-		// Set Cursor to Hand
-		Global::Selected_Cursor = Global::CURSORS::HAND;
-
 		// If Object is Not Currently Selected, Set Highlighter Visualizer
-		if (selector.object_index != object.object_index)
+		if (selector.moused_object != &object)
 		{
+			selector.moused_object = &object;
+
 			// If Select Was Unsuccessful, Test Next Object
-			if (!temp_list[index]->select(selector, object_info))
+			if (!temp_list[index]->select(selector, object_info, Global::Keys[GLFW_KEY_LEFT_ALT] || Global::Keys[GLFW_KEY_RIGHT_ALT]))
 			{
-				selector.highlighting = false;
 				object_info.active = false;
-				return 0;
+				Global::Selected_Cursor = Global::CURSORS::FORBIDEN;
+				return 1;
 			}
 		}
+
+		// Set Cursor to Hand
+		Global::Selected_Cursor = Global::CURSORS::HAND;
 
 		// If Left Click, Select Object
 		if (Global::LeftClick)
@@ -1771,13 +1811,13 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Object::Object*** object_li
 					}
 						
 					// Remove Child from Current Group
-					object.data_object->getParent()->getGroup()->createChangePop(object.data_object, true);
+					object.data_object->getParent()->getGroup()->createChangePop(object.data_object, MOVE_WITH_PARENT::MOVE_DISSABLED);
 					object.data_object->getParent()->getObjectIdentifier()[3]--;
 
 					// If Attempting to Add To Its Current Parent, Remove Object From Being a Child
 					// For This, Selected Object DataObject is Calling the Function, Test is the object.data_object->getParent()->getObjectIndex();
 					if (adding_to_current_parent)
-						change_controller->handleSingleSelectorReturn(object.data_object->makeCopySelected(selector), object.data_object, true);
+						change_controller->handleSingleSelectorReturn(object.data_object->makeCopySelected(selector), object.data_object, &selector,  true, false);
 
 					// Else, Swap Parents
 					else
@@ -1791,13 +1831,12 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Object::Object*** object_li
 					// Note: If Object Does Not Have a Group, It is a Standard Group Object
 					if (selected_object->getGroup() == nullptr) {
 						if (!Render::Objects::UnsavedGroup::testValidSelectionStatic(selected_object, object.data_object))
-							return 1;
-					}
+							return 1; }
 					else if (!selected_object->getGroup()->testValidSelection(selected_object, object.data_object))
 						return 1;
 
 					// Remove Child From Level
-					storeLevelOfOrigin(selector, object.returnPosition(), true);
+					storeLevelOfOrigin(selector, object.returnPosition(), MOVE_WITH_PARENT::MOVE_DISSABLED);
 
 					// Add Child to Parent
 					selector.addChildToOnlyOne(object.data_object->makeCopySelected(selector), object);
@@ -1813,76 +1852,80 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Object::Object*** object_li
 				// Possible Offset Created if From Complex Object
 				glm::vec2 complex_offset = glm::vec2(0.0f, 0.0f);
 
-				// Store Level of Origin if Originated From Level
-				if (object.parent == nullptr)
+				// If Object is a Complex Object, Store Values for Complex Parent
+				// Note: Need to Find a Way to Do This for Children of Objects To Be Selected
+				// This Is Because Complex Objects Can Now Become Children, And This Function Will be Skipped
+				if (object.group_object != nullptr && object.data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
 				{
-					// If Object is a Complex Object, Store Values for Complex Parent
-					if (object.group_object != nullptr && object.data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+					// Get the Root Parent Object of Object's Group
+					DataClass::Data_Object* complex_version = static_cast<Render::Objects::UnsavedComplex*>(object.data_object->getGroup())->getComplexParent();
+
+					// If Inactive, Set Position Offset
+					if (!static_cast<DataClass::Data_ComplexParent*>(complex_version)->isActive())
 					{
-						// Get the Root Parent Object of Object's Group
-						DataClass::Data_Object* complex_version = static_cast<Render::Objects::UnsavedComplex*>(object.data_object->getGroup())->getComplexParent();
+						// Store Root Parent in Root Data Object
+						static_cast<DataClass::Data_ComplexParent*>(complex_version)->storeRootParent(&object);
 
-						// If Inactive, Set Position Offset
-						if (!static_cast<DataClass::Data_ComplexParent*>(complex_version)->isActive())
-						{
-							// Store Root Parent in Root Data Object
-							static_cast<DataClass::Data_ComplexParent*>(complex_version)->storeRootParent(&object);
+						// Store Offset in Root Data Object
+						static_cast<DataClass::Data_ComplexParent*>(complex_version)->setPositionOffset(object.returnPosition());
 
-							// Store Offset in Root Data Object
-							static_cast<DataClass::Data_ComplexParent*>(complex_version)->setPositionOffset(object.returnPosition());
-
-							// Activate Root Data Object
-							static_cast<DataClass::Data_ComplexParent*>(complex_version)->setActive();
-						}
-
-						// If Not Active, DO NOT SELECT
-						else
-							return 1;
+						// Activate Root Data Object
+						static_cast<DataClass::Data_ComplexParent*>(complex_version)->setActive();
 					}
 
-					// Pop Object From Level
-					storeLevelOfOrigin(selector, object.returnPosition(), false);
+					// If Not Active, DO NOT SELECT
+					else
+						return 1;
 				}
+
+				// Store Level of Origin if Originated From Level
+				if (object.parent == nullptr)
+					storeLevelOfOrigin(selector, object.returnPosition(), MOVE_WITH_PARENT::MOVE_ENABLED);
 
 				// If Originated From Group, Remove from Group
 				else if (object.data_object->getParent() != nullptr)
 				{
-					// Get the Root Parent of Objects
-					DataClass::Data_Object* root_parent = object.data_object->getParent();
-					while (root_parent->getParent() != nullptr)
-						root_parent = root_parent->getParent();
-
-					// Test if Root Parent of Group is A Complex Object
-					if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+					// Look Through List of Objects to Determine If Object is From Complex Objects
+					Object::Object* current_parent_object = object.parent;
+					bool offseting = true;
+					while (current_parent_object != nullptr)
 					{
-						// Get the Parent Object
-						Object::Object* root_parent_object = object.parent;
-						while (root_parent_object->parent != nullptr)
-							root_parent_object = root_parent_object->parent;
-
-						// If Root Parent Object is a Temp Object, DO NOT SELECT
-						if (root_parent_object->storage_type == Object::STORAGE_TYPES::NULL_TEMP)
-							return 1;
-
-						// If Inactive, Set Position Offset
-						if (!static_cast<DataClass::Data_ComplexParent*>(root_parent)->isActive())
+						// Test if Root Parent of Group is A Complex Object
+						if (current_parent_object->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
 						{
-							// Store Root Parent in Root Data Object
-							static_cast<DataClass::Data_ComplexParent*>(root_parent)->storeRootParent(root_parent_object);
+							// Get the Parent Object That Matches the DataClass Parent
+							DataClass::Data_Object* current_parent = static_cast<Render::Objects::UnsavedComplex*>(current_parent_object->group_object)->getComplexParent();
 
-							// Store Offset in Root Data Object
-							static_cast<DataClass::Data_ComplexParent*>(root_parent)->setPositionOffset(root_parent_object->returnPosition());
+							// If Root Parent Object is a Temp Object, DO NOT SELECT
+							if (current_parent_object->storage_type == Object::STORAGE_TYPES::NULL_TEMP)
+								return 1;
 
-							// Activate Root Data Object
-							static_cast<DataClass::Data_ComplexParent*>(root_parent)->setActive();
+							// If Inactive, Set Position Offset
+							if (!static_cast<DataClass::Data_ComplexParent*>(current_parent)->isActive())
+							{
+								// Store Root Parent in Root Data Object
+								static_cast<DataClass::Data_ComplexParent*>(current_parent)->storeRootParent(current_parent_object);
+
+								// Store Offset in Root Data Object
+								static_cast<DataClass::Data_ComplexParent*>(current_parent)->setPositionOffset(current_parent_object->returnPosition());
+
+								// Activate Root Data Object
+								static_cast<DataClass::Data_ComplexParent*>(current_parent)->setActive();
+							}
+
+							// Remove Group Object Offset
+							if (offseting)
+								complex_offset = static_cast<DataClass::Data_ComplexParent*>(current_parent)->getPositionOffset();
+							offseting = false;
 						}
 
-						// Remove Group Object Offset
-						complex_offset = static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+						// Check Out the Next Parent
+						current_parent_object = current_parent_object->parent;
 					}
 
 					// For All Group Objects, Simply Pop From Current Object
-					object.data_object->getParent()->getGroup()->createChangePop(object.data_object, false);
+					//object.data_object->getParent()->getGroup()->createChangePop(object.data_object, MOVE_WITH_PARENT::MOVE_ENABLED);
+					object.data_object->getParent()->getGroup()->createChangePop(object.data_object, MOVE_WITH_PARENT::MOVE_DISSABLED);
 				}
 
 				// Make a Copy of the Data Class
@@ -1895,7 +1938,7 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Object::Object*** object_li
 				object_info.clearAll();
 
 				// Apply Possible Complex Offset
-				dataclass_copy->getPosition() += complex_offset;
+				dataclass_copy->offsetPosition(complex_offset);
 
 				// Select the Object
 				selector.unadded_data_objects.push_back(dataclass_copy);
@@ -1911,7 +1954,7 @@ uint8_t Render::Objects::Level::testSelectorOnObject(Object::Object*** object_li
 }
 
 template<class Type>
-bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list, Editor::Selector& selector, Editor::ObjectInfo& object_info)
+uint8_t Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list, Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	// Iterate Through Object List
 	for (object_list.it = object_list.beginStatic(); object_list.it != object_list.endStatic(); object_list.it++)
@@ -1945,8 +1988,8 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 			Global::Selected_Cursor = Global::CURSORS::HAND;
 
 			// If Object is Not Currently Selected, Set Highlighter Visualizer
-			if (selector.object_index != object.object_index)
-				object.select(selector, object_info);
+			if (selector.moused_object != &object)
+				object.select(selector, object_info, false);
 			selector.highlighting = true;
 
 			// If Left Click, Select Object
@@ -1956,7 +1999,7 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 				selector.active = true;
 
 				// Store Level of Origin
-				storeLevelOfOrigin(selector, object.returnPosition(), false);
+				storeLevelOfOrigin(selector, object.returnPosition(), MOVE_WITH_PARENT::MOVE_ENABLED);
 
 				// Remove Object From List
 				object_list.removeObject(object_list.it);
@@ -1967,14 +2010,14 @@ bool Render::Objects::Level::testSelectorOnList(Struct::List<Type>& object_list,
 				// Make a Copy of the Data Class
 				selector.unadded_data_objects.push_back(selector.highlighted_object->makeCopySelected(selector));
 
-				return true;
+				return 2;
 			}
 
-			return true;
+			return 1;
 		}
 	}
 
-	return false;
+	return 0;
 }
 
 void Render::Objects::Level::removeMarkedFromList(Object::Object* marked_object, glm::vec2* new_selected_position)
@@ -2017,7 +2060,7 @@ void Render::Objects::Level::removeMarkedFromList(Object::Object* marked_object,
 			Object::Object* object = container.object_array[i];
 
 			// Generate the Temp Object
-			Object::TempObject* temp_object = new Object::TempObject(object, new_selected_position);
+			Object::TempObject* temp_object = new Object::TempObject(object, new_selected_position, object == marked_object);
 			temp_objects.push_back(temp_object);
 
 			// Store Temp Object in Place of Parent, If Object Has a Group
@@ -2031,6 +2074,21 @@ void Render::Objects::Level::removeMarkedFromList(Object::Object* marked_object,
 				Object::Object** children = object->children;
 				for (int i = 0; i < object->children_size; i++)
 					children[i]->parent = temp_object;
+			}
+
+			// If Object Has a Parent, Replace the Original Child Instance With the Temp Object
+			if (object->parent != nullptr)
+			{
+				Object::Object* test_child_object = nullptr;
+				for (int i = 0; i < object->parent->children_size; i++)
+				{
+					test_child_object = object->parent->children[i];
+					if (test_child_object == object)
+					{
+						object->parent->children[i] = temp_object;
+						break;
+					}
+				}
 			}
 
 			// Delete Object
@@ -2143,7 +2201,7 @@ void Render::Objects::Level::reloadAll(float new_x, float new_y)
 void Render::Objects::Level::reloadAll()
 {
 	// Get Level Location of Camera
-	glm::vec2 new_level;
+	glm::i16vec2 new_level;
 	updateLevelPos(camera->Position, new_level);
 
 	// Reload Levels
@@ -2196,6 +2254,34 @@ void Render::Objects::Level::incorperatNewObjects(Object::Object** new_objects, 
 	container.total_object_count = new_container_size;
 	container.object_array = new_object_array;
 
+	// Generate the New Active Object Array
+	Object::Active* new_actives = new Object::Active[new_objects_size];
+
+	// Determine the Level Coords for Each of the New Objects
+	glm::i16vec2 level_coords = glm::i16vec2(0.0f, 0.0f);
+	Object::Object* root_parent = nullptr;
+	for (int i = 0; i < new_objects_size; i++)
+	{
+		// Get the Level Coords of the Object Root Parent Object
+		root_parent = new_objects[i];
+		while (root_parent->parent != nullptr)
+			root_parent = root_parent->parent;
+		updateLevelPos(*root_parent->pointerToPosition(), level_coords);
+
+		// Generate the New Active Object
+		new_actives[i] = Object::Active(true, true, level_coords, new_objects[i]);
+
+		// Tell Respective Sublevel That There is a New Object
+		sublevels[index_from_level(level_coords)]->new_active_objects++;
+	}
+
+	// Update the Sublevel Active Pointers
+	for (int i = 0; i < 9; i++)
+		sublevels[i]->includeNewActives(new_actives, new_objects_size, this);
+
+	// Delete the Temp Active Array
+	delete[] new_actives;
+
 	// Segregate Some Objects Into Seperate Arrays
 	segregateObjects();
 
@@ -2229,10 +2315,10 @@ glm::mat4 Render::Objects::Level::returnProjectionViewMatrix(uint8_t layer)
 	return projection[layer] * camera->view;
 }
 
-void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, bool disable_move)
+void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, MOVE_WITH_PARENT disable_move)
 {
 	// Get Level Coords of Object
-	glm::vec2 coords;
+	glm::i16vec2 coords;
 	updateLevelPos(position, coords);
 
 	// Store Pointer of Unsaved Level in Selector
@@ -2263,6 +2349,11 @@ GLuint Render::Objects::Level::returnSpotBufferSize()
 GLuint Render::Objects::Level::returnBeamBufferSize()
 {
 	return 96 * container.beam_size + 16;
+}
+
+Render::Objects::SubLevel** Render::Objects::Level::getSublevels()
+{
+	return sublevels;
 }
 
 #endif

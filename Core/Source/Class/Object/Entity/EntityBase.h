@@ -98,7 +98,7 @@ namespace Object::Entity
 	protected:
 
 		// Initialize Object
-		EntityBase(uint32_t& uuid_, EntityData& entity_, ObjectData& data_);
+		EntityBase(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, glm::vec2& offset);
 
 		// General Update Function
 		void updateEntity();

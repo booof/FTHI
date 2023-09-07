@@ -136,6 +136,12 @@ namespace Global
 	// Light Textures
 	std::map<std::string, Struct::SingleTexture> Visual_Textures;
 
+	// Flag to Reload Lights
+	bool reload_lights = false;
+
+	// Dummy Vec2 to be used as a Safe Nullptr
+	glm::vec2 dummy_vec2 = glm::vec2(0.0f, 0.0f);
+
 #endif
 
 	// Window Object

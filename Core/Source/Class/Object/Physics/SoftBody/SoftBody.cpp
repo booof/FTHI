@@ -29,7 +29,7 @@ void Object::Physics::Soft::SoftBody::initializeVisualizer()
 {
 	// Create Visualizer for Nodes
 	float vertices[42];
-	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, 1.0f, 1.0f, data.colors, vertices);
+	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.4f, 1.0f, 1.0f, data.colors, vertices);
 
 	// Generate Buffers
 	glGenVertexArrays(1, &VAO);

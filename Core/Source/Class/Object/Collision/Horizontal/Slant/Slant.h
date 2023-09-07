@@ -40,7 +40,7 @@ namespace Object::Mask
 		float intercept;
 
 		// Initilize Shape
-		Slant(SlantData& data_);
+		Slant(SlantData& data_, glm::vec2& offset);
 
 #ifdef EDITOR
 

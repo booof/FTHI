@@ -13,7 +13,7 @@
 // Math Functions
 #include "Source/Algorithms/Quick Math/QuickMath.h"
 
-Object::Physics::Rigid::RigidTrapezoid::RigidTrapezoid(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_) : RigidBody(uuid_, data_, rigid_, shape_, 120)
+Object::Physics::Rigid::RigidTrapezoid::RigidTrapezoid(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, glm::vec2& offset) : RigidBody(uuid_, data_, rigid_, shape_, 120, offset)
 {
 	// Store Object Type
 	type = PHYSICS_TYPES::TYPE_TRAPEZOID;
@@ -47,11 +47,11 @@ Object::Physics::Rigid::RigidTrapezoid::RigidTrapezoid(uint32_t& uuid_, ObjectDa
 
 	// Determine Angles for Quadrants
 	glm::vec2 pivot = glm::vec2(half_height * sin(physics.rotation), half_height * sin(physics.rotation - 1.5708f));
-	glm::vec2 offset = glm::vec2(half_width * cos(physics.rotation), half_width * sin(physics.rotation));
+	glm::vec2 pivot_offset = glm::vec2(half_width * cos(physics.rotation), half_width * sin(physics.rotation));
 	glm::vec2 parameterized_size_offset = glm::vec2(-size_offset_height * sin(physics.rotation), size_offset_height * cos(physics.rotation));
 	glm::vec2 parameterized_size_offset2 = glm::vec2(size_offset_width * cos(physics.rotation), size_offset_width * sin(physics.rotation));
-	vertices[0] = glm::vec2(pivot - offset); // Lower Left
-	vertices[1] = glm::vec2(pivot + offset); // Lower Right
+	vertices[0] = glm::vec2(pivot - pivot_offset); // Lower Left
+	vertices[1] = glm::vec2(pivot + pivot_offset); // Lower Right
 	vertices[2] = -vertices[0]; // Top Right
 	vertices[3] = -vertices[1]; // Top Left
 	vertices[1] += parameterized_size_offset;

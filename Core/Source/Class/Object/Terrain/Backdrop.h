@@ -11,7 +11,7 @@ class Object::Terrain::Backdrop : public TerrainBase
 public:
 
 	// Initialize Object
-	Backdrop(Shape::Shape* shape_, ObjectData data_) : TerrainBase(shape_, data_)
+	Backdrop(Shape::Shape* shape_, ObjectData data_, glm::vec2& offset) : TerrainBase(shape_, data_, offset)
 	{
 		layer = BACKDROP;
 	}

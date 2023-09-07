@@ -388,14 +388,20 @@ bool Source::Render::Initialize::initialize()
 	/////////////////
 
 	// Load Mouse Images
-	const char* image_Mouse[6] =
+	const char* image_Mouse[12] =
 	{
 		"../Resources/Textures/Mouse/Cursor.png",
-		"../Resources/Textures/Mouse/ReSizeHorizontal.png",
-		"../Resources/Textures/Mouse/ReSizeVertical.png",
 		"../Resources/Textures/Mouse/Hand.png",
 		"../Resources/Textures/Mouse/Type.png",
-		"../Resources/Textures/Mouse/Lock.png"
+		"../Resources/Textures/Mouse/ReSize.png",
+		"../Resources/Textures/Mouse/ReSizeHorizontal.png",
+		"../Resources/Textures/Mouse/ReSizeVertical.png",
+		"../Resources/Textures/Mouse/ReSizePositive.png",
+		"../Resources/Textures/Mouse/ReSizeNegative.png",
+		"../Resources/Textures/Mouse/Wait.png",
+		"../Resources/Textures/Mouse/Help.png",
+		"../Resources/Textures/Mouse/Lock.png",
+		"../Resources/Textures/Mouse/Forbiden.png"
 	};
 
 	// Width and Height of Images
@@ -410,35 +416,71 @@ bool Source::Render::Initialize::initialize()
 	image.height = imageHeight;
 	Global::Mouse_Textures.insert({ "Cursor", glfwCreateCursor(&image, 0, 0) });
 
-	// Set Image Parameters and Assign to Horizontal Resize Variable
-	image.pixels = SOIL_load_image(image_Mouse[1], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
-	image.width = imageWidth;
-	image.height = imageHeight;
-	Global::Mouse_Textures.insert({ "ReSizeHorizontal", glfwCreateCursor(&image, 12, 0) });
-
-	// Set Image Parameters and Assign to Horizontal Resize Variable
-	image.pixels = SOIL_load_image(image_Mouse[2], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
-	image.width = imageWidth;
-	image.height = imageHeight;
-	Global::Mouse_Textures.insert({ "ReSizeVertical", glfwCreateCursor(&image, 0, 12) });
-
 	// Set Image Parameters and Assign to Hand Variable
-	image.pixels = SOIL_load_image(image_Mouse[3], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
+	image.pixels = SOIL_load_image(image_Mouse[1], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
 	image.width = imageWidth;
 	image.height = imageHeight;
 	Global::Mouse_Textures.insert({ "Hand", glfwCreateCursor(&image, 5, 0) });
 
 	// Set Image Parameters and Assign to Type Variable
-	image.pixels = SOIL_load_image(image_Mouse[4], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
+	image.pixels = SOIL_load_image(image_Mouse[2], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
 	image.width = imageWidth;
 	image.height = imageHeight;
 	Global::Mouse_Textures.insert({ "Type", glfwCreateCursor(&image, 0, 11) });
 
-	// Set Image Parameters and Assign to Type Variable
+	// Set Image Parameters and Assign to BiDirectional Resize Variable
+	image.pixels = SOIL_load_image(image_Mouse[3], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
+	image.width = imageWidth;
+	image.height = imageHeight;
+	Global::Mouse_Textures.insert({ "ReSize", glfwCreateCursor(&image, 0, 11) });
+
+	// Set Image Parameters and Assign to Horizontal Resize Variable
+	image.pixels = SOIL_load_image(image_Mouse[4], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
+	image.width = imageWidth;
+	image.height = imageHeight;
+	Global::Mouse_Textures.insert({ "ReSizeHorizontal", glfwCreateCursor(&image, 12, 0) });
+
+	// Set Image Parameters and Assign to Horizontal Resize Variable
 	image.pixels = SOIL_load_image(image_Mouse[5], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
 	image.width = imageWidth;
 	image.height = imageHeight;
+	Global::Mouse_Textures.insert({ "ReSizeVertical", glfwCreateCursor(&image, 0, 12) });
+
+	// Set Image Parameters and Assign to Positive Resize Variable
+	image.pixels = SOIL_load_image(image_Mouse[6], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
+	image.width = imageWidth;
+	image.height = imageHeight;
+	Global::Mouse_Textures.insert({ "ReSizePositive", glfwCreateCursor(&image, 12, 0) });
+
+	// Set Image Parameters and Assign to Negative Resize Variable
+	image.pixels = SOIL_load_image(image_Mouse[7], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
+	image.width = imageWidth;
+	image.height = imageHeight;
+	Global::Mouse_Textures.insert({ "ReSizeNegative", glfwCreateCursor(&image, 0, 12) });
+
+	// Set Image Parameters and Assign to Wait Variable
+	image.pixels = SOIL_load_image(image_Mouse[8], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
+	image.width = imageWidth;
+	image.height = imageHeight;
+	Global::Mouse_Textures.insert({ "Wait", glfwCreateCursor(&image, 0, 11) });
+
+	// Set Image Parameters and Assign to Help Variable
+	image.pixels = SOIL_load_image(image_Mouse[9], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
+	image.width = imageWidth;
+	image.height = imageHeight;
+	Global::Mouse_Textures.insert({ "Help", glfwCreateCursor(&image, 0, 11) });
+
+	// Set Image Parameters and Assign to Lock Variable
+	image.pixels = SOIL_load_image(image_Mouse[10], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
+	image.width = imageWidth;
+	image.height = imageHeight;
 	Global::Mouse_Textures.insert({ "Lock", glfwCreateCursor(&image, 0, 11) });
+
+	// Set Image Parameters and Assign to Forbiden Variable
+	image.pixels = SOIL_load_image(image_Mouse[11], &imageWidth, &imageHeight, 0, SOIL_LOAD_RGBA);
+	image.width = imageWidth;
+	image.height = imageHeight;
+	Global::Mouse_Textures.insert({ "Forbiden", glfwCreateCursor(&image, 0, 11) });
 
 	// Set Cursor to Default
 	glfwSetCursor(Global::window, Global::Mouse_Textures.find("Cursor")->second);

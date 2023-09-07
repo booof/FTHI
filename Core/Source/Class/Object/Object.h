@@ -23,6 +23,9 @@ namespace Render::Objects {
 
 namespace Object
 {
+	// Declaration for Object Class
+	class Object;
+
 	// Base Objects List
 	enum ObjectList : unsigned char
 	{
@@ -54,6 +57,22 @@ namespace Object
 		GROUP_COUNT
 	};
 
+	// Definition for the Garbage Collection Structure
+	struct Active
+	{
+		// Determines if Object is Active
+		bool active = true;
+
+		// Determines if the Object is Alive
+		bool alive = true;
+
+		// Level Coords of Object
+		glm::i16vec2 level_pos = glm::i16vec2(0, 0);
+
+		// Pointer to the Object
+		Object* object_ptr;
+	};
+
 	// Definition for Basic Object Initializer For Reading From File
 	struct ObjectData
 	{
@@ -61,7 +80,7 @@ namespace Object
 		glm::vec2 position = glm::vec2(0.0f, 0.0f);
 
 		// Z-Pos of Object
-		float zpos = -1.0f;
+		float zpos = -2.0f;
 
 		// Colors of Object
 		glm::vec4 colors = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -105,13 +124,13 @@ namespace Object
 		uint32_t object_index = 0;       // The UUID For the Object
 		bool skip_selection = false;     // If True, Object is Skipped for Selection Until Mouse is Moved
 
+		// The Pointer to the Active Object
+		Active* active_ptr = nullptr;
+
 		// The Pointer to the Unsaved Group Object
 		Render::Objects::UnsavedCollection* group_object = nullptr;
 
 #endif
-
-		// Determines if Object is Active
-		bool active = true;
 
 		// Which Level Array The Object Should be Placed Into
 		uint8_t storage_type = 0;
@@ -146,7 +165,7 @@ namespace Object
 #ifdef EDITOR
 
 		// Select Object
-		bool select(Editor::Selector& selector, Editor::ObjectInfo& object_info);
+		bool select(Editor::Selector& selector, Editor::ObjectInfo& object_info, bool add_children);
 
 		// Test if Mouse Intersects Object
 		virtual bool testMouseCollisions(float x, float y) = 0;
@@ -196,10 +215,13 @@ namespace Object
 		// Position Being Modified by the Selector
 		glm::vec2* selected_position = nullptr;
 
+		// Determines if this is the Original Object
+		bool original = false;
+
 	public:
 
 		// Constructor
-		TempObject(Object* object, glm::vec2* new_position_ptr);
+		TempObject(Object* object, glm::vec2* new_position_ptr, bool original_);
 
 		// Deconstructor
 		~TempObject();
@@ -221,6 +243,9 @@ namespace Object
 
 		// Return Pointer to Selected Position
 		glm::vec2* pointerToSelectedPosition();
+
+		// Tests if This is the Original Object
+		bool isOriginal();
 	};
 
 	// List of Objects

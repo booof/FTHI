@@ -34,8 +34,15 @@ bool Object::Mask::Floor::FloorMaskLine::testCollisions(glm::vec2 test_position,
 
 void Object::Mask::Floor::FloorMaskLine::updateSelectedPosition(float deltaX, float deltaY)
 {
+	// Move the Object
 	data.position.x += deltaX;
 	data.position.y += deltaY;
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
+
+	// Calculate the New Collision Positions
+	//float half_width = data.width * 0.5f;
+	///x_left = data.position.x - half_width;
+	//x_right = data.position.x + half_width;
 }
 
 void Object::Mask::Floor::FloorMaskLine::getLeftRightEdgeVertices(glm::vec2& left, glm::vec2& right)
@@ -50,7 +57,7 @@ void Object::Mask::Floor::FloorMaskLine::returnMaterial(int& material)
 	material = data.material;
 }
 
-Object::Mask::Floor::FloorMaskLine::FloorMaskLine(HorizontalLineData& data_, bool& platform_) : HorizontalLine(data_)
+Object::Mask::Floor::FloorMaskLine::FloorMaskLine(HorizontalLineData& data_, bool& platform_, glm::vec2& offset) : HorizontalLine(data_, offset)
 {
 	// Store Type
 	type = HORIZONTAL_LINE;
@@ -94,9 +101,9 @@ glm::vec2* Object::Mask::Floor::FloorMaskLine::pointerToPosition()
 	return &data.position;
 }
 
-Object::Object* DataClass::Data_FloorMaskHorizontalLine::genObject()
+Object::Object* DataClass::Data_FloorMaskHorizontalLine::genObject(glm::vec2& offset)
 {
-	return new Object::Mask::Floor::FloorMaskLine(data, platform);
+	return new Object::Mask::Floor::FloorMaskLine(data, platform, offset);
 }
 
 void DataClass::Data_FloorMaskHorizontalLine::writeObjectData(std::ofstream& object_file)

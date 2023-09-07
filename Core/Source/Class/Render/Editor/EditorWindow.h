@@ -459,8 +459,9 @@ namespace Editor
 		// Single Texture for Textured Objects
 		Struct::SingleTexture texture;
 
-		// Object Index in Unsaved Levels
-		uint32_t object_index = 0;
+		// Pointer to the Currently Moused Over Object
+		Object::Object* moused_object = nullptr;
+		//uint32_t object_index = 0;
 
 		// Determines if Object Has Been Modified
 		bool modified = false;
@@ -469,6 +470,9 @@ namespace Editor
 		// 0 = False, 1 = SpringMass Node, 2 = SpringMass Spring, 4 = Hinge SubObject
 		CHILD_OBJECT_TYPES add_child_object = CHILD_OBJECT_TYPES::NONE;
 		bool add_child = false;
+
+		// Determines if Selected Object Vertices Should be Forced Reloaded
+		bool force_reload_vertices = false;
 
 		// Create New Object Window
 		void genNewObjectWindow();

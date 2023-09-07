@@ -57,13 +57,13 @@ namespace Render::Objects
 		void buildObjectsHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, ObjectsInstance& instance);
 
 		// Generator to Build Objects
-		void buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Object** active_array, uint16_t& active_index, Object::Object* parent, glm::vec2 position_offset);
+		void buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Active* active_array, uint16_t& active_index, Object::Object* parent, glm::vec2 position_offset);
 
 		// Return Pointer to Shape Data
 		Shape::Shape* getShapePointer(Editor::Selector* selector);
 
 		// Function to Add Objects While Transversing
-		void addWhileTraversing(DataClass::Data_Object* data_object, bool move_with_parent);
+		void addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent);
 
 		// Function to Remove Objects While Traversing
 		void removeWhileTraversing(DataClass::Data_Object* data_object);

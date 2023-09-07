@@ -2,7 +2,7 @@
 #include "Render/Struct/DataClasses.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 
-Object::Entity::NPC::NPC(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, uint16_t& ai) : EntityBase(uuid_, entity_, data_)
+Object::Entity::NPC::NPC(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, uint16_t& ai, glm::vec2& offset) : EntityBase(uuid_, entity_, data_, offset)
 {
 	// Store AI Script Index
 	ai_script = ai;
@@ -15,9 +15,9 @@ void Object::Entity::NPC::updateObject()
 	// Execute AI Script
 }
 
-Object::Object* DataClass::Data_NPC::genObject()
+Object::Object* DataClass::Data_NPC::genObject(glm::vec2& offset)
 {
-	return new Object::Entity::NPC(uuid, entity, data, ai);
+	return new Object::Entity::NPC(uuid, entity, data, ai, offset);
 }
 
 void DataClass::Data_NPC::writeObjectData(std::ofstream& object_file)

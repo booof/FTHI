@@ -85,7 +85,7 @@ namespace Object::Mask::Trigger
 	public:
 
 		// Initialize Object
-		TriggerMask(TriggerData& data_);
+		TriggerMask(TriggerData& data_, glm::vec2& offset);
 
 #ifdef EDITOR
 

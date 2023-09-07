@@ -33,7 +33,7 @@ namespace Object::Light::Beam
 	public:
 
 		// Initialize Object
-		Beam(BeamData& beam_, LightData& light_);
+		Beam(BeamData& beam_, LightData& light_, glm::vec2& offset);
 
 		// Load Light Into Buffer
 		void loadLight();

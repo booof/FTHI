@@ -3,6 +3,7 @@
 #define DATA_CLASSES_H
 
 #include "ExternalLibs.h"
+#include "Render/Objects/UnsavedBase.h"
 #include "Object/Object.h"
 #include "Render/Shape/Rectangle.h"
 #include "Render/Shape/Trapezoid.h"
@@ -77,15 +78,6 @@ namespace DataClass
 		// The Index of the Object
 		uint32_t object_index = 0;
 
-		// Lambdas to Read a Shape
-		const std::function<Shape::Shape* (std::ifstream& object_file)> shapes[5] = {
-			[](std::ifstream& object_file)->Shape::Shape* {return new Shape::Rectangle(object_file); },
-			[](std::ifstream& object_file)->Shape::Shape* {return new Shape::Trapezoid(object_file); },
-			[](std::ifstream& object_file)->Shape::Shape* {return new Shape::Triangle(object_file); },
-			[](std::ifstream& object_file)->Shape::Shape* {return new Shape::Circle(object_file); },
-			[](std::ifstream& object_file)->Shape::Shape* {return new Shape::Polygon(object_file); }
-		};
-
 		// The Pointer to the Unsaved Group (Or Unsaved Complex)
 		Render::Objects::UnsavedCollection* group_object = nullptr;
 
@@ -93,19 +85,13 @@ namespace DataClass
 		Data_Object* parent = nullptr;
 
 		// Determines if the Object Should Move With Its Parent
-		bool move_with_parent = true;
-
-		// The Colors Used to Visualize Parent-Child Relationships
-		const glm::vec4 visualizer_colors[5] = {
-			glm::vec4(0.0f, 0.0f, 0.8f, 1.0f), // Blue
-			glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), // Red
-			glm::vec4(0.0f, 0.8f, 0.0f, 1.0f), // Green
-			glm::vec4(0.8f, 0.0f, 0.8f, 1.0f), // Pink
-			glm::vec4(0.0f, 0.8f, 0.8f, 1.0f)  // Turquoise
-		};
+		Render::Objects::MOVE_WITH_PARENT move_with_parent = Render::Objects::MOVE_WITH_PARENT::MOVE_ENABLED;
 
 		// The Layer the Object is in In a Group
-		uint8_t group_layer = 0;
+		int8_t group_layer = 0;
+		
+		// Determines if the Object is Able to be Selected
+		bool selectable = true;
 
 		// The Array of Objects This DataClass Represents
 		// This Array is Unique to Each Object Index
@@ -121,13 +107,22 @@ namespace DataClass
 		void writeEditorData(std::ofstream& editor_file);
 
 		// Function to Read Data and Create an Object
-		virtual Object::Object* genObject() = 0;
+		virtual Object::Object* genObject(glm::vec2& offset) = 0;
 
 		// Function to Write Data to File
 		virtual void writeObjectData(std::ofstream& object_file) = 0;
 
 		// Function to Read Data From File
 		virtual void readObjectData(std::ifstream& object_file) = 0;
+
+		// Function to Generate a New Shape
+		Shape::Shape* readNewShape(std::ifstream& object_file, uint8_t index);
+
+		// Set Position 2 and 3 Pointers to Null
+		void position23Null(int& index2, int& index3, glm::vec2** position2, glm::vec2** position3);
+
+		// Set Position 3 Pointer to Null
+		void position3Null(int& index3, glm::vec2** position3);
 
 		// Constructor for Base Class
 		Data_Object();
@@ -144,13 +139,19 @@ namespace DataClass
 		void addChild(DataClass::Data_Object* data_object);
 
 		// Function to Add a Child to a Data Object Via Selection
-		void addChildViaSelection(DataClass::Data_Object* data_object, bool disable_move);
+		void addChildViaSelection(DataClass::Data_Object* data_object, Render::Objects::MOVE_WITH_PARENT disable_move);
+
+		// Function to Draw Group Visualizer Points and Lines With the Given Offsets
+		void drawGroupVisualizerHelper(glm::vec2& left_offset, glm::vec2& right_offset, glm::vec2& point_offset, glm::vec2 new_offset);
 
 		// Function to Draw Group Visualizers
 		void drawGroupVisualizer(glm::vec2 current_offset);
 
 		// Function to Draw Group Visualizers Specifically for Selector
 		void drawSelectedGroupVisualizer(glm::vec2 new_offset);
+
+		// Modified Function to Draw Group Visualizers But With an Offset
+		void drawSelectedGroupVisualizerOffset(glm::vec2 new_offset, glm::vec2 new_offset2);
 
 		// Function to Draw Group Visualizer With Parent
 		void drawParentConnection();
@@ -165,19 +166,19 @@ namespace DataClass
 		Data_Object* getParent();
 
 		// Disable the Move With Parent Feature
-		void disableMoveWithParent();
+		void disableMoveWithParent(Render::Objects::MOVE_WITH_PARENT mode);
 
 		// Re-Enable the Move With Parent Feature
 		void enableMoveWithParent();
 
 		// Get the Move With Parent Flag
-		bool getMoveWithParent();
+		Render::Objects::MOVE_WITH_PARENT getMoveWithParent();
 
 		// Set the Layer the Object is in a Group
-		void setGroupLayer(uint8_t new_layer);
+		virtual void setGroupLayer(int8_t new_layer);
 
 		// Get the Group Layer
-		uint8_t& getGroupLayer();
+		int8_t& getGroupLayer();
 
 		// Get the List of the Real Objects
 		std::vector<Object::Object*>& getObjects();
@@ -189,7 +190,7 @@ namespace DataClass
 		void clearObjects();
 
 		// Generate Object
-		Object::Object* generateObject();
+		Object::Object* generateObject(glm::vec2& offset);
 
 		// Get the Object Identifier
 		uint8_t* getObjectIdentifier();
@@ -225,10 +226,40 @@ namespace DataClass
 		virtual void updateSelectedPosition(float deltaX, float deltaY, bool update_real) = 0;
 
 		// Generate Children Recursively
-		void genChildrenRecursive(Object::Object*** object_list, int& list_size, Object::Object* parent, glm::vec2& offset);
+		void genChildrenRecursive(Object::Object*** object_list, int& list_size, Object::Object* parent, glm::vec2& offset, Editor::Selector* selector, bool test_groups);
 
 		// Tests if an Object Index is a Parent of the Object
 		bool testIsParent(DataClass::Data_Object* parent);
+
+		// Disables the Object for Selecting
+		void disableSelecting();
+
+		// Enables the Object for Selecting
+		void enableSelection();
+
+		// Enables Selecting For This Object Only
+		void enableSelectionNonRecursive();
+
+		// Determines if the Object can be Selected
+		bool isSelectable();
+
+		// Offset the Position of the Object
+		virtual void offsetPosition(glm::vec2& offset);
+
+		// Offset the Position of the Object and All Children
+		void offsetPositionRecursive(glm::vec2& offset);
+
+		// Helper Function to Offset Position of Object and All Children
+		void offsetPositionRecursiveHelper(glm::vec2& offset);
+
+		// For Objects With Multiple Positions, Only Offset the Opposite Positions
+		virtual void offsetOppositePosition(glm::vec2& offset);
+
+		// Returns the Color at the Specified Index
+		glm::vec4& returnLineColor(int8_t index);
+
+		// Gets the Indicies and Position Pointers for Object Info
+		virtual void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3) = 0;
 	};
 
 	// Sub Object Data Class
@@ -293,6 +324,8 @@ namespace DataClass
 
 		// Update the Selected Position of an Object
 		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Slant
@@ -315,6 +348,14 @@ namespace DataClass
 
 		// Update the Selected Position of an Object
 		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+
+		// Offset the Position of the Object
+		void offsetPosition(glm::vec2& offset);
+
+		// Offset the Opposite Position
+		void offsetOppositePosition(glm::vec2& offset);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Slope
@@ -337,6 +378,8 @@ namespace DataClass
 
 		// Update the Selected Position of an Object
 		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Floor Mask
@@ -357,7 +400,7 @@ namespace DataClass
 	class Data_FloorMaskHorizontalLine : public Data_Floor, public Data_HorizontalLine
 	{
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -381,7 +424,7 @@ namespace DataClass
 	class Data_FloorMaskSlant : public Data_Floor, public Data_Slant
 	{
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -405,7 +448,7 @@ namespace DataClass
 	class Data_FloorMaskSlope : public Data_Floor, public Data_Slope
 	{
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -429,7 +472,7 @@ namespace DataClass
 	class Data_CeilingMaskHorizontalLine : public Data_HorizontalLine
 	{
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -453,7 +496,7 @@ namespace DataClass
 	class Data_CeilingMaskSlant : public Data_Slant
 	{
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -477,7 +520,7 @@ namespace DataClass
 	class Data_CeilingMaskSlope : public Data_Slope
 	{
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -517,6 +560,8 @@ namespace DataClass
 
 		// Update the Selected Position of an Object
 		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Curve
@@ -539,13 +584,15 @@ namespace DataClass
 
 		// Update the Selected Position of an Object
 		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Left Mask Vertical Line
 	class Data_LeftMaskVerticalLine : public Data_VerticalLine
 	{
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -569,7 +616,7 @@ namespace DataClass
 	class Data_LeftMaskCurve : public Data_Curve
 	{
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -593,7 +640,7 @@ namespace DataClass
 	class Data_RightMaskVerticalLine : public Data_VerticalLine
 	{
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -617,7 +664,7 @@ namespace DataClass
 	class Data_RightMaskCurve : public Data_Curve
 	{
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -643,7 +690,7 @@ namespace DataClass
 		Object::Mask::Trigger::TriggerData data;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -672,6 +719,8 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, float& size);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Shape
@@ -686,6 +735,14 @@ namespace DataClass
 	public:
 
 		Shape::Shape* getShape();
+
+		// Offset the Position of the Object
+		void offsetPosition(glm::vec2& offset);
+
+		// If Triangle, Offset the Opposite Positions
+		void offsetOppositePosition(glm::vec2& offset);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 	
 	// Terrain Object
@@ -695,7 +752,7 @@ namespace DataClass
 		uint8_t layer;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -734,6 +791,9 @@ namespace DataClass
 		const float DEFAULT_LINEAR = 1.0f;
 		const float DEFAULT_QUADRATIC = 1.0f;
 
+		// Set Object Info Colors
+		void infoColors(Editor::ObjectInfo& object_info);
+
 	public:
 
 		Object::Light::LightData& getLightData();
@@ -752,7 +812,7 @@ namespace DataClass
 		Object::Light::Directional::DirectionalData directional;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -777,6 +837,14 @@ namespace DataClass
 		Object::Light::Directional::DirectionalData& getDirectionalData();
 
 		void generateInitialValues(glm::vec2& position, float& size);
+
+		// Offset the Position of the Object
+		void offsetPosition(glm::vec2& offset);
+
+		// Offset the Opposite Position
+		void offsetOppositePosition(glm::vec2& offset);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Point Light
@@ -786,7 +854,7 @@ namespace DataClass
 		Object::Light::Point::PointData point;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -811,6 +879,8 @@ namespace DataClass
 		Object::Light::Point::PointData& getPointData();
 
 		void generateInitialValues(glm::vec2& position);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Spot Light
@@ -820,7 +890,7 @@ namespace DataClass
 		Object::Light::Spot::SpotData spot;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -845,6 +915,8 @@ namespace DataClass
 		Object::Light::Spot::SpotData& getSpotData();
 
 		void generateInitialValues(glm::vec2& position);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Beam Light
@@ -854,7 +926,7 @@ namespace DataClass
 		Object::Light::Beam::BeamData beam;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -879,6 +951,14 @@ namespace DataClass
 		Object::Light::Beam::BeamData& getBeamData();
 
 		void generateInitialValues(glm::vec2& position, float& size);
+
+		// Offset the Position of the Object
+		void offsetPosition(glm::vec2& offset);
+
+		// Offset the Opposite Position
+		void offsetOppositePosition(glm::vec2& offset);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Object with a UUID
@@ -904,7 +984,7 @@ namespace DataClass
 		Object::Physics::Rigid::RigidBodyData rigid;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -935,7 +1015,7 @@ namespace DataClass
 		std::string file_name;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -957,6 +1037,8 @@ namespace DataClass
 		std::string& getFile();
 
 		void generateInitialValues(glm::vec2& position);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// SpringMass Node Object
@@ -969,7 +1051,7 @@ namespace DataClass
 		Object::Physics::Soft::NodeData node_data;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Get the Script of an Object
 		int& getScript();
@@ -1008,6 +1090,8 @@ namespace DataClass
 
 		// Function to Get the Node Data
 		Object::Physics::Soft::NodeData& getNodeData();
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// SpringMass Node Object
@@ -1020,7 +1104,7 @@ namespace DataClass
 		Object::Physics::Soft::Spring spring_data;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Get the Script of an Object
 		int& getScript();
@@ -1059,6 +1143,8 @@ namespace DataClass
 
 		// Function to Get the Spring Data
 		Object::Physics::Soft::Spring& getSpringData();
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Wire Physics Object
@@ -1068,7 +1154,7 @@ namespace DataClass
 		Object::Physics::Soft::WireData wire;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -1093,6 +1179,8 @@ namespace DataClass
 		void generateInitialValues(glm::vec2& position, float& size);
 
 		Object::Physics::Soft::WireData& getWireData();
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Anchor Physics Object
@@ -1102,7 +1190,7 @@ namespace DataClass
 		Object::Physics::Hinge::AnchorData data;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -1131,6 +1219,8 @@ namespace DataClass
 		void generateInitialValues(glm::vec2& position);
 
 		Object::Physics::Hinge::AnchorData& getAnchorData();
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Hinge Physics Object
@@ -1143,7 +1233,7 @@ namespace DataClass
 		Object::Physics::Hinge::HingeData data;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -1174,6 +1264,8 @@ namespace DataClass
 		Object::Physics::Hinge::HingeData& getHingeData();
 
 		std::string& getFile();
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// Entity Object
@@ -1190,6 +1282,8 @@ namespace DataClass
 		Object::Entity::EntityData& getEntityData();
 
 		void generateInitialData(glm::vec2& position);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// NPC Entities
@@ -1199,7 +1293,7 @@ namespace DataClass
 		uint16_t ai = 0;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -1223,7 +1317,7 @@ namespace DataClass
 	class Data_Controllable : public Data_Entity
 	{
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -1250,7 +1344,7 @@ namespace DataClass
 		Object::Entity::InteractableData interactable;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -1277,7 +1371,7 @@ namespace DataClass
 		Object::Entity::DynamicData dynamic;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -1304,7 +1398,7 @@ namespace DataClass
 		Object::Group::GroupData data;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -1320,7 +1414,6 @@ namespace DataClass
 
 		// Update the Selected Position of an Object
 		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
-
 
 	public:
 
@@ -1340,6 +1433,11 @@ namespace DataClass
 
 		// Write Object
 		void writeObject(std::ofstream& object_file, std::ofstream& editor_file);
+
+		// Set the Layer the Object is in a Group
+		void setGroupLayer(int8_t new_layer);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 
 	// DataClass for Complex Object While Editing
@@ -1361,7 +1459,7 @@ namespace DataClass
 		Object::Object* root_parent = nullptr;
 
 		// Function to Read Data and Create an Object
-		Object::Object* genObject();
+		Object::Object* genObject(glm::vec2& offset);
 
 		// Function to Write Data to File
 		void writeObjectData(std::ofstream& object_file);
@@ -1387,7 +1485,7 @@ namespace DataClass
 	public:
 
 		// Default Constructor for Object
-		Data_ComplexParent() {}
+		Data_ComplexParent();
 
 		// Initialize Object
 		void setGroup(Render::Objects::UnsavedComplex* complex_group);
@@ -1412,6 +1510,11 @@ namespace DataClass
 
 		// Disables the Object
 		void setInactive();
+
+		// Set the Layer the Object is in a Group
+		void setGroupLayer(int8_t new_layer);
+
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
 }
 

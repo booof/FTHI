@@ -11,7 +11,7 @@ class Object::Terrain::Formerground : public TerrainBase
 public:
 
 	// Initialize Object
-	Formerground(Shape::Shape* shape_, ObjectData data_) : TerrainBase(shape_, data_)
+	Formerground(Shape::Shape* shape_, ObjectData data_, glm::vec2& offset) : TerrainBase(shape_, data_, offset)
 	{
 		layer = FORMERGROUND;
 	}

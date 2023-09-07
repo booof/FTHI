@@ -2,7 +2,7 @@
 #include "Render/Struct/DataClasses.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 
-Object::Entity::Controllables::Controllables(uint32_t& uuid_, EntityData& entity_, ObjectData& data_) : EntityBase(uuid_, entity_, data_)
+Object::Entity::Controllables::Controllables(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, glm::vec2& offset) : EntityBase(uuid_, entity_, data_, offset)
 {
 
 }
@@ -11,9 +11,9 @@ void Object::Entity::Controllables::updateObject()
 {
 }
 
-Object::Object* DataClass::Data_Controllable::genObject()
+Object::Object* DataClass::Data_Controllable::genObject(glm::vec2& offset)
 {
-	return new Object::Entity::Controllables(uuid, entity, data);
+	return new Object::Entity::Controllables(uuid, entity, data, offset);
 }
 
 void DataClass::Data_Controllable::writeObjectData(std::ofstream& object_file)

@@ -2,7 +2,7 @@
 #include "Render/Struct/DataClasses.h"
 #include "ChangeController.h"
 
-void Render::Objects::UnsavedGroup::setChildLayer(DataClass::Data_Object* data_object, uint8_t new_layer)
+void Render::Objects::UnsavedGroup::setChildLayer(DataClass::Data_Object* data_object, int8_t new_layer)
 {
 	data_object->setGroupLayer(new_layer);
 	UnsavedCollection* data_group = data_object->getGroup();
@@ -10,14 +10,13 @@ void Render::Objects::UnsavedGroup::setChildLayer(DataClass::Data_Object* data_o
 		data_group->recursiveSetGroupLayer(new_layer + 1);
 }
 
-void Render::Objects::UnsavedGroup::addWhileTraversing(DataClass::Data_Object* data_object, bool move_with_parent)
+void Render::Objects::UnsavedGroup::addWhileTraversing(DataClass::Data_Object* data_object,  MOVE_WITH_PARENT move_with_parent)
 {
 	// Add Object To Change List
 	instance_with_changes.data_objects.push_back(data_object);
 
 	// Determine if Object Should Move With Parent
-	if (!move_with_parent)
-		data_object->disableMoveWithParent();
+	data_object->disableMoveWithParent(move_with_parent);
 
 	UnsavedCollection* data_group = data_object->getGroup();
 	if (data_group != nullptr)
@@ -70,6 +69,10 @@ bool Render::Objects::UnsavedGroup::testValidSelectionStatic(DataClass::Data_Obj
 	// Only Standard Objects and Complex Root Objects Can be Selected
 	// Hinge Connectors and Softbody Objects Are Not Allowed
 
+	// If Attempting to Create a Circular Group, Stop That from Happening
+	if (!preventCircularGroups(parent, test_child))
+		return false;
+
 	return true;
 }
 
@@ -82,10 +85,10 @@ Render::Objects::UnsavedGroup::UnsavedGroup(uint8_t initial_size)
 	change_controller->storeUnsavedGroup(this);
 }
 
-void Render::Objects::UnsavedGroup::recursiveSetGroupLayer(uint8_t layer)
+void Render::Objects::UnsavedGroup::recursiveSetGroupLayer(int8_t layer)
 {
 	// Set Next Layer Value
-	uint8_t next_layer = layer + 1;
+	int8_t next_layer = layer + 1;
 
 	// Update All Children and Their Children
 	for (DataClass::Data_Object* data_object : instance_with_changes.data_objects)
@@ -96,24 +99,57 @@ void Render::Objects::UnsavedGroup::recursiveSetGroupLayer(uint8_t layer)
 	}
 }
 
+void Render::Objects::UnsavedGroup::recursiveSetModifiedOffset(glm::vec2& offset)
+{
+	// Don't Iterate If There Are No Changes
+	if (current_change_list == nullptr)
+		return;
+
+	glm::vec2 offset2 = -offset;
+
+	// Iterate Through All Children of the Modified Child and Provide Offset
+	//for (Change* change : current_change_list->changes)
+	//	change->data->offsetPositionRecursiveHelper(offset);
+}
+
 void Render::Objects::UnsavedGroup::updateParentofChildren()
 {
 	for (DataClass::Data_Object* child : instance_with_changes.data_objects)
 		child->setParent(parent_pointer);
 }
 
-void Render::Objects::UnsavedGroup::setParent(DataClass::Data_Object* new_parent, bool move)
+void Render::Objects::UnsavedGroup::setParent(DataClass::Data_Object* new_parent, MOVE_WITH_PARENT move)
 {
 	// Move Objects If Enabled
-	if (move && parent_pointer != nullptr)
+	if (move == MOVE_WITH_PARENT::MOVE_ENABLED && parent_pointer != nullptr)
 	{
+		// Determine How Much to Move Children
 		glm::vec2 delta_pos = new_parent->getPosition() - parent_pointer->getPosition();
 		for (DataClass::Data_Object* child : instance_with_changes.data_objects)
 		{
-			if (child->getMoveWithParent())
-				child->updateSelectedPosition(delta_pos.x, delta_pos.y, true);
-			else
-				child->enableMoveWithParent();
+			// Move Child Based on Its Move Condition
+			switch (child->getMoveWithParent())
+			{
+			case MOVE_WITH_PARENT::MOVE_DISSABLED: child->enableMoveWithParent(); break;
+			case MOVE_WITH_PARENT::MOVE_ENABLED: child->updateSelectedPosition(delta_pos.x, delta_pos.y, true); break;
+			case MOVE_WITH_PARENT::MOVE_SECONDARY_ONLY: child->offsetOppositePosition(delta_pos); break;
+			case MOVE_WITH_PARENT::MOVE_SECONDARY_ONLY_NO_OFFSET:
+			{
+				// Need to Remove Any Offset From Complex Objects
+				DataClass::Data_Object* root_parent = parent_pointer->getParent();
+				glm::vec2 new_delta_pos = delta_pos;
+				while (root_parent != nullptr)
+				{
+					if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+					{
+						new_delta_pos += root_parent->getPosition();
+						break;
+					}
+					root_parent = root_parent->getParent();
+				}
+				child->offsetOppositePosition(new_delta_pos);
+			}
+			}
 		}
 	}
 
@@ -122,6 +158,11 @@ void Render::Objects::UnsavedGroup::setParent(DataClass::Data_Object* new_parent
 
 	// Force an Update of Parent for Each Child
 	updateParentofChildren();
+}
+
+DataClass::Data_Object* Render::Objects::UnsavedGroup::getParent()
+{
+	return parent_pointer;
 }
 
 void Render::Objects::UnsavedGroup::enqueueLevelParent(DataClass::Data_Object* data_object)
@@ -166,7 +207,7 @@ void Render::Objects::UnsavedGroup::ParentQueue::moveParents()
 			UnsavedGroup* parent_group = static_cast<UnsavedGroup*>(parent->getGroup());
 
 			// Set New Parent for Group
-			parent_group->setParent(parent, true);
+			parent_group->setParent(parent, MOVE_WITH_PARENT::MOVE_ENABLED);
 
 			// Recursively Set Group Layer
 			parent_group->recursiveSetGroupLayer(parent->getGroupLayer() + 1);

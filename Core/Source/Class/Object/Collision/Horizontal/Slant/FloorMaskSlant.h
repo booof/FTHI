@@ -38,7 +38,7 @@ namespace Object::Mask
 	public:
 
 		// Initialize Object
-		FloorMaskSlant(SlantData& data_, bool& platform_);
+		FloorMaskSlant(SlantData& data_, bool& platform_, glm::vec2& offset);
 
 		// Return Pointer to Position
 		glm::vec2* pointerToPosition();

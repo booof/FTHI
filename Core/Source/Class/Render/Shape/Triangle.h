@@ -58,6 +58,10 @@ public:
 
 	// Update the Selected Position of the Shape
 	void updateSelectedPosition(float deltaX, float deltaY);
+	
+	// Gets the Indicies and Position Pointers for Object Info
+	void setInfoPointers(int& index2, int& index3, glm::vec2** position2, glm::vec2** position3);
+
 
 #endif
 

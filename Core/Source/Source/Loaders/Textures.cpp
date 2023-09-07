@@ -473,20 +473,6 @@ void Source::Textures::ChangeCursor(GLFWwindow* window)
 			break;
 		}
 
-		// Horizontal Resize Cursor
-		case Global::CURSORS::HORIZONTAL_RESIZE:
-		{
-			glfwSetCursor(window, Global::Mouse_Textures.find("ReSizeHorizontal")->second);
-			break;
-		}
-
-		// Verticle Resize Cursor
-		case Global::CURSORS::VERTICAL_RESIZE:
-		{
-			glfwSetCursor(window, Global::Mouse_Textures.find("ReSizeVertical")->second);
-			break;
-		}
-
 		// The Cursor That Looks Like a Hand
 		case Global::CURSORS::HAND:
 		{
@@ -501,10 +487,66 @@ void Source::Textures::ChangeCursor(GLFWwindow* window)
 			break;
 		}
 
+		// The BiDirectional Cursor
+		case Global::CURSORS::BIDIRECTIONAL_RESIZE:
+		{
+			glfwSetCursor(window, Global::Mouse_Textures.find("ReSize")->second);
+			break;
+		}
+
+		// Horizontal Resize Cursor
+		case Global::CURSORS::HORIZONTAL_RESIZE:
+		{
+			glfwSetCursor(window, Global::Mouse_Textures.find("ReSizeHorizontal")->second);
+			break;
+		}
+
+		// Verticle Resize Cursor
+		case Global::CURSORS::VERTICAL_RESIZE:
+		{
+			glfwSetCursor(window, Global::Mouse_Textures.find("ReSizeVertical")->second);
+			break;
+		}
+
+		// Positive Slope Resize Cursor
+		case Global::CURSORS::POSITIVE_SLOPE_RESIZE:
+		{
+			glfwSetCursor(window, Global::Mouse_Textures.find("ReSizePositive")->second);
+			break;
+		}
+
+		// Negative Slope Resize Cursor
+		case Global::CURSORS::NEGATIVE_SLOPE_RESIZE:
+		{
+			glfwSetCursor(window, Global::Mouse_Textures.find("ReSizeNegative")->second);
+			break;
+		}
+
+		// The Wait Object Cursor
+		case Global::CURSORS::WAIT:
+		{
+			glfwSetCursor(window, Global::Mouse_Textures.find("Wait")->second);
+			break;
+		}
+
+		// The Help Object Cursor
+		case Global::CURSORS::HELP:
+		{
+			glfwSetCursor(window, Global::Mouse_Textures.find("Help")->second);
+			break;
+		}
+
 		// The Locked Object Cursor
 		case Global::CURSORS::LOCK:
 		{
 			glfwSetCursor(window, Global::Mouse_Textures.find("Lock")->second);
+			break;
+		}
+
+		// The Forbiden Cursor
+		case Global::CURSORS::FORBIDEN:
+		{
+			glfwSetCursor(window, Global::Mouse_Textures.find("Forbiden")->second);
 			break;
 		}
 

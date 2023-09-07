@@ -239,7 +239,7 @@ void Editor::ProjectSelector::loadDLL()
             ErrorExit((LPTSTR)"LoadLibrary");
     }
 
-    if (test_dll != NULL)
+    if (test_dll != NULL && true)
     {
         bindFunctionPointerPointers funct3 = (bindFunctionPointerPointers)GetProcAddress(test_dll, "bindFunctionPointer");
         if (GetLastError())

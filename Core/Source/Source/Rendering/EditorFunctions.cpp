@@ -32,11 +32,17 @@ void Source::Rendering::Editing::edit(Render::Objects::Level* level, Editor::Sel
 			Source::Listeners::SmoothKeyCallback_Editor(*level->camera, *selector, *level, accelerationTimer);
 
 		// If Selector is Inactive, Perform Selecting
-		if ((!selector->active && !selector->editing) ||
-			((Global::Keys[GLFW_KEY_LEFT_CONTROL] || Global::Keys[GLFW_KEY_RIGHT_CONTROL])
-				^ (selector->selectedOnlyOne() && (Global::Keys[GLFW_KEY_LEFT_ALT] || Global::Keys[GLFW_KEY_RIGHT_ALT])))
-			)
-			level->testSelector(*selector, *object_info);
+		bool complex_selection = ((Global::Keys[GLFW_KEY_LEFT_CONTROL] || Global::Keys[GLFW_KEY_RIGHT_CONTROL])
+			^ (selector->selectedOnlyOne() && (Global::Keys[GLFW_KEY_LEFT_ALT] || Global::Keys[GLFW_KEY_RIGHT_ALT])));
+		if ((!selector->active && !selector->editing) || complex_selection)
+		{
+			// Test Selection
+			uint8_t result = level->testSelector(*selector, *object_info);
+
+			// If Selection Was Invalid and Complex Selection, Disable Left Click
+			if (result == 1 && complex_selection)
+				Global::LeftClick = false;
+		}
 
 		// If Selecting and Right Click, Activate Editor Window
 		else if (Global::RightClick)
@@ -76,25 +82,22 @@ void Source::Rendering::Editing::renderEditor(Render::Objects::Level* level, Edi
 	{
 		// Test if Selector Should be Displayed Instead
 		if (selector->active)
-		{
 			selector->blitzSelector();
-		}
 
 		// Test if Selector Highlighter Should be Displayed
 		if (selector->highlighting)
-		{
 			selector->blitzHighlighter();
-		}
 
 		// Test if Editor Window Should be Displayed
 		if (selector->active_window)
-		{
 			selector->drawWindow();
-		}
+
+		// If Editor Window is Not Displayed, Display Object Info
+		else
+			object_info->drawInfo();
 
 		// Draw Header
 		debugger->drawCompilerStatus();
-		object_info->drawInfo();
 	}
 
 	// Draw Selected Text Icon, If it is Being Used

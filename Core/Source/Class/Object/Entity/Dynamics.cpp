@@ -2,7 +2,7 @@
 #include "Render/Struct/DataClasses.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 
-Object::Entity::Dynamics::Dynamics(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, DynamicData& dynamic_) : EntityBase(uuid_, entity_, data_)
+Object::Entity::Dynamics::Dynamics(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, DynamicData& dynamic_, glm::vec2& offset) : EntityBase(uuid_, entity_, data_, offset)
 {
 	// Store Dynamic Data
 	dynamic = dynamic_;
@@ -12,9 +12,9 @@ void Object::Entity::Dynamics::updateObject()
 {
 }
 
-Object::Object* DataClass::Data_Dynamic::genObject()
+Object::Object* DataClass::Data_Dynamic::genObject(glm::vec2& offset)
 {
-	return new Object::Entity::Dynamics(uuid, entity, data, dynamic);
+	return new Object::Entity::Dynamics(uuid, entity, data, dynamic, offset);
 }
 
 void DataClass::Data_Dynamic::writeObjectData(std::ofstream& object_file)

@@ -108,21 +108,21 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(ObjectsInstanc
 void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, ObjectsInstance& instance)
 {
 	// Allocate Memory for Active Array
-	*active_objects = new Object::Object*[instance.number_of_loaded_objects];
-	Object::Object** active_array = *active_objects;
+	if (instance.data_objects.size())
+		*active_objects = new Object::Active[instance.number_of_loaded_objects];
+	Object::Active* active_array = *active_objects;
 	uint16_t active_index = 0;
 
 	// Generate Objects
 	buildObjectsGenerator(instance.data_objects, objects, index, physics, entities, active_array, active_index, nullptr, glm::vec2(0.0f, 0.0f));
 }
 
-void Render::Objects::UnsavedLevel::buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Object** active_array, uint16_t& active_index, Object::Object* parent, glm::vec2 position_offset)
+void Render::Objects::UnsavedLevel::buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Active* active_array, uint16_t& active_index, Object::Object* parent, glm::vec2 position_offset)
 {
 	for (DataClass::Data_Object* data_object : data_object_array)
 	{
 		// Generate Object and Attach Data Object
-		Object::Object* new_object = data_object->generateObject();
-		*new_object->pointerToPosition() += position_offset;
+		Object::Object* new_object = data_object->generateObject(position_offset);
 		new_object->parent = parent;
 
 		// If Parent != Nullptr, Add to Parent's Children Array
@@ -158,7 +158,8 @@ void Render::Objects::UnsavedLevel::buildObjectsGenerator(std::vector<DataClass:
 		{
 			objects[index] = new_object;
 			index++;
-			active_array[active_index] = new_object;
+			active_array[active_index] = Object::Active(true, true, glm::i16vec2(level_x, level_y), new_object);
+			new_object->active_ptr = &active_array[active_index];
 			active_index++;
 		}
 
@@ -172,10 +173,9 @@ void Render::Objects::UnsavedLevel::buildObjectsGenerator(std::vector<DataClass:
 			new_object->children = new Object::Object*[group->getChildren().size()];
 
 			// Get the Potential Offset of the Object
-			new_object->group_object = group;
 			glm::vec2 new_offset = position_offset;
 			if (group->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
-				new_offset += new_object->returnPosition();
+				new_offset = new_object->returnPosition();
 
 			// Recursively Generate Children
 			buildObjectsGenerator(group->getChildren(), objects, index, physics, entities, active_array, active_index, new_object, new_offset);
@@ -224,7 +224,7 @@ Shape::Shape* Render::Objects::UnsavedLevel::getShapePointer(Editor::Selector* s
 	return nullptr;
 }
 
-void Render::Objects::UnsavedLevel::addWhileTraversing(DataClass::Data_Object* data_object, bool move_with_parent)
+void Render::Objects::UnsavedLevel::addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent)
 {
 	instance_with_changes.data_objects.push_back(data_object);
 	UnsavedCollection* data_group = data_object->getGroup();
@@ -353,8 +353,12 @@ void Render::Objects::UnsavedLevel::returnObjectHeaderHelper(DataClass::Data_Obj
 {
 	if (dobject->getGroup() != nullptr)
 	{
-		instance_with_changes.number_of_loaded_objects += dobject->getGroup()->getNumberOfChildren();
-		for (DataClass::Data_Object* dobject2 : dobject->getGroup()->getChildren())
+		// Get Children Vector and Increment Children Count
+		std::vector<DataClass::Data_Object*>& children_vector = dobject->getGroup()->getChildren();
+		instance_with_changes.number_of_loaded_objects += children_vector.size();
+
+		// Add Direct Children of Object
+		for (DataClass::Data_Object* dobject2 : children_vector)
 			returnObjectHeaderHelper(dobject2);
 	}
 }

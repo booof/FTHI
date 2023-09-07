@@ -51,7 +51,7 @@ namespace Object::Group
 
 	public:
 
-		GroupObject(GroupData& data_, std::string file_name_, Render::Objects::UnsavedComplex* complex_object);
+		GroupObject(GroupData& data_, std::string file_name_, Render::Objects::UnsavedComplex* complex_object, glm::vec2& offset);
 
 		~GroupObject();
 
@@ -72,6 +72,9 @@ namespace Object::Group
 
 		// Draw Object
 		void drawObject();
+
+		// Update the Model Matrix for Visualizer
+		void updateModelMatrix();
 	};
 }
 

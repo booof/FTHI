@@ -10,6 +10,7 @@
 #include "TextureHandler.h"
 #include "SubLevel.h"
 #include "Macros.h"
+#include "UnsavedBase.h"
 
 // IDEA: Add Global Unsaved Level That is Always Loaded
 // This is to Easily Incorporate the Player and Dynamic Entities Such as Bullets
@@ -156,7 +157,7 @@ namespace Render::Objects
 		SubLevel* sublevels[9];
 
 		// Current Level Position
-		glm::vec2 level_position;
+		glm::i16vec2 level_position;
 
 		// Vertex Array Objects
 		GLuint VAO, VBO;
@@ -204,7 +205,7 @@ namespace Render::Objects
 		void testReload();
 
 		// Reload Levels
-		void reloadLevels(glm::vec2& level_old, glm::vec2& level_new, bool save);
+		void reloadLevels(glm::i16vec2& level_old, glm::i16vec2& level_new, bool save);
 
 		// Segregate Objects from Main List Into Smaller Lists
 		void segregateObjects();
@@ -257,13 +258,13 @@ namespace Render::Objects
 		void drawContainer();
 
 		// Update Level Location
-		void updateLevelPos(glm::vec2 position, glm::vec2& level);
+		void updateLevelPos(glm::vec2 position, glm::i16vec2& level);
 
 		// Return Index of Corrisponding SubLevel from Level Coords
-		int8_t index_from_level(glm::vec2 level_coords);
+		int8_t index_from_level(glm::i16vec2 level_coords);
 
 		// Return Coordinates of Sublevel from Corrisponding Sublevel Index
-		glm::vec2 level_from_index(int8_t index);
+		glm::i16vec2 level_from_index(int8_t index);
 
 #ifdef EDITOR
 
@@ -271,34 +272,34 @@ namespace Render::Objects
 		void drawVisualizers();
 
 		// Test Selector Object
-		void testSelector(Editor::Selector& selector, Editor::ObjectInfo& object_info);
+		uint8_t testSelector(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test Selector on Terrain Objects
-		bool testSelectorTerrain(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info);
+		uint8_t testSelectorTerrain(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test Selector on Lighting Objects
-		bool testSelectorLights(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info);
+		uint8_t testSelectorLights(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test Selector on Effect Objects
-		bool testSelectorEffects(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info);
+		uint8_t testSelectorEffects(short index, Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test Selector on Physics Objects
-		bool testSelectorPhysics(Editor::Selector& selector, Editor::ObjectInfo& object_info);
+		uint8_t testSelectorPhysics(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test Selector on Entity Objects
-		bool testSelectorEntity(Editor::Selector& selector, Editor::ObjectInfo& object_info);
+		uint8_t testSelectorEntity(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test Selector on Group Objects
-		bool testSelectorGroup(Editor::Selector& selector, Editor::ObjectInfo& object_info);
+		uint8_t testSelectorGroup(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test Selector on Collision Mask Objects
-		bool testSelectorMasks(Editor::Selector& selector, Editor::ObjectInfo& object_info);
+		uint8_t testSelectorMasks(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Test Selector on an Individual Object
 		uint8_t testSelectorOnObject(Object::Object*** object_list, uint16_t& count, Editor::Selector& selector, int index, Editor::ObjectInfo& object_info);
 
 		// Test Selector on an Object List
-		template <class Type> bool testSelectorOnList(Struct::List<Type>& object_list, Editor::Selector& selector, Editor::ObjectInfo& object_info);
+		template <class Type> uint8_t testSelectorOnList(Struct::List<Type>& object_list, Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
 		// Remove Object From Primary Object List
 		void removeMarkedFromList(Object::Object* marked_object, glm::vec2* new_selected_position);
@@ -329,7 +330,7 @@ namespace Render::Objects
 		glm::mat4 returnProjectionViewMatrix(uint8_t layer);
 
 		// Store Level of Origin
-		void storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, bool disable_move);
+		void storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, MOVE_WITH_PARENT disable_move);
 
 		// Return Size of Directional Light Buffer
 		GLuint returnDirectionalBufferSize();
@@ -342,6 +343,9 @@ namespace Render::Objects
 
 		// Return Size of Beam Light Buffer
 		GLuint returnBeamBufferSize();
+
+		// Returns the Sublevels of the Object
+		SubLevel** getSublevels();
 
 
 #endif

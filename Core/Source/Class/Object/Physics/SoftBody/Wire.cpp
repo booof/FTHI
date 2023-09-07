@@ -6,7 +6,7 @@
 
 #include "Globals.h"
 
-Object::Physics::Soft::Wire::Wire(uint32_t& uuid_, ObjectData& data_, WireData& wire_)
+Object::Physics::Soft::Wire::Wire(uint32_t& uuid_, ObjectData& data_, WireData& wire_, glm::vec2& offset)
 {
 	// Store Object Type
 	type = PHYSICS_TYPES::TYPE_WIRE;
@@ -15,6 +15,7 @@ Object::Physics::Soft::Wire::Wire(uint32_t& uuid_, ObjectData& data_, WireData& 
 	data = data_;
 	wire = wire_;
 	uuid = uuid_;
+	data.position += offset;
 
 	// Store Storage Type
 	storage_type = PHYSICS_COUNT;
@@ -114,9 +115,9 @@ glm::vec2 Object::Physics::Soft::Wire::returnPosition()
 	return data.position;
 }
 
-Object::Object* DataClass::Data_Wire::genObject()
+Object::Object* DataClass::Data_Wire::genObject(glm::vec2& offset)
 {
-	return new Object::Physics::Soft::Wire(uuid, data, wire);
+	return new Object::Physics::Soft::Wire(uuid, data, wire, offset);
 }
 
 void DataClass::Data_Wire::writeObjectData(std::ofstream& object_file)
@@ -190,4 +191,18 @@ void DataClass::Data_Wire::generateInitialValues(glm::vec2& position, float& siz
 Object::Physics::Soft::WireData& DataClass::Data_Wire::getWireData()
 {
 	return wire;
+}
+
+void DataClass::Data_Wire::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &data.position;
+	index1 = 2;
+
+	// Position2 is at Index 3
+	*position2 = &wire.position2;
+	index2 = 3;
+
+	// Position 3 Not Important
+	position3Null(index3, position3);
 }

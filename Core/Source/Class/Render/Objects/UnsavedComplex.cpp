@@ -81,7 +81,7 @@ void Render::Objects::UnsavedComplex::constructUnmodifiedDataHelper(ObjectsInsta
 	updateVisualizer();
 }
 
-void Render::Objects::UnsavedComplex::addWhileTraversing(DataClass::Data_Object* data_object, bool move_with_parent)
+void Render::Objects::UnsavedComplex::addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent)
 {
 	// Add Object To Change List
 	instance_with_changes.data_objects.push_back(data_object);
@@ -89,11 +89,10 @@ void Render::Objects::UnsavedComplex::addWhileTraversing(DataClass::Data_Object*
 	// If Object is a Parent, Update Group
 	UnsavedCollection* data_group = data_object->getGroup();
 	if (data_group != nullptr)
-		static_cast<UnsavedGroup*>(data_object->getGroup())->setParent(data_object, true);
+		static_cast<UnsavedGroup*>(data_object->getGroup())->setParent(data_object, MOVE_WITH_PARENT::MOVE_ENABLED);
 
 	// Determine if Object Should Move With Parent
-	if (!move_with_parent)
-		data_object->disableMoveWithParent();
+	data_object->disableMoveWithParent(move_with_parent);
 }
 
 void Render::Objects::UnsavedComplex::removeWhileTraversing(DataClass::Data_Object* data_object)
@@ -127,6 +126,10 @@ bool Render::Objects::UnsavedComplex::testValidSelection(DataClass::Data_Object*
 		notification_->notificationMessage(Editor::NOTIFICATION_MESSAGES::NOTIFICATION_ERROR, message);
 		return false;
 	}
+
+	// If Attempting to Create a Circular Group, Stop That from Happening
+	if (!preventCircularGroups(parent, test_child))
+		return false;
 
 	return true;
 }
@@ -230,7 +233,7 @@ void Render::Objects::UnsavedComplex::constructUnmodifiedData(std::string file_p
 	constructUnmodifiedDataHelper(instance_with_changes);
 }
 
-void Render::Objects::UnsavedComplex::recursiveSetGroupLayer(uint8_t layer)
+void Render::Objects::UnsavedComplex::recursiveSetGroupLayer(int8_t layer)
 {
 	// Update All Children and Their Children
 	for (DataClass::Data_Object* data_object : instance_with_changes.data_objects)
@@ -308,7 +311,7 @@ glm::vec2* Render::Objects::UnsavedComplex::getSelectedPosition()
 	return nullptr;
 }
 
-std::vector<Object::Object*> Render::Objects::UnsavedComplex::getInstances()
+std::vector<Object::Object*>& Render::Objects::UnsavedComplex::getInstances()
 {
 	return instance_vector;
 }
@@ -343,7 +346,6 @@ void Render::Objects::UnsavedComplex::drawVisualizer()
 
 	// Unbind Vertex Array
 	glBindVertexArray(0);
-
 }
 
 void Render::Objects::UnsavedComplex::drawSelected(int object_vertex_count, int mode, GLuint model_loc, glm::vec3 delta_pos, Object::Object* instance_to_skip)
@@ -359,7 +361,7 @@ void Render::Objects::UnsavedComplex::drawSelected(int object_vertex_count, int 
 			continue;
 
 		// Test if Instance Should be Skipped
-		if ((*it)->object_index != instance_to_skip->object_index)
+		if (*it != instance_to_skip)
 		{
 			// Get Position of Instance
 			glm::vec2& position = *(*it)->pointerToPosition();
@@ -385,13 +387,14 @@ void Render::Objects::UnsavedComplex::drawSelectedConnection(DataClass::Data_Obj
 		glm::vec2& position = *(*it)->pointerToPosition();
 
 		// Draw Connection With Parent
+		glm::vec4& parent_connection_color = selected_object->returnLineColor(selected_object->getParent()->getGroupLayer());
 		if (selected_object->getParent()->getGroup()->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
-			Vertices::Visualizer::visualizeLine(position, selected_object->getPosition() - position_offset + position, 1.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			Vertices::Visualizer::visualizeLine(position, selected_object->getPosition() - position_offset + position, 0.5f, parent_connection_color);
 		else
-			Vertices::Visualizer::visualizeLine(selected_object->getParent()->getPosition() + position, selected_object->getPosition() - position_offset + position, 1.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			Vertices::Visualizer::visualizeLine(selected_object->getParent()->getPosition() + position, selected_object->getPosition() - position_offset + position, 0.5f, parent_connection_color);
 
 		// Draw Connection Point of Object
-		Vertices::Visualizer::visualizePoint(selected_object->getPosition() - position_offset + position, 2.0f, glm::vec4(0.0f, 0.0f, 0.8f, 1.0f));
+		Vertices::Visualizer::visualizePoint(selected_object->getPosition() - position_offset + position, 1.0f, selected_object->returnLineColor(selected_object->getGroupLayer()));
 
 		// Draw Children Connection With the Current Offset
 		if (selected_object->getGroup() != nullptr)
@@ -400,15 +403,35 @@ void Render::Objects::UnsavedComplex::drawSelectedConnection(DataClass::Data_Obj
 			for (std::vector<DataClass::Data_Object*>::iterator it2 = children.begin(); it2 != children.end(); it2++)
 			{
 				// Draw Connection With Child
-				Vertices::Visualizer::visualizeLine((*it2)->getPosition() + position, selected_object->getPosition() - position_offset + position, 1.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+				Vertices::Visualizer::visualizeLine((*it2)->getPosition() + position, selected_object->getPosition() - position_offset + position, 0.5f, selected_object->returnLineColor(selected_object->getGroupLayer()));
 
 				// Draw Connection Point of Child
-				Vertices::Visualizer::visualizePoint((*it2)->getPosition() + position, 2.0f, glm::vec4(0.0f, 0.0f, 0.8f, 1.0f));
+				Vertices::Visualizer::visualizePoint((*it2)->getPosition() + position, 1.0f, selected_object->returnLineColor(selected_object->getGroupLayer() + 1));
 
 				// Recursively Draw Connections With Other Children
 				(*it2)->drawGroupVisualizer(position);
 			}
 		}
+	}
+}
+
+void Render::Objects::UnsavedComplex::drawSelectedConnectionParentOnly(DataClass::Data_Object* selected_object, glm::vec2 position_offset)
+{
+	// Iterate Through Each Instance and Draw the Connection to Selected Object
+	for (std::vector<Object::Object*>::iterator it = instance_vector.begin(); it != instance_vector.end(); it++)
+	{
+		// Get Position of Instance
+		glm::vec2& position = *(*it)->pointerToPosition();
+
+		// Draw Connection With Parent
+		glm::vec4& parent_connection_color = selected_object->returnLineColor(selected_object->getParent()->getGroupLayer());
+		if (selected_object->getParent()->getGroup()->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
+			Vertices::Visualizer::visualizeLine(position, selected_object->getPosition() - position_offset + position, 0.5f, parent_connection_color);
+		else
+			Vertices::Visualizer::visualizeLine(selected_object->getParent()->getPosition() + position, selected_object->getPosition() - position_offset + position, 0.5f, parent_connection_color);
+
+		// Draw Connection Point of Object
+		Vertices::Visualizer::visualizePoint(selected_object->getPosition() - position_offset + position, 1.0f, selected_object->returnLineColor(selected_object->getParent()->getGroupLayer() + 1));
 	}
 }
 
@@ -427,7 +450,7 @@ void DataClass::Data_Complex::setGroup(Render::Objects::UnsavedComplex* new_grou
 	file_name = Source::Algorithms::Common::getFileName(file_path, false);
 }
 
-Object::Object* DataClass::Data_ComplexParent::genObject()
+Object::Object* DataClass::Data_ComplexParent::genObject(glm::vec2& offset)
 {
 	return nullptr;
 }
@@ -464,6 +487,12 @@ DataClass::Data_Object* DataClass::Data_ComplexParent::makeCopy()
 	return this;
 }
 
+DataClass::Data_ComplexParent::Data_ComplexParent()
+{
+	// Set Group Layer to -1 For Same Reason as Group Object
+	group_layer = -1;
+}
+
 void DataClass::Data_ComplexParent::setGroup(Render::Objects::UnsavedComplex* complex_group)
 {
 	// Store Complex Group Object
@@ -498,6 +527,19 @@ void DataClass::Data_ComplexParent::setInactive()
 void DataClass::Data_ComplexParent::storeRootParent(Object::Object* parent)
 {
 	root_parent = parent;
+}
+
+void DataClass::Data_ComplexParent::setGroupLayer(int8_t new_layer)
+{
+	group_layer = -1;
+}
+
+void DataClass::Data_ComplexParent::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Literally Nothing is Used
+	*position1 = &Global::dummy_vec2;
+	index1 = -1;
+	position23Null(index2, index3, position2, position3);
 }
 
 Object::Object* DataClass::Data_ComplexParent::getRootParent()

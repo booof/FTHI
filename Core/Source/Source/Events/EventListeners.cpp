@@ -436,6 +436,9 @@ void Source::Listeners::CursorCallback(GLFWwindow* window, double xPos, double y
 
 void Source::Listeners::ScrollCallback(GLFWwindow* window, double offsetX, double offsetY)
 {
+	// Show That the Cursor Updated
+	Global::cursor_Move = true;
+
 	// Update Zoom Scale
 	Global::zoom_scale -= (float)(offsetY * 0.01);
 	Global::zoom = true;
@@ -456,6 +459,9 @@ void Source::Listeners::ScrollCallback(GLFWwindow* window, double offsetX, doubl
 
 void Source::Listeners::ScrollBarCallback(GLFWwindow* window, double offsetX, double offsetY)
 {
+	// Show That the Cursor Updated
+	Global::cursor_Move = true;
+
 	// Move ScrollBar
 	if (Global::scroll_bar != nullptr)
 	{
@@ -655,7 +661,9 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 
 		// Undo Change
 		if (Global::Keys[GLFW_KEY_Z])
-		{
+		{		
+			if (selector.editing)
+				change_controller->handleSelectorCancelation(&selector);
 			change_controller->undo();
 			Global::Keys[GLFW_KEY_Z] = false;
 		}
@@ -663,6 +671,8 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 		// Redo Change
 		if (Global::Keys[GLFW_KEY_Y])
 		{
+			if (selector.editing)
+				change_controller->handleSelectorCancelation(&selector);
 			change_controller->redo();
 			Global::Keys[GLFW_KEY_Y] = false;
 		}
@@ -751,13 +761,15 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 			else if (selector.editing_mode == EDITING_MODES::EDIT_OBJECT)
 			{
 				selector.active_window = false;
+				selector.force_reload_vertices = true;
+				Global::reload_lights = true;
 				glfwSetScrollCallback(Global::window, ScrollCallback);
 			}
 		}
 
-		// Stop Editing Object
+		// Cancel Editing Object if Objects are Currently Selected
 		else if (selector.active)
-			selector.deselectObject();
+			change_controller->handleSelectorCancelation(&selector);
 
 		// Otherwise, Toggle Editor Options GUI
 		else
@@ -818,7 +830,7 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 		Global::Keys[GLFW_KEY_Q] = false;
 
 		// Get Level Location
-		glm::vec2 coords;
+		glm::i16vec2 coords;
 		level.updateLevelPos(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), coords);
 
 		// Print Location

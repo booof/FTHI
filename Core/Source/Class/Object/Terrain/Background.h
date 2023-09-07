@@ -11,7 +11,7 @@ class Object::Terrain::Background : public TerrainBase
 public:
 
 	// Initialize Object
-	Background(Shape::Shape* shape_, ObjectData data_, uint8_t layer) : TerrainBase(shape_, data_)
+	Background(Shape::Shape* shape_, ObjectData data_, uint8_t layer, glm::vec2& offset) : TerrainBase(shape_, data_, offset)
 	{
 		layer = BACKGROUND_3 + layer;
 	}

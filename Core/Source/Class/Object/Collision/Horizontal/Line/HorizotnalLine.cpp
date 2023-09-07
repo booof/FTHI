@@ -3,10 +3,11 @@
 #include "FloorMaskLine.h"
 #include "CeilingMaskLine.h"
 
-Object::Mask::HorizontalLine::HorizontalLine(HorizontalLineData& data_)
+Object::Mask::HorizontalLine::HorizontalLine(HorizontalLineData& data_, glm::vec2& offset)
 {
 	// Store Data
 	data = std::move(data_);
+	data.position += offset;
 
 	// Calculate Left and Right Vertex X Position
 	float half_width = data.width * 0.5f;
@@ -25,8 +26,8 @@ void Object::Mask::HorizontalLine::initializeVisualizer(GLuint& VAO, GLuint& VBO
 	// Vertices
 	float vertices[] =
 	{
-		0.0f - half_width, 0.0f, -3.0f,  color.r, color.g, color.b, color.a,
-		0.0f + half_width, 0.0f, -3.0f,  color.r, color.g, color.b, color.a,
+		0.0f - half_width, 0.0f, -1.6f,  color.r, color.g, color.b, color.a,
+		0.0f + half_width, 0.0f, -1.6f,  color.r, color.g, color.b, color.a,
 	};
 
 	// Initialize VBO and VAO
@@ -85,4 +86,14 @@ void DataClass::Data_HorizontalLine::updateSelectedPosition(float deltaX, float 
 	data.position.x += deltaX;
 	data.position.y += deltaY;
 	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
+}
+
+void DataClass::Data_HorizontalLine::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &data.position;
+	index1 = 2;
+
+	// Others are Not Important
+	position23Null(index2, index3, position2, position3);
 }

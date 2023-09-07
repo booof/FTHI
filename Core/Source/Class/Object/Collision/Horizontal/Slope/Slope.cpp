@@ -7,10 +7,11 @@
 
 #include "Render/Struct/DataClasses.h"
 
-Object::Mask::Slope::Slope(SlopeData& data_)
+Object::Mask::Slope::Slope(SlopeData& data_, glm::vec2& offset)
 {
 	// Store Data
 	data = std::move(data_);
+	data.position += offset;
 
 	// Calculate X Positions of Edges
 	float half_width = abs(data.width * 0.5f);
@@ -36,7 +37,7 @@ void Object::Mask::Slope::initializeVisualizer(GLuint& VAO, GLuint& VBO, glm::ma
 
 	// Get Vertices
 	float vertices[154];
-	Vertices::Line::genLineSimplifiedCurve1(0, 0, -3.0f, data.height, data.width, color, 11, vertices);
+	Vertices::Line::genLineSimplifiedCurve1(0, 0, -1.6f, data.height, data.width, color, 11, vertices);
 
 	// Initialize VBO and VAO
 	glGenVertexArrays(1, &VAO);
@@ -93,7 +94,17 @@ void DataClass::Data_Slope::generateInitialValues(glm::vec2& position, float& si
 void DataClass::Data_Slope::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
 {
 	data.position.x += deltaX;
-	data.position.y += deltaX;
+	data.position.y += deltaY;
 	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
+}
+
+void DataClass::Data_Slope::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &data.position;
+	index1 = 2;
+
+	// Others are Not Important
+	position23Null(index2, index3, position2, position3);
 }
 

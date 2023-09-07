@@ -37,10 +37,10 @@ bool Object::Mask::Ceiling::CeilingMaskSlant::testCollisions(glm::vec2 test_posi
 void Object::Mask::Ceiling::CeilingMaskSlant::updateSelectedPosition(float deltaX, float deltaY)
 {
 	data.position.x += deltaX;
-	data.position.y += deltaX;
+	data.position.y += deltaY;
 	data.position2.x += deltaX;
 	data.position2.y += deltaY;
-	initializeVisualizer(VAO, VBO, model, glm::vec4(0.28f, 0.0f, 0.34f, 1.0f));
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
 }
 
 void Object::Mask::Ceiling::CeilingMaskSlant::returnMaterial(int& material)
@@ -48,7 +48,7 @@ void Object::Mask::Ceiling::CeilingMaskSlant::returnMaterial(int& material)
 	material = data.material;
 }
 
-Object::Mask::Ceiling::CeilingMaskSlant::CeilingMaskSlant(SlantData& data_) : Slant(data_)
+Object::Mask::Ceiling::CeilingMaskSlant::CeilingMaskSlant(SlantData& data_, glm::vec2& offset) : Slant(data_, offset)
 {
 	// Store Type
 	type = HORIZONTAL_SLANT;
@@ -96,9 +96,9 @@ void Object::Mask::Ceiling::CeilingMaskSlant::getLeftRightEdgeVertices(glm::vec2
 	right = data.position2;
 }
 
-Object::Object* DataClass::Data_CeilingMaskSlant::genObject()
+Object::Object* DataClass::Data_CeilingMaskSlant::genObject(glm::vec2& offset)
 {
-	return new Object::Mask::Ceiling::CeilingMaskSlant(data);
+	return new Object::Mask::Ceiling::CeilingMaskSlant(data, offset);
 }
 
 void DataClass::Data_CeilingMaskSlant::writeObjectData(std::ofstream& object_file)

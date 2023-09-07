@@ -1,10 +1,11 @@
 #include "VerticalLine.h"
 #include "Render/Struct/DataClasses.h"
 
-Object::Mask::VerticalLine::VerticalLine(VerticalLineData data_)
+Object::Mask::VerticalLine::VerticalLine(VerticalLineData data_, glm::vec2& offset)
 {
 	// Store Data
 	data = std::move(data_);
+	data.position += offset;
 
 	// Calculate Bottom and Top Vertex Y Position
 	float half_height = data.height * 0.5f;
@@ -21,8 +22,8 @@ void Object::Mask::VerticalLine::initializeVisualizer(GLuint& VAO, GLuint& VBO, 
 	// Vertices
 	float vertices[] =
 	{
-		0.0f, 0.0f + half_height, -3.0f, color.r, color.g, color.b, color.a,
-		0.0f, 0.0f - half_height, -3.0f, color.r, color.g, color.b, color.a
+		0.0f, 0.0f + half_height, -1.6f, color.r, color.g, color.b, color.a,
+		0.0f, 0.0f - half_height, -1.6f, color.r, color.g, color.b, color.a
 	};
 
 	// Initialize VBO and VAO
@@ -77,4 +78,14 @@ void DataClass::Data_VerticalLine::updateSelectedPosition(float deltaX, float de
 	data.position.x += deltaX;
 	data.position.y += deltaY;
 	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
+}
+
+void DataClass::Data_VerticalLine::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &data.position;
+	index1 = 2;
+
+	// Others are Not Important
+	position23Null(index2, index3, position2, position3);
 }

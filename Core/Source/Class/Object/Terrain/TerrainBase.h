@@ -35,7 +35,7 @@ namespace Object::Terrain
 		int instance = 0;
 
 		// Initialize Object
-		TerrainBase(Shape::Shape* shape_, ObjectData data_);
+		TerrainBase(Shape::Shape* shape_, ObjectData data_, glm::vec2& offset);
 
 		void updateObject();
 
@@ -49,6 +49,9 @@ namespace Object::Terrain
 
 		// Z-Position of Object
 		float zpos = 0.0f;
+
+		// Deconstructor
+		~TerrainBase();
 
 		// Initialize Vertices
 		void initializeTerrain(int& offset_, int& instance_, int& instance_index_);

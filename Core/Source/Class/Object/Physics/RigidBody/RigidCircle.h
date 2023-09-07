@@ -17,7 +17,7 @@ namespace Object::Physics::Rigid
 		float radius = 0;
 
 		// Initialize Object
-		RigidCircle(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_);
+		RigidCircle(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, glm::vec2& offset);
 
 		// Creates Vertices and Lines For Collision Detection
 		void prepCollisions();

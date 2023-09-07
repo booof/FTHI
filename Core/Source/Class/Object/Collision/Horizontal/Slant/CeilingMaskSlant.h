@@ -35,7 +35,7 @@ namespace Object::Mask
 	public:
 
 		// Initialize Object
-		CeilingMaskSlant(SlantData& data_);
+		CeilingMaskSlant(SlantData& data_, glm::vec2& offset);
 
 		// Return Pointer to Position
 		glm::vec2* pointerToPosition();

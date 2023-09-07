@@ -36,7 +36,7 @@ namespace Object::Mask
 	public:
 
 		// Initialize Object
-		FloorMaskLine(HorizontalLineData& data_, bool& platform_);
+		FloorMaskLine(HorizontalLineData& data_, bool& platform_, glm::vec2& offset);
 
 		// Return Pointer to Position
 		glm::vec2* pointerToPosition();

@@ -4,12 +4,13 @@
 #include "Source/Loaders/Textures.h"
 #include "Globals.h"
 
-Object::Entity::EntityBase::EntityBase(uint32_t& uuid_, EntityData& entity_, ObjectData& data_)
+Object::Entity::EntityBase::EntityBase(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, glm::vec2& offset)
 {
 	// Store Information
 	entity = entity_;
 	data = data_;
 	uuid = uuid_;
+	data.position += offset;
 
 	stats.Force = 20.0f;
 
@@ -39,7 +40,7 @@ Object::Entity::EntityBase::EntityBase(uint32_t& uuid_, EntityData& entity_, Obj
 
 	// Generate and Store Vertex Data
 	float vertices[30];
-	Vertices::Rectangle::genRectTexture(0.0f, 0.0f, -1.0f, entity.half_width * 2.0f, entity.half_height * 2.0f, vertices);
+	Vertices::Rectangle::genRectTexture(0.0f, 0.0f, -1.8f, entity.half_width * 2.0f, entity.half_height * 2.0f, vertices);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	// Enable Position Vertices
@@ -137,4 +138,14 @@ void DataClass::Data_Entity::generateInitialData(glm::vec2& position)
 	entity.half_collision_width = 2.0f;
 	entity.half_collision_height = 2.0f;
 	data.script = 0;
+}
+
+void DataClass::Data_Entity::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &data.position;
+	index1 = 2;
+
+	// Others are Not Important
+	position23Null(index2, index3, position2, position3);
 }

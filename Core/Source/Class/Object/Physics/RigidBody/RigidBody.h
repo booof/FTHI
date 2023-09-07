@@ -71,7 +71,7 @@ namespace Object::Physics::Rigid
 	protected:
 
 		// Initialize Object
-		RigidBody(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, int vertex_count);
+		RigidBody(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, int vertex_count, glm::vec2& offset);
 
 	public:
 
@@ -117,6 +117,9 @@ namespace Object::Physics::Rigid
 
 		// Angle Between Angle Offsets
 		float angle_between_offsets = 1.5708f;
+
+		// Deconstrucor
+		~RigidBody();
 
 		// Creates Vertices and Lines For Collision Detection
 		virtual void prepCollisions() = 0;

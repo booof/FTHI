@@ -10,11 +10,13 @@
 // Globals
 #include "Globals.h"
 
-Object::Light::Beam::Beam::Beam(BeamData& beam_, LightData& light_)
+Object::Light::Beam::Beam::Beam(BeamData& beam_, LightData& light_, glm::vec2& offset)
 {
 	// Store Data
 	beam = std::move(beam_);
 	data = std::move(light_);
+	data.position += offset;
+	beam.position2 += offset;
 	data.layer = 4;
 
 	// Store Storage Type
@@ -66,6 +68,9 @@ Object::Light::Beam::Beam::Beam(BeamData& beam_, LightData& light_)
 
 void Object::Light::Beam::Beam::loadLight()
 {
+	// Generate Nullified Model
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
+
 	// Add Light and Line Direction Data
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, buffer_offset, 16, glm::value_ptr(direction));
 
@@ -109,12 +114,9 @@ void Object::Light::Beam::Beam::initializeVisualizer()
 	// Save Texture
 	//texture = Visual_Textures.find("DirectionalLight.png")->second;
 
-	// Generate Nullified Model
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
-
 	// Generate Vertices
 	float vertices[30];
-	Vertices::Line::genLineTexture(0.0f, beam.position2.x - data.position.x, 0.0f, beam.position2.y - data.position.y, -0.9f, 0.4f, vertices);
+	Vertices::Line::genLineTexture(0.0f, beam.position2.x - data.position.x, 0.0f, beam.position2.y - data.position.y, -1.5f, 0.4f, vertices);
 
 	// Generate Vertex Objects
 	glGenVertexArrays(1, &VAO);
@@ -161,11 +163,19 @@ bool Object::Light::Beam::Beam::testMouseCollisions(float x, float y)
 
 void Object::Light::Beam::Beam::updateSelectedPosition(float deltaX, float deltaY)
 {
+	// Update Position
 	data.position.x += deltaX;
 	data.position.y += deltaY;
 	beam.position2.x += deltaX;
 	beam.position2.y += deltaY;
-	initializeVisualizer();
+
+	// Update the Intercept
+	Intercept = data.position.y - (Slope * data.position.x);
+
+	// Update Shader Data
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::BeamBuffer);
+	loadLight();
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 glm::vec2 Object::Light::Beam::Beam::returnPosition()
@@ -175,9 +185,9 @@ glm::vec2 Object::Light::Beam::Beam::returnPosition()
 
 #endif
 
-Object::Object* DataClass::Data_Beam::genObject()
+Object::Object* DataClass::Data_Beam::genObject(glm::vec2& offset)
 {
-	return new Object::Light::Beam::Beam(beam, light_data);
+	return new Object::Light::Beam::Beam(beam, light_data, offset);
 }
 
 void DataClass::Data_Beam::writeObjectData(std::ofstream& object_file)
@@ -208,6 +218,8 @@ void DataClass::Data_Beam::info(Editor::ObjectInfo& object_info)
 	object_info.setObjectType("Beam Light", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &light_data.position.x, &light_data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	infoColors(object_info);
+	object_info.addSingleValue("Index: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object_index, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 }
 
 DataClass::Data_Object* DataClass::Data_Beam::makeCopy()
@@ -235,5 +247,32 @@ void DataClass::Data_Beam::generateInitialValues(glm::vec2& position, float& siz
 	beam.position2 = position + glm::vec2(size, 0.0f);
 	beam.linear = DEFAULT_LINEAR;
 	beam.quadratic = DEFAULT_QUADRATIC;
+}
+
+void DataClass::Data_Beam::offsetPosition(glm::vec2& offset)
+{
+	// Update Positions of Both Vertices
+	light_data.position += offset;
+	beam.position2 += offset;
+}
+
+void DataClass::Data_Beam::offsetOppositePosition(glm::vec2& offset)
+{
+	// Only Update Second Position
+	beam.position2 += offset;
+}
+
+void DataClass::Data_Beam::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &light_data.position;
+	index1 = 2;
+
+	// Position2 is at Index 3
+	*position2 = &beam.position2;
+	index2 = 3;
+
+	// Position 3 Not Important
+	position3Null(index3, position3);
 }
 

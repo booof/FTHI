@@ -37,7 +37,7 @@ namespace Object::Mask
 		float y_top, y_bottom;
 
 		// Initialize Vertical Line
-		VerticalLine(VerticalLineData data_);
+		VerticalLine(VerticalLineData data_, glm::vec2& offset);
 
 #ifdef EDITOR
 

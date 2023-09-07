@@ -3353,8 +3353,8 @@ void Editor::EditorWindow::generateNewObject()
 	glfwSetScrollCallback(Global::window, Source::Listeners::ScrollCallback);
 
 	// Generate New Object Index
-	object_index = Global::object_index_counter;
-	Global::object_index_counter++;
+	//object_index = Global::object_index_counter;
+	//Global::object_index_counter++;
 
 	// Determine New Position of Object
 	//glm::vec2 new_position = glm::vec2(0.0f, 0.0f);
@@ -3622,7 +3622,7 @@ void Editor::EditorWindow::generateNewObject()
 		case Object::Entity::ENTITY_NPC:
 		{
 			DataClass::Data_NPC* new_npc = new DataClass::Data_NPC(0);
-			new_npc->generateInitialData(position);
+			new_npc->generateInitialData(new_position);
 			new_data_object = new_npc;
 
 			break;
@@ -3632,7 +3632,7 @@ void Editor::EditorWindow::generateNewObject()
 		case Object::Entity::ENTITY_CONTROLLABLE:
 		{
 			DataClass::Data_Controllable* new_controllable = new DataClass::Data_Controllable(0);
-			new_controllable->generateInitialData(position);
+			new_controllable->generateInitialData(new_position);
 			new_data_object = new_controllable;
 
 			break;
@@ -3642,7 +3642,7 @@ void Editor::EditorWindow::generateNewObject()
 		case Object::Entity::ENTITY_INTERACTABLE:
 		{
 			DataClass::Data_Interactable* new_interactable = new DataClass::Data_Interactable(0);
-			new_interactable->generateInitialData(position);
+			new_interactable->generateInitialData(new_position);
 			new_data_object = new_interactable;
 
 			break;
@@ -3652,7 +3652,7 @@ void Editor::EditorWindow::generateNewObject()
 		case Object::Entity::ENTITY_DYNAMIC:
 		{
 			DataClass::Data_Dynamic* new_dynamic = new DataClass::Data_Dynamic(0);
-			new_dynamic->generateInitialData(position);
+			new_dynamic->generateInitialData(new_position);
 			new_data_object = new_dynamic;
 
 			break;
@@ -3673,7 +3673,7 @@ void Editor::EditorWindow::generateNewObject()
 	case Object::GROUP:
 	{
 		DataClass::Data_GroupObject* new_group = new DataClass::Data_GroupObject();
-		new_group->generateInitialData(position);
+		new_group->generateInitialData(new_position);
 		new_data_object = new_group;
 
 		break;

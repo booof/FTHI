@@ -10,7 +10,7 @@
 #include "Source/Vertices/Visualizer/Visualizer.h"
 #include "Source/Algorithms/Quick Math/QuickMath.h"
 
-Object::Physics::Rigid::RigidCircle::RigidCircle(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_) : RigidBody(uuid_, data_, rigid_, shape_, 1200)
+Object::Physics::Rigid::RigidCircle::RigidCircle(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, glm::vec2& offset) : RigidBody(uuid_, data_, rigid_, shape_, 1200, offset)
 {
 	// Store Object Type
 	type = PHYSICS_TYPES::TYPE_CIRCLE;

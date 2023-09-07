@@ -24,7 +24,7 @@ void Object::Mask::Trigger::TriggerMask::initializeVisualizer()
 
 	// Generate Vertices
 	float vertices[42];
-	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -3.0f, data.width, data.height, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), vertices);
+	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.7f, data.width, data.height, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), vertices);
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
@@ -90,10 +90,11 @@ void Object::Mask::Trigger::TriggerMask::testTrigger(glm::vec2 test_position, Su
 	trigger(object);
 }
 
-Object::Mask::Trigger::TriggerMask::TriggerMask(TriggerData& data_)
+Object::Mask::Trigger::TriggerMask::TriggerMask(TriggerData& data_, glm::vec2& offset)
 {
 	// Store Data
 	data = std::move(data_);
+	data.position += offset;
 
 	// Store Storage Type
 	storage_type = TRIGGER_COUNT;
@@ -116,9 +117,9 @@ Object::Mask::Trigger::TriggerMask::TriggerMask(TriggerData& data_)
 	initializeScript(data.script);
 }
 
-Object::Object* DataClass::Data_TriggerMask::genObject()
+Object::Object* DataClass::Data_TriggerMask::genObject(glm::vec2& offset)
 {
-	return new Object::Mask::Trigger::TriggerMask(data);
+	return new Object::Mask::Trigger::TriggerMask(data, offset);
 }
 
 void DataClass::Data_TriggerMask::writeObjectData(std::ofstream& object_file)
@@ -184,5 +185,15 @@ void DataClass::Data_TriggerMask::generateInitialValues(glm::vec2& position, flo
 	data.height = size;
 	data.check_type = Object::Mask::Trigger::CHECK_TYPE::NONE;
 	data.script = 0;
+}
+
+void DataClass::Data_TriggerMask::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &data.position;
+	index1 = 2;
+
+	// Others are Not Important
+	position23Null(index2, index3, position2, position3);
 }
 

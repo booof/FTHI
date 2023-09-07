@@ -1,10 +1,12 @@
 #include "Slant.h"
 #include "Render/Struct/DataClasses.h"
 
-Object::Mask::Slant::Slant(SlantData& data_)
+Object::Mask::Slant::Slant(SlantData& data_, glm::vec2& offset)
 {
 	// Store Data
 	data = std::move(data_);
+	data.position += offset;
+	data.position2 += offset;
 
 	// Calculate Slope of Linear Function
 	slope = (data.position2.y - data.position.y) / (data.position2.x - data.position.x);
@@ -23,8 +25,8 @@ void Object::Mask::Slant::initializeVisualizer(GLuint& VAO, GLuint& VBO, glm::ma
 	// Vertices
 	float vertices[] =
 	{
-		0.0f,                               0.0f,                               -3.0f,  color.r, color.g, color.b, color.a,
-		data.position2.x - data.position.x, data.position2.y - data.position.y, -3.0f,  color.r, color.g, color.b, color.a
+		0.0f,                               0.0f,                               -1.6f,  color.r, color.g, color.b, color.a,
+		data.position2.x - data.position.x, data.position2.y - data.position.y, -1.6f,  color.r, color.g, color.b, color.a
 	};
 
 	// Initialize VBO and VAO
@@ -85,4 +87,31 @@ void DataClass::Data_Slant::updateSelectedPosition(float deltaX, float deltaY, b
 	data.position2.x += deltaX;
 	data.position2.y += deltaY;
 	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
+}
+
+void DataClass::Data_Slant::offsetPosition(glm::vec2& offset)
+{
+	// Update the Positions of Both Bvertices
+	data.position += offset;
+	data.position2 += offset;
+}
+
+void DataClass::Data_Slant::offsetOppositePosition(glm::vec2& offset)
+{
+	// Only Update Second Position
+	data.position2 += offset;
+}
+
+void DataClass::Data_Slant::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &data.position;
+	index1 = 2;
+
+	// Position2 is at Index 3
+	*position2 = &data.position2;
+	index2 = 3;
+
+	// Position 3 Not Important
+	position3Null(index3, position3);
 }

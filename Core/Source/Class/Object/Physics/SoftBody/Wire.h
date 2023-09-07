@@ -47,7 +47,7 @@ namespace Object::Physics::Soft
 	public:
 
 		// Initialize Object
-		Wire(uint32_t& uuid_, ObjectData& data_, WireData& wire_);
+		Wire(uint32_t& uuid_, ObjectData& data_, WireData& wire_, glm::vec2& offset);
 
 		// Return Pointer to Position
 		glm::vec2* pointerToPosition();

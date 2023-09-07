@@ -38,7 +38,7 @@ namespace Object::Physics::Soft
 		bool* skip_springs = nullptr;
 
 		// Initialize Object
-		SpringMass(uint32_t & uuid_, ObjectData& data_, std::string& file_name_, DataClass::Data_SpringMass* data_object_);
+		SpringMass(uint32_t & uuid_, ObjectData& data_, std::string& file_name_, DataClass::Data_SpringMass* data_object_, glm::vec2& offset);
 
 		// Deconstructor
 		~SpringMass();

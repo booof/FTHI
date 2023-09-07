@@ -89,10 +89,10 @@ namespace Render::Objects
 		static ParentQueue parent_queue;
 
 		// Set Group Layer of a Child and Sub-Children
-		void setChildLayer(DataClass::Data_Object* data_object, uint8_t new_layer);
+		void setChildLayer(DataClass::Data_Object* data_object, int8_t new_layer);
 
 		// Function to Add Objects While Transversing
-		void addWhileTraversing(DataClass::Data_Object* data_object, bool move_with_parent);
+		void addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent);
 
 		// Function to Remove Objects While Traversing
 		void removeWhileTraversing(DataClass::Data_Object* data_object);
@@ -114,13 +114,19 @@ namespace Render::Objects
 		UnsavedGroup(uint8_t initial_size);
 
 		// Recursively Set the Group Layer
-		void recursiveSetGroupLayer(uint8_t layer);
+		void recursiveSetGroupLayer(int8_t layer);
+
+		// Recursively Provide Offset for Modified Children
+		void recursiveSetModifiedOffset(glm::vec2& offset);
 
 		// Function to Set the Parent Pointer of All Children
 		void updateParentofChildren();
 
 		// Set Parent Object
-		void setParent(DataClass::Data_Object* new_parent, bool move);
+		void setParent(DataClass::Data_Object* new_parent, MOVE_WITH_PARENT move);
+
+		// Get the Parent Object
+		DataClass::Data_Object* getParent();
 
 		// Add Parent From Level to Parent Queue
 		static void enqueueLevelParent(DataClass::Data_Object* data_object);

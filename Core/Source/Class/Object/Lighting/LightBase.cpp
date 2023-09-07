@@ -2,6 +2,7 @@
 #include "Render/Struct/DataClasses.h"
 #include "Macros.h"
 #include "Globals.h"
+#include "Render/Editor/ObjectInfo.h"
 
 #ifdef EDITOR
 
@@ -31,6 +32,17 @@ glm::vec2* Object::Light::LightBase::pointerToPosition()
 }
 
 #endif
+
+void DataClass::Data_Light::infoColors(Editor::ObjectInfo& object_info)
+{
+	// Colors
+	object_info.addColorValue(" A: ", glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), &light_data.ambient, false);
+	object_info.addColorValue(" D: ", glm::vec4(0.0f, 0.8f, 0.0f, 1.0f), &light_data.diffuse, false);
+	object_info.addColorValue(" S:  ", glm::vec4(0.0f, 0.0f, 0.8f, 1.0f), &light_data.specular, true);
+
+	// Intensity
+	object_info.addSingleValue("Intensity: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &light_data.intensity, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), false);
+}
 
 Object::Light::LightData& DataClass::Data_Light::getLightData()
 {

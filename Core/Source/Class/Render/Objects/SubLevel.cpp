@@ -327,16 +327,80 @@ void Render::Objects::SubLevel::subtractHeader(uint32_t& object_count)
 	object_count -= number_of_loaded_objects;
 }
 
+void Render::Objects::SubLevel::deactivateObjects()
+{
+	// Deactivate All Static Objects Part of This Level
+	for (uint32_t i = 0; i < number_of_loaded_objects; i++)
+		active_objects[i].active = false;
+}
+
+void Render::Objects::SubLevel::includeNewActives(Object::Active* new_actives, int new_active_count, Level* level)
+{
+	// If There are Objects in Level, Rebalance the Array
+	if (new_active_objects == 0 && removed_count == 0)
+		return;
+
+	// Store the Old Object Count
+	int old_object_count = number_of_loaded_objects;
+
+	// Determine The New Object Count
+	number_of_loaded_objects += new_active_objects - removed_count;
+
+	// Generate the New Active Array
+	Object::Active* new_active_array = nullptr;
+	if (number_of_loaded_objects)
+		new_active_array = new Object::Active[number_of_loaded_objects];
+
+	// The Iterator to Insert Objects Into
+	int insertion_index = 0;
+
+	// Copy All Currently Alive Active Objects Into New Array
+	for (int i = 0; i < old_object_count; i++)
+	{
+		// Don't Add Dead Objects
+		if (active_objects[i].alive)
+		{
+			new_active_array[insertion_index] = active_objects[i];
+			active_objects[i].object_ptr->active_ptr = &new_active_array[insertion_index++];
+		}
+	}
+
+	// Copy New Active Objects Into New Array
+	for (int i = 0; i < new_active_count; i++)
+	{
+		if (new_actives[i].level_pos.x == level_x && new_actives[i].level_pos.y == level_y)
+		{
+			new_active_array[insertion_index] = new_actives[i];
+			new_actives[i].object_ptr->active_ptr = &new_active_array[insertion_index++];
+		}
+	}
+
+	// Delete the Old Active Array
+	if (old_object_count)
+		delete[] active_objects;
+
+	// Store the New Active Array
+	active_objects = new_active_array;
+	unsaved_level->active_objects = &active_objects;
+
+	// Reset the New Actives Count
+	new_active_objects = 0;
+	removed_count = 0;
+}
+
+void Render::Objects::SubLevel::resetCounts()
+{
+	// Reset the New Actives Count
+	new_active_objects = 0;
+	removed_count = 0;
+}
+
 Render::Objects::SubLevel::~SubLevel()
 {
 
 #ifdef SHOW_LEVEL_LOADING
-	std::cout << "deleting level: " << level_x << " " << level_y << "\n";
+	std::cout << "deleting level: " << level_x << " " << level_y << "   " << path << "\n";
 #endif
-
-	// Deactivate All Static Objects Part of This Level
-	for (uint32_t i = 0; i < number_of_loaded_objects; i++)
-		active_objects[i]->active = false;
 
 	// Delete Active Objects Array
 	if (number_of_loaded_objects)

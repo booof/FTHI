@@ -1,7 +1,6 @@
 #include "FloorMaskSlope.h"
 #include "Render/Struct/DataClasses.h"
 #include "Class/Render/Editor/ObjectInfo.h"
-#include "Source/Vertices/Visualizer/Visualizer.h"
 #include "Globals.h"
 
 #ifdef EDITOR
@@ -19,10 +18,10 @@ bool Object::Mask::Floor::FloorMaskSlope::testCollisions(glm::vec2 test_position
 	if (fallthrough && platform)
 		return false;
 
-	Vertices::Visualizer::visualizePoint(glm::vec2(x_left, data.position.y), 0.4f, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
-	Vertices::Visualizer::visualizePoint(glm::vec2(x_right, data.position.y), 0.4f, glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
+	//Vertices::Visualizer::visualizePoint(glm::vec2(x_left, data.position.y), 0.4f, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+	//Vertices::Visualizer::visualizePoint(glm::vec2(x_right, data.position.y), 0.4f, glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
 
-	Vertices::Visualizer::visualizePoint(data.position, 0.5f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+	//Vertices::Visualizer::visualizePoint(data.position, 0.5f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
 
 	// Check if Object is Between X-Values
 	if (x_left < test_position.x && test_position.x < x_right)
@@ -31,7 +30,7 @@ bool Object::Mask::Floor::FloorMaskSlope::testCollisions(glm::vec2 test_position
 		float localY;
 		localY = half_height * atan(slope * (test_position.x - data.position.x)) + data.position.y;
 
-		Vertices::Visualizer::visualizePoint(glm::vec2(test_position.x, localY), 0.5f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+		//Vertices::Visualizer::visualizePoint(glm::vec2(test_position.x, localY), 0.5f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
 
 		// Check if Object Y Intercepts Floor Y
 		//if ((localY - SPEED * 1.5f * deltaTime - Angle / 2.0f * HeightSign) < posY && localY > posY)
@@ -53,7 +52,7 @@ void Object::Mask::Floor::FloorMaskSlope::updateSelectedPosition(float deltaX, f
 {
 	data.position.x += deltaX;
 	data.position.y += deltaY;
-	initializeVisualizer(VAO, VBO, model, glm::vec4(0.04f, 0.24f, 1.0f, 1.0f));
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
 }
 
 void Object::Mask::Floor::FloorMaskSlope::getLeftRightEdgeVertices(glm::vec2& left, glm::vec2& right)
@@ -67,7 +66,7 @@ void Object::Mask::Floor::FloorMaskSlope::returnMaterial(int& material)
 	material = data.material;
 }
 
-Object::Mask::Floor::FloorMaskSlope::FloorMaskSlope(SlopeData& data_, bool& platform_) : Slope(data_)
+Object::Mask::Floor::FloorMaskSlope::FloorMaskSlope(SlopeData& data_, bool& platform_, glm::vec2& offset) : Slope(data_, offset)
 {
 	// Store Type
 	type = HORIZONTAL_SLOPE;
@@ -109,9 +108,9 @@ glm::vec2* Object::Mask::Floor::FloorMaskSlope::pointerToPosition()
 	return &data.position;
 }
 
-Object::Object* DataClass::Data_FloorMaskSlope::genObject()
+Object::Object* DataClass::Data_FloorMaskSlope::genObject(glm::vec2& offset)
 {
-	return new Object::Mask::Floor::FloorMaskSlope(data, platform);
+	return new Object::Mask::Floor::FloorMaskSlope(data, platform, offset);
 }
 
 void DataClass::Data_FloorMaskSlope::writeObjectData(std::ofstream& object_file)

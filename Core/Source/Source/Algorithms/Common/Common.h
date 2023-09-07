@@ -7,7 +7,7 @@
 namespace Source::Algorithms::Common
 {
 	// OpenGL Error Log
-	void readErrorLog();
+	bool readErrorLog();
 
 	// Converts Strings to Integers
 	int convertStringToInt(std::string& string);

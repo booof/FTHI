@@ -13,7 +13,7 @@
 // Shaders
 #include "Render/Shader/Shader.h"
 
-Object::Physics::Hinge::Anchor::Anchor(uint32_t& uuid_, AnchorData& data_)
+Object::Physics::Hinge::Anchor::Anchor(uint32_t& uuid_, AnchorData& data_, glm::vec2& offset)
 {
 	// Store Object Type
 	type = PHYSICS_TYPES::TYPE_ANCHOR;
@@ -21,6 +21,7 @@ Object::Physics::Hinge::Anchor::Anchor(uint32_t& uuid_, AnchorData& data_)
 	// Store Data
 	data = data_;
 	uuid = uuid_;
+	data.position += offset;
 
 	// Store Storage Type
 	storage_type = PHYSICS_COUNT;
@@ -38,7 +39,7 @@ Object::Physics::Hinge::Anchor::Anchor(uint32_t& uuid_, AnchorData& data_)
 
 	// Store Vertices
 	float vertices[42];
-	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, 0.5f, 0.5f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), vertices);
+	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.4f, 0.5f, 0.5f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), vertices);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	// Enable Position Vertices
@@ -128,9 +129,9 @@ glm::vec2 Object::Physics::Hinge::Anchor::returnPosition()
 	return data.position;
 }
 
-Object::Object* DataClass::Data_Anchor::genObject()
+Object::Object* DataClass::Data_Anchor::genObject(glm::vec2& offset)
 {
-	return new Object::Physics::Hinge::Anchor(uuid, data);
+	return new Object::Physics::Hinge::Anchor(uuid, data, offset);
 }
 
 void DataClass::Data_Anchor::writeObjectData(std::ofstream& object_file)
@@ -195,4 +196,14 @@ void DataClass::Data_Anchor::generateInitialValues(glm::vec2& position)
 Object::Physics::Hinge::AnchorData& DataClass::Data_Anchor::getAnchorData()
 {
 	return data;
+}
+
+void DataClass::Data_Anchor::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &data.position;
+	index1 = 2;
+
+	// Others are Not Important
+	position23Null(index2, index3, position2, position3);
 }

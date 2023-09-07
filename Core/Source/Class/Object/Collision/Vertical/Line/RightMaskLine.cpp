@@ -39,7 +39,7 @@ void Object::Mask::Right::RightMaskLine::returnMaterial(int& material)
 	material = data.material;
 }
 
-Object::Mask::Right::RightMaskLine::RightMaskLine(VerticalLineData& data_) : VerticalLine(data_)
+Object::Mask::Right::RightMaskLine::RightMaskLine(VerticalLineData& data_, glm::vec2& offset) : VerticalLine(data_, offset)
 {
 	// Store Type
 	type = VERTICAL_LINE;
@@ -88,9 +88,9 @@ void Object::Mask::Right::RightMaskLine::getTopAndBottomEdgeVertices(glm::vec2& 
 	bottom = data.position;
 }
 
-Object::Object* DataClass::Data_RightMaskVerticalLine::genObject()
+Object::Object* DataClass::Data_RightMaskVerticalLine::genObject(glm::vec2& offset)
 {
-	return new Object::Mask::Right::RightMaskLine(data);
+	return new Object::Mask::Right::RightMaskLine(data, offset);
 }
 
 void DataClass::Data_RightMaskVerticalLine::writeObjectData(std::ofstream& object_file)

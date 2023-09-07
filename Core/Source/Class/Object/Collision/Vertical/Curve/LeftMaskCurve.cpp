@@ -44,7 +44,7 @@ void Object::Mask::Left::LeftMaskCurve::returnMaterial(int& material)
 	material = data.material;
 }
 
-Object::Mask::Left::LeftMaskCurve::LeftMaskCurve(CurveData& data_) : Curve(data_)
+Object::Mask::Left::LeftMaskCurve::LeftMaskCurve(CurveData& data_, glm::vec2& offset) : Curve(data_, offset)
 {
 	// Store Type
 	type = VERTICAL_CURVE;
@@ -91,9 +91,9 @@ void Object::Mask::Left::LeftMaskCurve::getTopAndBottomEdgeVertices(glm::vec2& t
 	bottom = glm::vec2(data.position.x, modified_coordinates.y);
 }
 
-Object::Object* DataClass::Data_LeftMaskCurve::genObject()
+Object::Object* DataClass::Data_LeftMaskCurve::genObject(glm::vec2& offset)
 {
-	return new Object::Mask::Left::LeftMaskCurve(data);
+	return new Object::Mask::Left::LeftMaskCurve(data, offset);
 }
 
 void DataClass::Data_LeftMaskCurve::writeObjectData(std::ofstream& object_file)

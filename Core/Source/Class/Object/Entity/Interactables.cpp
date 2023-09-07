@@ -2,7 +2,7 @@
 #include "Render/Struct/DataClasses.h"
 #include "Class/Render/Editor/ObjectInfo.h"
 
-Object::Entity::Interactables::Interactables(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, InteractableData& interactable_) : EntityBase(uuid_, entity_, data_)
+Object::Entity::Interactables::Interactables(uint32_t& uuid_, EntityData& entity_, ObjectData& data_, InteractableData& interactable_, glm::vec2& offset) : EntityBase(uuid_, entity_, data_, offset)
 {
 	// Store Interactable Data
 	interactable = interactable_;
@@ -17,9 +17,9 @@ void Object::Entity::Interactables::updateObject()
 	// If Collision Detection, Execute Function
 }
 
-Object::Object* DataClass::Data_Interactable::genObject()
+Object::Object* DataClass::Data_Interactable::genObject(glm::vec2& offset)
 {
-	return new Object::Entity::Interactables(uuid, entity, data, interactable);
+	return new Object::Entity::Interactables(uuid, entity, data, interactable, offset);
 }
 
 void DataClass::Data_Interactable::writeObjectData(std::ofstream& object_file)

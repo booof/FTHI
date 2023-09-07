@@ -1,9 +1,11 @@
 #include "Common.h"
 
-void Source::Algorithms::Common::readErrorLog()
+bool Source::Algorithms::Common::readErrorLog()
 {
+	bool error_found = false;
 	GLenum err;
 	while ((err = glGetError()) != GL_NO_ERROR) {
+		error_found = true;
 		std::string error;
 		switch (err)
 		{
@@ -17,6 +19,7 @@ void Source::Algorithms::Common::readErrorLog()
 		}
 		std::cout << "OPENGL ERROR: " << err << ": " << error << "\n";
 	}
+	return error_found;
 }
 
 int Source::Algorithms::Common::convertStringToInt(std::string& string)

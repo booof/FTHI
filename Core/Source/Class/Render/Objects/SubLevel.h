@@ -15,12 +15,16 @@ namespace Render::Objects
 namespace Object
 {
 	class Object;
+	struct Active;
 	namespace Physics { class PhysicsBase; }
 	namespace Entity { class EntityBase; }
 }
 
 namespace Render::Objects
 {
+	// Declaration for Level Object
+	class Level;
+
 	// Container for Chunk of the World
 	class SubLevel
 	{
@@ -33,16 +37,20 @@ namespace Render::Objects
 		std::string path;
 
 		// Coordinates of Level
-		int level_x;
-		int level_y;
-		int level_version;
+		int16_t level_x;
+		int16_t level_y;
+		int16_t level_version;
 
 		// Header Data
 		//LevelHeader header;
 		uint32_t number_of_loaded_objects = 0;
 
 		// The Array of All Active Objects
-		Object::Object** active_objects;
+		Object::Active* active_objects;
+
+		// The Number of New Active Objects
+		int16_t new_active_objects = 0;
+		int16_t removed_count = 0;
 
 #ifdef EDITOR
 
@@ -85,6 +93,15 @@ namespace Render::Objects
 
 		// Subtract Header
 		void subtractHeader(uint32_t& object_count);
+
+		// Deactivate All Objects Belonging To This Level
+		void deactivateObjects();
+
+		// Include New Objects Into Active Object Array
+		void includeNewActives(Object::Active* new_actives, int new_active_count, Level* level);
+
+		// Resets the Counts of the Object
+		void resetCounts();
 
 		// Delete Level
 		~SubLevel();

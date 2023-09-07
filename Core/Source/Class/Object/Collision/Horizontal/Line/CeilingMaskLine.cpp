@@ -31,7 +31,7 @@ void Object::Mask::Ceiling::CeilingMaskLine::updateSelectedPosition(float deltaX
 {
 	data.position.x += deltaX;
 	data.position.y += deltaY;
-	initializeVisualizer(VAO, VBO, model, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
 }
 
 void Object::Mask::Ceiling::CeilingMaskLine::returnMaterial(int& material)
@@ -39,7 +39,7 @@ void Object::Mask::Ceiling::CeilingMaskLine::returnMaterial(int& material)
 	material = data.material;
 }
 
-Object::Mask::Ceiling::CeilingMaskLine::CeilingMaskLine(HorizontalLineData& data_) : HorizontalLine(data_)
+Object::Mask::Ceiling::CeilingMaskLine::CeilingMaskLine(HorizontalLineData& data_, glm::vec2& offset) : HorizontalLine(data_, offset)
 {
 	// Store Data
 	type = HORIZONTAL_LINE;
@@ -88,9 +88,9 @@ void Object::Mask::Ceiling::CeilingMaskLine::getLeftRightEdgeVertices(glm::vec2&
 	right = glm::vec2(x_right, data.position.y);
 }
 
-Object::Object* DataClass::Data_CeilingMaskHorizontalLine::genObject()
+Object::Object* DataClass::Data_CeilingMaskHorizontalLine::genObject(glm::vec2& offset)
 {
-	return new Object::Mask::Ceiling::CeilingMaskLine(data);
+	return new Object::Mask::Ceiling::CeilingMaskLine(data, offset);
 }
 
 void DataClass::Data_CeilingMaskHorizontalLine::writeObjectData(std::ofstream& object_file)

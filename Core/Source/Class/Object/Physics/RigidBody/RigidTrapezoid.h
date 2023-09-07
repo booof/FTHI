@@ -31,7 +31,7 @@ namespace Object::Physics::Rigid
 		float offset_distance = 0.0f;
 
 		// Initialize Object
-		RigidTrapezoid(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_);
+		RigidTrapezoid(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, glm::vec2& offset);
 
 		// Creates Vertices and Lines For Collision Detection
 		void prepCollisions();

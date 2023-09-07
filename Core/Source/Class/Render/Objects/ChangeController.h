@@ -148,6 +148,9 @@ namespace Render::Objects
 		// Test if Unsaved Level Has Been Saved Prevously
 		bool testIfSaved(SavedIdentifier test_identifier);
 
+		// Add Data Object to Unsaved
+		void addToUnsaved(DataClass::Data_Object* data_object);
+
 	public:
 
 		// Remove the Copy Constructor
@@ -174,6 +177,9 @@ namespace Render::Objects
 		// Return Unsaved Complex of Corrisponding File. If DNE, Create New Unsaved Complex
 		UnsavedComplex* getUnsavedComplex(std::string& file_path);
 
+		// Increments the Removed Count of the Specified SubLevel
+		void incrementRemovedCount(int16_t x, int16_t y, int8_t z);
+
 		// Stores an Unsaved Group
 		void storeUnsavedGroup(UnsavedGroup* new_group);
 
@@ -184,10 +190,16 @@ namespace Render::Objects
 		void handleSelectorReturn(Editor::Selector* selector);
 
 		// Handle the Return of a Single Object From Selector
-		void handleSingleSelectorReturn(DataClass::Data_Object* data_object, DataClass::Data_Object* original_object, bool reload_all);
+		void handleSingleSelectorReturn(DataClass::Data_Object* data_object, DataClass::Data_Object* original_object, Editor::Selector* selector, bool reload_all, bool keep_parent);
 
-		// Hangle Deletion of an Object From Selector
+		// Simple Function to Generate a Real Object From a Returned Object from the Selector (Above Function No Work)
+		void handleSelectorRealReturn(DataClass::Data_Object* data_object, Editor::Selector* selector);
+
+		// Handle Deletion of an Object From Selector
 		void handleSelectorDelete(Editor::Selector* selector);
+
+		// Handle Cancelation of a Selection
+		void handleSelectorCancelation(Editor::Selector* selector);
 
 		// Undo
 		void undo();

@@ -80,14 +80,17 @@ namespace Global
 	enum class CURSORS : uint8_t
 	{
 		ARROW,
-		HORIZONTAL_RESIZE,
-		VERTICAL_RESIZE,
 		HAND,
 		TYPE,
+		BIDIRECTIONAL_RESIZE,
+		HORIZONTAL_RESIZE,
+		VERTICAL_RESIZE,
 		POSITIVE_SLOPE_RESIZE,
 		NEGATIVE_SLOPE_RESIZE,
-		POINT,
-		LOCK
+		WAIT,
+		HELP,
+		LOCK,
+		FORBIDEN
 	};
 
 	// Cursor Variables
@@ -173,6 +176,12 @@ namespace Global
 
 	// Light Textures
 	extern std::map<std::string, Struct::SingleTexture> Visual_Textures;
+
+	// Flag to Reload Lights
+	extern bool reload_lights;
+
+	// Dummy Vec2 to be used as a Safe Nullptr
+	extern glm::vec2 dummy_vec2;
 
 #endif
 

@@ -25,6 +25,56 @@ bool Render::Objects::ChangeController::testIfSaved(SavedIdentifier test_identif
 	return false;
 }
 
+void Render::Objects::ChangeController::addToUnsaved(DataClass::Data_Object* data_object)
+{
+	// Set Parent in Object's Data Group
+	UnsavedCollection* data_group = data_object->getGroup();
+	if (data_group != nullptr && data_group->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
+		static_cast<Render::Objects::UnsavedGroup*>(data_group)->setParent(data_object, MOVE_WITH_PARENT::MOVE_DISSABLED);
+
+	// Object Has a Parent
+	DataClass::Data_Object* parent = data_object->getParent();
+	if (parent != nullptr)
+	{
+		// If Complex, Create Offset
+
+		// Get the Root Parent of Objects
+		DataClass::Data_Object* root_parent = parent;
+		while (root_parent->getParent() != nullptr)
+			root_parent = root_parent->getParent();
+
+		// If Parent Group is a Complex Group, Deactivate Root
+		if (root_parent->getGroup()->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
+		{
+			// First, Offset Object
+			glm::vec2 offset = -static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+			data_object->offsetPosition(offset);
+			//data_object->getPosition() -= static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+
+			// Deactivate Object
+			static_cast<DataClass::Data_ComplexParent*>(root_parent)->setInactive();
+		}
+
+		// Create a Change in the Group Object to Add the Object
+		parent->getGroup()->createChangeAppend(data_object, MOVE_WITH_PARENT::MOVE_DISSABLED);
+
+		// Disable Move With Parent in the Event A Parent Was Also Changed
+		parent->getGroup()->disableMoveWithParent(data_object);
+	}
+
+	// Object is in the Level
+	else
+	{
+		// Get Position of Object in Terms of Level
+		glm::vec2 object_level_position;
+		updateLevelPos(data_object->getPosition(), object_level_position);
+
+		// Get Unsaved Level of Where Object is Now
+		UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
+		temp_unsaved_level->createChangeAppend(data_object, MOVE_WITH_PARENT::MOVE_ENABLED);
+	}
+}
+
 void Render::Objects::ChangeController::initializeChangeController()
 {
 	// Initialize Master Stack
@@ -64,7 +114,7 @@ Render::Objects::UnsavedLevel* Render::Objects::ChangeController::getUnsavedLeve
 Render::Objects::UnsavedLevel* Render::Objects::ChangeController::getUnsavedLevelObject(DataClass::Data_Object* object)
 {
 	// Convert Position into Level Coords
-	glm::vec2 level_pos;
+	glm::i16vec2 level_pos;
 	level->updateLevelPos(object->getPosition(), level_pos);
 
 	// Retrive the Level
@@ -121,6 +171,17 @@ Render::Objects::UnsavedComplex* Render::Objects::ChangeController::getUnsavedCo
 	return new_unsaved_complex;
 }
 
+void Render::Objects::ChangeController::incrementRemovedCount(int16_t x, int16_t y, int8_t z)
+{
+	// Get the Index of the Sublevel
+	int8_t index = level->index_from_level(glm::i16vec2(x, y));
+	if (index == -1)
+		return;
+
+	// Increment the Removed Count
+	level->getSublevels()[index]->removed_count++;
+}
+
 void Render::Objects::ChangeController::storeUnsavedGroup(UnsavedGroup* new_group)
 {
 	unsaved_groups.push_back(new_group);
@@ -153,52 +214,7 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 
 	// Add All Data Objects
 	for (DataClass::Data_Object* data_object : selector->data_objects)
-	{
-		// Set Parent in Object's Data Group
-		UnsavedCollection* data_group = data_object->getGroup();
-		if (data_group != nullptr && data_group->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
-			static_cast<Render::Objects::UnsavedGroup*>(data_group)->setParent(data_object, false);
-
-		// Object Has a Parent
-		DataClass::Data_Object* parent = data_object->getParent();
-		if (parent != nullptr)
-		{
-			// If Complex, Create Offset
-
-			// Get the Root Parent of Objects
-			DataClass::Data_Object* root_parent = parent;
-			while (root_parent->getParent() != nullptr)
-				root_parent = root_parent->getParent();
-
-			// If Parent Group is a Complex Group, Deactivate Root
-			if (root_parent->getGroup()->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
-			{
-				// First, Offset Object
-				data_object->getPosition() -= static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
-
-				// Deactivate Object
-				static_cast<DataClass::Data_ComplexParent*>(root_parent)->setInactive();
-			}
-
-			// Create a Change in the Group Object to Add the Object
-			parent->getGroup()->createChangeAppend(data_object, false);
-
-			// Disable Move With Parent in the Event A Parent Was Also Changed
-			parent->getGroup()->disableMoveWithParent(data_object);
-		}
-
-		// Object is in the Level
-		else
-		{
-			// Get Position of Object in Terms of Level
-			glm::vec2 object_level_position;
-			updateLevelPos(data_object->getPosition(), object_level_position);
-
-			// Get Unsaved Level of Where Object is Now
-			UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
-			temp_unsaved_level->createChangeAppend(data_object, false);
-		}
-	}
+		addToUnsaved(data_object);
 
 	// Finalize Changes in Unsaved Levels
 	for (int i = 0; i < unsaved_levels.size(); i++)
@@ -239,7 +255,7 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 	// Temp Objects, Both Deleting Them and Removing Parents Set as Them
 }
 
-void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Data_Object* data_object, DataClass::Data_Object* original_object, bool reload_all)
+void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Data_Object* data_object, DataClass::Data_Object* original_object, Editor::Selector* selector, bool reload_all, bool keep_parent)
 {
 	// Get the Root Parent of Objects
 	DataClass::Data_Object* root_parent = data_object;
@@ -270,36 +286,124 @@ void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Da
 
 	// Get Unsaved Level of Where Object is Now
 	UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
-	temp_unsaved_level->createChangeAppend(data_object, true);
+	temp_unsaved_level->createChangeAppend(data_object, MOVE_WITH_PARENT::MOVE_DISSABLED);
 
-	// Reset Group Variables
-	data_object->setParent(nullptr);
-	data_object->setGroupLayer(0);
-
-	// Recursively set Group Layer
-	UnsavedCollection* data_group = data_object->getGroup();
-	if (data_group != nullptr && data_group->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
+	// If Should Not Keep Parent, Remove Parent and Reset Group Object
+	if (!keep_parent)
 	{
-		static_cast<Render::Objects::UnsavedGroup*>(data_group)->setParent(data_object, false);
-		data_group->recursiveSetGroupLayer(1);
+		// Reset Group Variables
+		data_object->setParent(nullptr);
+		data_object->setGroupLayer(0);
+
+		// Recursively set Group Layer
+		UnsavedCollection* data_group = data_object->getGroup();
+		if (data_group != nullptr && data_group->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
+		{
+			static_cast<Render::Objects::UnsavedGroup*>(data_group)->setParent(data_object, MOVE_WITH_PARENT::MOVE_DISSABLED);
+			data_group->recursiveSetGroupLayer(data_object->getGroupLayer() + 1);
+		}
 	}
 
-	// Add Object and Children to Level
+	// Add Object and Children to Level, If From a Complex Object
+	glm::vec2 offset = glm::vec2(0.0f, 0.0f);
 	if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
 	{
 		Object::Object** object_list = new Object::Object*[1];
-		object_list[0] = data_object->generateObject();
+		object_list[0] = data_object->generateObject(offset);
 		object_list[0]->parent = nullptr;
 		int list_size = 1;
-		glm::vec2 offset = glm::vec2(0.0f, 0.0f);
-		data_object->genChildrenRecursive(&object_list, list_size, object_list[0], offset);
+		data_object->enableSelectionNonRecursive();
+		data_object->genChildrenRecursive(&object_list, list_size, object_list[0], offset, selector, true);
+		selector->addUnselectableRecursive(data_object);
 		level->incorperatNewObjects(object_list, list_size);
 	}
 
 	// Add Single Object Into Level
 	else
 	{
-		Object::Object* new_object = data_object->generateObject();
+		// Generate the Object
+		Object::Object* new_object = data_object->generateObject(offset);
+
+		level->incorperatNewObjects(&new_object, 1);
+	}
+}
+
+void Render::Objects::ChangeController::handleSelectorRealReturn(DataClass::Data_Object* data_object, Editor::Selector* selector)
+{
+	// Get the Root Parent of Objects
+	DataClass::Data_Object* root_parent = data_object;
+	glm::vec2 offset = glm::vec2(0.0f, 0.0f);
+	while (root_parent->getParent() != nullptr)
+	{
+		// Get the Next Parent to Test
+		root_parent = root_parent->getParent();
+
+		// If From a Root Parent, Remove Offset
+		if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+		{
+			// Remove Offset From Objects and Children
+			offset = static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+			glm::vec2* offset_ptr = static_cast<Render::Objects::UnsavedComplex*>(root_parent->getGroup())->getSelectedPosition();
+			if (offset_ptr != nullptr)
+				offset = *offset_ptr;
+
+			// Remove Children From Level
+			level->removeMarkedChildrenFromList(data_object);
+			break;
+		}
+	}
+
+	// Add Object to Unsaved
+	addToUnsaved(data_object);
+
+	// Add Object and Children to Level, If From a Complex Object
+	if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+	{
+		// Determine the Number of Instances to Create
+		int instance_size = data_object->getParent()->getObjects().size();
+		int list_size = instance_size;
+		Object::Object** object_list = new Object::Object*[instance_size];
+		Object::Object* root_real_parent = nullptr;
+		glm::vec2 real_offset = glm::vec2(0.0f, 0.0f);
+
+		// Dissable Selection for Data Object
+		data_object->enableSelectionNonRecursive();
+		selector->addUnselectableRecursive(data_object);
+
+		// Generate Children and Set Parent for Each Instance
+		for (int i = 0; i < instance_size; i++)
+		{
+			// Determine the Offset of This Individual Object
+			real_offset = glm::vec2(0.0f, 0.0f);
+			root_real_parent = data_object->getParent()->getObjects().at(i);
+			while (root_real_parent != nullptr)
+			{
+				if (root_real_parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+				{
+					real_offset = *root_real_parent->pointerToPosition();
+					break;
+				}
+				root_real_parent = root_real_parent->parent;
+			}
+
+			// Generate the Object and Set the Parent
+			object_list[i] = data_object->generateObject(real_offset);
+			object_list[i]->parent = data_object->getParent()->getObjects().at(i);
+
+			// Generate the Children
+			data_object->genChildrenRecursive(&object_list, list_size, object_list[i], real_offset, selector, true);
+		}
+
+		// Add New Objects into the Level
+		level->incorperatNewObjects(object_list, list_size);
+	}
+
+	// Add Single Object Into Level
+	else
+	{
+		// Generate the Object
+		Object::Object* new_object = data_object->generateObject(offset);
+
 		level->incorperatNewObjects(&new_object, 1);
 	}
 }
@@ -321,11 +425,16 @@ void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* s
 	current_instance->camera_pos = glm::vec2(level->camera->Position.x, level->camera->Position.y);
 
 	// Remove Parent from All Groups of Selected Objects
+	std::vector<DataClass::Data_Object*> orphan_list;
 	for (DataClass::Data_Object* data_object : selector->data_objects)
 	{
 		if (data_object->getGroup() != nullptr)
-			data_object->getGroup()->makeOrphans();
+			data_object->getGroup()->makeOrphans(selector, orphan_list);
 	}
+
+	// Finalize Orphans After Processing
+	for (DataClass::Data_Object* orphan : orphan_list)
+		orphan->setParent(nullptr);
 
 	// As Deletion Change Has Already Been Made when Selecting, Simply Finalize the Changes
 
@@ -344,6 +453,76 @@ void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* s
 		if (group.finalizeChangeList())
 			current_instance->stack_indicies.push_back(unsaved_groups.at(i));
 	}
+
+	// Finalize Changes in Unsaved Complex
+	for (int i = 0; i < unsaved_complex.size(); i++)
+	{
+		UnsavedComplex& group = *unsaved_complex.at(i);
+		if (group.finalizeChangeList())
+			current_instance->stack_indicies.push_back(unsaved_complex.at(i));
+	}
+
+	// Clear Temps
+	level->clearTemps();
+
+	// Perform a Parent Reload on All Complex Objects
+	for (UnsavedComplex* group : unsaved_complex)
+		static_cast<DataClass::Data_ComplexParent*>(group->getComplexParent())->setInactive();
+
+	// Reload Objects
+	level->reloadAll();
+}
+
+void Render::Objects::ChangeController::handleSelectorCancelation(Editor::Selector* selector)
+{
+	// For All Data Objects, If From a Complex Object, Add Offset Back In
+	for (DataClass::Data_Object* data_object : selector->data_objects)
+	{
+		// Get the Root Parent of Objects
+		DataClass::Data_Object* root_parent = data_object;
+		while (root_parent->getParent() != nullptr)
+		{
+			// Get the Next Parent to Test
+			root_parent = root_parent->getParent();
+
+			// If From a Root Parent, Remove Offset
+			if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+			{
+				// Remove Offset From Objects and Children
+				glm::vec2 offset = -static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+				glm::vec2* offset_ptr = static_cast<Render::Objects::UnsavedComplex*>(root_parent->getGroup())->getSelectedPosition();
+				if (offset_ptr != nullptr)
+					offset = -*offset_ptr;
+				data_object->offsetPosition(offset);
+				break;
+			}
+		}
+	}
+
+	// Undo the Current Changes in Levels
+	for (UnsavedLevel* unsaved_level : unsaved_levels)
+		unsaved_level->resetChangeList();
+
+	// Undo the Current Changes in Groups
+	for (UnsavedGroup* unsaved_group : unsaved_groups)
+		unsaved_group->resetChangeList();
+
+	// Undo the Current Changes in Complex
+	for (UnsavedComplex* unsaved_complex_ : unsaved_complex)
+		unsaved_complex_->resetChangeList();
+
+	// Move Children of Group Objects
+	Objects::UnsavedGroup::finalizeParentMovement();
+
+	// Delete All Newly Selected Objects
+	selector->deleteSelectedObjects();
+
+	// Clear Temps
+	level->clearTemps();
+
+	// Perform a Parent Reload on All Complex Objects
+	for (UnsavedComplex* group : unsaved_complex)
+		static_cast<DataClass::Data_ComplexParent*>(group->getComplexParent())->setInactive();
 
 	// Reload Objects
 	level->reloadAll();

@@ -44,14 +44,13 @@ void Object::Mask::Floor::FloorMaskSlant::updateSelectedPosition(float deltaX, f
 	data.position.y += deltaY;
 	data.position2.x += deltaX;
 	data.position2.y += deltaY;
-
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
 }
 
 void Object::Mask::Floor::FloorMaskSlant::getLeftRightEdgeVertices(glm::vec2& left, glm::vec2& right)
 {
 	left = data.position;
 	right = data.position2;
-	initializeVisualizer(VAO, VBO, model, glm::vec4(0.0f, 1.0f, 1.0f, 1.0f));
 }
 
 void Object::Mask::Floor::FloorMaskSlant::returnMaterial(int& material)
@@ -59,7 +58,7 @@ void Object::Mask::Floor::FloorMaskSlant::returnMaterial(int& material)
 	material = data.material;
 }
 
-Object::Mask::Floor::FloorMaskSlant::FloorMaskSlant(SlantData& data_, bool& platform_) : Slant(data_)
+Object::Mask::Floor::FloorMaskSlant::FloorMaskSlant(SlantData& data_, bool& platform_, glm::vec2& offset) : Slant(data_, offset)
 {
 	// Store Type
 	type = HORIZONTAL_SLANT;
@@ -102,9 +101,9 @@ glm::vec2* Object::Mask::Floor::FloorMaskSlant::pointerToPosition()
 	return &data.position;
 }
 
-Object::Object* DataClass::Data_FloorMaskSlant::genObject()
+Object::Object* DataClass::Data_FloorMaskSlant::genObject(glm::vec2& offset)
 {
-	return new Object::Mask::Floor::FloorMaskSlant(data, platform);
+	return new Object::Mask::Floor::FloorMaskSlant(data, platform, offset);
 }
 
 void DataClass::Data_FloorMaskSlant::writeObjectData(std::ofstream& object_file)

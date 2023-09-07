@@ -335,7 +335,11 @@ void Render::Objects::UnsavedBase::moveBackwardsThroughChanges(Changes* changes)
 	{
 		// If this is a Remove Change, Add Change to Current Data Object List
 		if (change->change_type == REMOVE)
+		{
 			addWhileTraversing(change->data, change->move_with_parent);
+			if (change->move_with_parent == MOVE_WITH_PARENT::MOVE_SECONDARY_ONLY_NO_OFFSET)
+				change->move_with_parent = MOVE_WITH_PARENT::MOVE_SECONDARY_ONLY;
+		}
 
 		// If this is an Add Change Remove Change from Current Data Object List
 		else
@@ -343,7 +347,7 @@ void Render::Objects::UnsavedBase::moveBackwardsThroughChanges(Changes* changes)
 	}
 }
 
-void Render::Objects::UnsavedBase::createChangeAppend(DataClass::Data_Object* data_object, bool disable_move)
+void Render::Objects::UnsavedBase::createChangeAppend(DataClass::Data_Object* data_object, MOVE_WITH_PARENT disable_move)
 {
 	// Generate Change List if Not Generated Already
 	generateChangeList();
@@ -351,7 +355,7 @@ void Render::Objects::UnsavedBase::createChangeAppend(DataClass::Data_Object* da
 	// Generate the New Change
 	Change* change = new Change;
 	change->change_type = CHANGE_TYPES::ADD;
-	change->move_with_parent = !disable_move;
+	change->move_with_parent = disable_move;
 
 	// Store Data Object in Change
 	change->data = data_object;
@@ -368,7 +372,7 @@ void Render::Objects::UnsavedBase::createChangeAppend(DataClass::Data_Object* da
 	changeToModified();
 }
 
-void Render::Objects::UnsavedBase::createChangePop(DataClass::Data_Object* data_object_to_remove, bool disable_move)
+void Render::Objects::UnsavedBase::createChangePop(DataClass::Data_Object* data_object_to_remove, MOVE_WITH_PARENT disable_move)
 {
 	// Generate Change List if Not Generated Already
 	generateChangeList();
@@ -376,7 +380,7 @@ void Render::Objects::UnsavedBase::createChangePop(DataClass::Data_Object* data_
 	// Generate the New Change
 	Change* change = new Change;
 	change->change_type = CHANGE_TYPES::REMOVE;
-	change->move_with_parent = !disable_move;
+	change->move_with_parent = disable_move;
 
 	// Find Data Object in the List of Data Objects, Remove it, and Store it in Change
 	for (int i = 0; i < instance_with_changes.data_objects.size(); i++)
@@ -460,3 +464,9 @@ bool Render::Objects::UnsavedBase::finalizeChangeList()
 	return false;
 }
 
+std::vector<Render::Objects::UnsavedBase::Change*>* Render::Objects::UnsavedBase::getChanges()
+{
+	if (current_change_list == nullptr)
+		return nullptr;
+	return &current_change_list->changes;
+}

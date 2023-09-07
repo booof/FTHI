@@ -33,7 +33,7 @@ namespace Object::Physics::Hinge
 		AnchorData data;
 
 		// Initialize Object
-		Anchor(uint32_t& uuid_, AnchorData& data_);
+		Anchor(uint32_t& uuid_, AnchorData& data_, glm::vec2& offset);
 
 		// Update Object
 		void updateObject();

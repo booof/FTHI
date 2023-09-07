@@ -29,7 +29,7 @@ namespace Object::Light::Directional
 	public:
 
 		// Initialize Object
-		Directional(DirectionalData& directional_, LightData light_);
+		Directional(DirectionalData& directional_, LightData light_, glm::vec2& offset);
 
 		// Load Light Into Buffer
 		void loadLight();
@@ -50,6 +50,9 @@ namespace Object::Light::Directional
 
 		// Return Position of Object
 		glm::vec2 returnPosition();
+
+		// Return Second Position of Object
+		glm::vec2 returnSecondPosition();
 
 		// Slope and Y-Intercept of Line for Editing
 		float Slope;

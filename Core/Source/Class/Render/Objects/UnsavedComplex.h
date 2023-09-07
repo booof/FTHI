@@ -80,7 +80,7 @@ namespace Render::Objects
 		void constructUnmodifiedDataHelper(ObjectsInstance& instance);
 
 		// Function to Add Objects While Transversing
-		void addWhileTraversing(DataClass::Data_Object* data_object, bool move_with_parent);
+		void addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent);
 
 		// Function to Remove Objects While Traversing
 		void removeWhileTraversing(DataClass::Data_Object* data_object);
@@ -109,7 +109,7 @@ namespace Render::Objects
 		void constructUnmodifiedData(std::string file_path_);
 
 		// Recursively Set the Group Layer
-		void recursiveSetGroupLayer(uint8_t layer);
+		void recursiveSetGroupLayer(int8_t layer);
 
 		// Returns the File Name of the Object
 		std::string& getFilePath();
@@ -136,7 +136,7 @@ namespace Render::Objects
 		glm::vec2* getSelectedPosition();
 
 		// Returns the Instance Array
-		std::vector<Object::Object*> getInstances();
+		std::vector<Object::Object*>& getInstances();
 
 		// Draw Object State Visualizer
 		void drawVisualizer();
@@ -146,6 +146,9 @@ namespace Render::Objects
 
 		// Draw Connection to Currently Edited Object for All Instances
 		void drawSelectedConnection(DataClass::Data_Object* selected_object, glm::vec2 position_offset);
+
+		// Draw Connection to Currently Edited Object to ONLY the Parent Object
+		void drawSelectedConnectionParentOnly(DataClass::Data_Object* selected_object, glm::vec2 position_offset);
 	};
 }
 

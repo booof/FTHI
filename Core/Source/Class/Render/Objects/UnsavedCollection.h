@@ -23,7 +23,7 @@ namespace Render::Objects
 	public:
 
 		// Recursively Set the Group Layer
-		virtual void recursiveSetGroupLayer(uint8_t layer) = 0;
+		virtual void recursiveSetGroupLayer(int8_t layer) = 0;
 
 		// Get the Number of Children in Group
 		uint8_t getNumberOfChildren();
@@ -38,10 +38,13 @@ namespace Render::Objects
 		void disableMoveWithParent(DataClass::Data_Object* data_object);
 
 		// Make All Children Orphans
-		void makeOrphans();
+		void makeOrphans(Editor::Selector* selector, std::vector<DataClass::Data_Object*>& orphan_list);
 
 		// Determines What the Collection Type is
 		virtual UNSAVED_COLLECTIONS getCollectionType() = 0;
+
+		// Test if Object Is Not Added to a Higher Parent
+		static bool preventCircularGroups(DataClass::Data_Object* parent, DataClass::Data_Object* test_child);
 	};
 }
 

@@ -78,6 +78,7 @@ namespace Shape
 
 namespace Object
 {
+	struct Active;
 	class Object;
 }
 
@@ -96,12 +97,23 @@ namespace Render::Objects
 		unsigned int checksum;
 	};
 
+	// The Modes That Can Occour When Moving Child Objects
+	enum MOVE_WITH_PARENT : uint8_t
+	{
+		MOVE_ENABLED = 0,
+		MOVE_DISSABLED,
+		MOVE_SECONDARY_ONLY,
+		MOVE_SECONDARY_ONLY_NO_OFFSET
+	};
+
 	// Unsaved Base Object
 	class UnsavedBase
 	{
 
-	protected:
+	public:
 
+		// The Two Types of Changes That Can Occour
+		// Describes the Process that Caused the Change, NOT What Happens During an Undo
 		enum CHANGE_TYPES : uint8_t
 		{
 			ADD = 1,
@@ -112,14 +124,16 @@ namespace Render::Objects
 		struct Change
 		{
 			// The Type of Change
-			uint8_t change_type;
+			uint8_t change_type = 0;
 
 			// Determines if Object Should Move With Parent
-			bool move_with_parent = true;
+			MOVE_WITH_PARENT move_with_parent = MOVE_WITH_PARENT::MOVE_ENABLED;
 
 			// Pointer to Data Object At Identifier is to be Replaced With
-			DataClass::Data_Object* data;
+			DataClass::Data_Object* data = nullptr;
 		};
+
+	protected:
 
 		// Instance Changes
 		struct Changes
@@ -262,7 +276,7 @@ namespace Render::Objects
 		void changeToSaved();
 
 		// Function to Add Objects While Transversing
-		virtual void addWhileTraversing(DataClass::Data_Object* data_object, bool move_with_parent) = 0;
+		virtual void addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent) = 0;
 
 		// Function to Remove Objects While Traversing
 		virtual void removeWhileTraversing(DataClass::Data_Object* data_object) = 0;
@@ -290,13 +304,13 @@ namespace Render::Objects
 		bool saved = false;
 
 		// Pointer to Active Objects Array
-		Object::Object*** active_objects = nullptr;
+		Object::Active** active_objects = nullptr;
 
 		// Create a New Change by Appending a New Object
-		void createChangeAppend(DataClass::Data_Object* data_object, bool disable_move);
+		void createChangeAppend(DataClass::Data_Object* data_object, MOVE_WITH_PARENT disable_move);
 
 		// Create a New Change by Removing an Object
-		void createChangePop(DataClass::Data_Object* data_object_to_remove, bool disable_move);
+		void createChangePop(DataClass::Data_Object* data_object_to_remove, MOVE_WITH_PARENT disable_move);
 
 		// Reset a Change List in the Event it is Canceled
 		void resetChangeList();
@@ -312,6 +326,9 @@ namespace Render::Objects
 
 		// Finalize a New Change List. Returns True if a Change List was Created
 		bool finalizeChangeList();
+
+		// Get the Current Change List
+		std::vector<Change*>* getChanges();
 	};
 }
 

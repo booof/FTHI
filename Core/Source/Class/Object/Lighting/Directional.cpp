@@ -10,11 +10,13 @@
 // Globals
 #include "Globals.h"
 
-Object::Light::Directional::Directional::Directional(DirectionalData& directional_, LightData light_)
+Object::Light::Directional::Directional::Directional(DirectionalData& directional_, LightData light_, glm::vec2& offset)
 {
 	// Store Data
 	directional = std::move(directional_);
 	data = std::move(light_);
+	data.position += offset;
+	directional.position2 += offset;
 	data.layer = 4;
 
 	// Store Storage Type
@@ -78,6 +80,9 @@ Object::Light::Directional::Directional::Directional(DirectionalData& directiona
 
 void Object::Light::Directional::Directional::loadLight()
 {
+	// Generate Nullified Model
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
+
 	// Add Light and Line Direction Data
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, buffer_offset, 16, glm::value_ptr(light_direction));
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, (GLintptr)buffer_offset + 16, 16, glm::value_ptr(line_direction));
@@ -118,12 +123,9 @@ void Object::Light::Directional::Directional::initializeVisualizer()
 	// Save Texture
 	//texture = Visual_Textures.find("DirectionalLight.png")->second;
 
-	// Generate Nullified Model
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
-
 	// Generate Vertices
 	float vertices[30];
-	Vertices::Line::genLineTexture(0.0f, directional.position2.x - data.position.x, 0.0f, directional.position2.y - data.position.y, -0.9f, 0.4f, vertices);
+	Vertices::Line::genLineTexture(0.0f, directional.position2.x - data.position.x, 0.0f, directional.position2.y - data.position.y, -1.5f, 0.4f, vertices);
 
 	// Generate Vertex Objects
 	glGenVertexArrays(1, &VAO);
@@ -170,11 +172,19 @@ bool Object::Light::Directional::Directional::testMouseCollisions(float x, float
 
 void Object::Light::Directional::Directional::updateSelectedPosition(float deltaX, float deltaY)
 {
+	// Update Positions
 	data.position.x += deltaX;
 	data.position.y += deltaY;
 	directional.position2.x += deltaX;
 	directional.position2.y += deltaY;
-	initializeVisualizer();
+
+	// Update the Intercept
+	Intercept = data.position.y - (Slope * data.position.x);
+
+	// Update Shader Data
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::DirectionalBuffer);
+	loadLight();
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 glm::vec2 Object::Light::Directional::Directional::returnPosition()
@@ -182,11 +192,16 @@ glm::vec2 Object::Light::Directional::Directional::returnPosition()
 	return data.position;
 }
 
+glm::vec2 Object::Light::Directional::Directional::returnSecondPosition()
+{
+	return directional.position2;
+}
+
 #endif
 
-Object::Object* DataClass::Data_Directional::genObject()
+Object::Object* DataClass::Data_Directional::genObject(glm::vec2& offset)
 {
-	return new Object::Light::Directional::Directional(directional, light_data);
+	return new Object::Light::Directional::Directional(directional, light_data, offset);
 }
 
 void DataClass::Data_Directional::writeObjectData(std::ofstream& object_file)
@@ -218,6 +233,8 @@ void DataClass::Data_Directional::info(Editor::ObjectInfo& object_info)
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addDoubleValue("Pos1: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &light_data.position.x, &light_data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 	object_info.addDoubleValue("Pos2: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &directional.position2.x, &directional.position2.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	infoColors(object_info);
+	object_info.addSingleValue("Index: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object_index, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 }
 
 DataClass::Data_Object* DataClass::Data_Directional::makeCopy()
@@ -243,5 +260,32 @@ void DataClass::Data_Directional::generateInitialValues(glm::vec2& position, flo
 {
 	generateInitialLightValues(position);
 	directional.position2 = position + glm::vec2(size, 0.0f);
+}
+
+void DataClass::Data_Directional::offsetPosition(glm::vec2& offset)
+{
+	// Update Position of Both Vertices
+	light_data.position += offset;
+	directional.position2 += offset;
+}
+
+void DataClass::Data_Directional::offsetOppositePosition(glm::vec2& offset)
+{
+	// Only Update Second Position
+	directional.position2 += offset;
+}
+
+void DataClass::Data_Directional::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &light_data.position;
+	index1 = 2;
+
+	// Position2 is at Index 3
+	*position2 = &directional.position2;
+	index2 = 3;
+
+	// Position 3 Not Important
+	position3Null(index3, position3);
 }
 

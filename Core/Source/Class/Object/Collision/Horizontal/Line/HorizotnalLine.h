@@ -37,7 +37,7 @@ namespace Object::Mask
 		float x_left, x_right;
 
 		// Initilize Horizontal Line
-		HorizontalLine(HorizontalLineData& data_);
+		HorizontalLine(HorizontalLineData& data_, glm::vec2& offset);
 
 #ifdef EDITOR
 

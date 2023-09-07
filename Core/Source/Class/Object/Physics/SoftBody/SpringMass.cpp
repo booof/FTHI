@@ -11,7 +11,7 @@
 
 #include "Globals.h"
 
-Object::Physics::Soft::SpringMass::SpringMass(uint32_t& uuid_, ObjectData& data_, std::string& file_name_, DataClass::Data_SpringMass* data_object_)
+Object::Physics::Soft::SpringMass::SpringMass(uint32_t& uuid_, ObjectData& data_, std::string& file_name_, DataClass::Data_SpringMass* data_object_, glm::vec2& offset)
 {
 	// Store Object Type
 	type = PHYSICS_TYPES::TYPE_SPRING_MASS;
@@ -22,6 +22,7 @@ Object::Physics::Soft::SpringMass::SpringMass(uint32_t& uuid_, ObjectData& data_
 	path = Global::project_resources_path + "/Models/SoftBodies/" + file_name;
 	uuid = uuid_;
 	data_object = data_object_;
+	data.position += offset;
 
 	// Store Storage Type
 	storage_type = PHYSICS_COUNT;
@@ -224,9 +225,9 @@ void Object::Physics::Soft::SpringMass::select3(Editor::Selector& selector)
 	}
 }
 
-Object::Object* DataClass::Data_SpringMass::genObject()
+Object::Object* DataClass::Data_SpringMass::genObject(glm::vec2& offset)
 {
-	return new Object::Physics::Soft::SpringMass(uuid, data, file_name, this);
+	return new Object::Physics::Soft::SpringMass(uuid, data, file_name, this, offset);
 }
 
 void DataClass::Data_SpringMass::writeObjectData(std::ofstream& object_file)
@@ -290,7 +291,17 @@ void DataClass::Data_SpringMass::generateInitialValues(glm::vec2& position)
 	file_name = "NULL";
 }
 
-Object::Object* DataClass::Data_SpringMassNode::genObject()
+void DataClass::Data_SpringMass::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &data.position;
+	index1 = 2;
+
+	// Others are Not Important
+	position23Null(index2, index3, position2, position3);
+}
+
+Object::Object* DataClass::Data_SpringMassNode::genObject(glm::vec2& offset)
 {
 	return nullptr;
 }
@@ -360,7 +371,17 @@ Object::Physics::Soft::NodeData& DataClass::Data_SpringMassNode::getNodeData()
 	return node_data;
 }
 
-Object::Object* DataClass::Data_SpringMassSpring::genObject()
+void DataClass::Data_SpringMassNode::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &node_data.position;
+	index1 = 2;
+
+	// Others are Not Important
+	position23Null(index2, index3, position2, position3);
+}
+
+Object::Object* DataClass::Data_SpringMassSpring::genObject(glm::vec2& offset)
 {
 	return nullptr;
 }
@@ -425,4 +446,12 @@ DataClass::Data_SpringMass* DataClass::Data_SpringMassSpring::getParent()
 Object::Physics::Soft::Spring& DataClass::Data_SpringMassSpring::getSpringData()
 {
 	return spring_data;
+}
+
+void DataClass::Data_SpringMassSpring::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Literally Nothing is Used
+	*position1 = &Global::dummy_vec2;
+	index1 = -1;
+	position23Null(index2, index3, position2, position3);
 }

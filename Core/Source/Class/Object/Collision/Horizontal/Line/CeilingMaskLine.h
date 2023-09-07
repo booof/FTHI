@@ -35,7 +35,7 @@ namespace Object::Mask
 	public:
 
 		// Initialize Object
-		CeilingMaskLine(HorizontalLineData& data_);
+		CeilingMaskLine(HorizontalLineData& data_, glm::vec2& offset);
 
 		// Return Pointer to Position
 		glm::vec2* pointerToPosition();

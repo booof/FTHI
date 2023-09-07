@@ -27,7 +27,7 @@ namespace Object::Light::Point
 	public:
 
 		// Initialize Object 
-		Point(PointData& point_, LightData& light_);
+		Point(PointData& point_, LightData& light_, glm::vec2& offset);
 
 		// Load Light Into Shader
 		void loadLight();

@@ -77,13 +77,14 @@ bool operator<(const float value, const Object::Physics::Rigid::Named_Node node1
 	return value < node1.value;
 }
 
-Object::Physics::Rigid::RigidBody::RigidBody(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, int vertex_count)
+Object::Physics::Rigid::RigidBody::RigidBody(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, int vertex_count, glm::vec2& offset)
 {
 	// Store Object Data
 	data = data_;
 	shape = shape_;
 	rigid = rigid_;
 	uuid = uuid_;
+	data.position += offset;
 
 	// Store Initial Position
 	physics.Position = data.position;
@@ -120,6 +121,12 @@ Object::Physics::Rigid::RigidBody::RigidBody(uint32_t& uuid_, ObjectData& data_,
 	// Unbind Vertex Object
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+}
+
+Object::Physics::Rigid::RigidBody::~RigidBody()
+{
+	// Delete the Shape
+	delete shape;
 }
 
 void Object::Physics::Rigid::RigidBody::initializeVertices(int & instance_, int & instance_index_)
@@ -264,15 +271,16 @@ glm::vec2 Object::Physics::Rigid::RigidBody::returnPosition()
 	return data.position;
 }
 
-Object::Object* DataClass::Data_RigidBody::genObject()
+Object::Object* DataClass::Data_RigidBody::genObject(glm::vec2& offset)
 {
+	Shape::Shape* shape_copy = shape->makeCopy();
 	switch (object_identifier[2])
 	{
-	case Shape::TRAPEZOID: return new Object::Physics::Rigid::RigidTrapezoid(uuid, data, rigid, shape);
-	case Shape::TRIANGLE: return new Object::Physics::Rigid::RigidTriangle(uuid, data, rigid, shape);
-	case Shape::CIRCLE: return new Object::Physics::Rigid::RigidCircle(uuid, data, rigid, shape);
-	case Shape::POLYGON: return new Object::Physics::Rigid::RigidPolygon(uuid, data, rigid, shape);
-	default: return new Object::Physics::Rigid::RigidRectangle(uuid, data, rigid, shape);
+	case Shape::TRAPEZOID: return new Object::Physics::Rigid::RigidTrapezoid(uuid, data, rigid, shape_copy, offset);
+	case Shape::TRIANGLE: return new Object::Physics::Rigid::RigidTriangle(uuid, data, rigid, shape_copy, offset);
+	case Shape::CIRCLE: return new Object::Physics::Rigid::RigidCircle(uuid, data, rigid, shape_copy, offset);
+	case Shape::POLYGON: return new Object::Physics::Rigid::RigidPolygon(uuid, data, rigid, shape_copy, offset);
+	default: return new Object::Physics::Rigid::RigidRectangle(uuid, data, rigid, shape_copy, offset);
 	}
 }
 
@@ -289,7 +297,7 @@ void DataClass::Data_RigidBody::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&uuid, sizeof(uint32_t));
 	object_file.read((char*)&data, sizeof(Object::ObjectData));
 	object_file.read((char*)&rigid, sizeof(Object::Physics::Rigid::RigidBodyData));
-	shape = shapes[object_identifier[2]](object_file);
+	shape = readNewShape(object_file, object_identifier[2]);
 }
 
 DataClass::Data_RigidBody::Data_RigidBody(uint8_t shape_identifier, uint8_t children_size)
@@ -313,6 +321,7 @@ void DataClass::Data_RigidBody::info(Editor::ObjectInfo& object_info)
 	object_info.addTextValue("Shape: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &shape_name_map[shape->shape], glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
 	shape->selectInfo(object_info);
+	object_info.addColorValue("Color: ", glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), &data.colors, true);
 }
 
 DataClass::Data_Object* DataClass::Data_RigidBody::makeCopy()

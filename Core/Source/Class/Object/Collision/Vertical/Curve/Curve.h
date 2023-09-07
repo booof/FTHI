@@ -52,7 +52,7 @@ namespace Object::Mask
 		float x_offset;
 
 		// Initialize Curve
-		Curve(CurveData& data_);
+		Curve(CurveData& data_, glm::vec2& offset);
 
 #ifdef EDITOR
 

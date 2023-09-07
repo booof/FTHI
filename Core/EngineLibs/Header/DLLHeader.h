@@ -99,9 +99,9 @@
 #include "../../Source/Class/Object/Physics/RigidBody/RigidPolygon.h"
 
 // Soft Body Physics
-#include "../../Source/Class/Object/Physics/Softody/SoftBody.h"
-#include "../../Source/Class/Object/Physics/Softody/SpringMass.h"
-#include "../../Source/Class/Object/Physics/Softody/Wire.h"
+#include "../../Source/Class/Object/Physics/Softbody/SoftBody.h"
+#include "../../Source/Class/Object/Physics/Softbody/SpringMass.h"
+#include "../../Source/Class/Object/Physics/Softbody/Wire.h"
 
 // Hinge Physics
 #include "../../Source/Class/Object/Physics/Hinge/Anchor.h"

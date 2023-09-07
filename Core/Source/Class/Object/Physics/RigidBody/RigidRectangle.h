@@ -24,7 +24,7 @@ namespace Object::Physics::Rigid
 		float half_width = 0, half_height = 0;
 		
 		// Initialize Object
-		RigidRectangle(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_);
+		RigidRectangle(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, glm::vec2& offset);
 
 		// Creates Vertices and Lines For Collision Detection
 		void prepCollisions();

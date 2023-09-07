@@ -12,11 +12,14 @@
 #include "Render/Objects/UnsavedGroup.h"
 
 // Initialize Terrain
-Object::Terrain::TerrainBase::TerrainBase(Shape::Shape* shape_, ObjectData data_)
+Object::Terrain::TerrainBase::TerrainBase(Shape::Shape* shape_, ObjectData data_, glm::vec2& offset)
 {
 	// Store Information
 	shape = shape_;
 	data = data_;
+	data.position += offset;
+	if (shape->shape == Shape::SHAPES::TRIANGLE)
+		static_cast<Shape::Triangle*>(shape)->updateSelectedPosition(offset.x, offset.y);
 	//data.zpos = -60.0f;
 
 	// Store Storage Type
@@ -54,6 +57,7 @@ Object::Terrain::TerrainBase::TerrainBase(Shape::Shape* shape_, ObjectData data_
 
 void Object::Terrain::TerrainBase::updateObject()
 {
+
 }
 
 glm::vec2* Object::Terrain::TerrainBase::pointerToPosition()
@@ -64,6 +68,12 @@ glm::vec2* Object::Terrain::TerrainBase::pointerToPosition()
 bool Object::Terrain::TerrainBase::testMouseCollisions(float x, float y)
 {
 	return shape->testMouseCollisions(x, y, data.position.x, data.position.y);
+}
+
+Object::Terrain::TerrainBase::~TerrainBase()
+{
+	// Delete the Shape
+	delete shape;
 }
 
 void Object::Terrain::TerrainBase::initializeTerrain(int& offset_, int& instance_, int& instance_index_)
@@ -78,7 +88,7 @@ void Object::Terrain::TerrainBase::initializeTerrain(int& offset_, int& instance
 	// Assign Vertices
 	shape->initializeVertices(data, offset_, instance_index_);
 
-	//data.zpos = -1.0f;
+	data.zpos = -2.0f;
 
 	// Assign Instance
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, instance, 64, glm::value_ptr(model));
@@ -125,16 +135,17 @@ void Object::Terrain::TerrainBase::updateModel()
 
 #endif
 
-Object::Object* DataClass::Data_Terrain::genObject()
+Object::Object* DataClass::Data_Terrain::genObject(glm::vec2& offset)
 {
+	Shape::Shape* shape_copy = shape->makeCopy();
 	switch (object_identifier[1])
 	{
-	case Object::Terrain::BACKDROP: return new Object::Terrain::Backdrop(shape, data); break;
+	case Object::Terrain::BACKDROP: return new Object::Terrain::Backdrop(shape_copy, data, offset); break;
 	case Object::Terrain::BACKGROUND_3:
 	case Object::Terrain::BACKGROUND_2:
-	case Object::Terrain::BACKGROUND_1: return new Object::Terrain::Background(shape, data, layer); break;
-	case Object::Terrain::FOREGROUND: return new Object::Terrain::Foreground(shape, data); break;
-	default: return new Object::Terrain::Formerground(shape, data);
+	case Object::Terrain::BACKGROUND_1: return new Object::Terrain::Background(shape_copy, data, layer, offset); break;
+	case Object::Terrain::FOREGROUND: return new Object::Terrain::Foreground(shape_copy, data, offset); break;
+	default: return new Object::Terrain::Formerground(shape_copy, data, offset);
 	}
 }
 
@@ -148,7 +159,7 @@ void DataClass::Data_Terrain::writeObjectData(std::ofstream& object_file)
 
 void DataClass::Data_Terrain::readObjectData(std::ifstream& object_file)
 {
-	shape = shapes[object_identifier[2]](object_file);
+	shape = readNewShape(object_file, object_identifier[2]);
 	object_file.read((char*)&data, sizeof(Object::ObjectData));
 	if (testIfBackground())
 		object_file.read((char*)&layer, sizeof(uint8_t));
@@ -172,11 +183,16 @@ DataClass::Data_Terrain::Data_Terrain(uint8_t layer_identifier, uint8_t shape_id
 
 void DataClass::Data_Terrain::info(Editor::ObjectInfo& object_info)
 {
+	// Get the Number of Children to Display
 	static int num_of_children;
 	if (group_object == nullptr)
 		num_of_children = 0;
 	else
 		num_of_children = group_object->getNumberOfChildren();
+
+	// Get the Group Layer to Display
+	static unsigned int group_layer2;
+	group_layer2 = group_layer;
 
 	// Map to Shape Names
 	static std::string shape_name_map[] = { "Rectangle", "Trapezoid", "Triangle", "Circle", "Polygon" };
@@ -187,9 +203,9 @@ void DataClass::Data_Terrain::info(Editor::ObjectInfo& object_info)
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addTextValue("Shape: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &shape_name_map[shape->shape], glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &data.position.x, &data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
-	object_info.addSingleValue("Num of Children: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &num_of_children, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
-	object_info.addSingleValue("Group Layer: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &group_layer, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 	shape->selectInfo(object_info);
+	object_info.addColorValue("Color: ", glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), &data.colors, true);
+	object_info.addSingleValue("Group Layer: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &group_layer2, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 	object_info.addSingleValue("Index: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object_index, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 }
 
@@ -203,7 +219,7 @@ DataClass::Data_Object* DataClass::Data_Terrain::makeCopy()
 void DataClass::Data_Terrain::generateInitialValues(glm::vec2& position, glm::vec4 color, Shape::Shape* new_shape)
 {
 	data.position = position;
-	data.zpos = -1.0f;
+	data.zpos = -2.0f;
 	data.colors = color;
 	data.normals = glm::vec3(0.0f, 0.0f, 1.0f);
 	data.texture_name = 0;

@@ -23,7 +23,7 @@ namespace Object::Physics::Rigid
 		int number_of_sides = 0;
 
 		// Initialize Object
-		RigidPolygon(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_);
+		RigidPolygon(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, glm::vec2& offset);
 
 		// Creates Vertices and Lines For Collision Detection
 		void prepCollisions();

@@ -10,7 +10,7 @@
 // Sorting Algorithms
 #include "Source/Algorithms/Sorting/SortingAlgorithms.h"
 
-Object::Physics::Rigid::RigidRectangle::RigidRectangle(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_) : RigidBody(uuid_, data_, rigid_, shape_, 120)
+Object::Physics::Rigid::RigidRectangle::RigidRectangle(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, glm::vec2& offset) : RigidBody(uuid_, data_, rigid_, shape_, 120, offset)
 {
 	// Store Object Type
 	type = PHYSICS_TYPES::TYPE_RECTANGLE;

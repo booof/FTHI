@@ -62,6 +62,15 @@ namespace Editor
 		RESIZING
 	};
 
+	// The List of Selector Highlight States
+	enum SelectedHighlight : uint8_t
+	{
+		SELECTABLE,
+		PREVIOUS_SELECTION,
+		INVALID_SELECTION,
+		ADD_CHILDREN
+	};
+
 	// A Struct for a Pointer to Limb Attatched to Currently Selected Object
 	struct ConnectedLimb
 	{
@@ -530,6 +539,9 @@ namespace Editor
 		// Selector Data of Object
 		std::vector<Selected_Object*> selected_objects;
 
+		// List of Previously Selected Objects
+		std::vector<DataClass::Data_Object*> previously_selected;
+
 		// Temp Position
 		glm::vec2 temp_position;
 
@@ -546,8 +558,30 @@ namespace Editor
 		ConnectedLimb* connected_limbs = nullptr;
 		int connected_limbs_count = 0;
 
+		// The Offset to Make Object Into Relative
+		glm::vec2 relative_offset = glm::vec2(0.0f, 0.0f);
+
+		// Global Positions for All 3 Possible Positions
+		glm::vec2* first_position_global = nullptr;
+		glm::vec2* second_position_global = nullptr;
+		glm::vec2* third_position_global = nullptr;
+
+		// Relative Positions for All 3 Possible Positions
+		glm::vec2 first_position_relative = glm::vec2(0.0f, 0.0f);
+		glm::vec2 second_position_relative = glm::vec2(0.0f, 0.0f);
+		glm::vec2 third_position_relative = glm::vec2(0.0f, 0.0f);
+
+		// Look-Up Table of Highlight Colors
+		glm::vec3 highlight_colors[4] = { glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 8.0f, 0.0f), glm::vec3(0.8f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.8f) };
+
 		// Initialize Selector for Object
 		void initializeSelector();
+
+		// Edit the Positions in the Object Info
+		void editInfoPositions(DataClass::Data_Object* data_object);
+
+		// Update the Object Info
+		void updateInfoPositions();
 
 
 		// The Following Functions Store Object Vertices and Data
@@ -606,6 +640,9 @@ namespace Editor
 
 		// Store Data for Light Objects
 		Selected_Object* storeSelectorDataLights(DataClass::Data_Object* data_object);
+
+		// Allocate Shader Data for Light Objects
+		void allocateSelectorShaderDataLights(DataClass::Data_Object* data_object);
 
 		// Store Shader Data of Light
 		void storeSelectorShaderDataLights(DataClass::Data_Object* data_object);
@@ -672,6 +709,9 @@ namespace Editor
 
 		// Sets the Values of the Temporary Connection Positions
 		void setTempConnectionPos(glm::vec2& left, glm::vec2& right);
+
+		// Add Unselectable Objects Recursively
+		void addUnselectableRecursiveHelper(DataClass::Data_Object* data_object);
 
 		// Add a Child Object
 		void addChild();
@@ -766,7 +806,7 @@ namespace Editor
 		Selector();
 
 		// Activate the Highlighter for Selector
-		void activateHighlighter(glm::vec2 offset);
+		void activateHighlighter(glm::vec2 offset, SelectedHighlight mode);
 
 		// Update Object
 		void updateSelector();
@@ -827,6 +867,18 @@ namespace Editor
 
 		// Clear Complex Parent of Selected Object
 		void clearOnlyOneComplexParent();
+
+		// Makes all Previously Selected Objects Selectable
+		void makeSelectable();
+
+		// External Function to Add an Unselectable Object
+		void addUnselectable(DataClass::Data_Object* data_object);
+
+		// Add Unselectable Objects Recursively
+		void addUnselectableRecursive(DataClass::Data_Object* data_object);
+
+		// Delete All Selected Objects
+		void deleteSelectedObjects();
 	};
 }
 

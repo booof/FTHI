@@ -91,5 +91,16 @@ void Shape::Triangle::updateSelectedPosition(float deltaX, float deltaY)
 	position3.y += deltaY;
 }
 
+void Shape::Triangle::setInfoPointers(int& index2, int& index3, glm::vec2** position2, glm::vec2** position3)
+{
+	// Match Position Pointers
+	*position2 = &this->position2;
+	*position3 = &this->position3;
+
+	// Positions 2 and 3 are at Indicies 4 and 5 Respectively
+	index2 = 4;
+	index3 = 5;
+}
+
 #endif
 

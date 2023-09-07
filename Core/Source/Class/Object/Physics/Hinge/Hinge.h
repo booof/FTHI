@@ -124,7 +124,7 @@ namespace Object::Physics::Hinge
 		int number_of_children;
 
 		// Initialize Object
-		Hinge(uint32_t& uuid_, HingeData& data_, std::string& file_name_);
+		Hinge(uint32_t& uuid_, HingeData& data_, std::string& file_name_, glm::vec2& offset);
 
 		// Delete Object
 		~Hinge();

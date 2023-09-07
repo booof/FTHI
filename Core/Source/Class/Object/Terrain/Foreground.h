@@ -13,7 +13,7 @@ public:
 	int test_var = 1;
 
 	// Initialize Object
-	Foreground(Shape::Shape* shape_, ObjectData data_) : TerrainBase(shape_, data_) 
+	Foreground(Shape::Shape* shape_, ObjectData data_, glm::vec2& offset) : TerrainBase(shape_, data_, offset)
 	{
 		layer = FOREGROUND;
 	}

@@ -13,6 +13,9 @@
 
 Editor::ObjectInfo::ObjectInfo()
 {
+	if (Source::Algorithms::Common::readErrorLog())
+		std::cout << "l\n";
+
 	// Set Initial Values
 	type_text_position = glm::vec2(0.0f, 0.0f);
 	first_text_position = glm::vec2(0.0f, 0.0f);
@@ -50,6 +53,29 @@ Editor::ObjectInfo::ObjectInfo()
 	// Unbind Vertex Object
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+	// Set Color Value Count to 0
+	TextColor::resetColorCount();
+
+	// Generate the Text Color Vertex Objects
+	glGenVertexArrays(1, &TextColor::VAO);
+	glGenBuffers(1, &TextColor::VBO);
+
+	// Bind Text Color Vertex Objects
+	glBindVertexArray(TextColor::VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, TextColor::VBO);
+
+	// Enable Position Vertices
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(0));
+	glEnableVertexAttribArray(0);
+
+	// Enable Color Vertices
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(3 * sizeof(GL_FLOAT)));
+	glEnableVertexAttribArray(1);
+
+	// Unbind Vertex Object
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 void Editor::ObjectInfo::drawInfo()
@@ -61,6 +87,8 @@ void Editor::ObjectInfo::drawInfo()
 	// If Should Restructure Flag is True, Determine How the Layout Should be Established
 	if (should_restructure)
 	{
+		//std::cout << "should restructure\n";
+
 		// Determine Size of Text
 		max_width = MAX_TEXT_SIZE * Global::editor_options->option_object_info_max_width_percent;
 		max_height = DEFAULT_TEXT_HEIGHT * Global::editor_options->option_object_info_text_size_percent;
@@ -94,6 +122,9 @@ void Editor::ObjectInfo::drawInfo()
 		// Set Position of Text
 		type_text_position = glm::vec2(89.5f - (max_text_size + type_size) * 0.5f, 49.9f - 32.0f * type_scale);
 		first_text_position = glm::vec2((90.0f - max_text_size), (49.9f - type_height_offset));
+
+		// Generate the Color Vertices
+		generateColorVertices();
 
 		// Disable Flag
 		should_restructure = false;
@@ -223,6 +254,49 @@ void Editor::ObjectInfo::editBooleanValue(int index, bool* value)
 	object.setValue(value);
 }
 
+void Editor::ObjectInfo::addColorValue(std::string identifier, glm::vec4 identifier_color, glm::vec4* value, bool generate)
+{
+	// Generate and Store Text Object
+	text_objects.push_back(new TextColor(identifier, identifier_color, value));
+
+	// If Generate is Set, Generate Vertices for All Instances
+	if (generate)
+	{
+		// Bind Vertex Object
+		glBindVertexArray(TextColor::VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, TextColor::VBO);
+
+		// Allocate Vertex Data
+		// Each Color Has 2 Rectangles; 1 for the Color, and 1 for
+		// a Black Outline. Colors Have Same Transparency as Value
+		// and Width the Current Width of the Object. All Colors
+		// Will Be at 0,0 and Dynamically Modified Via a Model Matrix
+		glBufferData(GL_ARRAY_BUFFER, 84 * sizeof(GL_FLOAT) * TextColor::getColorCount(), 0, GL_STATIC_DRAW);
+
+		// Vertices are Generated Along With All Other Objects
+
+		// Unbind Vertex Object
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+
+	// Enable Flag
+	should_restructure = true;
+}
+
+void Editor::ObjectInfo::editColorValue(int index, glm::vec4* value)
+{
+	// Return if Index is Greater or Equal to Size of Text Array
+	if (index > text_objects.size())
+		return;
+
+	// Get Reference to Object
+	TextColor& object = *static_cast<TextColor*>(text_objects[index]);
+
+	// Store Data
+	object.setValue(value);
+}
+
 void Editor::ObjectInfo::removeValueAtIndex(int index)
 {
 	// If Index is Out of Range, Disregard
@@ -250,6 +324,56 @@ void Editor::ObjectInfo::clearAll()
 
 	// Reset Type String
 	type_text = "";
+
+	// Set Color Value Count to 0
+	TextColor::resetColorCount();
+}
+
+void Editor::ObjectInfo::generateColorVertices()
+{
+	// Bind Vertex Object
+	glBindVertexArray(TextColor::VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, TextColor::VBO);
+
+	// Iterate Through Each Color Object and Generate Their Vertices
+	int offset = 0, triangle_offset = 0, text_width;
+	float width = 0.0f, height = 0.0f, x = 0.0f, y = 0.0f;
+	float vertices[42];
+	for (TextMaster* instance : text_objects)
+	{
+		if (instance->getTextType() == TEXT_OBJECTS::TEXT_COLOR)
+		{
+			// Get Reference to Instance
+			TextColor* color_instance = static_cast<TextColor*>(instance);
+
+			// Store the Offset
+			color_instance->setVAOOffset(triangle_offset);
+			triangle_offset += 12;
+
+			// Calculate the Width and Height of the Boxes
+			text_width = color_instance->getTextSize(max_width);
+			width = (max_width - text_width) * 0.9f;
+			height = (color_instance->returnScale() / 0.143f) * 3.5;
+
+			// Calculate the X/Y-Position of the Boxes
+			x = first_text_position.x + text_width * 1.3 + width * 0.5f - 1;
+			y = color_instance->returnScale() * 10;
+
+			// Set Black Outline
+			Vertices::Rectangle::genRectColor(x, y, -0.7f, width, height, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), vertices);
+			glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(GL_FLOAT), sizeof(vertices), vertices);
+			offset += 42;
+
+			// Set Color Outline
+			Vertices::Rectangle::genRectColor(x, y, -0.6f, width - 0.4f, height - 0.4f, color_instance->getColor(), vertices);
+			glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(GL_FLOAT), sizeof(vertices), vertices);
+			offset += 42;
+		}
+	}
+
+	// Unbind Vertex Object
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 void Editor::ObjectInfo::forceResize()
@@ -291,6 +415,11 @@ Editor::ObjectInfo::TextString::TextString(std::string identifier_, glm::vec4 id
 	identifier_color = identifier_color_;
 	value_string = value_;
 	color = value_color_;
+}
+
+Editor::ObjectInfo::TEXT_OBJECTS Editor::ObjectInfo::TextString::getTextType()
+{
+	return TEXT_OBJECTS::TEXT_STRING;
 }
 
 void Editor::ObjectInfo::TextString::blitzText(float x, float& y, float max_height)
@@ -335,6 +464,11 @@ Editor::ObjectInfo::TextSingleValue::TextSingleValue(std::string identifier_, gl
 	setValue(value_);
 }
 
+Editor::ObjectInfo::TEXT_OBJECTS Editor::ObjectInfo::TextSingleValue::getTextType()
+{
+	return TEXT_OBJECTS::TEXT_SINGLE_VALUE;
+}
+
 void Editor::ObjectInfo::TextSingleValue::blitzText(float x, float& y, float max_height)
 {
 	// Render Text
@@ -355,7 +489,6 @@ float Editor::ObjectInfo::TextSingleValue::getTextSize(float max_width)
 		value_string = value_stream.str();
 		//value_string = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*static_cast<float*>(value)));
 	}
-
 
 	// Get Size of Text
 	text_size = Source::Fonts::getTextSize(identifier + value_string, text_scale);
@@ -392,6 +525,11 @@ Editor::ObjectInfo::TextDoubleValue::TextDoubleValue(std::string identifier_, gl
 
 	// Set Values
 	setValues(value1_, value2_);
+}
+
+Editor::ObjectInfo::TEXT_OBJECTS Editor::ObjectInfo::TextDoubleValue::getTextType()
+{
+	return TEXT_OBJECTS::TEXT_DOUBLE_VALUE;
 }
 
 void Editor::ObjectInfo::TextDoubleValue::blitzText(float x, float& y, float max_height)
@@ -454,6 +592,11 @@ Editor::ObjectInfo::TextBoolean::TextBoolean(std::string identifier_, glm::vec4 
 	color = value_color_;
 }
 
+Editor::ObjectInfo::TEXT_OBJECTS Editor::ObjectInfo::TextBoolean::getTextType()
+{
+	return TEXT_OBJECTS::TEXT_BOOL;
+}
+
 void Editor::ObjectInfo::TextBoolean::blitzText(float x, float& y, float max_height)
 {
 	// Render Text
@@ -489,3 +632,89 @@ void Editor::ObjectInfo::TextBoolean::setValue(bool* value_)
 	// Store Value
 	value = value_;
 }
+
+Editor::ObjectInfo::TextColor::TextColor(std::string identifier_, glm::vec4 identifier_color_, glm::vec4* value_)
+{
+	// Store Values
+	identifier = identifier_;
+	identifier_color = identifier_color_;
+	value = value_;
+
+	// Increment Color Count
+	color_count++;
+}
+
+void Editor::ObjectInfo::TextColor::blitzText(float x, float& y, float max_height)
+{
+	// Render Text
+	y -= returnHeightOffset(max_height);
+	x = Source::Fonts::renderText(identifier, x, y, text_scale, identifier_color, true);
+
+	// Generate Model Matrix
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, y, 0.0f));
+
+	// Render Color
+	Global::colorShaderStatic.Use();
+	glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(model));
+	glUniform1i(Global::staticLocColor, 1);
+	glBindVertexArray(VAO);
+	glDrawArrays(GL_TRIANGLES, vao_offset, 12);
+	glBindVertexArray(0);
+	glUniform1i(Global::staticLocColor, 0);
+	Global::fontShader.Use();
+}
+
+float Editor::ObjectInfo::TextColor::getTextSize(float max_width)
+{
+	// Get Size of Identifier
+	text_size = Source::Fonts::getTextSize(identifier, text_scale);
+
+	// Clamp Size and Scale, If Needed
+	if (text_size > max_width)
+	{
+		text_scale = (max_width * text_scale) / text_size;
+		text_size = max_width;
+	}
+
+	// Return Size of Text
+	return text_size;
+}
+
+void Editor::ObjectInfo::TextColor::setValue(glm::vec4* value_)
+{
+	value = value_;
+}
+
+bool Editor::ObjectInfo::TextColor::containsColor()
+{
+	return color_count == 0;
+}
+
+void Editor::ObjectInfo::TextColor::resetColorCount()
+{
+	color_count = 0;
+}
+
+uint8_t Editor::ObjectInfo::TextColor::getColorCount()
+{
+	return color_count;
+}
+
+glm::vec4& Editor::ObjectInfo::TextColor::getColor()
+{
+	return *value;
+}
+
+void Editor::ObjectInfo::TextColor::setVAOOffset(int new_offset)
+{
+	vao_offset = new_offset;
+}
+
+Editor::ObjectInfo::TEXT_OBJECTS Editor::ObjectInfo::TextColor::getTextType()
+{
+	return TEXT_OBJECTS::TEXT_COLOR;
+}
+
+uint8_t Editor::ObjectInfo::TextColor::color_count;
+GLuint Editor::ObjectInfo::TextColor::VAO;
+GLuint Editor::ObjectInfo::TextColor::VBO;

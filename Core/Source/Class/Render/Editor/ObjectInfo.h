@@ -13,6 +13,16 @@ namespace Editor
 	// The Object Info Class
 	class ObjectInfo
 	{
+		// The Different Types of Text Objects
+		enum class TEXT_OBJECTS : uint8_t
+		{
+			TEXT_STRING = 1,
+			TEXT_SINGLE_VALUE,
+			TEXT_DOUBLE_VALUE,
+			TEXT_BOOL,
+			TEXT_COLOR
+		};
+
 		// Master Class for Text Objects
 		class TextMaster
 		{
@@ -35,6 +45,9 @@ namespace Editor
 			bool interpret_as_int = false;
 
 		public:
+
+			// Returns the Type of Text Object
+			virtual TEXT_OBJECTS getTextType() = 0;
 
 			// Blitz Text Function
 			virtual void blitzText(float x, float& y, float max_height) = 0;
@@ -72,6 +85,9 @@ namespace Editor
 			// Constructor
 			TextString(std::string identifier_, glm::vec4 identifier_color_, std::string* value_, glm::vec4 value_color_);
 
+			// Returns the Type of Text Object
+			TEXT_OBJECTS getTextType();
+
 			// Blitz Text
 			void blitzText(float x, float& y, float max_height);
 
@@ -98,6 +114,9 @@ namespace Editor
 
 			// Constructor
 			TextSingleValue(std::string identifier_, glm::vec4 identifier_color_, void* value_, glm::vec4 value_color_, bool is_int);
+
+			// Returns the Type of Text Object
+			TEXT_OBJECTS getTextType();
 
 			// Blitz Text
 			void blitzText(float x, float& y, float max_height);
@@ -145,6 +164,9 @@ namespace Editor
 			TextDoubleValue(std::string identifier_, glm::vec4 identifier_color_, std::string secondary_identifier_1_, glm::vec4 secondary_color_1_,
 				std::string secondary_identifier_2_, glm::vec4 secondary_color_2_, void* value1_, void* value2_, glm::vec4 value_color_, bool is_int);
 
+			// Returns the Type of Text Object
+			TEXT_OBJECTS getTextType();
+
 			// Blitz Text
 			void blitzText(float x, float& y, float max_height);
 
@@ -172,6 +194,9 @@ namespace Editor
 			// Constructor
 			TextBoolean(std::string identifier_, glm::vec4 identifier_color_, bool* value_, glm::vec4 value_color_);
 
+			// Returns the Type of Text Object
+			TEXT_OBJECTS getTextType();
+
 			// Blitz Text
 			void blitzText(float x, float& y, float max_height);
 
@@ -185,11 +210,49 @@ namespace Editor
 		// Class for Color Values
 		class TextColor : public TextMaster
 		{
-			// Colors
-			glm::vec4* color_value;
+			// The Amount of Color Values Loaded
+			static uint8_t color_count;
 
-			// Vertex Object
-			GLuint VAO, VBO;
+			// Colors
+			glm::vec4* value;
+
+			// Offset in Vertex Array
+			int vao_offset;
+
+		public:
+
+			// Vertex Object for All Instances Combined
+			static GLuint VAO, VBO;
+
+			// Constructor
+			TextColor(std::string identifier_, glm::vec4 identifier_color_, glm::vec4* value_);
+
+			// Returns the Type of Text Object
+			TEXT_OBJECTS getTextType();
+
+			// Blitz Text
+			void blitzText(float x, float& y, float max_height);
+
+			// Get Size of Text
+			float getTextSize(float max_width);
+
+			// Set Value
+			void setValue(glm::vec4* value_);
+
+			// Returns True if There is At Least 1 Color Value
+			static bool containsColor();
+
+			// Reset the Color Count
+			static void resetColorCount();
+
+			// Get the Color Count
+			static uint8_t getColorCount();
+
+			// Returns the Color
+			glm::vec4& getColor();
+
+			// Set the VAO Offset
+			void setVAOOffset(int new_offset);
 		};
 
 		// Vertex Object
@@ -234,6 +297,9 @@ namespace Editor
 		// Max Scale
 		float max_scale = 1.0;
 
+		// Generate Color Vertices
+		void generateColorVertices();
+
 	public:
 
 		// Determines if Object is Active
@@ -272,6 +338,12 @@ namespace Editor
 
 		// Edit Boolean Value
 		void editBooleanValue(int index, bool* value);
+
+		// Add Color Value
+		void addColorValue(std::string identifier, glm::vec4 identifier_color, glm::vec4* value, bool generate);
+
+		// Edit Color Value
+		void editColorValue(int index, glm::vec4* value);
 
 		// Remove Value
 		void removeValueAtIndex(int index);

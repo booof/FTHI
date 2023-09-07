@@ -54,7 +54,7 @@ short Object::Physics::Rigid::RigidTriangle::find_max(float x, float y, float z)
 	return 2;
 }
 
-Object::Physics::Rigid::RigidTriangle::RigidTriangle(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_) : RigidBody(uuid_, data_, rigid_, shape_, 60)
+Object::Physics::Rigid::RigidTriangle::RigidTriangle(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, glm::vec2& offset) : RigidBody(uuid_, data_, rigid_, shape_, 60, offset)
 {
 	// Store Object Type
 	type = PHYSICS_TYPES::TYPE_TRIANGLE;
@@ -70,6 +70,7 @@ Object::Physics::Rigid::RigidTriangle::RigidTriangle(uint32_t& uuid_, ObjectData
 
 	// Store Initial Coordinates
 	Shape::Triangle& temp_tri = *static_cast<Shape::Triangle*>(shape);
+	temp_tri.updateSelectedPosition(offset.x, offset.y);
 	coords1 = data.position;
 	coords2 = *temp_tri.pointerToSecondPosition();
 	coords3 = *temp_tri.pointerToThirdPosition();

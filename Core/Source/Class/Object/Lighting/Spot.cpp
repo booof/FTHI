@@ -10,11 +10,12 @@
 // Globals
 #include "Globals.h"
 
-Object::Light::Spot::Spot::Spot(SpotData& spot_, LightData& light_)
+Object::Light::Spot::Spot::Spot(SpotData& spot_, LightData& light_, glm::vec2& offset)
 {
 	// Store Structures
 	spot = std::move(spot_);
 	data = std::move(light_);
+	data.position += offset;
 	data.layer = 4;
 	spot.direction.w = 1.0f;
 
@@ -53,6 +54,13 @@ Object::Light::Spot::Spot::Spot(SpotData& spot_, LightData& light_)
 
 void Object::Light::Spot::Spot::loadLight()
 {
+	// Generate Model Matrix
+	glm::vec2 normalized_direction = glm::normalize(glm::vec2(spot.direction.x, spot.direction.y));
+	float angle = atan(normalized_direction.y / normalized_direction.x) - 1.571f;
+	if (normalized_direction.x < 0) { angle -= 3.142f; }
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
+	model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
+
 	// Add Position Data
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, buffer_offset, 16, glm::value_ptr(glm::vec4(data.position.x, data.position.y, 2.0f, 0.0f)));
 
@@ -99,16 +107,9 @@ void Object::Light::Spot::Spot::initializeVisualizer()
 	// Save Texture
 	//texture = Visual_Textures.find("SpotLight.png")->second;
 
-	// Generate Model Matrix
-	glm::vec2 normalized_direction = glm::normalize(glm::vec2(spot.direction.x, spot.direction.y));
-	float angle = atan(normalized_direction.y / normalized_direction.x) - 1.571f;
-	if (normalized_direction.x < 0) { angle -= 3.142f; }
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
-	model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-
 	// Generate Vertices
 	float vertices[30];
-	Vertices::Rectangle::genRectTexture(0.0f, -2.0f, -0.9f, 2.0f, 4.0f, vertices);
+	Vertices::Rectangle::genRectTexture(0.0f, -2.0f, -1.5f, 2.0f, 4.0f, vertices);
 
 	// Generate Vertex Objects
 	glGenVertexArrays(1, &VAO);
@@ -146,9 +147,14 @@ bool Object::Light::Spot::Spot::testMouseCollisions(float x, float y)
 
 void Object::Light::Spot::Spot::updateSelectedPosition(float deltaX, float deltaY)
 {
+	// Update Position
 	data.position.x += deltaX;
 	data.position.y += deltaY;
-	initializeVisualizer();
+
+	// Update Shader Data
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::SpotBuffer);
+	loadLight();
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 glm::vec2 Object::Light::Spot::Spot::returnPosition()
@@ -158,9 +164,9 @@ glm::vec2 Object::Light::Spot::Spot::returnPosition()
 
 #endif
 
-Object::Object* DataClass::Data_Spot::genObject()
+Object::Object* DataClass::Data_Spot::genObject(glm::vec2& offset)
 {
-	return new Object::Light::Spot::Spot(spot, light_data);
+	return new Object::Light::Spot::Spot(spot, light_data, offset);
 }
 
 void DataClass::Data_Spot::writeObjectData(std::ofstream& object_file)
@@ -191,6 +197,8 @@ void DataClass::Data_Spot::info(Editor::ObjectInfo& object_info)
 	object_info.setObjectType("Spot Light", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
 	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &light_data.position.x, &light_data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	infoColors(object_info);
+	object_info.addSingleValue("Index: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object_index, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 }
 
 DataClass::Data_Object* DataClass::Data_Spot::makeCopy()
@@ -218,5 +226,15 @@ void DataClass::Data_Spot::generateInitialValues(glm::vec2& position)
 	spot.angle2 = 0.5f;
 	spot.linear = DEFAULT_LINEAR;
 	spot.quadratic = DEFAULT_QUADRATIC;
+}
+
+void DataClass::Data_Spot::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &light_data.position;
+	index1 = 2;
+
+	// Others are Not Important
+	position23Null(index2, index3, position2, position3);
 }
 

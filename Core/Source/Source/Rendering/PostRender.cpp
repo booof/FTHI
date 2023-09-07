@@ -20,6 +20,7 @@ void Source::Rendering::Post::postRender()
 	Global::cursor_Move = false;
 	Global::reload_all = false;
 	Global::DoubleClick = false;
+	Global::reload_lights = false;
 
 	glFlush();
 

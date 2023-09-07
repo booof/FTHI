@@ -52,7 +52,7 @@ namespace Object::Mask
 		float half_height;
 
 		// Initialize Slope
-		Slope(SlopeData& data_);
+		Slope(SlopeData& data_, glm::vec2& offset);
 
 #ifdef EDITOR
 

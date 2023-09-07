@@ -132,6 +132,11 @@ Editor::Selector::Selector()
 	// Store Group Selector Resizing Pointer
 	Selected_Object::group_selector = &group_selector;
 
+	// Null-Initialize Global Position Pointers
+	first_position_global = &Global::dummy_vec2;
+	second_position_global = &Global::dummy_vec2;
+	third_position_global = &Global::dummy_vec2;
+
 	// Set Selected Object Initial Values
 	Selected_Object::moving = false;
 	Selected_Object::resizing = false;
@@ -142,12 +147,12 @@ Editor::Selector::Selector()
 	Selected_Object::updateSelectedPositions = [this](DataClass::Data_Object* data_object, float deltaX, float deltaY)->void {updateSelectedPositions(data_object, deltaX, deltaY); };
 }
 
-void Editor::Selector::activateHighlighter(glm::vec2 offset)
+void Editor::Selector::activateHighlighter(glm::vec2 offset, SelectedHighlight mode)
 {
 	// Allocate Memory for Selector Vertices
 	allocateSelectorVertices(highlighted_object, highlighted_vertex_objects);
 
-	// Generate Selector Vertices
+	// Generate Selector Vertices 
 	genSelectorVertices(highlighted_object, highlighted_vertex_objects);
 
 	// Apply Offset, If Needed
@@ -156,6 +161,13 @@ void Editor::Selector::activateHighlighter(glm::vec2 offset)
 	// Bind Outline Vertex Objects
 	glBindVertexArray(highlighted_vertex_objects.outlineVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, highlighted_vertex_objects.outlineVBO);
+
+	// Apply the Highlighter Color, If it is Different
+	if (mode != SelectedHighlight::SELECTABLE)
+	{
+		for (int i = 3 * sizeof(GL_FLOAT), j = 0; j < 8; i += 7 * sizeof(GL_FLOAT), j++)
+			glBufferSubData(GL_ARRAY_BUFFER, i, 3 * sizeof(GL_FLOAT), glm::value_ptr(highlight_colors[mode]));
+	}
 
 	// Enable Position Vertices for Outline VAO
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GL_FLOAT), (void*)(0));
@@ -179,6 +191,9 @@ void Editor::Selector::updateSelector()
 	// If Editing, Edit Object
 	else if (editing)
 		editObject();
+
+	// Update Object Info
+	updateInfoPositions();
 }
 
 void Editor::Selector::blitzSelector()
@@ -315,14 +330,48 @@ void Editor::Selector::blitzSelector()
 	// Draw Visualizers for Groups
 	for (Selected_Object* selected_object : selected_objects)
 	{
-		// Determine Delta Pos, If Needed
-		//glm::vec2 delta_pos = glm::vec3(0.0f, 0.0f, 0.0f);
-		//if (selected_object->complex_root != nullptr)
-		//	delta_pos = glm::vec2(selected_object->complex_root->pointerToPosition()->x, selected_object->complex_root->pointerToPosition()->y);
-
 		// If This is a Complex Object, Draw As if From Complex Object
 		if (selected_object->data_object->getGroup() != nullptr && selected_object->data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
-			selected_object->data_object->drawSelectedGroupVisualizer(glm::vec2(*selected_object->object_x, *selected_object->object_y));
+		{
+			// If This Object Has a Nested Complex Parent, Draw to All Instances
+			if (selected_object->complex_root != nullptr)
+			{
+				// Determine the Real Object That Was Selected
+				for (Object::Object* object : selected_object->data_object->getObjects())
+				{
+					if (static_cast<Object::TempObject*>(object)->isOriginal())
+					{
+						// Determine the Offset of the Real Object
+						glm::vec2 offset = glm::vec2(*selected_object->object_x, *selected_object->object_y) - *object->pointerToPosition();
+
+						// Draw Connections To All Children
+						for (Object::Object* object : selected_object->data_object->getObjects())
+						{
+							glm::vec2 combined_offest = *object->pointerToPosition() + offset;
+							selected_object->data_object->drawSelectedGroupVisualizerOffset(combined_offest, combined_offest - selected_object->data_object->getPosition());
+						}
+
+						break;
+					}
+				}
+			}
+
+			// Else, Draw Only Connections For This Object
+			else
+				selected_object->data_object->drawSelectedGroupVisualizer(glm::vec2(*selected_object->object_x, *selected_object->object_y));
+
+			// If Object Has a Parent, Draw Parent Connection
+			if (selected_object->complex_root == nullptr)
+				selected_object->data_object->drawParentConnection();
+			else
+			{
+				// Get Delta Position of Selected Object
+				glm::vec2 delta_pos = *selected_object->complex_root->pointerToPosition();
+
+				// Draw Connection ONLY to Parent
+				static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelectedConnectionParentOnly(selected_object->data_object, delta_pos);
+			}
+		}
 
 		// For Children of Normal Group Objects, Draw Parent Connection
 		else if (selected_object->complex_root == nullptr)
@@ -338,7 +387,6 @@ void Editor::Selector::blitzSelector()
 		else
 		{
 			// Get Delta Position of Selected Object
-			//glm::vec2 delta_pos = glm::vec2(*selected_object->object_x, *selected_object->object_y) - *selected_object->complex_root->pointerToPosition();
 			glm::vec2 delta_pos = *selected_object->complex_root->pointerToPosition();
 
 			// Draw Connection for All Instances
@@ -398,11 +446,15 @@ void Editor::Selector::deselectObject()
 		delete selected_object;
 	selected_objects.clear();
 
+	// Make All Object Selectable Again
+	makeSelectable();
+
 	// Reset Some Variables
 	originated_from_level = false;
 	add_child_object = CHILD_OBJECT_TYPES::NONE;
 	add_child = false;
-	object_index = 0;
+	//object_index = 0;
+	moused_object = nullptr;
 
 	// Erase Data Objects
 	data_objects.clear();
@@ -488,7 +540,8 @@ void Editor::Selector::deselectNode(Selected_SpringMassNode* selected_object)
 	editing = false;
 	highlighting = false;
 	originated_from_level = false;
-	object_index = 0;
+	//object_index = 0;
+	moused_object = nullptr;
 	uuid = 0;
 
 	// Erase Data Objects
@@ -548,7 +601,8 @@ void Editor::Selector::deselectSpring(Selected_SpringMassSpring* selected_object
 	editing = false;
 	highlighting = false;
 	originated_from_level = false;
-	object_index = 0;
+	//object_index = 0;
+	moused_object = nullptr;
 	uuid = 0;
 
 	// Delete the Node Array
@@ -710,7 +764,8 @@ void Editor::Selector::clear()
 
 	// Reset Some Variables
 	originated_from_level = false;
-	object_index = 0;
+	//object_index = 0;
+	moused_object = nullptr;
 }
 
 void Editor::Selector::storeLimbPointers(int index, Object::Physics::Soft::Spring* limbs, int limbs_size)
@@ -763,13 +818,16 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 	if (origin_object.parent != nullptr)
 	{
 		Object::Object* root_parent = origin_object.parent;
-		while (root_parent->parent != nullptr)
-			root_parent = root_parent->parent;
-		if (root_parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+		while (root_parent != nullptr)
 		{
-			// Add Offset to Objects and Children
-			glm::vec2& offset = *root_parent->pointerToPosition();
-			data_object->updateSelectedPosition(offset.x, offset.y, false);
+			if (root_parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+			{
+				// Add Offset to Objects and Children
+				glm::vec2& offset = *root_parent->pointerToPosition();
+				data_object->updateSelectedPosition(offset.x, offset.y, false);
+				break;
+			}
+			root_parent = root_parent->parent;
 		}
 	}
 
@@ -779,19 +837,8 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 	if (only_one->getGroup() != nullptr && only_one->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
 		root_data_object = static_cast<Render::Objects::UnsavedComplex*>(only_one->getGroup())->getComplexParent();
 
-	// Object is Being Added to a Lower Object
-	if (root_object != nullptr)
-	{
-		// Remove Offset From Objects and Children
-		glm::vec2& offset = *root_object->pointerToPosition();
-		data_object->updateSelectedPosition(-offset.x, -offset.y, false);
-
-		// Remove Children From Level
-		level->removeMarkedChildrenFromList(data_object);
-	}
-
 	// Object is Being Added Directly
-	else if (root_data_object != nullptr)
+	if (root_data_object != nullptr)
 	{
 		// Remove Offset From Objects and Children
 		glm::vec2* offset = static_cast<Render::Objects::UnsavedComplex*>(root_data_object->getGroup())->getSelectedPosition();
@@ -803,8 +850,19 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 		level->removeMarkedChildrenFromList(data_object);
 	}
 
+	// Object is Being Added to a Lower Object
+	else if (root_object != nullptr)
+	{
+		// Remove Offset From Objects and Children
+		glm::vec2& offset = *root_object->pointerToPosition();
+		data_object->updateSelectedPosition(-offset.x, -offset.y, true);
+
+		// Remove Children From Level
+		level->removeMarkedChildrenFromList(data_object);
+	}
+
 	// Add Child to Selected Object
-	only_one->addChildViaSelection(data_object, true);
+	only_one->addChildViaSelection(data_object, Render::Objects::MOVE_WITH_PARENT::MOVE_DISSABLED);
 
 	// Update Number of Children Object Has
 	only_one->getObjectIdentifier()[3] = only_one->getGroup()->getNumberOfChildren();
@@ -816,8 +874,11 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 	else
 		data_object->setParent(only_one);
 
+	// Make Data Object and Children Unselectable
+	addUnselectableRecursive(data_object);
+
 	// Set Group Layer
-	uint8_t new_layer = selected_objects.at(0)->data_object->getGroupLayer() + 1;
+	int8_t new_layer = selected_objects.at(0)->data_object->getGroupLayer() + 1;
 	data_object->setGroupLayer(new_layer);
 
 	// Set Group Layer Recursively
@@ -830,10 +891,10 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 	{
 		// Get List of Parent Instances
 		std::vector<Object::Object*> parents; 
-		if (root_object != nullptr)
-			parents = data_object->getParent()->getObjects();
-		else
+		if (root_data_object != nullptr)
 			parents = static_cast<Render::Objects::UnsavedComplex*>(root_data_object->getGroup())->getInstances();
+		else
+			parents = data_object->getParent()->getObjects();
 
 		// Allocate to Store All Object Instances and Their Offsets, No Children
 		Object::Object** object_list = new Object::Object*[parents.size()];
@@ -845,26 +906,53 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 		{
 			// Find the Parent's Complex Offset
 			Object::Object* parent_parent = parent;
-			while (parent_parent->parent != nullptr)
+			offsets[list_size] = glm::vec2(0.0f, 0.0f);
+			while (parent_parent != nullptr)
+			{
+				if (parent_parent->group_object != nullptr && parent_parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+				{
+					if (parent_parent->storage_type == Object::STORAGE_TYPES::NULL_TEMP)
+					{
+						if (parent_parent->data_object->getObjects().size() == 1)
+							offsets[list_size] += *static_cast<Object::TempObject*>(parent_parent)->pointerToSelectedPosition();
+
+						else
+						{
+							// Determine the Real Object That Was Selected
+							for (Object::Object* object : parent_parent->data_object->getObjects())
+							{
+								if (static_cast<Object::TempObject*>(object)->isOriginal())
+								{
+									// Determine the Offset of the Real Object
+									glm::vec2 offset = glm::vec2(*selected_objects.at(0)->object_x, *selected_objects.at(0)->object_y) - *object->pointerToPosition();
+									offsets[list_size] += parent_parent->returnPosition() + offset;
+
+									break;
+								}
+							}
+						}
+					}
+					else
+						offsets[list_size] += parent_parent->returnPosition();
+					break;
+				}
 				parent_parent = parent_parent->parent;
-			if (parent_parent->storage_type == Object::STORAGE_TYPES::NULL_TEMP)
-				offsets[list_size] = *static_cast<Object::TempObject*>(parent_parent)->pointerToSelectedPosition();
-			else
-				offsets[list_size] = parent_parent->returnPosition();
+			}
 
 			// If the Parent Was Assigned a New Group Object, Store it Here
 			parent->group_object = only_one->getGroup();
 
 			// Generate Object With Correct Offset
-			object_list[list_size] = data_object->generateObject();
+			object_list[list_size] = data_object->generateObject(offsets[list_size]);
 			object_list[list_size]->parent = parent;
-			*object_list[list_size]->pointerToPosition() += offsets[list_size];
 			list_size++;
 		}
 
 		// Generate Children for Each Object With the Correct Offset
+		data_object->enableSelectionNonRecursive();
 		for (int i = 0; i < parents.size(); i++)
-			data_object->genChildrenRecursive(&object_list, list_size, object_list[i], offsets[i]);
+			data_object->genChildrenRecursive(&object_list, list_size, object_list[i], offsets[i], this, true);
+		addUnselectableRecursive(data_object);
 
 		// Free the Offsets List
 		delete[] offsets;
@@ -915,9 +1003,12 @@ void Editor::Selector::clearOnlyOneComplexParent()
 		glm::vec2 offset = selected_object.complex_root->returnPosition();
 
 		// Update All Children of Object
-		std::vector<DataClass::Data_Object*>& children = selected_object.data_object->getGroup()->getChildren();
-		for (DataClass::Data_Object* child : children)
-			child->updateSelectedPosition(offset.x, offset.y, false);
+		if (data_object->getGroup() != nullptr)
+		{
+			std::vector<DataClass::Data_Object*>& children = data_object->getGroup()->getChildren();
+			for (DataClass::Data_Object* child : children)
+				child->updateSelectedPosition(offset.x, offset.y, false);
+		}
 
 		// Remove Children From Level
 		level->removeMarkedChildrenFromList(data_object);
@@ -940,7 +1031,9 @@ void Editor::Selector::clearOnlyOneComplexParent()
 		Object::Object** object_list = new Object::Object*[1];
 		int list_size = 0;
 		offset = glm::vec2(0.0f, 0.0f);
-		data_object->genChildrenRecursive(&object_list, list_size, temp_object, offset);
+		data_object->enableSelection();
+		data_object->genChildrenRecursive(&object_list, list_size, temp_object, offset, this, true);
+		addUnselectableRecursive(data_object);
 
 		// Add Children Into Level
 		level->incorperatNewObjects(object_list, list_size);
@@ -949,6 +1042,68 @@ void Editor::Selector::clearOnlyOneComplexParent()
 
 	// Clear the Complex Root
 	selected_object.complex_root = nullptr;
+}
+
+void Editor::Selector::makeSelectable()
+{
+	// Iterate Throught Previously Selected Objects and Make Them and Their Children Selectable
+	for (DataClass::Data_Object* data_object : previously_selected)
+		data_object->enableSelection();
+
+	// Clear the List
+	previously_selected.clear();
+}
+
+void Editor::Selector::addUnselectable(DataClass::Data_Object* data_object)
+{
+	// Mark Object as Being Unselectable
+	data_object->disableSelecting();
+
+	// Add Object to Previously Selected Objects
+	previously_selected.push_back(data_object);
+}
+
+void Editor::Selector::addUnselectableRecursive(DataClass::Data_Object* data_object)
+{
+	// Disable Selection for Object
+	addUnselectable(data_object);
+
+	// Check Children of Object
+	if (data_object->getGroup() != nullptr)
+	{
+		for (DataClass::Data_Object* child : data_object->getGroup()->getChildren())
+			addUnselectableRecursiveHelper(child);
+	}
+}
+
+void Editor::Selector::deleteSelectedObjects()
+{
+	// Selector is Not Loaded
+	active = false;
+	editing = false;
+	highlighting = false;
+
+	// Delete Selected Data Objects
+	for (DataClass::Data_Object* data_object : data_objects)
+		delete data_object;
+
+	// Delete Selected Objects
+	for (Selected_Object* selected_object : selected_objects)
+		delete selected_object;
+
+	// Clear the Vectors
+	data_objects.clear();
+	selected_objects.clear();
+
+	// Make All Object Selectable Again
+	makeSelectable();
+
+	// Reset Some Variables
+	originated_from_level = false;
+	add_child_object = CHILD_OBJECT_TYPES::NONE;
+	add_child = false;
+	//object_index = 0;
+	moused_object = nullptr;
 }
 
 void Editor::Selector::initializeSelector()
@@ -989,7 +1144,10 @@ void Editor::Selector::initializeSelector()
 
 			// Test if Root Parent of Group is A Complex Object. If So, Store Root Parent Object
 			if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+			{
+				// Store Complex Root Parent
 				selected_object->complex_root = static_cast<DataClass::Data_ComplexParent*>(root_parent)->getRootParent();
+			}
 		}
 
 		// Bind Object Vertex Objects
@@ -1065,6 +1223,55 @@ void Editor::Selector::initializeSelector()
 
 	// Determine the Boundaries of the Group Selector
 	updateGroupSelector();
+}
+
+void Editor::Selector::editInfoPositions(DataClass::Data_Object* data_object)
+{
+	// Indicies to be Replaced in the Object Info Object
+	int index1 = 0, index2 = 0, index3 = 0;
+
+	// Root Parent
+	DataClass::Data_Object* root_parent = data_object->getParent();
+
+	// Determine The Offset to Make Positions Relative
+	// If Not Complex, Offset Will be 0
+	relative_offset = glm::vec2(0.0f, 0.0f);
+	while (root_parent != nullptr)
+	{
+		if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+			relative_offset -= root_parent->getPosition();
+		root_parent = root_parent->getParent();
+	}
+
+	// Get Pointers and Indicies from Data Object
+	data_object->setInfoPointers(index1, index2, index3, &first_position_global, &second_position_global, &third_position_global);
+
+	// Replace First Position
+	if (index1 != -1)
+		info->editDoubleValue(index1 - 1, &first_position_relative.x, &first_position_relative.y);
+
+	// Replace Second Position
+	if (index2 != -1)
+		info->editDoubleValue(index2 - 1, &second_position_relative.x, &second_position_relative.y);
+
+	// Replace Third Position
+	if (index3 != -1)
+		info->editDoubleValue(index3 - 1, &third_position_relative.x, &third_position_relative.y);
+
+	// Set the Initial Values
+	updateInfoPositions();
+}
+
+void Editor::Selector::updateInfoPositions()
+{
+	// Update All Three Positions, Even if Only 1 is Used
+	// Should be More Efficient Than an If Statement
+	first_position_relative = *first_position_global + relative_offset;
+	second_position_relative = *second_position_global + relative_offset;
+	third_position_relative = *third_position_global + relative_offset;
+
+	// Update the Object Info Object
+	info->forceResize();
 }
 
 void Editor::Selector::allocateSelectorVertices(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
@@ -1400,6 +1607,9 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorData(DataClass
 	// Store Object Info
 	data_object->info(*info);
 
+	// Edit Object Info
+	editInfoPositions(data_object);
+
 	// Return Selected Object
 	return selected_object;
 }
@@ -1505,8 +1715,8 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object
 		glm::vec3 temp_color = object_identifier[1] == Object::Mask::FLOOR ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(1.0f, 0.0f, 1.0f);
 		float half_width = horizontal_line_data.width * 0.5f;
 		float object_vertices[] = {
-			0.0f - half_width, 0.0f, -1.0f,  temp_color.x, temp_color.y, temp_color.z, 1.0f,
-			0.0f + half_width, 0.0f, -1.0f,  temp_color.x, temp_color.y, temp_color.z, 1.0f };
+			0.0f - half_width, 0.0f, -1.6f,  temp_color.x, temp_color.y, temp_color.z, 1.0f,
+			0.0f + half_width, 0.0f, -1.6f,  temp_color.x, temp_color.y, temp_color.z, 1.0f };
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 56, object_vertices);
 
 		// Bind Outline VAO
@@ -1515,7 +1725,7 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, horizontal_line_data.width, 1.0f, outline_vertices);
+		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, horizontal_line_data.width, 1.0f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
@@ -1533,8 +1743,8 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object
 		// Generate and Store Object Vertices
 		glm::vec3 temp_color = object_identifier[1] == Object::Mask::FLOOR ? glm::vec3(0.0f, 1.0f, 1.0f) : glm::vec3(0.28f, 0.0f, 0.34f);
 		float object_vertices[] = {
-			0.0f,                                           0.0f,				                          	-1.0f,  temp_color.x, temp_color.y, temp_color.z, 1.0f,
-			slant_data.position2.x - slant_data.position.x, slant_data.position2.y - slant_data.position.y, -1.0f,  temp_color.x, temp_color.y, temp_color.z, 1.0f };
+			0.0f,                                           0.0f,				                          	-1.6f,  temp_color.x, temp_color.y, temp_color.z, 1.0f,
+			slant_data.position2.x - slant_data.position.x, slant_data.position2.y - slant_data.position.y, -1.6f,  temp_color.x, temp_color.y, temp_color.z, 1.0f };
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 56, object_vertices);
 
 		// Bind Outline VAO
@@ -1543,7 +1753,7 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Line::genLineHighlighter(0.0f, slant_data.position2.x - slant_data.position.x, 0.0f, slant_data.position2.y - slant_data.position.y, -0.9f, outline_vertices);
+		Vertices::Line::genLineHighlighter(0.0f, slant_data.position2.x - slant_data.position.x, 0.0f, slant_data.position2.y - slant_data.position.y, -1.1f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
@@ -1560,7 +1770,7 @@ void Editor::Selector::genSelectorVerticesHorizontalMasks(DataClass::Data_Object
 
 		// Generate and Store Object Vertices
 		float object_vertices[154];
-		Vertices::Line::genLineSimplifiedCurve1(0.0f, 0.0f, -1.0f, slope_data.height, slope_data.width, object_identifier[1] == Object::Mask::FLOOR ? glm::vec4(0.04f, 0.24f, 1.0f, 1.0f) : glm::vec4(0.0f, 0.0f, 0.45f, 1.0f), 11, object_vertices);
+		Vertices::Line::genLineSimplifiedCurve1(0.0f, 0.0f, -1.6f, slope_data.height, slope_data.width, object_identifier[1] == Object::Mask::FLOOR ? glm::vec4(0.04f, 0.24f, 1.0f, 1.0f) : glm::vec4(0.0f, 0.0f, 0.45f, 1.0f), 11, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 616, object_vertices);
 		vertex_objects.object_vertex_count = 22;
 
@@ -1758,8 +1968,8 @@ void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* 
 		glm::vec3 temp_color = object_identifier[1] == Object::Mask::LEFT_WALL ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(0.0f, 0.0f, 1.0f);
 		float half_height = vertical_line_data.height * 0.5f;
 		float object_vertices[] = {
-			0.0f, 0.0f + half_height, -1.0f, temp_color.x, temp_color.y, temp_color.z, 1.0f,
-			0.0f, 0.0f - half_height, -1.0f, temp_color.x, temp_color.y, temp_color.z, 1.0f };
+			0.0f, 0.0f + half_height, -1.6f, temp_color.x, temp_color.y, temp_color.z, 1.0f,
+			0.0f, 0.0f - half_height, -1.6f, temp_color.x, temp_color.y, temp_color.z, 1.0f };
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 56, object_vertices);
 
 		// Bind Outline VAO
@@ -1768,7 +1978,7 @@ void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* 
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, 1.0f, vertical_line_data.height, outline_vertices);
+		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, 1.0f, vertical_line_data.height, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
@@ -1789,7 +1999,7 @@ void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* 
 		float x_offset = (21.0f * curve_data.width - 25.0f) / 30.0f;
 		int8_t sign = (object_identifier[1] == 1) ? -1 : 1;
 		float object_vertices[154];
-		Vertices::Line::genLineSimplifiedCurve2(-curve_data.width / 2 * sign, -curve_data.height / 2, -3.0f, curve_data.width, slope, amplitude, x_offset, sign, object_identifier[1] == Object::Mask::LEFT_WALL ? glm::vec4(1.0f, 0.4f, 0.0f, 1.0f) : glm::vec4(0.04f, 0.0f, 0.27f, 1.0f), 11, object_vertices);
+		Vertices::Line::genLineSimplifiedCurve2(-curve_data.width / 2 * sign, -curve_data.height / 2, -1.7f, curve_data.width, slope, amplitude, x_offset, sign, object_identifier[1] == Object::Mask::LEFT_WALL ? glm::vec4(1.0f, 0.4f, 0.0f, 1.0f) : glm::vec4(0.04f, 0.0f, 0.27f, 1.0f), 11, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 616, object_vertices);
 
 		// Bind Outline VAO
@@ -1798,7 +2008,7 @@ void Editor::Selector::genSelectorVerticesVerticalMasks(DataClass::Data_Object* 
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, curve_data.width, curve_data.height, outline_vertices);
+		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, curve_data.width, curve_data.height, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
@@ -1922,7 +2132,7 @@ void Editor::Selector::genSelectorVerticesTriggerMasks(DataClass::Data_Object* d
 
 	// Generate and Store Object Vertices
 	float object_vertices[42];
-	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, trigger_data.width, trigger_data.height, glm::vec4(0.4f, 0.0f, 0.0f, 0.5f), object_vertices);
+	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.7f, trigger_data.width, trigger_data.height, glm::vec4(0.4f, 0.0f, 0.0f, 0.5f), object_vertices);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 	// Bind Outline VAO
@@ -1931,7 +2141,7 @@ void Editor::Selector::genSelectorVerticesTriggerMasks(DataClass::Data_Object* d
 
 	// Generate and Store Outline Vertices
 	float outline_vertices[56];
-	Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, trigger_data.width, trigger_data.height, outline_vertices);
+	Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, trigger_data.width, trigger_data.height, outline_vertices);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 	// Set Initial Position Model Matrix
@@ -2102,7 +2312,7 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 
 		// Generate and Store Object Vertices
 		float object_vertices[72];
-		Vertices::Rectangle::genRectObjectFull(glm::vec2(0.0f), -1.0f, *rectangle_data.pointerToWidth(), *rectangle_data.pointerToHeight(), object_data.colors, object_data.normals, object_vertices);
+		Vertices::Rectangle::genRectObjectFull(glm::vec2(0.0f), -2.0f, *rectangle_data.pointerToWidth(), *rectangle_data.pointerToHeight(), object_data.colors, object_data.normals, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 288, object_vertices);
 
 		// Bind Outline VAO
@@ -2111,7 +2321,7 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, *rectangle_data.pointerToWidth(), *rectangle_data.pointerToHeight(), outline_vertices);
+		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, *rectangle_data.pointerToWidth(), *rectangle_data.pointerToHeight(), outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		break;
@@ -2125,7 +2335,7 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 
 		// Generate and Store Object Vertices
 		float object_vertices[72];
-		Vertices::Trapezoid::genTrapObjectFull(glm::vec2(0.0f), -1.0f, *trapezoid_data.pointerToWidth(), *trapezoid_data.pointerToHeight(), *trapezoid_data.pointerToWidthOffset(), *trapezoid_data.pointerToHeightOffset(), object_data.colors, object_data.normals, object_vertices);
+		Vertices::Trapezoid::genTrapObjectFull(glm::vec2(0.0f), -2.0f, *trapezoid_data.pointerToWidth(), *trapezoid_data.pointerToHeight(), *trapezoid_data.pointerToWidthOffset(), *trapezoid_data.pointerToHeightOffset(), object_data.colors, object_data.normals, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 288, object_vertices);
 
 		// Bind Outline VAO
@@ -2134,7 +2344,7 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Trapezoid::genTrapHighlighter(0.0f, 0.0f, -0.9f, *trapezoid_data.pointerToWidth(), *trapezoid_data.pointerToHeight(), *trapezoid_data.pointerToWidthOffset(), *trapezoid_data.pointerToHeightOffset(), outline_vertices);
+		Vertices::Trapezoid::genTrapHighlighter(0.0f, 0.0f, -1.1f, *trapezoid_data.pointerToWidth(), *trapezoid_data.pointerToHeight(), *trapezoid_data.pointerToWidthOffset(), *trapezoid_data.pointerToHeightOffset(), outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		break;
@@ -2153,7 +2363,7 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 
 		// Generate and Store Object Vertices
 		float object_vertices[36];
-		Vertices::Triangle::genTriObjectFull(glm::vec2(0.0f), temp_coords2 - temp_coords1, temp_coords3 - temp_coords1, -1.0f, object_data.colors, object_data.normals, object_vertices);
+		Vertices::Triangle::genTriObjectFull(glm::vec2(0.0f), temp_coords2 - temp_coords1, temp_coords3 - temp_coords1, -2.0f, object_data.colors, object_data.normals, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 144, object_vertices);
 
 		// Bind Outline VAO
@@ -2162,7 +2372,7 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[42];
-		Vertices::Triangle::genTriHighlighter(glm::vec2(0.0f), temp_coords2 - temp_coords1, temp_coords3 - temp_coords1, -0.9f, outline_vertices);
+		Vertices::Triangle::genTriHighlighter(glm::vec2(0.0f), temp_coords2 - temp_coords1, temp_coords3 - temp_coords1, -1.1f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 168, outline_vertices);
 
 		break;
@@ -2176,7 +2386,7 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 
 		// Generate and Store Object Vertices
 		float object_vertices[720];
-		Vertices::Circle::genCircleObjectFull(glm::vec2(0.0f), -1.0f, *circle_data.pointerToRadius(), 20, object_data.colors, object_data.normals, object_vertices);
+		Vertices::Circle::genCircleObjectFull(glm::vec2(0.0f), -2.0f, *circle_data.pointerToRadius(), 20, object_data.colors, object_data.normals, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 2880, object_vertices);
 
 		// Bind Outline VAO
@@ -2185,7 +2395,7 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[280];
-		Vertices::Circle::genCircleHighlighter(0.0f, 0.0f, -0.9f, *circle_data.pointerToRadius(), 20, outline_vertices);
+		Vertices::Circle::genCircleHighlighter(0.0f, 0.0f, -1.1f, *circle_data.pointerToRadius(), 20, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 1120, outline_vertices);
 
 		break;
@@ -2200,7 +2410,7 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 		// Generate and Store Object Vertices
 		unsigned char number_of_sides = *polygon_data.pointerToNumberOfSides();
 		float* object_vertices = new float[(int)number_of_sides * 36];
-		Vertices::Circle::genCircleObjectFull(glm::vec2(0.0f), -1.0f, *polygon_data.pointerToRadius(), (int)number_of_sides, object_data.colors, object_data.normals, object_vertices);
+		Vertices::Circle::genCircleObjectFull(glm::vec2(0.0f), -2.0f, *polygon_data.pointerToRadius(), (int)number_of_sides, object_data.colors, object_data.normals, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, (GLsizeiptr)number_of_sides * 144, object_vertices);
 		delete[] object_vertices;
 
@@ -2210,7 +2420,7 @@ void Editor::Selector::genSelectorVerticesShapes(int index, DataClass::Data_Obje
 
 		// Generate and Store Outline Vertices
 		float* outline_vertices = new float[number_of_sides * 14];
-		Vertices::Circle::genCircleHighlighter(0.0f, 0.0f, -0.9f, *polygon_data.pointerToRadius(), number_of_sides, outline_vertices);
+		Vertices::Circle::genCircleHighlighter(0.0f, 0.0f, -1.1f, *polygon_data.pointerToRadius(), number_of_sides, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 56 * number_of_sides, outline_vertices);
 		delete[] outline_vertices;
 
@@ -2469,7 +2679,7 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 
 		// Generate and Store Object Vertices
 		float object_vertices[30];
-		Vertices::Line::genLineTexture(0.0f, directional_data.position2.x - light_data.position.x, 0.0f, directional_data.position2.y - light_data.position.y, -0.9f, 0.4f, object_vertices);
+		Vertices::Line::genLineTexture(0.0f, directional_data.position2.x - light_data.position.x, 0.0f, directional_data.position2.y - light_data.position.y, -1.5f, 0.4f, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 120, object_vertices);
 
 		// Bind Outline VAO
@@ -2478,7 +2688,7 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Line::genLineHighlighter(0.0f, directional_data.position2.x - light_data.position.x, 0.0f, directional_data.position2.y - light_data.position.y, -0.8f, outline_vertices);
+		Vertices::Line::genLineHighlighter(0.0f, directional_data.position2.x - light_data.position.x, 0.0f, directional_data.position2.y - light_data.position.y, -1.1f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		break;
@@ -2489,7 +2699,7 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 	{
 		// Generate and Store Object Vertices
 		float object_vertices[30];
-		Vertices::Rectangle::genRectTexture(0.0f, 0.0f, -0.9f, 2.0f, 3.0f, object_vertices);
+		Vertices::Rectangle::genRectTexture(0.0f, 0.0f, -1.5f, 2.0f, 3.0f, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 120, object_vertices);
 
 		// Bind Outline VAO
@@ -2498,7 +2708,7 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.8f, 2.0f, 3.0f, outline_vertices);
+		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, 2.0f, 3.0f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		break;
@@ -2509,7 +2719,7 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 	{
 		// Generate and Store Object Vertices
 		float object_vertices[30];
-		Vertices::Rectangle::genRectTexture(0.0f, 0.0f, -0.9f, 2.0f, 4.0f, object_vertices);
+		Vertices::Rectangle::genRectTexture(0.0f, 0.0f, -1.5f, 2.0f, 4.0f, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 120, object_vertices);
 
 		// Bind Outline VAO
@@ -2518,7 +2728,7 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.8f, 2.0f, 4.0f, outline_vertices);
+		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, 2.0f, 4.0f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		break;
@@ -2532,7 +2742,7 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 
 		// Generate and Store Object Vertices
 		float object_vertices[30];
-		Vertices::Line::genLineTexture(0.0f, beam_data.position2.x - light_data.position.x, 0.0f, beam_data.position2.y - light_data.position.y, -0.9f, 0.4f, object_vertices);
+		Vertices::Line::genLineTexture(0.0f, beam_data.position2.x - light_data.position.x, 0.0f, beam_data.position2.y - light_data.position.y, -1.5f, 0.4f, object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 120, object_vertices);
 
 		// Bind Outline VAO
@@ -2541,7 +2751,7 @@ void Editor::Selector::genSelectorVerticesLights(DataClass::Data_Object* data_ob
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Line::genLineHighlighter(0.0f, beam_data.position2.x - light_data.position.x, 0.0f, beam_data.position2.y - light_data.position.y, -0.8f, outline_vertices);
+		Vertices::Line::genLineHighlighter(0.0f, beam_data.position2.x - light_data.position.x, 0.0f, beam_data.position2.y - light_data.position.y, -1.1f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		break;
@@ -2572,6 +2782,9 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 	// Get Light Data
 	Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
 
+	// Determine the Number of Instances the Real Data Object Appears
+	int real_instance_count = data_object->getObjects().size();
+
 	// Parse Light Types
 	switch (data_object->getObjectIdentifier()[1])
 	{
@@ -2598,38 +2811,6 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 		// Store Texture
 		texture = Global::Visual_Textures.find("DirectionalLight.png")->second;
 
-		// Get Size of Directional Light Buffer
-		light_buffer_offset = level->returnDirectionalBufferSize();
-		int light_buffer_count = (light_buffer_offset - 16) / 96 + 1;
-
-		// Bind Buffers
-		glBindBuffer(GL_COPY_READ_BUFFER, Global::DirectionalBuffer);
-		glBindBuffer(GL_COPY_WRITE_BUFFER, copyBuffer);
-
-		// Allocate Memory for Copy Buffer
-		glBufferData(GL_COPY_WRITE_BUFFER, (GLsizeiptr)light_buffer_offset + 96, NULL, GL_STREAM_COPY);
-
-		// Copy Contents of Point Buffer to the Copy Buffer
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
-
-		// Swap Buffer Enums
-		glBindBuffer(GL_COPY_WRITE_BUFFER, Global::DirectionalBuffer);
-		glBindBuffer(GL_COPY_READ_BUFFER, copyBuffer);
-
-		// Allocate Memory for Point Buffer
-		glBufferData(GL_COPY_WRITE_BUFFER, (GLsizeiptr)light_buffer_offset + 96, NULL, GL_DYNAMIC_DRAW);
-
-		// Copy Contents of Copy Buffer Back Into Point Buffer
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
-
-		// Increment the Header
-		light_buffer_count = 1;
-		glBufferSubData(GL_COPY_WRITE_BUFFER, 0, 4, &light_buffer_count);
-
-		// Unbind Buffers
-		glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
-		glBindBuffer(GL_COPY_READ_BUFFER, 0);
-
 		break;
 	}
 
@@ -2653,38 +2834,6 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 
 		// Store Texture
 		texture = Global::Visual_Textures.find("PointLight.png")->second;
-
-		// Get Size of Point Light Buffer
-		light_buffer_offset = level->returnPointBufferSize();
-		int light_buffer_count = (light_buffer_offset - 16) / 80 + 1;
-
-		// Bind Buffers
-		glBindBuffer(GL_COPY_READ_BUFFER, Global::PointBuffer);
-		glBindBuffer(GL_COPY_WRITE_BUFFER, copyBuffer);
-
-		// Allocate Memory for Copy Buffer
-		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 80, NULL, GL_STREAM_COPY);
-
-		// Copy Contents of Point Buffer to the Copy Buffer
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
-
-		// Swap Buffer Enums
-		glBindBuffer(GL_COPY_WRITE_BUFFER, Global::PointBuffer);
-		glBindBuffer(GL_COPY_READ_BUFFER, copyBuffer);
-
-		// Allocate Memory for Point Buffer
-		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 80, NULL, GL_DYNAMIC_DRAW);
-
-		// Copy Contents of Copy Buffer Back Into Point Buffer
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
-
-		// Increment the Header
-		light_buffer_count = 1;
-		glBufferSubData(GL_COPY_WRITE_BUFFER, 0, 4, &light_buffer_count);
-
-		// Unbind Buffers
-		glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
-		glBindBuffer(GL_COPY_READ_BUFFER, 0);
 
 		// Disable Resize
 		new_selected_rectangle.enable_resize = false;
@@ -2712,38 +2861,6 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 
 		// Store Texture
 		texture = Global::Visual_Textures.find("SpotLight.png")->second;
-
-		// Get Size of Spot Light Buffer
-		light_buffer_offset = level->returnSpotBufferSize();
-		int light_buffer_count = (light_buffer_offset - 16) / 96 + 1;
-
-		// Bind Buffers
-		glBindBuffer(GL_COPY_READ_BUFFER, Global::SpotBuffer);
-		glBindBuffer(GL_COPY_WRITE_BUFFER, copyBuffer);
-
-		// Allocate Memory for Copy Buffer
-		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 96, NULL, GL_STREAM_COPY);
-
-		// Copy Contents of Point Buffer to the Copy Buffer
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
-
-		// Swap Buffer Enums
-		glBindBuffer(GL_COPY_WRITE_BUFFER, Global::SpotBuffer);
-		glBindBuffer(GL_COPY_READ_BUFFER, copyBuffer);
-
-		// Allocate Memory for Point Buffer
-		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 96, NULL, GL_DYNAMIC_DRAW);
-
-		// Copy Contents of Copy Buffer Back Into Point Buffer
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
-
-		// Increment the Header
-		light_buffer_count = 1;
-		glBufferSubData(GL_COPY_WRITE_BUFFER, 0, 4, &light_buffer_count);
-
-		// Unbind Buffers
-		glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
-		glBindBuffer(GL_COPY_READ_BUFFER, 0);
 
 		// Disable Resize
 		new_selected_rectangle.enable_resize = false;
@@ -2773,6 +2890,151 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 		// Store Texture
 		texture = Global::Visual_Textures.find("BeamLight.png")->second;
 
+		break;
+	}
+
+	}
+
+	// Set Object Position
+	selected_object->object_x = &light_data.position.x;
+	selected_object->object_y = &light_data.position.y;
+
+	// Allocate Shader Data
+	allocateSelectorShaderDataLights(data_object);
+
+	// Store Shader Data
+	storeSelectorShaderDataLights(data_object);
+
+	// Return Selected Object
+	return selected_object;
+}
+
+void Editor::Selector::allocateSelectorShaderDataLights(DataClass::Data_Object* data_object)
+{
+	// Determine the Number of Instances the Real Data Object Appears
+	int real_instance_count = data_object->getObjects().size();
+
+	// Parse Light Types
+	switch (data_object->getObjectIdentifier()[1])
+	{
+
+	// Directional Light
+	case Object::Light::DIRECTIONAL:
+	{
+		// Get Size of Directional Light Buffer
+		light_buffer_offset = level->returnDirectionalBufferSize();
+		int light_buffer_count = (light_buffer_offset - 16) / 96 + 1;
+
+		// Bind Buffers
+		glBindBuffer(GL_COPY_READ_BUFFER, Global::DirectionalBuffer);
+		glBindBuffer(GL_COPY_WRITE_BUFFER, copyBuffer);
+
+		// Allocate Memory for Copy Buffer
+		glBufferData(GL_COPY_WRITE_BUFFER, (GLsizeiptr)light_buffer_offset + 96 * real_instance_count, NULL, GL_STREAM_COPY);
+
+		// Copy Contents of Directional Buffer to the Copy Buffer
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
+
+		// Swap Buffer Enums
+		glBindBuffer(GL_COPY_WRITE_BUFFER, Global::DirectionalBuffer);
+		glBindBuffer(GL_COPY_READ_BUFFER, copyBuffer);
+
+		// Allocate Memory for Directional Buffer
+		glBufferData(GL_COPY_WRITE_BUFFER, (GLsizeiptr)light_buffer_offset + 96 * real_instance_count, NULL, GL_DYNAMIC_DRAW);
+
+		// Copy Contents of Copy Buffer Back Into Point Buffer
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
+
+		// Increment the Header
+		light_buffer_count += real_instance_count;
+		glBufferSubData(GL_COPY_WRITE_BUFFER, 0, 4, &light_buffer_count);
+
+		// Unbind Buffers
+		glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+		glBindBuffer(GL_COPY_READ_BUFFER, 0);
+
+		break;
+	}
+
+	// Point Light
+	case Object::Light::POINT:
+	{
+		// Get Size of Point Light Buffer
+		light_buffer_offset = level->returnPointBufferSize();
+		int light_buffer_count = (light_buffer_offset - 16) / 80 + 1;
+
+		// Bind Buffers
+		glBindBuffer(GL_COPY_READ_BUFFER, Global::PointBuffer);
+		glBindBuffer(GL_COPY_WRITE_BUFFER, copyBuffer);
+
+		// Allocate Memory for Copy Buffer
+		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 80 * real_instance_count, NULL, GL_STREAM_COPY);
+
+		// Copy Contents of Point Buffer to the Copy Buffer
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
+
+		// Swap Buffer Enums
+		glBindBuffer(GL_COPY_WRITE_BUFFER, Global::PointBuffer);
+		glBindBuffer(GL_COPY_READ_BUFFER, copyBuffer);
+
+		// Allocate Memory for Point Buffer
+		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 80 * real_instance_count, NULL, GL_DYNAMIC_DRAW);
+
+		// Copy Contents of Copy Buffer Back Into Point Buffer
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
+
+		// Increment the Header
+		light_buffer_count += real_instance_count;
+		glBufferSubData(GL_COPY_WRITE_BUFFER, 0, 4, &light_buffer_count);
+
+		// Unbind Buffers
+		glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+		glBindBuffer(GL_COPY_READ_BUFFER, 0);
+
+		break;
+	}
+
+	// Spot Light
+	case Object::Light::SPOT:
+	{
+		// Get Size of Spot Light Buffer
+		light_buffer_offset = level->returnSpotBufferSize();
+		int light_buffer_count = (light_buffer_offset - 16) / 96 + 1;
+
+		// Bind Buffers
+		glBindBuffer(GL_COPY_READ_BUFFER, Global::SpotBuffer);
+		glBindBuffer(GL_COPY_WRITE_BUFFER, copyBuffer);
+
+		// Allocate Memory for Copy Buffer
+		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 96 * real_instance_count, NULL, GL_STREAM_COPY);
+
+		// Copy Contents of Point Buffer to the Copy Buffer
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
+
+		// Swap Buffer Enums
+		glBindBuffer(GL_COPY_WRITE_BUFFER, Global::SpotBuffer);
+		glBindBuffer(GL_COPY_READ_BUFFER, copyBuffer);
+
+		// Allocate Memory for Point Buffer
+		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 96 * real_instance_count, NULL, GL_DYNAMIC_DRAW);
+
+		// Copy Contents of Copy Buffer Back Into Point Buffer
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
+
+		// Increment the Header
+		light_buffer_count += real_instance_count;
+		glBufferSubData(GL_COPY_WRITE_BUFFER, 0, 4, &light_buffer_count);
+
+		// Unbind Buffers
+		glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+		glBindBuffer(GL_COPY_READ_BUFFER, 0);
+
+		break;
+	}
+
+	// Beam Light
+	case Object::Light::BEAM:
+	{
 		// Get Size of Beam Light Buffer
 		light_buffer_offset = level->returnBeamBufferSize();
 		int light_buffer_count = (light_buffer_offset - 16) / 96 + 1;
@@ -2782,7 +3044,7 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 		glBindBuffer(GL_COPY_WRITE_BUFFER, copyBuffer);
 
 		// Allocate Memory for Copy Buffer
-		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 96, NULL, GL_STREAM_COPY);
+		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 96 * real_instance_count, NULL, GL_STREAM_COPY);
 
 		// Copy Contents of Point Buffer to the Copy Buffer
 		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
@@ -2792,13 +3054,13 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 		glBindBuffer(GL_COPY_READ_BUFFER, copyBuffer);
 
 		// Allocate Memory for Point Buffer
-		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 96, NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_COPY_WRITE_BUFFER, light_buffer_offset + 96 * real_instance_count, NULL, GL_DYNAMIC_DRAW);
 
 		// Copy Contents of Copy Buffer Back Into Point Buffer
 		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, light_buffer_offset);
 
 		// Increment the Header
-		light_buffer_count = 1;
+		light_buffer_count += real_instance_count;
 		glBufferSubData(GL_COPY_WRITE_BUFFER, 0, 4, &light_buffer_count);
 
 		// Unbind Buffers
@@ -2809,22 +3071,26 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 	}
 
 	}
-
-	// Set Object Position
-	selected_object->object_x = &light_data.position.x;
-	selected_object->object_y = &light_data.position.y;
-
-	// Store Shader Data
-	storeSelectorShaderDataLights(data_object);
-
-	// Return Selected Object
-	return selected_object;
 }
 
 void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* data_object)
 {
 	// Get Light Data
 	Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
+
+	// Determine the Original Position from the Original Real Object
+	glm::vec2 original_position;
+	for (Object::Object* temp_real : data_object->getObjects())
+	{
+		if (temp_real->storage_type == Object::STORAGE_TYPES::NULL_TEMP && static_cast<Object::TempObject*>(temp_real)->isOriginal())
+		{
+			original_position = temp_real->returnPosition();
+			break;
+		}
+	}
+
+	// Get the Offset From the Original Light Position
+	glm::vec2 original_offset = data_object->getPosition() - original_position;
 
 	// Parse Light Types
 	switch (data_object->getObjectIdentifier()[1])
@@ -2848,19 +3114,29 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 		light_direction = glm::normalize(-light_direction);
 		light_direction.z = 1.0f;
 		line_direction = glm::normalize(line_direction);
+		glm::vec2 second_position_offset = directional_data.position2 - light_data.position;
 
-		// Add Light and Line Direction Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset, 16, glm::value_ptr(light_direction));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 16, 16, glm::value_ptr(line_direction));
+		// Add Each Instance of Selected Directional Light to Shaders
+		int real_instance_count = data_object->getObjects().size();
+		for (int i = 0, j = light_buffer_offset; i < real_instance_count; i++, j += 96)
+		{
+			// Add Light and Line Direction Data
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j, 16, glm::value_ptr(light_direction));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 16, 16, glm::value_ptr(line_direction));
 
-		// Add Ambient, Diffuse, and Specular Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 32, 16, glm::value_ptr(light_data.ambient * light_data.intensity));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 48, 16, glm::value_ptr(light_data.diffuse * light_data.intensity));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 64, 16, glm::value_ptr(light_data.specular * light_data.intensity));
+			// Add Ambient, Diffuse, and Specular Data
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 32, 16, glm::value_ptr(light_data.ambient * light_data.intensity));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 48, 16, glm::value_ptr(light_data.diffuse * light_data.intensity));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 64, 16, glm::value_ptr(light_data.specular * light_data.intensity));
 
-		// Add Endpoint Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 80, 8, glm::value_ptr(light_data.position));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 88, 8, glm::value_ptr(directional_data.position2));
+			// Get the Real Instance to be Shaded
+			Object::Light::Directional::Directional* directional_real = static_cast<Object::Light::Directional::Directional*>(data_object->getObjects().at(i));
+
+			// Add Endpoint Data
+			glm::vec2 first_real_position = directional_real->returnPosition() + original_offset;
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 80, 8, glm::value_ptr(first_real_position));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 88, 8, glm::value_ptr(first_real_position + second_position_offset));
+		}
 
 		// Unbind Directional Light Buffer
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -2877,17 +3153,26 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 		// Bind Point Light Buffer
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::PointBuffer);
 
-		// Add Position Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset, 16, glm::value_ptr(glm::vec4(light_data.position.x, light_data.position.y, 2.0f, 1.0f)));
+		// Add Each Instance of Selected Point Light to Shaders
+		int real_instance_count = data_object->getObjects().size();
+		for (int i = 0, j = light_buffer_offset; i < real_instance_count; i++, j += 80)
+		{
+			// Get the Real Instance to be Shaded
+			Object::Light::Point::Point* point_real = static_cast<Object::Light::Point::Point*>(data_object->getObjects().at(i));
 
-		// Add Ambient, Diffuse, and Specular Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 16, 16, glm::value_ptr(light_data.ambient * light_data.intensity));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 32, 16, glm::value_ptr(light_data.diffuse * light_data.intensity));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 48, 16, glm::value_ptr(light_data.specular * light_data.intensity));
+			// Add Position Data
+			glm::vec2 real_position = *point_real->pointerToPosition() + original_offset;
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j, 16, glm::value_ptr(glm::vec4(real_position.x, real_position.y, 2.0f, 1.0f)));
 
-		// Add Attenuation Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 64, 4, &point_data.linear);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 68, 4, &point_data.quadratic);
+			// Add Ambient, Diffuse, and Specular Data
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 16, 16, glm::value_ptr(light_data.ambient * light_data.intensity));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 32, 16, glm::value_ptr(light_data.diffuse * light_data.intensity));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 48, 16, glm::value_ptr(light_data.specular * light_data.intensity));
+
+			// Add Attenuation Data
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 64, 4, &point_data.linear);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 68, 4, &point_data.quadratic);
+		}
 
 		// Unbind Point Light Buffer
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -2904,24 +3189,33 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 		// Bind Spot Light Buffer
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::SpotBuffer);
 
-		// Add Position Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset, 16, glm::value_ptr(glm::vec4(light_data.position.x, light_data.position.y, 2.0f, 0.0f)));
+		// Add Each Instance of Selected Spot Light to Shaders
+		int real_instance_count = data_object->getObjects().size();
+		for (int i = 0, j = light_buffer_offset; i < real_instance_count; i++, j += 96)
+		{
+			// Get the Real Instance to be Shaded
+			Object::Light::Spot::Spot* spot_real = static_cast<Object::Light::Spot::Spot*>(data_object->getObjects().at(i));
 
-		// Add Direction Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 16, 16, glm::value_ptr(spot_data.direction));
+			// Add Position Data
+			glm::vec2 real_position = *spot_real->pointerToPosition() + original_offset;
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j, 16, glm::value_ptr(glm::vec4(real_position.x, real_position.y, 2.0f, 0.0f)));
 
-		// Add Ambient, Diffuse, and Specular Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 32, 16, glm::value_ptr(light_data.ambient * light_data.intensity));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 48, 16, glm::value_ptr(light_data.diffuse * light_data.intensity));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 64, 16, glm::value_ptr(light_data.specular * light_data.intensity));
+			// Add Direction Data
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 16, 16, glm::value_ptr(spot_data.direction));
 
-		// Add Attenuation Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 80, 4, &spot_data.linear);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 84, 4, &spot_data.quadratic);
+			// Add Ambient, Diffuse, and Specular Data
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 32, 16, glm::value_ptr(light_data.ambient * light_data.intensity));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 48, 16, glm::value_ptr(light_data.diffuse * light_data.intensity));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 64, 16, glm::value_ptr(light_data.specular * light_data.intensity));
 
-		// Add Angle Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 88, 4, &spot_data.angle1);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 92, 4, &spot_data.angle2);
+			// Add Attenuation Data
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 80, 4, &spot_data.linear);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 84, 4, &spot_data.quadratic);
+
+			// Add Angle Data
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 88, 4, &spot_data.angle1);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 92, 4, &spot_data.angle2);
+		}
 
 		// Unbind Spot Light Buffer
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -2943,22 +3237,32 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 		float perpendicular_slope = -1.0f / slope;
 		glm::vec4 direction = glm::vec4(1.0f, slope, 0, 0);
 		direction = glm::normalize(direction);
+		glm::vec2 second_position_offset = beam_data.position2 - light_data.position;
 
-		// Add Light and Line Direction Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset, 16, glm::value_ptr(direction));
+		// Add Each Instance of Selected Spot Light to Shaders
+		int real_instance_count = data_object->getObjects().size();
+		for (int i = 0, j = light_buffer_offset; i < real_instance_count; i++, j += 96)
+		{
+			// Add Light and Line Direction Data
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j, 16, glm::value_ptr(direction));
 
-		// Add Ambient, Diffuse, and Specular Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 16, 16, glm::value_ptr(light_data.ambient * light_data.intensity));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 32, 16, glm::value_ptr(light_data.diffuse * light_data.intensity));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 48, 16, glm::value_ptr(light_data.specular * light_data.intensity));
+			// Add Ambient, Diffuse, and Specular Data
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 16, 16, glm::value_ptr(light_data.ambient * light_data.intensity));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 32, 16, glm::value_ptr(light_data.diffuse * light_data.intensity));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 48, 16, glm::value_ptr(light_data.specular * light_data.intensity));
 
-		// Add Attenuation Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 64, 4, &beam_data.linear);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 68, 4, &beam_data.quadratic);
+			// Add Attenuation Data
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 64, 4, &beam_data.linear);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 68, 4, &beam_data.quadratic);
 
-		// Add Endpoint Data
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 72, 8, glm::value_ptr(light_data.position));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, light_buffer_offset + 80, 8, glm::value_ptr(beam_data.position2));
+			// Get the Real Instance to be Shaded
+			Object::Light::Beam::Beam* beam_real = static_cast<Object::Light::Beam::Beam*>(data_object->getObjects().at(i));
+
+			// Add Endpoint Data
+			glm::vec2 first_real_position = *beam_real->pointerToPosition() + original_offset;
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 72, 8, glm::value_ptr(first_real_position));
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 80, 8, glm::value_ptr(first_real_position + second_position_offset));
+		}
 
 		// Unbind Spot Light Buffer
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -3056,7 +3360,7 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 			// Generate and Store Object Vertices
 			float object_vertices[42];
 			float double_radius = node_data.radius * 2.0f;
-			Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, double_radius, double_radius, glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), object_vertices);
+			Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.7f, double_radius, double_radius, glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), object_vertices);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 			// Bind Outline VAO
@@ -3066,7 +3370,7 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 			// Generate and Store Outline Vertices
 			double_radius *= 1.2f;
 			float outline_vertices[56];
-			Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, double_radius, double_radius, outline_vertices);
+			Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, double_radius, double_radius, outline_vertices);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 			// Set Initial Position Model Matrix
@@ -3078,7 +3382,7 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 		{
 			// Generate and Store Object Vertices
 			float object_vertices[42];
-			Vertices::Line::genLineColor(temp_connection_pos_left.x, temp_connection_pos_right.x, temp_connection_pos_left.y, temp_connection_pos_right.y, -1.0f, 0.2f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), object_vertices);
+			Vertices::Line::genLineColor(temp_connection_pos_left.x, temp_connection_pos_right.x, temp_connection_pos_left.y, temp_connection_pos_right.y, -1.7f, 0.2f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), object_vertices);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 			// Bind Outline VAO
@@ -3087,7 +3391,7 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 
 			// Generate and Store Outline Vertices
 			float outline_vertices[56];
-			Vertices::Line::genLineHighlighterWidth(temp_connection_pos_left.x, temp_connection_pos_right.x, temp_connection_pos_left.y, temp_connection_pos_right.y, -0.9f, 0.3f, outline_vertices);
+			Vertices::Line::genLineHighlighterWidth(temp_connection_pos_left.x, temp_connection_pos_right.x, temp_connection_pos_left.y, temp_connection_pos_right.y, -1.1f, 0.3f, outline_vertices);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 			// Set Initial Position Model Matrix
@@ -3102,7 +3406,7 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 
 			// Generate and Store Object Vertices
 			float object_vertices[42];
-			Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, 2.0f, 2.0f, object_data.colors, object_vertices);
+			Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.4f, 2.0f, 2.0f, object_data.colors, object_vertices);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 			// Bind Outline VAO
@@ -3111,7 +3415,7 @@ void Editor::Selector::genSelectorVerticesSoftBody(DataClass::Data_Object* data_
 
 			// Generate and Store Outline Vertices
 			float outline_vertices[56];
-			Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, 2.0f, 2.0f, outline_vertices);
+			Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, 2.0f, 2.0f, outline_vertices);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 			// Set Initial Position Model Matrix
@@ -3331,7 +3635,7 @@ void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_obj
 
 		// Generate and Store Object Vertices
 		float object_vertices[42];
-		Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, 1.0f, 1.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), object_vertices);
+		Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.4f, 1.0f, 1.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 		// Bind Outline VAO
@@ -3340,7 +3644,7 @@ void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_obj
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, 1.0f, 1.0f, outline_vertices);
+		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, 1.0f, 1.0f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
@@ -3357,7 +3661,7 @@ void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_obj
 
 		// Generate and Store Object Vertices
 		float object_vertices[42];
-		Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, 1.0f, 1.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), object_vertices);
+		Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.4f, 1.0f, 1.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), object_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 		// Bind Outline VAO
@@ -3366,7 +3670,7 @@ void Editor::Selector::genSelectorVerticesHinge(DataClass::Data_Object* data_obj
 
 		// Generate and Store Outline Vertices
 		float outline_vertices[56];
-		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, 1.0f, 1.0f, outline_vertices);
+		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, 1.0f, 1.0f, outline_vertices);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 		// Set Initial Position Model Matrix
@@ -3487,7 +3791,7 @@ void Editor::Selector::genSelectorVerticesEntity(DataClass::Data_Object* data_ob
 	// Generate and Store Object Vertices
 	float object_vertices[72];
 	object_data.colors = glm::vec4(1.0f);
-	Vertices::Rectangle::genRectObjectFull(glm::vec2(0.0f), -1.0f, entity_data.half_width * 2.0f, entity_data.half_height * 2.0f, object_data.colors, object_data.normals, object_vertices);
+	Vertices::Rectangle::genRectObjectFull(glm::vec2(0.0f), -1.8f, entity_data.half_width * 2.0f, entity_data.half_height * 2.0f, object_data.colors, object_data.normals, object_vertices);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 288, object_vertices);
 
 	// Bind Outline VAO
@@ -3496,7 +3800,7 @@ void Editor::Selector::genSelectorVerticesEntity(DataClass::Data_Object* data_ob
 
 	// Generate and Store Outline Vertices
 	float outline_vertices[56];
-	Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, entity_data.half_collision_width * 2.0f, entity_data.half_collision_height * 2.0f, outline_vertices);
+	Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, entity_data.half_collision_width * 2.0f, entity_data.half_collision_height * 2.0f, outline_vertices);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 	// Set Initial Position Model Matrix
@@ -3584,7 +3888,7 @@ void Editor::Selector::genSelectorVerticesGroup(DataClass::Data_Object* data_obj
 
 	// Generate and Store Object Vertices
 	float object_vertices[42];
-	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, 2.0f, 2.0f, glm::vec4(0.0f, 0.8f, 0.6f, 0.9f), object_vertices);
+	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.4f, 2.0f, 2.0f, glm::vec4(0.0f, 0.8f, 0.6f, 0.9f), object_vertices);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 168, object_vertices);
 
 	// Bind Outline VAO
@@ -3593,7 +3897,7 @@ void Editor::Selector::genSelectorVerticesGroup(DataClass::Data_Object* data_obj
 
 	// Generate and Store Outline Vertices
 	float outline_vertices[56];
-	Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -0.9f, 2.0f, 2.0f, outline_vertices);
+	Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, 2.0f, 2.0f, outline_vertices);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 224, outline_vertices);
 
 	// Set Initial Position Model Matrix
@@ -3774,6 +4078,28 @@ void Editor::Selector::editObject()
 		return;
 	}
 
+	// If the Flag to Update Object Vertices is Enabled, Force Update Vertices
+	if (force_reload_vertices)
+	{
+		force_reload_vertices = false;
+		for (Selected_Object* selected_object : selected_objects)
+			genSelectorVertices(selected_object->data_object, selected_object->vertex_objects);
+	}
+
+	// If The Level Object Reloaded the Lights, Reload the Selected Lights
+	if (Global::reload_lights)
+	{
+		Global::reload_lights = false;
+		for (DataClass::Data_Object* data_object : data_objects)
+		{
+			if (data_object->getObjectIdentifier()[0] == Object::ObjectList::LIGHT)
+			{
+				allocateSelectorShaderDataLights(data_object);
+				storeSelectorShaderDataLights(data_object);
+			}
+		}
+	}
+
 	// If the CTRL Modifier is Active, Attempt to Deselect a Singular Object
 	if (Global::Keys[GLFW_KEY_LEFT_CONTROL] || Global::Keys[GLFW_KEY_RIGHT_CONTROL])
 	{
@@ -3801,14 +4127,26 @@ void Editor::Selector::editObject()
 
 						// Return Normal Object
 						else
-							change_controller->handleSingleSelectorReturn(data_objects.at(i), nullptr, true);
+							change_controller->handleSelectorRealReturn(selected_objects.at(i)->data_object, this);
+
+						// Make the Object Unselectable
+						addUnselectable(selected_objects.at(i)->data_object);
+
+						// Remove Object From the DataClass Vector
+						for (int j = 0; j < data_objects.size(); j++)
+						{
+							if (selected_objects.at(i)->data_object->getObjectIndex() == data_objects.at(j)->getObjectIndex())
+							{
+								data_objects.erase(data_objects.begin() + j);
+								break;
+							}
+						}
 
 						// Delete the Selected Object
 						delete selected_objects.at(i);
 
-						// Remove Object From the Vectors
+						// Remove Object From the Selected Object Vector
 						selected_objects.erase(selected_objects.begin() + i);
-						data_objects.erase(data_objects.begin() + i);
 
 						// If A Group is Still Selected, Update Group Selector
 						if (selected_objects.size() > 1)
@@ -4052,9 +4390,6 @@ void Editor::Selector::editObject()
 
 	if (should_deselect)
 		deselectObject();
-
-	// Update Object Info
-	info->forceResize();
 }
 
 uint8_t Editor::Selector::updateHinge(Selected_Object* selected_object)
@@ -4322,6 +4657,19 @@ void Editor::Selector::setTempConnectionPos(glm::vec2& left, glm::vec2& right)
 {
 	temp_connection_pos_left = left;
 	temp_connection_pos_right = right;
+}
+
+void Editor::Selector::addUnselectableRecursiveHelper(DataClass::Data_Object* data_object)
+{
+	// Disable Selection for Object
+	data_object->disableSelecting();
+
+	// Check Children of Object
+	if (data_object->getGroup() != nullptr)
+	{
+		for (DataClass::Data_Object* child : data_object->getGroup()->getChildren())
+			addUnselectableRecursiveHelper(child);
+	}
 }
 
 void Editor::Selector::addChild()
@@ -4754,17 +5102,17 @@ void Editor::Selector::clampBase(Selected_Object* selected_object)
 void Editor::Selector::clampObjects(bool enabled, float(&endpoints)[8], int Type, int endpoint_count, int extraValue, func function)
 {
 	// Map to Get All Levels
-	const glm::vec2 level_map[9] =
+	const glm::i16vec2 level_map[9] =
 	{
-		glm::vec2(-1, 1),
-		glm::vec2(0, 1),
-		glm::vec2(1, 1),
-		glm::vec2(-1, 0),
-		glm::vec2(0, 0),
-		glm::vec2(1, 0),
-		glm::vec2(-1, -1),
-		glm::vec2(0, -1),
-		glm::vec2(1, -1)
+		glm::i16vec2(-1, 1),
+		glm::i16vec2(0, 1),
+		glm::i16vec2(1, 1),
+		glm::i16vec2(-1, 0),
+		glm::i16vec2(0, 0),
+		glm::i16vec2(1, 0),
+		glm::i16vec2(-1, -1),
+		glm::i16vec2(0, -1),
+		glm::i16vec2(1, -1)
 	};
 
 	// Only Clamp if Boolean is True
@@ -4774,13 +5122,13 @@ void Editor::Selector::clampObjects(bool enabled, float(&endpoints)[8], int Type
 		for (int i = 0; i < 2 * endpoint_count; i += 2)
 		{
 			// Determine Level Location of Endpoint
-			glm::vec2 endpoint_level;
+			glm::i16vec2 endpoint_level;
 			level->updateLevelPos(glm::vec2(endpoints[i], endpoints[i + 1]), endpoint_level);
 
 			// Iterate Through Level Endpoint is In And All 8 Levels Surrounding It
 			for (int j = 0; j < 9; j++)
 			{
-				glm::vec2 level_index = endpoint_level + level_map[j];
+				glm::i16vec2 level_index = endpoint_level + level_map[j];
 
 				// Get the Unsaved Level Endpoint is At
 				Render::Objects::UnsavedLevel* unsaved_level = change_controller->getUnsavedLevel((int)level_index.x, (int)level_index.y, 0);
@@ -4803,7 +5151,8 @@ void Editor::Selector::clampFloorMasks(float(&endpoints)[8], Render::Objects::Un
 	for (int j = 0; j < floor_masks_size; j++)
 	{
 		// Get Current Object
-		Object::Mask::Floor::FloorMask* object = static_cast<Object::Mask::Floor::FloorMask*>(floor_masks[j]->generateObject());
+		glm::vec2 null_vec = glm::vec2(0.0f, 0.0f);
+		Object::Mask::Floor::FloorMask* object = static_cast<Object::Mask::Floor::FloorMask*>(floor_masks[j]->generateObject(null_vec));
 
 		// Skip Object if Clamp to Clamp is Enabled and Object is Not Clampable
 		if (!(!Global::editor_options->option_clamp_to_clamp || (object->clamp && Global::editor_options->option_clamp_to_clamp)))
@@ -4881,7 +5230,8 @@ void Editor::Selector::clampWallMasksLeft(float(&endpoints)[8], Render::Objects:
 	{
 		// Get Current Object
 		int iterations = 2;
-		Object::Mask::Left::LeftMask* object = static_cast<Object::Mask::Left::LeftMask*>(left_masks[j]->generateObject());
+		glm::vec2 null_vec = glm::vec2(0.0f, 0.0f);
+		Object::Mask::Left::LeftMask* object = static_cast<Object::Mask::Left::LeftMask*>(left_masks[j]->generateObject(null_vec));
 
 		// Skip Object if Clamp to Clamp is Enabled and Object is Not Clampable
 		if (!(!Global::editor_options->option_clamp_to_clamp || (object->clamp && Global::editor_options->option_clamp_to_clamp)))
@@ -4954,7 +5304,8 @@ void Editor::Selector::clampWallMasksRight(float(&endpoints)[8], Render::Objects
 	{
 		// Get Current Object
 		int iterations = 2;
-		Object::Mask::Right::RightMask* object = static_cast<Object::Mask::Right::RightMask*>(right_masks[j]->generateObject());
+		glm::vec2 null_vec = glm::vec2(0.0f, 0.0f);
+		Object::Mask::Right::RightMask* object = static_cast<Object::Mask::Right::RightMask*>(right_masks[j]->generateObject(null_vec));
 
 		// Skip Object if Clamp to Clamp is Enabled and Object is Not Clampable
 		if (!(!Global::editor_options->option_clamp_to_clamp || (object->clamp && Global::editor_options->option_clamp_to_clamp)))
@@ -5020,7 +5371,8 @@ void Editor::Selector::clampCeilingMasks(float(&endpoints)[8], Render::Objects::
 	for (int j = 0; j < ceiling_masks_size; j++)
 	{
 		// Get Current Object
-		Object::Mask::Ceiling::CeilingMask* object = static_cast<Object::Mask::Ceiling::CeilingMask*>(ceiling_masks[j]->generateObject());
+		glm::vec2 null_vec = glm::vec2(0.0f, 0.0f);
+		Object::Mask::Ceiling::CeilingMask* object = static_cast<Object::Mask::Ceiling::CeilingMask*>(ceiling_masks[j]->generateObject(null_vec));
 
 		// Skip Object if Clamp to Clamp is Enabled and Object is Not Clampable
 		if (!(!Global::editor_options->option_clamp_to_clamp || (object->clamp && Global::editor_options->option_clamp_to_clamp)))
@@ -7157,7 +7509,7 @@ void Editor::Selector::Selected_Line::testResizeLine()
 			selected_vertex = 1;
 
 			// Set Cursor
-			Global::Selected_Cursor = Global::CURSORS::POINT;
+			Global::Selected_Cursor = Global::CURSORS::BIDIRECTIONAL_RESIZE;
 		}
 
 		// Test if Mouse is Close to Opposite Vertex
@@ -7167,7 +7519,7 @@ void Editor::Selector::Selected_Line::testResizeLine()
 			selected_vertex = 2;
 
 			// Set Cursor
-			Global::Selected_Cursor = Global::CURSORS::POINT;
+			Global::Selected_Cursor = Global::CURSORS::BIDIRECTIONAL_RESIZE;
 		}
 
 		// Test if Color of Outline Should Change

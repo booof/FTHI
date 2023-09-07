@@ -15,7 +15,7 @@ glm::vec2 Object::Mask::Ceiling::CeilingMaskSlope::returnPosition()
 bool Object::Mask::Ceiling::CeilingMaskSlope::testCollisions(glm::vec2 test_position, float error)
 {
 	// Check if Object is Between X-Values
-	if (x_left < test_position.x && test_position.x < x_left)
+	if (x_left < test_position.x && test_position.x < x_right)
 	{
 		// Calculate Localized Y Value of Mask at Object X
 		float localY;
@@ -41,7 +41,7 @@ void Object::Mask::Ceiling::CeilingMaskSlope::updateSelectedPosition(float delta
 {
 	data.position.x += deltaX;
 	data.position.y += deltaY;
-	initializeVisualizer(VAO, VBO, model, glm::vec4(0.0f, 0.0f, 0.45f, 1.0f));
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
 }
 
 void Object::Mask::Ceiling::CeilingMaskSlope::returnMaterial(int& material)
@@ -49,7 +49,7 @@ void Object::Mask::Ceiling::CeilingMaskSlope::returnMaterial(int& material)
 	material = data.material;
 }
 
-Object::Mask::Ceiling::CeilingMaskSlope::CeilingMaskSlope(SlopeData& data_) : Slope(data_)
+Object::Mask::Ceiling::CeilingMaskSlope::CeilingMaskSlope(SlopeData& data_, glm::vec2& offset) : Slope(data_, offset)
 {
 	// Store Type
 	type = HORIZONTAL_SLOPE;
@@ -96,9 +96,9 @@ void Object::Mask::Ceiling::CeilingMaskSlope::getLeftRightEdgeVertices(glm::vec2
 	right = glm::vec2(data.position.x + abs(data.width), data.position.y + data.height);
 }
 
-Object::Object* DataClass::Data_CeilingMaskSlope::genObject()
+Object::Object* DataClass::Data_CeilingMaskSlope::genObject(glm::vec2& offset)
 {
-	return new Object::Mask::Ceiling::CeilingMaskSlope(data);
+	return new Object::Mask::Ceiling::CeilingMaskSlope(data, offset);
 }
 
 void DataClass::Data_CeilingMaskSlope::writeObjectData(std::ofstream& object_file)

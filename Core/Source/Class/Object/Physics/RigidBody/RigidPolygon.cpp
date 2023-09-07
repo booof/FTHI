@@ -13,7 +13,7 @@
 // Math Functions
 #include "Source/Algorithms/Quick Math/QuickMath.h"
 
-Object::Physics::Rigid::RigidPolygon::RigidPolygon(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_) : RigidBody(uuid_, data_, rigid_, shape_, *static_cast<Shape::Polygon*>(shape_)->pointerToNumberOfSides() * 60)
+Object::Physics::Rigid::RigidPolygon::RigidPolygon(uint32_t& uuid_, ObjectData& data_, RigidBodyData& rigid_, Shape::Shape* shape_, glm::vec2& offset) : RigidBody(uuid_, data_, rigid_, shape_, *static_cast<Shape::Polygon*>(shape_)->pointerToNumberOfSides() * 60, offset)
 {
 	// Store Object Type
 	type = PHYSICS_TYPES::TYPE_POLYGON;

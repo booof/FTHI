@@ -36,7 +36,7 @@
 // Shader
 #include "Render/Shader/Shader.h"
 
-Object::Physics::Hinge::Hinge::Hinge(uint32_t& uuid_, HingeData& data_, std::string& file_name_)
+Object::Physics::Hinge::Hinge::Hinge(uint32_t& uuid_, HingeData& data_, std::string& file_name_, glm::vec2& offset)
 {
 	// Store Object Type
 	type = PHYSICS_TYPES::TYPE_HINGE;
@@ -48,6 +48,7 @@ Object::Physics::Hinge::Hinge::Hinge(uint32_t& uuid_, HingeData& data_, std::str
 	path = "../Resources/Models/Hinges/" + file_name;
 	Axis_of_Rotation = initial_position;
 	uuid = uuid_;
+	data.position += offset;
 
 	// Store Storage Type
 	storage_type = PHYSICS_COUNT;
@@ -250,6 +251,7 @@ void Object::Physics::Hinge::Hinge::readFile()
 	HingeData temp_hinge_data;
 	int temp_file_name_size = 0;
 	std::string temp_file_name = "";
+	glm::vec2 null_vec = glm::vec2(0.0f, 0.0f);
 
 	// Iterate Through File Until All is Read
 	while (!file.eof())
@@ -275,7 +277,7 @@ void Object::Physics::Hinge::Hinge::readFile()
 				file.read((char*)&temp_rigid_data, sizeof(Rigid::RigidBodyData));
 				Shape::Rectangle* new_rect = new Shape::Rectangle;
 				file.read((char*)(new_rect)+8, sizeof(Shape::Rectangle) - 8);
-				objects[temp_object_index] = new Rigid::RigidRectangle(temp_uuid, temp_object_data, temp_rigid_data, new_rect);
+				objects[temp_object_index] = new Rigid::RigidRectangle(temp_uuid, temp_object_data, temp_rigid_data, new_rect, null_vec);
 				temp_object_index++;
 				break;
 			}
@@ -286,7 +288,7 @@ void Object::Physics::Hinge::Hinge::readFile()
 				file.read((char*)&temp_rigid_data, sizeof(Rigid::RigidBodyData));
 				Shape::Trapezoid* new_trap = new Shape::Trapezoid;
 				file.read((char*)(new_trap)+8, sizeof(Shape::Trapezoid) - 8);
-				objects[temp_object_index] = new Rigid::RigidTrapezoid(temp_uuid, temp_object_data, temp_rigid_data, new_trap);
+				objects[temp_object_index] = new Rigid::RigidTrapezoid(temp_uuid, temp_object_data, temp_rigid_data, new_trap, null_vec);
 				temp_object_index++;
 				break;
 			}
@@ -297,7 +299,7 @@ void Object::Physics::Hinge::Hinge::readFile()
 				file.read((char*)&temp_rigid_data, sizeof(Rigid::RigidBodyData));
 				Shape::Triangle* new_tri = new Shape::Triangle;
 				file.read((char*)(new_tri)+8, sizeof(Shape::Triangle) - 8);
-				objects[temp_object_index] = new Rigid::RigidTriangle(temp_uuid, temp_object_data, temp_rigid_data, new_tri);
+				objects[temp_object_index] = new Rigid::RigidTriangle(temp_uuid, temp_object_data, temp_rigid_data, new_tri, null_vec);
 				temp_object_index++;
 				break;
 			}
@@ -308,7 +310,7 @@ void Object::Physics::Hinge::Hinge::readFile()
 				file.read((char*)&temp_rigid_data, sizeof(Rigid::RigidBodyData));
 				Shape::Circle* new_circle = new Shape::Circle;
 				file.read((char*)(new_circle)+8, sizeof(Shape::Circle) - 8);
-				objects[temp_object_index] = new Rigid::RigidCircle(temp_uuid, temp_object_data, temp_rigid_data, new_circle);
+				objects[temp_object_index] = new Rigid::RigidCircle(temp_uuid, temp_object_data, temp_rigid_data, new_circle, null_vec);
 				temp_object_index++;
 				break;
 			}
@@ -319,7 +321,7 @@ void Object::Physics::Hinge::Hinge::readFile()
 				file.read((char*)&temp_rigid_data, sizeof(Rigid::RigidBodyData));
 				Shape::Polygon* new_poly = new Shape::Polygon;
 				file.read((char*)(new_poly)+8, sizeof(Shape::Polygon) - 8);
-				objects[temp_object_index] = new Rigid::RigidPolygon(temp_uuid, temp_object_data, temp_rigid_data, new_poly);
+				objects[temp_object_index] = new Rigid::RigidPolygon(temp_uuid, temp_object_data, temp_rigid_data, new_poly, null_vec);
 				temp_object_index++;
 				break;
 			}
@@ -349,7 +351,7 @@ void Object::Physics::Hinge::Hinge::readFile()
 			{
 				file.read((char*)&temp_object_data, sizeof(ObjectData));
 				file.read((char*)&temp_wire_data, sizeof(Soft::WireData));
-				objects[temp_object_index] = new Soft::Wire(temp_uuid, temp_object_data, temp_wire_data);
+				objects[temp_object_index] = new Soft::Wire(temp_uuid, temp_object_data, temp_wire_data, null_vec);
 				temp_object_index++;
 				break;
 			}
@@ -367,7 +369,7 @@ void Object::Physics::Hinge::Hinge::readFile()
 			case (int)HINGES::ANCHOR:
 			{
 				file.read((char*)&temp_anchor_data, sizeof(AnchorData));
-				objects[temp_object_index] = new Anchor(temp_uuid, temp_anchor_data);
+				objects[temp_object_index] = new Anchor(temp_uuid, temp_anchor_data, null_vec);
 				temp_object_index++;
 				break;
 			}
@@ -378,7 +380,7 @@ void Object::Physics::Hinge::Hinge::readFile()
 				file.read((char*)&temp_hinge_data, sizeof(HingeData));
 				temp_file_name.resize(temp_file_name_size);
 				file.read((char*)&file_name[0], temp_file_name_size);
-				children[temp_hinge_index] = new Hinge(temp_uuid, temp_hinge_data, file_name);
+				children[temp_hinge_index] = new Hinge(temp_uuid, temp_hinge_data, file_name, null_vec);
 				temp_hinge_index++;
 				break;
 			}
@@ -631,7 +633,7 @@ void Object::Physics::Hinge::Hinge::initializeVisualizer()
 
 	// Get Data
 	float vertices[42];
-	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.0f, 1.0f, 1.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), vertices);
+	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.4f, 1.0f, 1.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), vertices);
 	vertices[3] = 1.0f;
 	vertices[11] = 1.0f;
 	vertices[31] = 1.0f;
@@ -847,9 +849,9 @@ void Object::Physics::Hinge::Hinge::perambulate(glm::vec2& object_position, floa
 	object_position = glm::vec2(Axis_of_Rotation.x + distance * cos(rotation_of_axis), Axis_of_Rotation.y + distance * sin(rotation_of_axis));
 }
 
-Object::Object* DataClass::Data_Hinge::genObject()
+Object::Object* DataClass::Data_Hinge::genObject(glm::vec2& offset)
 {
-	return new Object::Physics::Hinge::Hinge(uuid, data, file_name);
+	return new Object::Physics::Hinge::Hinge(uuid, data, file_name, offset);
 }
 
 void DataClass::Data_Hinge::writeObjectData(std::ofstream& object_file)
@@ -927,4 +929,14 @@ Object::Physics::Hinge::HingeData& DataClass::Data_Hinge::getHingeData()
 std::string& DataClass::Data_Hinge::getFile()
 {
 	return file_name;
+}
+
+void DataClass::Data_Hinge::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &data.position;
+	index1 = 2;
+
+	// Others are Not Important
+	position23Null(index2, index3, position2, position3);
 }

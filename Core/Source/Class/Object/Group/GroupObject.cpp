@@ -10,7 +10,7 @@
 void Object::Group::GroupObject::initializeVisualizer()
 {
 	// Generate Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
+	updateModelMatrix();
 
 	// Generate Vertex Objects
 	glGenVertexArrays(1, &VAO);
@@ -22,7 +22,7 @@ void Object::Group::GroupObject::initializeVisualizer()
 
 	// Generate Vertices
 	float vertices[42];
-	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.2f, 2.0f, 2.0f, glm::vec4(0.0f, 0.8f, 0.6f, 0.9f), vertices);
+	Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.4f, 2.0f, 2.0f, glm::vec4(0.0f, 0.8f, 0.6f, 0.9f), vertices);
 
 	// Store Vertices
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -50,10 +50,11 @@ glm::vec2* Object::Group::GroupObject::pointerToPosition()
 	return &data.position;
 }
 
-Object::Group::GroupObject::GroupObject(GroupData& data_, std::string file_path_, Render::Objects::UnsavedComplex* complex_object)
+Object::Group::GroupObject::GroupObject(GroupData& data_, std::string file_path_, Render::Objects::UnsavedComplex* complex_object, glm::vec2& offset)
 {
 	// Store Group Data
 	data = data_;
+	data.position += offset;
 
 	// Store File Name and Path to File
 	path = file_path_;
@@ -119,6 +120,7 @@ Render::Objects::UnsavedComplex* Object::Group::GroupObject::getComplexGroup()
 void Object::Group::GroupObject::updateSelectedPosition(float deltaX, float deltaY)
 {
 	data.position += glm::vec2(deltaX, deltaY);
+	updateModelMatrix();
 }
 
 void Object::Group::GroupObject::drawObject()
@@ -129,9 +131,14 @@ void Object::Group::GroupObject::drawObject()
 	glBindVertexArray(0);
 }
 
-Object::Object* DataClass::Data_GroupObject::genObject()
+void Object::Group::GroupObject::updateModelMatrix()
 {
-	return new Object::Group::GroupObject(data, file_path, static_cast<Render::Objects::UnsavedComplex*>(group_object));
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
+}
+
+Object::Object* DataClass::Data_GroupObject::genObject(glm::vec2& offset)
+{
+	return new Object::Group::GroupObject(data, file_path, static_cast<Render::Objects::UnsavedComplex*>(group_object), offset);
 }
 
 void DataClass::Data_GroupObject::writeObjectData(std::ofstream& object_file)
@@ -147,6 +154,7 @@ void DataClass::Data_GroupObject::readObjectData(std::ifstream& object_file)
 	file_path.resize(data.file_path_size);
 	object_file.read(&file_path[0], data.file_path_size);
 	file_name = Source::Algorithms::Common::getFileName(file_path, false);
+	group_layer = -1;
 
 	// Get Unsaved Complex Object
 	group_object = reinterpret_cast<Render::Objects::UnsavedCollection*>(change_controller->getUnsavedComplex(file_path));
@@ -164,8 +172,26 @@ glm::vec2& DataClass::Data_GroupObject::getPosition()
 
 void DataClass::Data_GroupObject::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
 {
+	// Update Position
 	data.position.x += deltaX;
 	data.position.y += deltaY;
+
+	// Update Model Matrix of All Children
+	if (update_real)
+	{
+		for (Object::Object* instance : *object_pointers)
+			instance->updateSelectedPosition(deltaX, deltaY);
+	}
+
+	// Don't Use The Helper Function. Instead, Use the Complex Alternative
+	for (DataClass::Data_Object* child : group_object->getChildren())
+	{
+		for (Object::Object* instance : child->getObjects())
+		{
+			if (instance->parent->object_index == object_index)
+				instance->updateSelectedComplexPosition(deltaX, deltaY);
+		}
+	}
 }
 
 DataClass::Data_GroupObject::Data_GroupObject()
@@ -175,6 +201,10 @@ DataClass::Data_GroupObject::Data_GroupObject()
 	object_identifier[1] = 0;
 	object_identifier[2] = 0;
 	object_identifier[3] = 0;
+
+	// Set Group Layer to -1
+	// Complex Objects Are Not Considered Part of a Group
+	group_layer = -1;
 }
 
 void DataClass::Data_GroupObject::info(Editor::ObjectInfo& object_info)
@@ -206,6 +236,7 @@ void DataClass::Data_GroupObject::generateInitialData(glm::vec2& position)
 	data.script = 0;
 	data.file_path_size = sizeof(file_path);
 	group_object = reinterpret_cast<Render::Objects::UnsavedCollection*>(change_controller->getUnsavedComplex(file_path));
+	group_layer = -1;
 }
 
 void DataClass::Data_GroupObject::writeObject(std::ofstream& object_file, std::ofstream& editor_file)
@@ -218,4 +249,19 @@ void DataClass::Data_GroupObject::writeObject(std::ofstream& object_file, std::o
 	// Children Will Not be Written Here, Will Instead
 	// Be Written In Write Function in Change Controller
 	// Alongside the Writing of the Levels
+}
+
+void DataClass::Data_GroupObject::setGroupLayer(int8_t new_layer)
+{
+	group_layer = -1;
+}
+
+void DataClass::Data_GroupObject::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)
+{
+	// Position 1 is at Index 2
+	*position1 = &data.position;
+	index1 = 2;
+
+	// Others are Not Important
+	position23Null(index2, index3, position2, position3);
 }
