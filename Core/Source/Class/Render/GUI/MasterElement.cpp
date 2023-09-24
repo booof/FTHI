@@ -54,14 +54,7 @@ bool GUI::MasterElement::updateElement()
 	// Set Default ScrollBar
 
 	// Update Mouse Position
-	if (horizontal_offset == nullptr)	
-		gui_mouse_position.x = Global::mouseX / Global::zoom_scale + gui_position.x;
-	else
-		gui_mouse_position.x = Global::mouseX / Global::zoom_scale - *horizontal_offset + gui_position.x;
-	if (vertical_offset == nullptr)
-		gui_mouse_position.y = Global::mouseY / Global::zoom_scale + gui_position.y;
-	else
-		gui_mouse_position.y = Global::mouseY / Global::zoom_scale - *vertical_offset + gui_position.y;
+	updateElementModel();
 
 	// Return True as GUI is Being Updated
 	return true;
@@ -94,4 +87,48 @@ void GUI::MasterElement::moveElement(float newX, float newY)
 GUI::DefaultElements* GUI::MasterElement::getDefaults()
 {
 	return defaults;
+}
+
+glm::mat4& GUI::MasterElement::getModel()
+{
+	return element_model;
+}
+
+void GUI::MasterElement::updateElementModel()
+{
+	element_model = glm::mat4(1.0f);
+	if (horizontal_offset == nullptr)
+		gui_mouse_position.x = Global::mouseX / Global::zoom_scale + gui_position.x;
+	else
+	{
+		gui_mouse_position.x = Global::mouseX / Global::zoom_scale - *horizontal_offset + gui_position.x;
+		element_model = glm::translate(element_model, glm::vec3(*horizontal_offset, 0.0f, 0.0f));
+	}
+	if (vertical_offset == nullptr)
+		gui_mouse_position.y = Global::mouseY / Global::zoom_scale + gui_position.y;
+	else
+	{
+		gui_mouse_position.y = Global::mouseY / Global::zoom_scale - *vertical_offset + gui_position.y;
+		element_model = glm::translate(element_model, glm::vec3(0.0f, *vertical_offset, 0.0f));
+	}
+}
+
+float GUI::MasterElement::getHorizontalOffset()
+{
+	// If Horizontal Offset is Nullptr, Return 0
+	if (horizontal_offset == nullptr)
+		return 0;
+
+	// Else, Get Value
+	return *horizontal_offset;
+}
+
+float GUI::MasterElement::getVerticalOffset()
+{
+	// If Vertical Offset is Nullptr, Return 0
+	if (vertical_offset == nullptr)
+		return 0;
+
+	// Else, Get Value
+	return *vertical_offset;
 }

@@ -242,4 +242,51 @@ void Source::Algorithms::Common::eraseFileExtension(std::string& file_path)
 	file_path.erase(file_path.begin() + start_index, file_path.end());
 }
 
+bool Source::Algorithms::Common::testFileNameInvalidCharacters(std::string& file_name)
+{
+	// List of Invalid Characters
+	std::string invalid_characters = "<>:\"/\\|?*";
+
+	// First, Test if All Characters are Greater Than or Equal to 32
+	for (char& c : file_name)
+	{
+		if (c < 32)
+			return false;
+	}
+
+	// Next, Test Any Invalid Characters
+	for (char& c : invalid_characters)
+	{
+		if (testIN(c, file_name.c_str()))
+			return false;
+	}
+
+	// Return True if File Name is Valid
+	return true;
+}
+
+std::string Source::Algorithms::Common::getFilePath(std::string& file_path)
+{
+	// The File Name
+	std::string result = "";
+
+	// Iterate Through File Path and Find Final "\\" or "/"
+	int last_dash = 0;
+	for (int i = 0; i < file_path.size(); i++)
+	{
+		if (testIN(file_path[i], "\\/"))
+			last_dash = i;
+	}
+
+	// Resize the Result
+	result.resize(last_dash);
+
+	// Copy Everything Up Until the Last Dash
+	for (int i = 0; i < last_dash; i++)
+		result[i] = file_path[i];
+
+	// Return the Result
+	return result;
+}
+
 

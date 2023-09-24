@@ -104,6 +104,10 @@ void GUI::Box::updateText()
 
 		}
 	}
+
+	// If Editing Text, Reset Offset
+	if (texting)
+		data.button_text.updateRenderText();
 }
 
 GUI::Box::Box(BoxData& data_)

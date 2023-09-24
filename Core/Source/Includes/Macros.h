@@ -30,6 +30,9 @@
 // Macro for Accessing the Debugger Singleton
 #define debugger Editor::Debugger::get()
 
+// Macro for Accessing the Scene Controller Singleton
+#define scene_controller Editor::SceneController::get()
+
 // Macro that Determines How to Build and Where to Get Project Dlls
 #ifdef _DEBUG
 #define CONFIG_DIR "Debug"

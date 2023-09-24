@@ -13,9 +13,6 @@
 
 Editor::ObjectInfo::ObjectInfo()
 {
-	if (Source::Algorithms::Common::readErrorLog())
-		std::cout << "l\n";
-
 	// Set Initial Values
 	type_text_position = glm::vec2(0.0f, 0.0f);
 	first_text_position = glm::vec2(0.0f, 0.0f);

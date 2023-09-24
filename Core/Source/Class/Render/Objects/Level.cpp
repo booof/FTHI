@@ -47,6 +47,11 @@ int8_t Render::Objects::Level::index_from_level(glm::i16vec2 level_coords)
 
 glm::i16vec2 Render::Objects::Level::level_from_index(int8_t index)
 {
+	// Update: The Values Will be Changed Based on Render Distance
+	// Min Index Will Remain 0, Max Will be Radius^2 - 1
+	// X-Pos Will Now be Modulused by the Radius
+	// Y-Pos Will be Changed Drastically
+
 	// If Index is Outside Level Range, Retrun 0,0
 	if (index > 8 || index < 0)
 		return glm::i16vec2(0, 0);
@@ -136,7 +141,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 		{
 			for (int level_x = -1; level_x < 2; level_x++)
 			{
-				new_level = new SubLevel((int)level_new.x + level_x, (int)level_new.y + level_y);
+				new_level = new SubLevel(level_data_path, (int)level_new.x + level_x, (int)level_new.y + level_y);
 				new_level->addHeader(total_object_count_new);
 				sublevels[iterater] = new_level;
 				iterater++;
@@ -182,7 +187,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 			// Load New Levels from the Left
 			if (!(i % 3))
 			{
-				new_level = new SubLevel((int)level_new.x - 1, (int)level_new.y + next_level_location);
+				new_level = new SubLevel(level_data_path, (int)level_new.x - 1, (int)level_new.y + next_level_location);
 				new_level->addHeader(container.total_object_count);
 				sublevels[i] = new_level;
 				next_level_location++;
@@ -217,7 +222,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 			// Load New Levels from the Right
 			if ((i % 3) == 2)
 			{
-				new_level = new SubLevel((int)level_new.x + 1, (int)level_new.y + next_level_location);
+				new_level = new SubLevel(level_data_path, (int)level_new.x + 1, (int)level_new.y + next_level_location);
 				new_level->addHeader(container.total_object_count);
 				sublevels[i] = new_level;
 				next_level_location--;
@@ -252,7 +257,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 			// Load New Levels from the North
 			if (i < 3)
 			{
-				new_level = new SubLevel((int)level_new.x + next_level_location, (int)level_new.y + 1);
+				new_level = new SubLevel(level_data_path, (int)level_new.x + next_level_location, (int)level_new.y + 1);
 				new_level->addHeader(container.total_object_count);
 				sublevels[i] = new_level;
 				next_level_location--;
@@ -287,7 +292,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 			// Load New Levels from the South
 			if (i > 5)
 			{
-				new_level = new SubLevel((int)level_new.x + next_level_location, (int)level_new.y - 1);
+				new_level = new SubLevel(level_data_path, (int)level_new.x + next_level_location, (int)level_new.y - 1);
 				new_level->addHeader(container.total_object_count);
 				sublevels[i] = new_level;
 				next_level_location++;
@@ -835,8 +840,77 @@ inline uint16_t Render::Objects::Level::reallocateHelper(Type*** list, int old_c
 	return index;
 }
 
-Render::Objects::Level::Level(std::string save_path, std::string core_path)
+Render::Objects::Level::Level(std::string& level_path, float initial_x, float initial_y, bool force_coords)
 {
+	// Reset Level Objects
+	container = { 0 };
+	temp_index_holder = 0;
+
+	// Test Output
+	std::cout << "Opening Scene at Path: " << level_path << "\n";
+
+#define READ
+#ifdef READ
+
+	// Open the Scene Data File for Reading
+	std::ifstream scene_data_file = std::ifstream(level_path + "SceneData.dat");
+
+	// Read the Scene Data
+	scene_data_file.read((char*)&scene_data, sizeof(scene_data));
+
+	// Read the Scene Name
+	scene_name.resize(scene_data.name_size);
+	scene_data_file.read(&scene_name[0], scene_data.name_size);
+
+#else
+
+	scene_name = "test";
+	scene_data.name_size = 5;
+	scene_data.initial_camera_y = 40.0f;
+	scene_data.initial_scale = 1.4f;
+
+	// Open the Scene Data File for Reading
+	std::ofstream scene_data_file = std::ofstream(level_path + "SceneData.dat");
+
+	// Read the Scene Data
+	scene_data_file.write((char*)&scene_data, sizeof(scene_data));
+
+	// Read the Scene Name
+	scene_data_file.write(scene_name.c_str(), scene_data.name_size);
+
+#endif
+
+	// Close the File
+	scene_data_file.close();
+
+	// Generate the Level Data Path
+	level_data_path = level_path + "LevelData\\";
+
+	// Generate the Editor Level Data Path
+	editor_level_data_path = level_path + "EditorLevelData\\";
+
+	// Save the New Zoom Scale
+	Global::zoom_scale = scene_data.initial_scale;
+	Global::zoom = true;
+
+	// Update Projection Matrix
+	Global::projection = glm::ortho(-Global::halfScalarX * Global::zoom_scale, Global::halfScalarX * Global::zoom_scale, -50.0f * Global::zoom_scale, 50.0f * Global::zoom_scale, 0.1f, 100.0f);
+
+	// Update Matrices Uniform Buffer
+	glBindBuffer(GL_UNIFORM_BUFFER, Global::MatricesBlock);
+	glBufferSubData(GL_UNIFORM_BUFFER, 64, 64, glm::value_ptr(Global::projection));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	// Construct Projection Matrices
+	for (int i = 0; i < 6; i++)
+		projection[i] = Global::projection;
+
+	// Create Camera
+	if (force_coords)
+		camera = new Camera::Camera(initial_x, initial_y, scene_data.stationary);
+	else
+		camera = new Camera::Camera(scene_data.initial_camera_x, scene_data.initial_camera_y, scene_data.stationary);
+
 	// Generate Terrain Buffer Object
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -864,33 +938,14 @@ Render::Objects::Level::Level(std::string save_path, std::string core_path)
 	// Initialize Change Controller
 	change_controller->storeLevelPointer(this);
 
-	// Construct Projection Matrices
-	for (int i = 0; i < 6; i++)
-	{
-		projection[i] = Global::projection;
-	}
-
-	// Create Camera
-	camera = new Camera::Camera(0, 0, 0);
-
-	// Create Textures
-	for (int i = 0; i < 6; i++)
-	{
-		//glGenTextures(1, terrain_textures[i]->texture.texture);
-		//glGenTextures(1, terrain_textures[i]->texture.material);
-		//glGenTextures(1, terrain_textures[i]->texture.mapping);
-	}
-
-	// Reset Level Objects
-	container = { 0 };
-	temp_index_holder = 0;
+	// Get the Level Position from the Initial Coordinates
+	updateLevelPos(glm::vec2(camera->Position.x, camera->Position.y), level_position);
 
 	// Initialize SubLevels
-	level_position = glm::vec2(0, 0);
 	for (int i = 0; i < 9; i++)
 	{
 		glm::vec2 coords = level_from_index(i);
-		sublevels[i] = new SubLevel((int)coords.x, (int)coords.y);
+		sublevels[i] = new SubLevel(level_data_path, (int)coords.x, (int)coords.y);
 		sublevels[i]->addHeader(container.total_object_count);
 	}
 
@@ -2354,6 +2409,22 @@ GLuint Render::Objects::Level::returnBeamBufferSize()
 Render::Objects::SubLevel** Render::Objects::Level::getSublevels()
 {
 	return sublevels;
+}
+
+std::string Render::Objects::Level::getLevelDataPath()
+{
+	return level_data_path;
+}
+
+std::string Render::Objects::Level::getEditorLevelDataPath()
+{
+	return editor_level_data_path;
+}
+
+void Render::Objects::Level::getSceneInfo(SceneData** data, std::string** name)
+{
+	*data = &scene_data;
+	*name = &scene_name;
 }
 
 #endif

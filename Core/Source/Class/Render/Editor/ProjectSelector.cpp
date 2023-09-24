@@ -13,6 +13,7 @@
 #include "Render/Objects/ChangeController.h"
 #include "Render/GUI/AdvancedString.h"
 #include "Render/GUI/SelectedText.h"
+#include "Render/Editor/SceneController.h"
 
 #include <strsafe.h>
 //#include <shobjidl.h> 
@@ -293,8 +294,6 @@ void Editor::ProjectSelector::loadProject()
 
     // Bind Path to Level Data
     Global::project_file_path = current_project_path + "\\" + current_project_name + ".dprj";
-    Global::level_data_path = current_project_path + "\\Data\\LevelData\\";
-    Global::editor_level_data_path = current_project_path + "\\Data\\EditorLevelData\\";
     Global::project_map_path = current_project_path + "\\Code\\Maps\\";
     Global::project_scripts_path = current_project_path + "\\Code\\Scripts\\";
     Global::script_folder_path = current_project_path + "\\Scripts";
@@ -302,6 +301,9 @@ void Editor::ProjectSelector::loadProject()
     Global::project_symbols_path = current_project_path + "\\Build\\Debug\\project_lib.pdb";
     Global::project_resources_path = current_project_path;
     Global::project_name = current_project_name;
+
+    // Read the Scene List
+    scene_controller->loadScenes();
 
     // Read Script Files
     script_wizard->loadScriptData();
@@ -320,7 +322,7 @@ void Editor::ProjectSelector::loadProject()
 
     // Tell Level to Reload All
     if (project_initialized)
-        change_controller->reset();
+        change_controller->reset(true);
 
     // Enable Project
     project_initialized = true;

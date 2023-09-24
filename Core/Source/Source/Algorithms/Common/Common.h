@@ -38,6 +38,12 @@ namespace Source::Algorithms::Common
 
 	// Erases the File Extension of a File Path
 	void eraseFileExtension(std::string& file_path);
+
+	// Test if a File Name Contains Invalid Characters
+	bool testFileNameInvalidCharacters(std::string& file_name);
+
+	// Erases the File Name From a File Path
+	std::string getFilePath(std::string& file_path);
 }
 
 #endif

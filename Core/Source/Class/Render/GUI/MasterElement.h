@@ -49,6 +49,9 @@ namespace GUI
 
 		// Pointer to Vertical Percent
 		float* vertical_offset = nullptr;
+
+		// Model Matrix for Elements
+		glm::mat4 element_model = glm::mat4(1.0f);
 		
 		// Update Pointers of Object
 		void updatePointers();
@@ -81,6 +84,18 @@ namespace GUI
 
 		// Return the Default Elements Struct
 		DefaultElements* getDefaults();
+
+		// Return Reference to the Element Model
+		glm::mat4& getModel();
+
+		// Update the Element Model
+		void updateElementModel();
+
+		// Get the Horizontal Offset
+		float getHorizontalOffset();
+
+		// Get the Vertical Offset
+		float getVerticalOffset();
 	};
 }
 

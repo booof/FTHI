@@ -136,6 +136,10 @@ void Editor::EditorWindow::initializeWindow()
 	// Unbind Array Object
 	glBindVertexArray(0);
 
+	/*
+	
+	// This Code Might be Removed, Depends on If List of Sublevels is Still Needed
+
 	// Load List of Files
 	std::string filePath = Global::level_data_path;
 
@@ -159,6 +163,7 @@ void Editor::EditorWindow::initializeWindow()
 		// Inrease Index
 		index++;
 	}
+	*/
 
 	// Generate the Master Element
 	GUI::DefaultElements* default_elements = new GUI::DefaultElements();
@@ -4746,8 +4751,6 @@ void Editor::EditorWindow::drawWindow()
 		// Draw Box Text
 		for (uint8_t i = 0; i < boxes_size; i++)
 			boxes[i]->blitzOffsetText();
-
-
 
 		// Bind Font Shader
 		//Global::fontShader.Use();

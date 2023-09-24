@@ -383,4 +383,27 @@ bool Editor::Notification::notificationCancelOption(NOTIFICATION_MESSAGES type, 
     return (stop_looping == 1);
 }
 
+void Editor::Notification::notificationSoundOnly(NOTIFICATION_MESSAGES type)
+{
+    // Stop Playing the Current Notification Message or Program will Crash
+    alSourceStop(notificationSource);
+
+    // Bind the Audio Source
+    alSourcei(notificationSource, AL_BUFFER, 0);
+
+    // Load Sound Based on Current Mode
+    switch (type)
+    {
+    case NOTIFICATION_MESSAGES::NOTIFICATION_MESSAGE: Source::Audio::loadAudioFile(notificationBuffer, std::string("../Resources/Sound/Notification/message.wav")); break;
+    case NOTIFICATION_MESSAGES::NOTIFICATION_WARNING: Source::Audio::loadAudioFile(notificationBuffer, std::string("../Resources/Sound/Notification/warning.wav")); break;
+    case NOTIFICATION_MESSAGES::NOTIFICATION_ERROR: Source::Audio::loadAudioFile(notificationBuffer, std::string("../Resources/Sound/Notification/error.wav")); break;
+    }
+
+    // Play the Sound
+    alSourcei(notificationSource, AL_BUFFER, notificationBuffer);
+
+    // Unbind the Audio Source
+    alSourcePlay(notificationSource);
+}
+
 Editor::Notification Editor::Notification::instance;

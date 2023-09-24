@@ -52,6 +52,7 @@
 #include "Object/Entity/Controllables.h"
 #include "Object/Entity/Interactables.h"
 #include "Object/Entity/Dynamics.h"
+#include "Render/Editor/SceneController.h"
 
 // Shader
 #include "Class/Render/Shader/Shader.h"
@@ -215,12 +216,15 @@ void Editor::Selector::blitzSelector()
 			// Bind Object Shader
 			Global::objectShaderStatic.Use();
 
+			// Get the Current Camera Coordinates
+			glm::vec3& cam_pos = static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->camera->Position;
+
 			// Send Matrix to Shader
 			//glm::mat4 matrix = level->returnProjectionViewMatrix(4) * model;
 			//glUniformMatrix4fv(Global::objectStaticMatrixLoc, 1, GL_FALSE, glm::value_ptr(matrix));
 			Global::modelLocObjectStatic = glGetUniformLocation(Global::objectShaderStatic.Program, "model");
 			glUniformMatrix4fv(Global::modelLocObjectStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
-			glUniform4f(glGetUniformLocation(Global::objectShaderStatic.Program, "view_pos"), level->camera->Position.x, level->camera->Position.y, 0.0f, 0.0f);
+			glUniform4f(glGetUniformLocation(Global::objectShaderStatic.Program, "view_pos"), cam_pos.y, cam_pos.y, 0.0f, 0.0f);
 			//glUniform1f(glGetUniformLocation(Global::objectShaderStatic.Program, "material.shininess"), 1.0);
 
 			// Draw Object
@@ -847,7 +851,7 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 		data_object->updateSelectedPosition(-offset->x, -offset->y, false);
 
 		// Remove Children From Level
-		level->removeMarkedChildrenFromList(data_object);
+		static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->removeMarkedChildrenFromList(data_object);
 	}
 
 	// Object is Being Added to a Lower Object
@@ -858,7 +862,7 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 		data_object->updateSelectedPosition(-offset.x, -offset.y, true);
 
 		// Remove Children From Level
-		level->removeMarkedChildrenFromList(data_object);
+		static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->removeMarkedChildrenFromList(data_object);
 	}
 
 	// Add Child to Selected Object
@@ -958,7 +962,7 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 		delete[] offsets;
 
 		// Store New Objects in Level
-		level->incorperatNewObjects(object_list, list_size);
+		static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->incorperatNewObjects(object_list, list_size);
 		delete[] object_list;
 	}
 }
@@ -1011,7 +1015,7 @@ void Editor::Selector::clearOnlyOneComplexParent()
 		}
 
 		// Remove Children From Level
-		level->removeMarkedChildrenFromList(data_object);
+		static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->removeMarkedChildrenFromList(data_object);
 
 		// Get the Temp Object Representing the Selected Object
 		Object::Object* temp_object = nullptr;
@@ -1036,7 +1040,7 @@ void Editor::Selector::clearOnlyOneComplexParent()
 		addUnselectableRecursive(data_object);
 
 		// Add Children Into Level
-		level->incorperatNewObjects(object_list, list_size);
+		static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->incorperatNewObjects(object_list, list_size);
 		delete[] object_list;
 	}
 
@@ -2783,7 +2787,9 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 	Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
 
 	// Determine the Number of Instances the Real Data Object Appears
-	int real_instance_count = data_object->getObjects().size();
+	int real_instance_count = 1;
+	if (data_object->hasReals())
+		data_object->getObjects().size();
 
 	// Parse Light Types
 	switch (data_object->getObjectIdentifier()[1])
@@ -2912,7 +2918,9 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataLights(Dat
 void Editor::Selector::allocateSelectorShaderDataLights(DataClass::Data_Object* data_object)
 {
 	// Determine the Number of Instances the Real Data Object Appears
-	int real_instance_count = data_object->getObjects().size();
+	int real_instance_count = 1;
+	if (data_object->hasReals())
+		data_object->getObjects().size();
 
 	// Parse Light Types
 	switch (data_object->getObjectIdentifier()[1])
@@ -2922,7 +2930,7 @@ void Editor::Selector::allocateSelectorShaderDataLights(DataClass::Data_Object* 
 	case Object::Light::DIRECTIONAL:
 	{
 		// Get Size of Directional Light Buffer
-		light_buffer_offset = level->returnDirectionalBufferSize();
+		light_buffer_offset = static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->returnDirectionalBufferSize();
 		int light_buffer_count = (light_buffer_offset - 16) / 96 + 1;
 
 		// Bind Buffers
@@ -2960,7 +2968,7 @@ void Editor::Selector::allocateSelectorShaderDataLights(DataClass::Data_Object* 
 	case Object::Light::POINT:
 	{
 		// Get Size of Point Light Buffer
-		light_buffer_offset = level->returnPointBufferSize();
+		light_buffer_offset = static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->returnPointBufferSize();
 		int light_buffer_count = (light_buffer_offset - 16) / 80 + 1;
 
 		// Bind Buffers
@@ -2998,7 +3006,7 @@ void Editor::Selector::allocateSelectorShaderDataLights(DataClass::Data_Object* 
 	case Object::Light::SPOT:
 	{
 		// Get Size of Spot Light Buffer
-		light_buffer_offset = level->returnSpotBufferSize();
+		light_buffer_offset = static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->returnSpotBufferSize();
 		int light_buffer_count = (light_buffer_offset - 16) / 96 + 1;
 
 		// Bind Buffers
@@ -3036,7 +3044,7 @@ void Editor::Selector::allocateSelectorShaderDataLights(DataClass::Data_Object* 
 	case Object::Light::BEAM:
 	{
 		// Get Size of Beam Light Buffer
-		light_buffer_offset = level->returnBeamBufferSize();
+		light_buffer_offset = static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->returnBeamBufferSize();
 		int light_buffer_count = (light_buffer_offset - 16) / 96 + 1;
 
 		// Bind Buffers
@@ -3078,14 +3086,22 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 	// Get Light Data
 	Object::Light::LightData& light_data = static_cast<DataClass::Data_Light*>(data_object)->getLightData();
 
+	// Determine the Number of Real Instances
+	int real_instance_count = 1;
+	if (data_object->hasReals())
+		real_instance_count = data_object->getObjects().size();
+
 	// Determine the Original Position from the Original Real Object
-	glm::vec2 original_position;
-	for (Object::Object* temp_real : data_object->getObjects())
+	glm::vec2 original_position = data_object->getPosition();
+	if (data_object->hasReals())
 	{
-		if (temp_real->storage_type == Object::STORAGE_TYPES::NULL_TEMP && static_cast<Object::TempObject*>(temp_real)->isOriginal())
+		for (Object::Object* temp_real : data_object->getObjects())
 		{
-			original_position = temp_real->returnPosition();
-			break;
+			if (temp_real->storage_type == Object::STORAGE_TYPES::NULL_TEMP && static_cast<Object::TempObject*>(temp_real)->isOriginal())
+			{
+				original_position = temp_real->returnPosition();
+				break;
+			}
 		}
 	}
 
@@ -3117,7 +3133,6 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 		glm::vec2 second_position_offset = directional_data.position2 - light_data.position;
 
 		// Add Each Instance of Selected Directional Light to Shaders
-		int real_instance_count = data_object->getObjects().size();
 		for (int i = 0, j = light_buffer_offset; i < real_instance_count; i++, j += 96)
 		{
 			// Add Light and Line Direction Data
@@ -3129,11 +3144,22 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 48, 16, glm::value_ptr(light_data.diffuse * light_data.intensity));
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 64, 16, glm::value_ptr(light_data.specular * light_data.intensity));
 
-			// Get the Real Instance to be Shaded
-			Object::Light::Directional::Directional* directional_real = static_cast<Object::Light::Directional::Directional*>(data_object->getObjects().at(i));
+			// If Object Has Real Objects, Get Real First Endpoint Position
+			glm::vec2 first_real_position = glm::vec2(0.0f, 0.0f);
+			if (data_object->hasReals())
+			{
+				// Get the Real Instance to be Shaded
+				Object::Light::Directional::Directional* directional_real = static_cast<Object::Light::Directional::Directional*>(data_object->getObjects().at(i));
+
+				// Get First Endpoint
+				first_real_position = directional_real->returnPosition() + original_offset;
+			}
+
+			// Else, Get Default Endpoint Position
+			else
+				first_real_position = data_object->getPosition();
 
 			// Add Endpoint Data
-			glm::vec2 first_real_position = directional_real->returnPosition() + original_offset;
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 80, 8, glm::value_ptr(first_real_position));
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 88, 8, glm::value_ptr(first_real_position + second_position_offset));
 		}
@@ -3154,15 +3180,22 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::PointBuffer);
 
 		// Add Each Instance of Selected Point Light to Shaders
-		int real_instance_count = data_object->getObjects().size();
 		for (int i = 0, j = light_buffer_offset; i < real_instance_count; i++, j += 80)
 		{
-			// Get the Real Instance to be Shaded
-			Object::Light::Point::Point* point_real = static_cast<Object::Light::Point::Point*>(data_object->getObjects().at(i));
+			// If Object Has Real Objects, Get Real Position
+			if (data_object->hasReals())
+			{
+				// Get the Real Instance to be Shaded
+				Object::Light::Point::Point* point_real = static_cast<Object::Light::Point::Point*>(data_object->getObjects().at(i));
 
-			// Add Position Data
-			glm::vec2 real_position = *point_real->pointerToPosition() + original_offset;
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j, 16, glm::value_ptr(glm::vec4(real_position.x, real_position.y, 2.0f, 1.0f)));
+				// Add Position Data
+				glm::vec2 real_position = *point_real->pointerToPosition() + original_offset;
+				glBufferSubData(GL_SHADER_STORAGE_BUFFER, j, 16, glm::value_ptr(glm::vec4(real_position.x, real_position.y, 2.0f, 1.0f)));
+			}
+
+			// Else, Use Position of Data Object
+			else
+				glBufferSubData(GL_SHADER_STORAGE_BUFFER, j, 16, glm::value_ptr(glm::vec4(data_object->getPosition().x, data_object->getPosition().y, 2.0f, 1.0f)));
 
 			// Add Ambient, Diffuse, and Specular Data
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 16, 16, glm::value_ptr(light_data.ambient * light_data.intensity));
@@ -3190,15 +3223,22 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::SpotBuffer);
 
 		// Add Each Instance of Selected Spot Light to Shaders
-		int real_instance_count = data_object->getObjects().size();
 		for (int i = 0, j = light_buffer_offset; i < real_instance_count; i++, j += 96)
 		{
-			// Get the Real Instance to be Shaded
-			Object::Light::Spot::Spot* spot_real = static_cast<Object::Light::Spot::Spot*>(data_object->getObjects().at(i));
+			// If Object Has Real Objects, Get Real Position
+			if (data_object->hasReals())
+			{
+				// Get the Real Instance to be Shaded
+				Object::Light::Spot::Spot* spot_real = static_cast<Object::Light::Spot::Spot*>(data_object->getObjects().at(i));
 
-			// Add Position Data
-			glm::vec2 real_position = *spot_real->pointerToPosition() + original_offset;
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j, 16, glm::value_ptr(glm::vec4(real_position.x, real_position.y, 2.0f, 0.0f)));
+				// Add Position Data
+				glm::vec2 real_position = *spot_real->pointerToPosition() + original_offset;
+				glBufferSubData(GL_SHADER_STORAGE_BUFFER, j, 16, glm::value_ptr(glm::vec4(real_position.x, real_position.y, 2.0f, 0.0f)));
+			}
+
+			// Else, Use Position of Data Object
+			else
+				glBufferSubData(GL_SHADER_STORAGE_BUFFER, j, 16, glm::value_ptr(glm::vec4(data_object->getPosition().x, data_object->getPosition().y, 2.0f, 1.0f)));
 
 			// Add Direction Data
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 16, 16, glm::value_ptr(spot_data.direction));
@@ -3240,7 +3280,6 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 		glm::vec2 second_position_offset = beam_data.position2 - light_data.position;
 
 		// Add Each Instance of Selected Spot Light to Shaders
-		int real_instance_count = data_object->getObjects().size();
 		for (int i = 0, j = light_buffer_offset; i < real_instance_count; i++, j += 96)
 		{
 			// Add Light and Line Direction Data
@@ -3255,11 +3294,22 @@ void Editor::Selector::storeSelectorShaderDataLights(DataClass::Data_Object* dat
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 64, 4, &beam_data.linear);
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 68, 4, &beam_data.quadratic);
 
-			// Get the Real Instance to be Shaded
-			Object::Light::Beam::Beam* beam_real = static_cast<Object::Light::Beam::Beam*>(data_object->getObjects().at(i));
+			// If Object Has Real Objects, Get Real First Endpoint Position
+			glm::vec2 first_real_position = glm::vec2(0.0f, 0.0f);
+			if (data_object->hasReals())
+			{
+				// Get the Real Instance to be Shaded
+				Object::Light::Beam::Beam* beam_real = static_cast<Object::Light::Beam::Beam*>(data_object->getObjects().at(i));
+
+				// Get First Endpoint
+				first_real_position = *beam_real->pointerToPosition() + original_offset;
+			}
+
+			// Else, Get Default Endpoint Position
+			else
+				first_real_position = data_object->getPosition();
 
 			// Add Endpoint Data
-			glm::vec2 first_real_position = *beam_real->pointerToPosition() + original_offset;
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 72, 8, glm::value_ptr(first_real_position));
 			glBufferSubData(GL_SHADER_STORAGE_BUFFER, j + 80, 8, glm::value_ptr(first_real_position + second_position_offset));
 		}
@@ -5123,7 +5173,7 @@ void Editor::Selector::clampObjects(bool enabled, float(&endpoints)[8], int Type
 		{
 			// Determine Level Location of Endpoint
 			glm::i16vec2 endpoint_level;
-			level->updateLevelPos(glm::vec2(endpoints[i], endpoints[i + 1]), endpoint_level);
+			static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->updateLevelPos(glm::vec2(endpoints[i], endpoints[i + 1]), endpoint_level);
 
 			// Iterate Through Level Endpoint is In And All 8 Levels Surrounding It
 			for (int j = 0; j < 9; j++)

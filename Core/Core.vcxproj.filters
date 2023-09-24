@@ -645,6 +645,9 @@
     <ClCompile Include="Source\Class\Render\GUI\SelectedText.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Class\Render\Editor\SceneController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Class\Object\Physics\PhysicsBase.h">
@@ -1047,6 +1050,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Class\Render\GUI\SelectedText.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Class\Render\Editor\SceneController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

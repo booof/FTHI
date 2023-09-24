@@ -16,6 +16,7 @@
 #include "Class/Render/Editor/Debugger.h"
 #include "Render/Struct/DataClasses.h"
 #include "Render/GUI/SelectedText.h"
+#include "Render/Editor/SceneController.h"
 
 void Source::Listeners::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -250,19 +251,25 @@ void Source::Listeners::KeyCallback(GLFWwindow* window, int key, int scancode, i
 					}
 
 					// Open Debugger
-					if (key == GLFW_KEY_F6)
+					else if (key == GLFW_KEY_F6)
 					{
 						debugger->updateWindow();
 					}
 
 					// Open Script Wizard
-					if (key == GLFW_KEY_F7)
+					else if (key == GLFW_KEY_F7)
 					{
 						script_wizard->updateScriptWizard();
 					}
 
+					// Open Scene Selector in Editing Mode
+					else if (key == GLFW_KEY_F8)
+					{
+						scene_controller->startEditingMode();
+					}
+
 					// Open Project Selector
-					if (key == GLFW_KEY_F8)
+					else if (key == GLFW_KEY_F9)
 					{
 						project_selector->select_project();
 					}
@@ -419,6 +426,10 @@ void Source::Listeners::CursorCallback(GLFWwindow* window, double xPos, double y
 {
 	// Show That the Cursor Updated
 	Global::cursor_Move = true;
+
+	// Save the Raw Mouse Position
+	Global::rawX = xPos;
+	Global::rawY = Global::screenHeight - yPos;
 
 	// Calculate Local Screen Mouse Coordinates
 	double temp_mouseX = (double)(xPos - Global::screenWidth * 0.5f) / Global::screenHeight * 101 * Global::zoom_scale;

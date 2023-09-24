@@ -776,9 +776,6 @@ namespace Editor
 		// Pivot of Object Rotations
 		glm::vec2 pivot;
 
-		// Pointer to Level Object
-		Render::Objects::Level* level = nullptr;
-
 		// Pointer to the Object Info Object
 		ObjectInfo* info = nullptr;
 

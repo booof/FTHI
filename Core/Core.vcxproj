@@ -68,6 +68,7 @@
     <ClCompile Include="Source\Class\Render\Editor\Notification.cpp" />
     <ClCompile Include="Source\Class\Render\Editor\ObjectInfo.cpp" />
     <ClCompile Include="Source\Class\Render\Editor\ProjectSelector.cpp" />
+    <ClCompile Include="Source\Class\Render\Editor\SceneController.cpp" />
     <ClCompile Include="Source\Class\Render\Editor\ScriptWizard.cpp" />
     <ClCompile Include="Source\Class\Render\Editor\Selector.cpp" />
     <ClCompile Include="Source\Class\Render\GUI\AdvancedString.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="Source\Class\Render\Editor\Notification.h" />
     <ClInclude Include="Source\Class\Render\Editor\ObjectInfo.h" />
     <ClInclude Include="Source\Class\Render\Editor\ProjectSelector.h" />
+    <ClInclude Include="Source\Class\Render\Editor\SceneController.h" />
     <ClInclude Include="Source\Class\Render\Editor\ScriptWizard.h" />
     <ClInclude Include="Source\Class\Render\Editor\Selector.h" />
     <ClInclude Include="Source\Class\Render\Editor\TextureWizard.h" />

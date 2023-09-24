@@ -306,7 +306,7 @@ Render::Objects::UnsavedLevel::~UnsavedLevel()
 	slave_stack.deleteStack();
 }
 
-void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y, uint8_t z)
+void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y, uint8_t z, std::string level_data_path, std::string editor_level_data_path)
 {
 	// Store Coordinates of Level
 	level_x = x;
@@ -323,8 +323,8 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y
 	file_name.append(Source::Algorithms::Common::removeTrailingZeros(std::to_string(y)));
 
 	// Get Paths of Level
-	object_path = Global::level_data_path + file_name;
-	editor_path = Global::editor_level_data_path + file_name;
+	object_path = level_data_path + file_name;
+	editor_path = editor_level_data_path + file_name;
 
 	// Read Unmodified Data
 	constructUnmodifiedDataHelper(instance_with_changes);

@@ -811,6 +811,11 @@ glm::vec4& DataClass::Data_Object::returnLineColor(int8_t index)
 	return visualizer_colors[index];
 }
 
+bool DataClass::Data_Object::hasReals()
+{
+	return object_pointers != nullptr;
+}
+
 Object::ObjectData& DataClass::Data_SubObject::getObjectData()
 {
 	return data;

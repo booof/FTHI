@@ -35,7 +35,7 @@
 
 #ifdef EDITOR
 
-Render::Objects::SubLevel::SubLevel(int x, int y)
+Render::Objects::SubLevel::SubLevel(std::string& level_data_path, int x, int y)
 {
 	// Store Coordinates of Level
 	level_x = x;
@@ -46,7 +46,7 @@ Render::Objects::SubLevel::SubLevel(int x, int y)
 #endif
 
 	// Get Path of Level
-	path = Global::level_data_path;
+	path = level_data_path;
 	path.append(Source::Algorithms::Common::removeTrailingZeros(std::to_string(x)));
 	path.append(",");
 	path.append(Source::Algorithms::Common::removeTrailingZeros(std::to_string(y)));

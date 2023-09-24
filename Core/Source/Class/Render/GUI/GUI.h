@@ -9,6 +9,16 @@
 
 namespace GUI
 {
+	// Data for GUIs
+	struct GUIData
+	{
+		// The Size of the GUI Name
+		uint16_t name_size;
+
+		// GUI Script
+		uint16_t script;
+	};
+
 	// Element Section in a GUI Structure
 	struct ElementSection
 	{

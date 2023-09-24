@@ -140,6 +140,14 @@ bool GUI::VerticalScrollBar::TestColloisions()
 		// Test if MouseY is inside Bar
 		if (Global::mouseY / Global::zoom_scale > (double)BarPosY - BarHeight && Global::mouseY / Global::zoom_scale < BarPosY)
 		{
+			// If Left Click, Start Scrolling
+			if (Global::LeftClick)
+			{
+				is_being_modified = true;
+				was_modified = true;
+				scroll_offset = Global::mouseY / Global::zoom_scale - BarPosY;
+			}
+
 			// Return True if Mouse is Inside Bar
 			return true;
 		}
@@ -156,15 +164,11 @@ float GUI::VerticalScrollBar::Scroll(float newY)
 
 	// Test if Bar Goes Past Maximum Value
 	if (BarPosY - BarHeight < MinPos)
-	{
 		BarPosY = MinPos + BarHeight;
-	}
 
 	// Test if Bar Goes Past Minimum Value
 	else if (BarPosY > MaxPos)
-	{
 		BarPosY = MaxPos;
-	}
 
 	// Recalulate Model Matrix
 	model_Scroll = glm::translate(glm::mat4(1.0f), glm::vec3(BarPosX, BarPosY, 0.0f));

@@ -144,7 +144,6 @@ bool GUI::HorizontalScrollBar::TestColloisions()
 			if (Global::LeftClick)
 			{
 				is_being_modified = true;
-				modified_by_user = true;
 				was_modified = true;
 				scroll_offset = Global::mouseX / Global::zoom_scale - BarPosX;
 			}
@@ -165,15 +164,11 @@ float GUI::HorizontalScrollBar::Scroll(float newX)
 
 	// Test if Bar Goes Past Maximum Value
 	if (BarPosX - BarWidth < MinPos)
-	{
 		BarPosX = MinPos + BarWidth;
-	}
 
 	// Test if Bar Goes Past Minimum Value
 	else if (BarPosX > MaxPos)
-	{
 		BarPosX = MaxPos;
-	}
 
 	// Recalulate Model Matrix
 	model_Scroll = glm::translate(glm::mat4(1.0f), glm::vec3(BarPosX, BarPosY, 0.0f));

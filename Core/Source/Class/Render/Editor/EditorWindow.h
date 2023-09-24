@@ -461,7 +461,6 @@ namespace Editor
 
 		// Pointer to the Currently Moused Over Object
 		Object::Object* moused_object = nullptr;
-		//uint32_t object_index = 0;
 
 		// Determines if Object Has Been Modified
 		bool modified = false;

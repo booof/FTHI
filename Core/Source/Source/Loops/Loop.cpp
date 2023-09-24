@@ -12,6 +12,7 @@
 #include "Source/Rendering/Exit.h"
 #include "Class/Render/Objects/ChangeController.h"
 #include "Class/Render/Editor/ObjectInfo.h"
+#include "Class/Render/Editor/SceneController.h"
 
 // Use This Function to Quickly Empty Error Log
 //while (glGetError() != GL_NO_ERROR) {}
@@ -24,15 +25,17 @@ void Loop::loop()
 	bool enable_loop = true;
 
 	// Level Object
-	Render::Objects::Level* level = new Render::Objects::Level(std::string(" "), std::string(" "));
+	Render::Objects::Level* level = nullptr;
+	scene_controller->loadDefault();
 
 	// Selector Object
 	Editor::Selector* selector = new Editor::Selector();
-	selector->level = level;
 
 	// Object Info
 	Editor::ObjectInfo* object_info = new Editor::ObjectInfo();
 	selector->info = object_info;
+
+	Editor::SceneController* sc = scene_controller->get();
 
 
 #ifdef FFMPEG
@@ -56,6 +59,9 @@ void Loop::loop()
 	// Main Loop
 	do
 	{
+		// Get Pointer to Level Object
+		level = static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance());
+
 		// Show That Program is Looping
 	//	std::cout << "looping\n";
 

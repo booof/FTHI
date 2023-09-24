@@ -117,6 +117,52 @@ namespace Object
 
 namespace Render::Objects
 {
+	// Data for Scenes
+	struct SceneData
+	{
+		// The File Identifier
+		// [0] = Data Type: 0 = SceneList, 1 = SceneData, 2 = Level Data, 3 = Editor Data, 5 = Vars
+		// [1] = Instance Type: 0 = Levels, 1 = GUIs. Similar Thing for Var Files
+		// [2] = Identifier #1: Static Number
+		// [3] = Identifier #2: Static Number
+		char identifier[4] = { 1, 0, 42, 125 };
+
+		// The Horizontal Size of a Sublevel
+		float sublevel_width = 128.0f;
+
+		// The Vertical Size of a Sublevel
+		float sublevel_height = 64.0f;
+
+		// The Number of Sublevels in a Given Direction
+		// Does Not Include Sublevel (0,0)
+		int sublevel_count_north = 10;
+		int sublevel_count_east = 10;
+		int sublevel_count_south = 10;
+		int sublevel_count_west = 10;
+
+		// The Size of the Level Name
+		uint16_t name_size = 0;
+
+		// Determines if the Sublevels Wrap
+		bool wrap_sublevels = false;
+
+		// Determines if the Camera is Stationary
+		bool stationary = false;
+
+		// Gravity
+		float gravity_scale = 1.0f;
+
+		// The Render Distance
+		unsigned int render_distance = 2;
+
+		// The Initial Camera Positions
+		float initial_camera_x = 0.0f;
+		float initial_camera_y = 0.0f;
+
+		// Initial Zoom Scale
+		float initial_scale = 0.2f;
+	};
+
 	// Container for Currently Loaded Objects
 	struct ObjectContainer
 	{
@@ -152,6 +198,18 @@ namespace Render::Objects
 	{
 		// Determines if Initialized
 		bool initialized = false;
+
+		// Level Path
+		std::string level_data_path = "";
+
+		// Editor Path
+		std::string editor_level_data_path = "";
+
+		// Scene Data Object
+		SceneData scene_data;
+
+		// Scene Name
+		std::string scene_name = "";
 
 		// Array of Loaded SubLevels
 		SubLevel* sublevels[9];
@@ -246,7 +304,7 @@ namespace Render::Objects
 		Camera::Camera* camera;
 
 		// Initialize New Level Container
-		Level(std::string save_path, std::string core_path);
+		Level(std::string& level_path, float initial_x, float initial_y, bool force_coords);
 
 		// Update Camera
 		void updateCamera();
@@ -347,6 +405,14 @@ namespace Render::Objects
 		// Returns the Sublevels of the Object
 		SubLevel** getSublevels();
 
+		// Get the Level Data Path
+		std::string getLevelDataPath();
+
+		// Get the Editor Level Data Path
+		std::string getEditorLevelDataPath();
+
+		// Get Pointers to the Scene Information
+		void getSceneInfo(SceneData** data, std::string** name);
 
 #endif
 

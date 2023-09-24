@@ -260,6 +260,9 @@ namespace DataClass
 
 		// Gets the Indicies and Position Pointers for Object Info
 		virtual void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3) = 0;
+
+		// Returns True if the Object Has Real Objects
+		bool hasReals();
 	};
 
 	// Sub Object Data Class

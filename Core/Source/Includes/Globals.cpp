@@ -34,8 +34,6 @@ namespace Global
 
 	// Path to Level Data
 	std::string project_file_path = "";
-	std::string level_data_path = "";
-	std::string editor_level_data_path = "";
 	std::string project_map_path = "";
 	std::string project_scripts_path = "";
 	std::string script_folder_path = "";
@@ -81,8 +79,13 @@ namespace Global
 	// Shows if Cursor Moved
 	bool cursor_Move = false;
 
+	// Raw Cursor Locations
+	double rawX = 0.0;
+	double rawY = 0.0;
+
 	// Cursor Locations
-	double mouseX, mouseY;
+	double mouseX = 0.0;
+	double mouseY = 0.0;
 
 	// Change in Mouse Positions
 	glm::vec2 deltaMouse = glm::vec2(0.0f, 0.0f);

@@ -94,7 +94,11 @@ Render::Objects::ChangeController* Render::Objects::ChangeController::get()
 
 void Render::Objects::ChangeController::storeLevelPointer(Level* level_)
 {
+	// Store the Level Pointer
 	level = level_;
+
+	// Reset the Change List
+	reset(false);
 }
 
 Render::Objects::UnsavedLevel* Render::Objects::ChangeController::getUnsavedLevel(int16_t x, int16_t y, int8_t z)
@@ -129,7 +133,7 @@ Render::Objects::UnsavedLevel* Render::Objects::ChangeController::generateUnsave
 	UnsavedLevel* new_unsaved_level = new UnsavedLevel();
 
 	// Generate Unmodified Data
-	new_unsaved_level->constructUnmodifiedData(x, y, z);
+	new_unsaved_level->constructUnmodifiedData(x, y, z, level->getLevelDataPath(), level->getEditorLevelDataPath());
 
 	// Test if Unsaved Level is Saved
 	identifier.level_x = x;
@@ -611,7 +615,7 @@ bool Render::Objects::ChangeController::returnIfUnsaved()
 	return master_stack->retrunArraySize() > 1;
 }
 
-void Render::Objects::ChangeController::reset()
+void Render::Objects::ChangeController::reset(bool reload)
 {
 	// Reset Unsaved Vectors
 	unsaved_levels.clear();
@@ -625,7 +629,8 @@ void Render::Objects::ChangeController::reset()
 	master_stack->reset();
 
 	// Reload Level
-	level->reloadAll();
+	if (reload)
+		level->reloadAll();
 }
 
 void Render::Objects::ChangeController::drawVisualizers()

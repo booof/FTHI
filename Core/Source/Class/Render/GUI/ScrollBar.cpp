@@ -14,17 +14,14 @@ bool GUI::ScrollBar::updateElement()
 	{
 		// If Left Click is Not Held, Disable Scrolling
 		if (!Global::LeftClick)
-		{
-			was_modified = false;
 			is_being_modified = false;
-		}
 
 		// If Bar is Currently Being Modified, Scroll the Bar
 		else if (is_being_modified)
 		{
 			was_modified = true;
-			Scroll(Global::mouseX / Global::zoom_scale - scroll_offset);
-			return false;
+			Scroll((Global::mouseY / Global::zoom_scale) - scroll_offset);
+			return true;
 		}
 
 		// If Not Being Modified, Test Collisions

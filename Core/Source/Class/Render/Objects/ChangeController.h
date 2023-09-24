@@ -220,7 +220,7 @@ namespace Render::Objects
 		bool returnIfUnsaved();
 
 		// Reset Change Controller
-		void reset();
+		void reset(bool reload);
 
 		// Draw Visualizers for Unsaved Objects
 		void drawVisualizers();

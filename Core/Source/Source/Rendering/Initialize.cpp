@@ -14,6 +14,7 @@
 #include "Source/Loaders/Audio.h"
 #include "Class/Render/Editor/ProjectSelector.h"
 #include "Class/Render/Editor/Debugger.h"
+#include "Render/Editor/SceneController.h"
 
 void why_do_i_have_to_mak_a_function_to_call_this()
 {
@@ -750,6 +751,9 @@ bool Source::Render::Initialize::initialize()
 
 	// Generate Debugger
 	debugger->initializeDebugger();
+
+	// Generate Scene Controller
+	scene_controller->initializeSceneController();
 
 #endif
 

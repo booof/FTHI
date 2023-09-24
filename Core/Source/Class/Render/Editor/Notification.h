@@ -87,6 +87,9 @@ namespace Editor
 		
 		// Notification With OK Button and Cancel Button
 		bool notificationCancelOption(NOTIFICATION_MESSAGES type, std::string& message);
+
+		// Notification With No GUI, Only Plays Sound
+		void notificationSoundOnly(NOTIFICATION_MESSAGES type);
 	};
 }
 

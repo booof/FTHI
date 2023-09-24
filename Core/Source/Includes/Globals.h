@@ -56,8 +56,6 @@ namespace Global
 
 	// Path to Level Data
 	extern std::string project_file_path;
-	extern std::string level_data_path;
-	extern std::string editor_level_data_path;
 	extern std::string project_map_path;
 	extern std::string project_scripts_path;
 	extern std::string script_folder_path;
@@ -119,6 +117,10 @@ namespace Global
 
 	// Shows if Cursor Moved
 	extern bool cursor_Move;
+
+	// Raw Cursor Locations
+	extern double rawX;
+	extern double rawY;
 
 	// Cursor Locations
 	extern double mouseX;

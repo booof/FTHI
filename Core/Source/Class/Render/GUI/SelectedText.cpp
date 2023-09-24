@@ -385,7 +385,8 @@ void GUI::SelectedText::stopSelecting()
 	glfwSetKeyCallback(Global::window, Source::Listeners::KeyCallback);
 
 	// Reset Render Text
-	text->updateRenderText();
+	if (text != nullptr)
+		text->updateRenderText();
 }
 
 void GUI::SelectedText::insertCharacter(char character)

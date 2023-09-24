@@ -55,7 +55,7 @@ namespace Render::Objects
 #ifdef EDITOR
 
 		// Initialize SubLevel
-		SubLevel(int x, int y);
+		SubLevel(std::string& level_data_path, int x, int y);
 
 		// Read Level
 		void readLevel(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities);
