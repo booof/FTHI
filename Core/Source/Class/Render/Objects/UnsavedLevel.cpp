@@ -259,17 +259,21 @@ bool Render::Objects::UnsavedLevel::testValidSelection(DataClass::Data_Object* p
 	return true;
 }
 
-Render::Objects::UnsavedLevel::UnsavedLevel()
+Render::Objects::UnsavedLevel::UnsavedLevel(glm::vec2& sizes)
 {
+	// Decrement Sizes by 0.1
+	sizes.x -= 0.1f;
+	sizes.y -= 0.1f;
+
 	// Constant Vertex Positions
 	const float vertices[] = {
 		0.1f,   0.1f,  -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
-		127.9f, 0.1f,  -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
-		127.9f, 0.1f,  -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
-		127.9f, 63.9f, -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
-		127.9f, 63.9f, -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
-		0.1f,   63.9f, -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
-		0.1f,   63.9f, -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
+		sizes.x, 0.1f,  -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
+		sizes.x, 0.1f,  -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
+		sizes.x, sizes.y, -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
+		sizes.x, sizes.y, -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
+		0.1f,   sizes.y, -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
+		0.1f,   sizes.y, -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
 		0.1f,   0.1f,  -1.0f, 0.0f, 0.9f, 0.0f, 1.0f,
 	};
 
@@ -306,7 +310,7 @@ Render::Objects::UnsavedLevel::~UnsavedLevel()
 	slave_stack.deleteStack();
 }
 
-void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y, uint8_t z, std::string level_data_path, std::string editor_level_data_path)
+void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y, uint8_t z, float width, float height, std::string level_data_path, std::string editor_level_data_path)
 {
 	// Store Coordinates of Level
 	level_x = x;
@@ -314,7 +318,7 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y
 	level_version = z;
 
 	// Generate Model Matrix
-	model = glm::translate(glm::mat4(1.0f), glm::vec3(128.0f * level_x, 64.0f * level_y, 0.0f));
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(width *level_x, height * level_y, 0.0f));
 
 	// Generate File Name
 	std::string file_name = "";

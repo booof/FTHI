@@ -83,13 +83,13 @@ namespace Render::Objects
 		int8_t level_version = 0;
 
 		// Initialize Object
-		UnsavedLevel();
+		UnsavedLevel(glm::vec2& sizes);
 
 		// Deconstructor
 		~UnsavedLevel();
 
 		// Construct Unmodified Data
-		void constructUnmodifiedData(int16_t x, int16_t y, uint8_t z, std::string level_data_path, std::string editor_level_data_path);
+		void constructUnmodifiedData(int16_t x, int16_t y, uint8_t z, float width, float height, std::string level_data_path, std::string editor_level_data_path);
 
 		// Build Objects to Main Level
 		void buildObjects(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities);

@@ -94,11 +94,29 @@ namespace Editor
 		// Box to Exit GUI
 		GUI::Box box_exit;
 
+		// Strings for Header
+		std::string header_cam_pos = "";
+		std::string header_mouse_pos = "";
+		std::string header_object_count = "";
+
+		// The Current Cycle of the Header
+		int header_state = 0;
+
+		// Level Width and Height for Positions
+		float level_width = 0.0f;
+		float level_height = 0.0f;
+
 		// Initial Constructor
 		Debugger() {};
 
 		// Read the Error Log
 		void readErrorLog();
+
+		// Draw Compiler Status
+		void drawCompilerStatus();
+
+		// Get the Position for Text
+		void getTextPosition(std::string& header_string, glm::vec2& position);
 
 	public:
 
@@ -126,8 +144,23 @@ namespace Editor
 		// Update Window
 		void updateWindow();
 
-		// Draw Compiler Status
-		void drawCompilerStatus();
+		// Draw the Header of the Debugger
+		void drawHeader();
+
+		// Set the Position of the Camera
+		void setCameraPosition(glm::vec2 position);
+
+		// Set the Position of the Mouse
+		void setMousePosition(glm::vec2 position);
+
+		// Cycle the Header State
+		void cycleHeaderState();
+
+		// Store Level Positions
+		void storeLevelPositions(float width, float height);
+
+		// Store the Current Object Count
+		void storeObjectCount(int count);
 
 		// Returns True if Project Has Been Looked Over
 		bool returnIfLookedOver();

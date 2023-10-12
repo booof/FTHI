@@ -327,11 +327,16 @@ void Render::Objects::SubLevel::subtractHeader(uint32_t& object_count)
 	object_count -= number_of_loaded_objects;
 }
 
-void Render::Objects::SubLevel::deactivateObjects()
+void* Render::Objects::SubLevel::deactivateObjects()
 {
 	// Deactivate All Static Objects Part of This Level
 	for (uint32_t i = 0; i < number_of_loaded_objects; i++)
 		active_objects[i].active = false;
+
+	// Return the Active Array
+	if (number_of_loaded_objects)
+		return active_objects;
+	return 0;
 }
 
 void Render::Objects::SubLevel::includeNewActives(Object::Active* new_actives, int new_active_count, Level* level)
@@ -395,7 +400,7 @@ void Render::Objects::SubLevel::resetCounts()
 	removed_count = 0;
 }
 
-Render::Objects::SubLevel::~SubLevel()
+void Render::Objects::SubLevel::deleteSubLevel()
 {
 
 #ifdef SHOW_LEVEL_LOADING
@@ -403,6 +408,6 @@ Render::Objects::SubLevel::~SubLevel()
 #endif
 
 	// Delete Active Objects Array
-	if (number_of_loaded_objects)
-		delete[] active_objects;
+	//if (number_of_loaded_objects)
+	//	delete[] active_objects;
 }

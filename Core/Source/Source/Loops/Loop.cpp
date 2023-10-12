@@ -59,19 +59,19 @@ void Loop::loop()
 	// Main Loop
 	do
 	{
-		// Get Pointer to Level Object
-		level = static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance());
-
 		// Show That Program is Looping
-	//	std::cout << "looping\n";
+		//	std::cout << "looping\n";
 
 		// Pre-Rendering
 		Source::Rendering::Pre::preRender();
 
-		//level->camera->updatePosition();
+		// Get Pointer to Level Object
+		level = static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance());
+		level->camera->testForCringe();
 
 		// Update Camera
 		level->updateCamera();
+		level->camera->testForCringe();
 
 #ifdef EDITOR
 
@@ -80,7 +80,7 @@ void Loop::loop()
 			level->reloadAll();
 
 		// Draw Level Boarders
-		Source::Rendering::Editing::drawLevelBoarders(level->camera);
+		level->drawLevelBorder();
 
 #endif
 

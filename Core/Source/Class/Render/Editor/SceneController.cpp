@@ -316,6 +316,11 @@ void* Editor::SceneController::getCurrentInstance()
     return currently_loaded_instance;
 }
 
+std::string& Editor::SceneController::getCurrentInstanceName()
+{
+    return *instance_name;
+}
+
 glm::mat4 Editor::SceneController::genTabMatrix(int index)
 {
     return glm::translate(glm::mat4(1.0f), glm::vec3(-93.75f + 37.5f * (float)index, 29.5f, 0.0f));

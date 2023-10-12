@@ -142,9 +142,6 @@ namespace Render::Objects
 		// Initialize Object
 		ChangeController() {}
 
-		// Get Level Coords from World Position
-		void updateLevelPos(glm::vec2 position, glm::vec2& level);
-
 		// Test if Unsaved Level Has Been Saved Prevously
 		bool testIfSaved(SavedIdentifier test_identifier);
 

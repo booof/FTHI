@@ -7,12 +7,6 @@
 #include "Class/Render/Struct/DataClasses.h"
 #include "Level.h"
 
-void Render::Objects::ChangeController::updateLevelPos(glm::vec2 position, glm::vec2& level)
-{
-	level.x = floor(position.x / 128);
-	level.y = floor(position.y / 64);
-}
-
 bool Render::Objects::ChangeController::testIfSaved(SavedIdentifier test_identifier)
 {
 	// Iterate Through Saved Array
@@ -66,8 +60,11 @@ void Render::Objects::ChangeController::addToUnsaved(DataClass::Data_Object* dat
 	else
 	{
 		// Get Position of Object in Terms of Level
-		glm::vec2 object_level_position;
-		updateLevelPos(data_object->getPosition(), object_level_position);
+		glm::i16vec2 object_level_position;
+		level->updateLevelPos(data_object->getPosition(), object_level_position);
+
+		//std::cout << "Adding To Level: " << object_level_position.x << " " << object_level_position.y << "  At Index: " << (int)level->getIndexFromLevel(object_level_position) << "\n";
+		std::cout << "Adding To Level: " << object_level_position.x << " " << object_level_position.y << "  At Index: "  << "\n";
 
 		// Get Unsaved Level of Where Object is Now
 		UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
@@ -130,10 +127,12 @@ Render::Objects::UnsavedLevel* Render::Objects::ChangeController::generateUnsave
 	static SavedIdentifier identifier;
 
 	// Generate Object
-	UnsavedLevel* new_unsaved_level = new UnsavedLevel();
+	glm::vec2 sizes = glm::vec2(0.0f, 0.0f);
+	level->getSublevelSize(sizes);
+	UnsavedLevel* new_unsaved_level = new UnsavedLevel(sizes);
 
 	// Generate Unmodified Data
-	new_unsaved_level->constructUnmodifiedData(x, y, z, level->getLevelDataPath(), level->getEditorLevelDataPath());
+	new_unsaved_level->constructUnmodifiedData(x, y, z, sizes.x, sizes.y, level->getLevelDataPath(), level->getEditorLevelDataPath());
 
 	// Test if Unsaved Level is Saved
 	identifier.level_x = x;
@@ -178,12 +177,12 @@ Render::Objects::UnsavedComplex* Render::Objects::ChangeController::getUnsavedCo
 void Render::Objects::ChangeController::incrementRemovedCount(int16_t x, int16_t y, int8_t z)
 {
 	// Get the Index of the Sublevel
-	int8_t index = level->index_from_level(glm::i16vec2(x, y));
+	int8_t index = level->getIndexFromLevel(glm::i16vec2(x, y));
 	if (index == -1)
 		return;
 
 	// Increment the Removed Count
-	level->getSublevels()[index]->removed_count++;
+	level->getSublevels()[index].removed_count++;
 }
 
 void Render::Objects::ChangeController::storeUnsavedGroup(UnsavedGroup* new_group)
@@ -285,8 +284,8 @@ void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Da
 	}
 
 	// Get Position of Object in Terms of Level
-	glm::vec2 object_level_position;
-	updateLevelPos(data_object->getPosition(), object_level_position);
+	glm::i16vec2 object_level_position;
+	level->updateLevelPos(data_object->getPosition(), object_level_position);
 
 	// Get Unsaved Level of Where Object is Now
 	UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);

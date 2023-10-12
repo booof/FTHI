@@ -12,6 +12,9 @@
 // Else, Objects Will be Written and Read in Binary Files
 #define READ_WRITE_TEXT
 
+// If Defined, Allow for Verbose Level Loading / Unloading
+//#define SHOW_LEVEL_LOADING
+
 // Macro for Accessing the Change Controller Singleton
 #define change_controller Render::Objects::ChangeController::get()
 

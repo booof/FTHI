@@ -948,6 +948,9 @@ void Source::Listeners::smoothKeyCallbackEditorSimplified(Camera& camera, Select
 	// Move Camera West if A is Held
 	if (Global::Keys[GLFW_KEY_A])
 		updateEditorCameraMovement(camera, selector, Render::Camera::WEST, acceleration_timer.w, acceleration_timer.z, camera.accelerationL);
+		
+	// Update Debug Positions
+	camera.updateDebugPositions(false);
 }
 
 void Source::Listeners::updateEditorCameraMovement(Camera& camera, Selector* selector, unsigned char direction, int16_t& acceleration_timer, int16_t& inverse_acceleration_timer, float& camera_acceleration)

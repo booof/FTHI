@@ -13,6 +13,7 @@ extern "C" {
 // Globals
 #include "Globals.h"
 #include "Class/Render/Shader/Shader.h"
+#include "Class\Render\Editor\Debugger.h"
 
 Render::Camera::Camera::Camera(float initialX, float initialY, bool stationary)
 {
@@ -56,6 +57,9 @@ void Render::Camera::Camera::moveCamera(unsigned char direction)
 	if (direction == WEST)  { Position.x -= distance * accelerationL; }
 
 	//updatePosition();
+
+	// State that the Camera Moved
+	moved = true;
 }
 
 #ifndef DLL_HEADER
@@ -63,6 +67,8 @@ void Render::Camera::Camera::moveCamera(unsigned char direction)
 void Render::Camera::Camera::updatePosition()
 {
 	// This Should Only be Executed Once Per Frame At the Start of Rendering
+
+	// TODO: If Wrapping is Dissabled, Prevent Camera from Observing Any Levels That Are Outside Range
 
 	// Calculate View Matrix
 	view = glm::translate(glm::mat4(1.0f), glm::vec3(-Position.x, -Position.y, Position.z));
@@ -80,6 +86,29 @@ void Render::Camera::Camera::updatePosition()
 
 	//Global::objectShader.Use();
 	//glUniform4f(glGetUniformLocation(Global::objectShader.Program, "material.viewPos"), -Position.x, -Position.y, 0.0f, 0.0f);
+}
+
+void Render::Camera::Camera::testForCringe()
+{
+	// If Cringe, Program Will Crash Here
+	int x = Position.x;
+}
+
+void Render::Camera::Camera::updateDebugPositions(bool override_move)
+{
+	// Test if Camera and Mouse Should Update
+	if (override_move || moved)
+	{
+		debugger->setCameraPosition(glm::vec2(Position.x, Position.y));
+		debugger->setMousePosition(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY));
+	}
+
+	// Else, Test if Mouse Should Update
+	else if (Global::cursor_Move)
+		debugger->setMousePosition(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY));
+
+	// Disable the Camera Moved Flag
+	moved = false;
 }
 
 #endif

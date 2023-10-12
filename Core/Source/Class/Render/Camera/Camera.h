@@ -49,6 +49,9 @@ namespace Render::Camera
 		// View Matrix
 		glm::mat4 view;
 
+		// Determines if the Camera Moved
+		bool moved = false;
+
 #ifndef DLL_HEADER
 
 		// Initialize Camera
@@ -63,6 +66,12 @@ namespace Render::Camera
 
 		// Occours Whenever the Camera is Moved
 		void updatePosition();
+
+		// Only Use This Function While Debugging
+		void testForCringe();
+
+		// Update Positions for the Debugger
+		void updateDebugPositions(bool override_move);
 
 #endif
 

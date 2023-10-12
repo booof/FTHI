@@ -25,9 +25,6 @@ namespace Source::Rendering::Editing
 
 	// Main Function for Drawing Editor Related Things
 	void renderEditor(Render::Objects::Level* level, Editor::Selector* selector, Editor::ObjectInfo* object_info);
-
-	// Draw Level Boarders
-	void drawLevelBoarders(Render::Camera::Camera* camera);
 }
 
 #endif

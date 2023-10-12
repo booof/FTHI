@@ -710,13 +710,18 @@ bool Source::Render::Initialize::initialize()
 
 	// Level Border Shader Locations
 	Global::borderShader.Use();
-	glGenVertexArrays(1, &Global::level_border_VAO);
 	Global::level_border_camera_pos_loc = glGetUniformLocation(Global::borderShader.Program, "view_pos");
 	Global::level_border_screen_width_loc = glGetUniformLocation(Global::borderShader.Program, "screen_width");
 	Global::level_border_screen_height_loc = glGetUniformLocation(Global::borderShader.Program, "screen_height");
+	Global::level_border_level_width_loc = glGetUniformLocation(Global::borderShader.Program, "level_width");
+	Global::level_border_level_height_loc = glGetUniformLocation(Global::borderShader.Program, "level_height");
+	Global::level_border_render_distance_loc = glGetUniformLocation(Global::borderShader.Program, "render_distance");
 	glUniform2f(Global::level_border_camera_pos_loc, 0.0f, 0.0f);
 	glUniform1f(Global::level_border_screen_width_loc, -Global::halfScalarX * Global::zoom_scale);
 	glUniform1f(Global::level_border_screen_height_loc, -50.0f * Global::zoom_scale);
+	glUniform1f(Global::level_border_screen_width_loc, 128.0f);
+	glUniform1f(Global::level_border_screen_height_loc, 64.0f);
+	glUniform1i(Global::level_border_render_distance_loc, 2);
 
 	// Enable Depth and Scissor Tests
 	glEnable(GL_DEPTH_TEST);

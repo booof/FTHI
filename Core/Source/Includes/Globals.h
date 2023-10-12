@@ -288,10 +288,12 @@ namespace Global
 	extern GLuint ParticleOffsetLocTexture;
 
 	// Level Border Objects
-	extern GLuint level_border_VAO;
 	extern GLuint level_border_camera_pos_loc;
 	extern GLuint level_border_screen_width_loc;
 	extern GLuint level_border_screen_height_loc;
+	extern GLuint level_border_level_width_loc;
+	extern GLuint level_border_level_height_loc;
+	extern GLuint level_border_render_distance_loc;
 
 	// Shaders List
 	extern Shader::Shader FramebufferShader_Core;

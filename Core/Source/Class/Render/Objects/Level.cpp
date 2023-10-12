@@ -32,33 +32,49 @@
 
 #include "UnsavedGroup.h"
 #include "UnsavedComplex.h"
+#include "Class\Render\Editor\Debugger.h"
 
 void Render::Objects::Level::updateLevelPos(glm::vec2 position, glm::i16vec2& level)
 {
-	level.x = floor(position.x / 128);
-	level.y = floor(position.y / 64);
+	level.x = floor(position.x / scene_data.sublevel_width);
+	level.y = floor(position.y / scene_data.sublevel_height);
 }
 
-int8_t Render::Objects::Level::index_from_level(glm::i16vec2 level_coords)
+int8_t Render::Objects::Level::getIndexFromLevel(glm::i16vec2 level_coords)
 {
-	if (abs(level_coords.x - level_position.x) > 1 || abs(level_coords.y - level_position.y) > 1) { return -1; }
-	return ((uint16_t)4 + (uint16_t)floor(level_coords.x - level_position.x) - (uint16_t)((level_coords.y - level_position.y) * 3));
+	// Determine if Level Coord is Not Currently Loaded
+	if (abs(level_coords.x - level_position.x) >= scene_data.render_distance || abs(level_coords.y - level_position.y) > scene_data.render_distance)
+		return -1;
+
+	// Get the Coords From the Top-Left Corner
+	uint8_t top_left_x = level_coords.x - level_position.x - level_coord_offset;
+	uint8_t top_left_y = level_coords.y - level_position.y - level_coord_offset;
+
+	// Get the Index From the Level Coord
+	return (uint8_t)(top_left_y * level_diameter + top_left_x);
 }
 
-glm::i16vec2 Render::Objects::Level::level_from_index(int8_t index)
+glm::i16vec2 Render::Objects::Level::getLevelFromIndex(int8_t index)
 {
 	// Update: The Values Will be Changed Based on Render Distance
 	// Min Index Will Remain 0, Max Will be Radius^2 - 1
-	// X-Pos Will Now be Modulused by the Radius
+	// X-Pos Will Now be Modulused by the Diameter of Loaded Levels
 	// Y-Pos Will be Changed Drastically
 
 	// If Index is Outside Level Range, Retrun 0,0
-	if (index > 8 || index < 0)
+	if (index > level_max_index || index < 0)
 		return glm::i16vec2(0, 0);
 
-	glm::i16vec2 coords;
-	coords.x = level_position.x + (index % 3) - 1;
-	coords.y = level_position.y + int16_t(index < 3) - int16_t(index > 5);
+	// The Coords That Will be Returned
+	glm::i16vec2 coords = glm::vec2(0.0f, 0.0f);
+
+	// Get the 2-D Index Positions Relative to the Top Left Corner 
+	int8_t index_x = index % level_diameter;
+	int8_t index_y = floor((index - index_x) / level_diameter);
+
+	// Get the Level Coords From the Indicies
+	coords.x = level_position.x + index_x + level_coord_offset;
+	coords.y = level_position.y + index_y + level_coord_offset;
 	return coords;
 }
 
@@ -81,8 +97,8 @@ void Render::Objects::Level::testReload()
 		uint16_t index = temp_index_holder;
 		for (int i = 0; i < 9; i++)
 		{
-			if (!sublevels[i]->initialized)
-				sublevels[i]->readLevel(container.object_array, index, physics_list, entity_list);
+			if (!sublevels[i].initialized)
+				sublevels[i].readLevel(container.object_array, index, physics_list, entity_list);
 		}
 
 		// Segregate Some Objects Into Seperate Arrays
@@ -104,8 +120,12 @@ void Render::Objects::Level::testReload()
 
 void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2& level_new, bool reload_all)
 {
-	// Pointer to New Level
-	SubLevel* new_level;
+
+#ifdef SHOW_LEVEL_LOADING
+	std::cout << "Begin Reloading\n";
+	std::cout << "Current Position: " << level_old.x << " " << level_old.y << "\n";
+	std::cout << "New Position: " << level_new.x << " " << level_new.y << "\n\n";
+#endif
 
 	// Reset Temp Index Holder
 	temp_index_holder = 0;
@@ -116,19 +136,12 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 	// Variable for New Object Count
 	uint32_t total_object_count_new = 0;
 
-	// Array of Sublevels That Need to be Deleted After Reallocation
-	SubLevel* used_sublevels[9] = { 0 };
-
 	// Index to Insert Into Used Sublevels Array
 	int used_index = 0;
 
 	// Test if Handler Should do a Complete Map Reset
 	if ((abs(level_old.x - level_new.x) > 1 || abs(level_old.y - level_new.y) > 1) || (level_old == level_new) || reload_all)
 	{
-		// Move Old Levels Into Unused Array
-		for (int i = 0; i < 9; i++)
-			used_sublevels[i] = sublevels[i];
-
 		// Reset Physics
 		physics_list.erase();
 
@@ -141,9 +154,10 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 		{
 			for (int level_x = -1; level_x < 2; level_x++)
 			{
-				new_level = new SubLevel(level_data_path, (int)level_new.x + level_x, (int)level_new.y + level_y);
-				new_level->addHeader(total_object_count_new);
-				sublevels[iterater] = new_level;
+				SubLevel& new_level = sublevels[iterater];
+				new_level.deleteSubLevel();
+				new_level = SubLevel(level_data_path, (int)level_new.x + level_x, (int)level_new.y + level_y);
+				new_level.addHeader(total_object_count_new);
 				iterater++;
 			}
 		}
@@ -152,13 +166,9 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 		reallocateAll(initialized, total_object_count_new);
 		initialized = true;
 
-		// Delete the Old Levels
-		for (int i = 0; i < 9; i++)
-			delete used_sublevels[i];
-
 		// Reset the Sublevel Counts
 		for (int i = 0; i < 9; i++)
-			sublevels[i]->resetCounts();
+			sublevels[i].resetCounts();
 
 #ifdef SHOW_LEVEL_LOADING
 		std::cout << "reloaded all\n";
@@ -172,24 +182,32 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 	// Move to the Left
 	if (level_old.x - level_new.x > 0)
 	{
+#ifdef SHOW_LEVEL_LOADING
+		std::cout << "moving west\n\n";
+#endif
+
 		// Deconstruct Old Levels
 		for (int i = 2; i < 9; i += 3)
 		{
-			sublevels[i]->subtractHeader(container.total_object_count);
-			sublevels[i]->deactivateObjects();
-			used_sublevels[used_index++] = sublevels[i];
+			sublevels[i].subtractHeader(container.total_object_count);
+			used_arrays[used_index++] = sublevels[i].deactivateObjects();
+			sublevels[i].deleteSubLevel();
 		}
 
 		// Shift Loaded Levels to the Right
 		int next_level_location = -1;
 		for (int i = 8; i > -1; i--)
 		{
+#ifdef SHOW_LEVEL_LOADING
+			std::cout << "Index: " << i << "\n";
+#endif
+
 			// Load New Levels from the Left
 			if (!(i % 3))
 			{
-				new_level = new SubLevel(level_data_path, (int)level_new.x - 1, (int)level_new.y + next_level_location);
-				new_level->addHeader(container.total_object_count);
-				sublevels[i] = new_level;
+				SubLevel& new_level = sublevels[i];
+				new_level = SubLevel(level_data_path, (int)level_new.x - 1, (int)level_new.y + next_level_location);
+				new_level.addHeader(container.total_object_count);
 				next_level_location++;
 			}
 
@@ -199,7 +217,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 		}
 
 #ifdef SHOW_LEVEL_LOADING
-		std::cout << "moved west\n";
+		std::cout << "moved west\n\n";
 #endif
 
 	}
@@ -207,24 +225,32 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 	// Move to the Right
 	else if (level_old.x - level_new.x < 0)
 	{
+#ifdef SHOW_LEVEL_LOADING
+		std::cout << "moving east\n";
+#endif
+
 		// Deconstruct Old Levels
 		for (int i = 0; i < 9; i += 3)
 		{
-			sublevels[i]->subtractHeader(container.total_object_count);
-			sublevels[i]->deactivateObjects();
-			used_sublevels[used_index++] = sublevels[i];
+			sublevels[i].subtractHeader(container.total_object_count);
+			used_arrays[used_index++] = sublevels[i].deactivateObjects();
+			sublevels[i].deleteSubLevel();
 		}
 
 		// Shift Loaded Levels to the Left
 		int next_level_location = 1;
 		for (int i = 0; i < 9; i++)
 		{
+#ifdef SHOW_LEVEL_LOADING
+			std::cout << "Index: " << i << "\n";
+#endif
+
 			// Load New Levels from the Right
 			if ((i % 3) == 2)
 			{
-				new_level = new SubLevel(level_data_path, (int)level_new.x + 1, (int)level_new.y + next_level_location);
-				new_level->addHeader(container.total_object_count);
-				sublevels[i] = new_level;
+				SubLevel& new_level = sublevels[i];
+				new_level = SubLevel(level_data_path, (int)level_new.x + 1, (int)level_new.y + next_level_location);
+				new_level.addHeader(container.total_object_count);
 				next_level_location--;
 			}
 
@@ -234,7 +260,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 		}
 
 #ifdef SHOW_LEVEL_LOADING
-		std::cout << "moved east\n";
+		std::cout << "moved east\n\n";
 #endif
 
 	}
@@ -242,24 +268,32 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 	// Move to the North
 	if (level_old.y - level_new.y < 0)
 	{
+#ifdef SHOW_LEVEL_LOADING
+		std::cout << "moving north\n";
+#endif
+
 		// Deconstruct Old Levels
 		for (int i = 6; i < 9; i++)
 		{
-			sublevels[i]->subtractHeader(container.total_object_count);
-			sublevels[i]->deactivateObjects();
-			used_sublevels[used_index++] = sublevels[i];
+			sublevels[i].subtractHeader(container.total_object_count);
+			used_arrays[used_index++] = sublevels[i].deactivateObjects();
+			sublevels[i].deleteSubLevel();
 		}
 
 		// Shift Loaded Levels to the South
 		int next_level_location = 1;
 		for (int i = 8; i > -1; i--)
 		{
+#ifdef SHOW_LEVEL_LOADING
+			std::cout << "Index: " << i << "\n";
+#endif
+
 			// Load New Levels from the North
 			if (i < 3)
 			{
-				new_level = new SubLevel(level_data_path, (int)level_new.x + next_level_location, (int)level_new.y + 1);
-				new_level->addHeader(container.total_object_count);
-				sublevels[i] = new_level;
+				SubLevel& new_level = sublevels[i];
+				new_level = SubLevel(level_data_path, (int)level_new.x + next_level_location, (int)level_new.y + 1);
+				new_level.addHeader(container.total_object_count);
 				next_level_location--;
 			}
 
@@ -269,7 +303,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 		}
 
 #ifdef SHOW_LEVEL_LOADING
-		std::cout << "moved north\n";
+		std::cout << "moved north\n\n";
 #endif
 
 	}
@@ -277,24 +311,32 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 	// Move to the South
 	else if (level_old.y - level_new.y > 0)
 	{
+#ifdef SHOW_LEVEL_LOADING
+		std::cout << "moving south\n";
+#endif
+
 		// Deconstruct Old Levels
 		for (int i = 0; i < 3; i++)
 		{
-			sublevels[i]->subtractHeader(container.total_object_count);
-			sublevels[i]->deactivateObjects();
-			used_sublevels[used_index++] = sublevels[i];
+			sublevels[i].subtractHeader(container.total_object_count);
+			used_arrays[used_index++] = sublevels[i].deactivateObjects();
+			sublevels[i].deleteSubLevel();
 		}
 
 		// Shift Loaded Levels to the North
 		int next_level_location = -1;
 		for (int i = 0; i < 9; i++)
 		{
+#ifdef SHOW_LEVEL_LOADING
+			std::cout << "Index: " << i << "\n";
+#endif
+
 			// Load New Levels from the South
 			if (i > 5)
 			{
-				new_level = new SubLevel(level_data_path, (int)level_new.x + next_level_location, (int)level_new.y - 1);
-				new_level->addHeader(container.total_object_count);
-				sublevels[i] = new_level;
+				SubLevel& new_level = sublevels[i];
+				new_level = SubLevel(level_data_path, (int)level_new.x + next_level_location, (int)level_new.y - 1);
+				new_level.addHeader(container.total_object_count);
 				next_level_location++;
 			}
 
@@ -304,10 +346,14 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 		}
 
 #ifdef SHOW_LEVEL_LOADING
-		std::cout << "moved south\n";
+		std::cout << "moved south\n\n";
 #endif
 
 	}
+
+#ifdef SHOW_LEVEL_LOADING
+	std::cout << "Finished Reloading\n";
+#endif
 
 #ifdef SHOW_LEVEL_LOADING
 	std::cout << "\n";
@@ -318,11 +364,14 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 
 	// Delete the Now Useless Sublevels
 	for (int i = 0; i < used_index; i++)
-		delete used_sublevels[i];
+	{
+		if (used_arrays[i] != 0)
+			delete[] used_arrays[i];
+	}
 
 	// Reset the Sublevel Counts
 	for (int i = 0; i < 9; i++)
-		sublevels[i]->resetCounts();
+		sublevels[i].resetCounts();
 }
 
 void Render::Objects::Level::segregateObjects()
@@ -350,6 +399,7 @@ void Render::Objects::Level::segregateObjects()
 	// Segregate Objects
 	Object::Object* current_object = nullptr;
 	Object::Object** object_array_end_pointer = object_array_pointer + container.total_object_count;
+	int non_temp_object_count = 0;
 	while (object_array_pointer < object_array_end_pointer)
 	{
 		current_object = *object_array_pointer;
@@ -363,6 +413,9 @@ void Render::Objects::Level::segregateObjects()
 		(*current_array_size_pointer)++;
 		object_array_pointer++;
 	}
+
+	// Store Current Object Count in Debugger
+	debugger->storeObjectCount(container.total_object_count);
 }
 
 void Render::Objects::Level::reallocateTextures()
@@ -534,12 +587,12 @@ void Render::Objects::Level::constructTerrain()
 	vertices *= 5;
 
 	// Allocate Memory
-	Vertices::Buffer::clearObjectVAO(VAO, VBO, vertices);
+	Vertices::Buffer::clearObjectVAO(terrainVAO, terrainVBO, vertices);
 	Vertices::Buffer::clearObjectDataBuffer(Global::InstanceBuffer, instances);
 
 	// Bind Buffer Objects
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindVertexArray(terrainVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, Global::InstanceBuffer);
 
 	// Construct and Store Each Vertex and Instance
@@ -883,6 +936,12 @@ Render::Objects::Level::Level(std::string& level_path, float initial_x, float in
 	// Close the File
 	scene_data_file.close();
 
+	// Calculate the Sizes for the Sublevel Holder
+	level_diameter = (scene_data.render_distance << 1) - 1;
+	level_count = level_diameter * level_diameter;
+	level_max_index = level_diameter * level_diameter - 1;
+	level_coord_offset = 1 - scene_data.render_distance;
+
 	// Generate the Level Data Path
 	level_data_path = level_path + "LevelData\\";
 
@@ -912,12 +971,12 @@ Render::Objects::Level::Level(std::string& level_path, float initial_x, float in
 		camera = new Camera::Camera(scene_data.initial_camera_x, scene_data.initial_camera_y, scene_data.stationary);
 
 	// Generate Terrain Buffer Object
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
+	glGenVertexArrays(1, &terrainVAO);
+	glGenBuffers(1, &terrainVBO);
 
 	// Bind Buffer
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindVertexArray(terrainVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
 
 	// Enable Position Vertices
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (void*)(0));
@@ -935,18 +994,79 @@ Render::Objects::Level::Level(std::string& level_path, float initial_x, float in
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
+	// Allocate Vertices for Level Border Positions (2 floats per sublevel)
+	float* border_vertices = new float[2 * level_count];
+
+	// Calculate the Positions for Each Sublevel
+	int initial_value = (int)scene_data.render_distance - (int)level_diameter;
+	int horizontal_counter = 0;
+	for (int i = 0, x_val = initial_value, y_val = initial_value; i < level_count * 2; i += 2)
+	{
+		// Set Coordinates
+		border_vertices[i] = scene_data.sublevel_width * (float)x_val;
+		border_vertices[i + 1] = scene_data.sublevel_height * (float)y_val;
+		horizontal_counter++;
+		x_val++;
+
+		// Test if Row is Finished
+		if (horizontal_counter == level_diameter)
+		{
+			horizontal_counter = 0;
+			x_val = initial_value;
+			y_val++;
+		}
+	}
+
+	// Generate Border Buffer Object
+	glGenVertexArrays(1, &borderVAO);
+	glGenBuffers(1, &borderVBO);
+
+	// Bind Buffer
+	glBindVertexArray(borderVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, borderVBO);
+
+	// Generate and Store Buffer Data
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * 2 * level_count, border_vertices, GL_STATIC_DRAW);
+
+	// Enable Vec2 Position Pointers
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GL_FLOAT), (void*)(0));
+	glEnableVertexAttribArray(0);
+
+	// Unbind Buffer
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	// Delete Vertex Aray
+	delete[] border_vertices;
+
+	// Bind the Level Border Shader
+	Global::borderShader.Use();
+
+	// Store the Chunk Size and Render Distance in Shader
+	glUniform1f(Global::level_border_level_width_loc, scene_data.sublevel_width);
+	glUniform1f(Global::level_border_level_height_loc, scene_data.sublevel_height);
+	glUniform1i(Global::level_border_render_distance_loc, scene_data.render_distance);
+
 	// Initialize Change Controller
 	change_controller->storeLevelPointer(this);
+
+	// Store Level Width for Debugger
+	debugger->storeLevelPositions(scene_data.sublevel_width, scene_data.sublevel_height);
+	camera->updateDebugPositions(true);
 
 	// Get the Level Position from the Initial Coordinates
 	updateLevelPos(glm::vec2(camera->Position.x, camera->Position.y), level_position);
 
+	// Generate the Sublevel List
+	sublevels = new SubLevel[level_count];
+	used_arrays = new void*[level_diameter * 2 - 1];
+
 	// Initialize SubLevels
-	for (int i = 0; i < 9; i++)
+	for (int i = 0; i < level_count; i++)
 	{
-		glm::vec2 coords = level_from_index(i);
-		sublevels[i] = new SubLevel(level_data_path, (int)coords.x, (int)coords.y);
-		sublevels[i]->addHeader(container.total_object_count);
+		glm::vec2 coords = getLevelFromIndex(i);
+		sublevels[i] = SubLevel(level_data_path, (int)coords.x, (int)coords.y);
+		sublevels[i].addHeader(container.total_object_count);
 	}
 
 	// Allocate Memory
@@ -957,8 +1077,8 @@ Render::Objects::Level::Level(std::string& level_path, float initial_x, float in
 	uint16_t index1 = 0;
 	uint16_t index2 = 0;
 	uint16_t index3 = 0;
-	for (int i = 0; i < 9; i++)
-		sublevels[i]->readLevel(container.object_array, index1, physics_list, entity_list);
+	for (int i = 0; i < level_count; i++)
+		sublevels[i].readLevel(container.object_array, index1, physics_list, entity_list);
 
 	// Segregate Some Objects Into Seperate Arrays
 	segregateObjects();
@@ -974,6 +1094,26 @@ Render::Objects::Level::Level(std::string& level_path, float initial_x, float in
 
 	// Update Physics for Rendering
 	reallocatePhysics();
+}
+
+Render::Objects::Level::~Level()
+{
+	// Delete the Object List
+	delete[] container.object_array;
+
+	// Delete the Used Arrays Array
+	delete[] used_arrays;
+
+	// Delete the Terrain Buffer
+	glDeleteVertexArrays(1, &terrainVAO);
+	glDeleteBuffers(1, &terrainVBO);
+
+	// Delete the Border Buffer
+	glDeleteVertexArrays(1, &borderVAO);
+	glDeleteBuffers(1, &borderVBO);
+
+	// Delete the Camera
+	delete camera;
 }
 
 void Render::Objects::Level::updateCamera()
@@ -1062,7 +1202,7 @@ void Render::Objects::Level::drawContainer()
 	glm::mat4 view_model = camera->view * model;
 
 	// Enable Vertex Object
-	glBindVertexArray(VAO);
+	glBindVertexArray(terrainVAO);
 
 	// Draw Terrain
 	for (int i = 0; i < 5; i++)
@@ -1106,13 +1246,35 @@ void Render::Objects::Level::drawContainer()
 	//glBindTexture(GL_TEXTURE1, *terrain_textures[5]->texture.material);
 	//glBindTexture(GL_TEXTURE2, *terrain_textures[5]->texture.mapping);
 	matrix = view_project * model;
-	glBindVertexArray(VAO);
+	glBindVertexArray(terrainVAO);
 	//glUniformMatrix4fv(Global::matrixLocObject, 1, GL_FALSE, glm::value_ptr(matrix));
 	glDrawArrays(GL_TRIANGLES, number_of_vertices[5], number_of_vertices[6]);
 	glBindVertexArray(0);
 }
 
 #ifdef EDITOR
+
+void Render::Objects::Level::drawLevelBorder()
+{
+	// If Level Border Visualization is Disabled, Do Nothing
+	if (!Global::level_border)
+		return;
+
+	// Bind Level Boarder Shader
+	Global::borderShader.Use();
+
+	// Bind Empty Vertex Object
+	glBindVertexArray(borderVAO);
+
+	// Store Camera Position
+	glUniform2f(Global::level_border_camera_pos_loc, camera->Position.x, camera->Position.y);
+
+	// Draw Borders
+	glDrawArrays(GL_POINTS, 0, level_count);
+
+	// Unbind Empty Vertex Object
+	glBindVertexArray(0);
+}
 
 void Render::Objects::Level::drawVisualizers()
 {
@@ -1121,7 +1283,7 @@ void Render::Objects::Level::drawVisualizers()
 
 	// Draw Level Visualizers
 	for (int i = 0; i < 9; i++)
-		sublevels[i]->drawVisualizer();
+		sublevels[i].drawVisualizer();
 
 	// Draw Complex Object Visualizers
 	change_controller->drawVisualizers();
@@ -2267,7 +2429,7 @@ void Render::Objects::Level::reloadAll()
 	uint16_t index2 = 0;
 	uint16_t index3 = 0;
 	for (int i = 0; i < 9; i++)
-		sublevels[i]->readLevel(container.object_array, index1, physics_list, entity_list);
+		sublevels[i].readLevel(container.object_array, index1, physics_list, entity_list);
 
 	// Segregate Some Objects Into Seperate Arrays
 	segregateObjects();
@@ -2327,12 +2489,12 @@ void Render::Objects::Level::incorperatNewObjects(Object::Object** new_objects, 
 		new_actives[i] = Object::Active(true, true, level_coords, new_objects[i]);
 
 		// Tell Respective Sublevel That There is a New Object
-		sublevels[index_from_level(level_coords)]->new_active_objects++;
+		sublevels[getIndexFromLevel(level_coords)].new_active_objects++;
 	}
 
 	// Update the Sublevel Active Pointers
 	for (int i = 0; i < 9; i++)
-		sublevels[i]->includeNewActives(new_actives, new_objects_size, this);
+		sublevels[i].includeNewActives(new_actives, new_objects_size, this);
 
 	// Delete the Temp Active Array
 	delete[] new_actives;
@@ -2406,7 +2568,7 @@ GLuint Render::Objects::Level::returnBeamBufferSize()
 	return 96 * container.beam_size + 16;
 }
 
-Render::Objects::SubLevel** Render::Objects::Level::getSublevels()
+Render::Objects::SubLevel* Render::Objects::Level::getSublevels()
 {
 	return sublevels;
 }
@@ -2425,6 +2587,12 @@ void Render::Objects::Level::getSceneInfo(SceneData** data, std::string** name)
 {
 	*data = &scene_data;
 	*name = &scene_name;
+}
+
+void Render::Objects::Level::getSublevelSize(glm::vec2& sizes)
+{
+	sizes.x = scene_data.sublevel_width;
+	sizes.y = scene_data.sublevel_height;
 }
 
 #endif

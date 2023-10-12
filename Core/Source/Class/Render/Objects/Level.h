@@ -212,13 +212,16 @@ namespace Render::Objects
 		std::string scene_name = "";
 
 		// Array of Loaded SubLevels
-		SubLevel* sublevels[9];
+		SubLevel* sublevels;
 
 		// Current Level Position
 		glm::i16vec2 level_position;
 
-		// Vertex Array Objects
-		GLuint VAO, VBO;
+		// Vertex Array Objects for Terrain
+		GLuint terrainVAO, terrainVBO;
+
+		// Vertex Array Objects for Border
+		GLuint borderVAO, borderVBO;
 
 		// Number of Terrain Vertices
 		GLuint number_of_vertices[7];
@@ -258,6 +261,21 @@ namespace Render::Objects
 
 		// Array of Temporary Removed Objects
 		std::vector<Object::TempObject*> temp_objects;
+
+		// Array of Used Sublevel Arrays
+		void** used_arrays;
+
+		// The Number of Sublevels that Are Loaded Simultaniusly
+		uint8_t level_count = 0;
+
+		// The Diameter of Loaded Levels
+		uint8_t level_diameter = 0;
+
+		// The Maximum Index Possible in Loaded Levels
+		uint8_t level_max_index = 0;
+
+		// The Coordinate Offset for Level Index
+		int8_t level_coord_offset = 0;
 
 		// Test if SubLevels Should be Reloaded
 		void testReload();
@@ -306,6 +324,9 @@ namespace Render::Objects
 		// Initialize New Level Container
 		Level(std::string& level_path, float initial_x, float initial_y, bool force_coords);
 
+		// Deconstructor to Avoid Memory Leaks
+		~Level();
+
 		// Update Camera
 		void updateCamera();
 
@@ -319,12 +340,15 @@ namespace Render::Objects
 		void updateLevelPos(glm::vec2 position, glm::i16vec2& level);
 
 		// Return Index of Corrisponding SubLevel from Level Coords
-		int8_t index_from_level(glm::i16vec2 level_coords);
+		int8_t getIndexFromLevel(glm::i16vec2 level_coords);
 
 		// Return Coordinates of Sublevel from Corrisponding Sublevel Index
-		glm::i16vec2 level_from_index(int8_t index);
+		glm::i16vec2 getLevelFromIndex(int8_t index);
 
 #ifdef EDITOR
+
+		// Draw the Level Border
+		void drawLevelBorder();
 
 		// Draw Static Level Objects if Visualization is Enabled
 		void drawVisualizers();
@@ -403,7 +427,7 @@ namespace Render::Objects
 		GLuint returnBeamBufferSize();
 
 		// Returns the Sublevels of the Object
-		SubLevel** getSublevels();
+		SubLevel* getSublevels();
 
 		// Get the Level Data Path
 		std::string getLevelDataPath();
@@ -413,6 +437,9 @@ namespace Render::Objects
 
 		// Get Pointers to the Scene Information
 		void getSceneInfo(SceneData** data, std::string** name);
+
+		// Get the Level Size
+		void getSublevelSize(glm::vec2& sizes);
 
 #endif
 

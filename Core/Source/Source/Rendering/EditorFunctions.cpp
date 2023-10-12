@@ -97,32 +97,10 @@ void Source::Rendering::Editing::renderEditor(Render::Objects::Level* level, Edi
 			object_info->drawInfo();
 
 		// Draw Header
-		debugger->drawCompilerStatus();
+		debugger->drawHeader();
 	}
 
 	// Draw Selected Text Icon, If it is Being Used
 	selected_text->renderCursor();
-}
-
-void Source::Rendering::Editing::drawLevelBoarders(Render::Camera::Camera* camera)
-{
-	// If Level Border Visualization is Disabled, Do Nothing
-	if (!Global::level_border)
-		return;
-
-	// Bind Level Boarder Shader
-	Global::borderShader.Use();
-
-	// Bind Empty Vertex Object
-	glBindVertexArray(Global::level_border_VAO);
-
-	// Store Camera Position
-	glUniform2f(Global::level_border_camera_pos_loc, camera->Position.x, camera->Position.y);
-
-	// Draw Borders
-	glDrawArrays(GL_POINTS, 0, 1);
-
-	// Unbind Empty Vertex Object
-	glBindVertexArray(0);
 }
 

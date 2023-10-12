@@ -358,6 +358,9 @@ namespace Editor
 
 		// Get the Current Instance
 		void* getCurrentInstance();
+
+		// Get the Name of the Current Instance
+		std::string& getCurrentInstanceName();
 	};
 }
 

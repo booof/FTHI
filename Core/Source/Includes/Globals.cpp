@@ -215,10 +215,12 @@ namespace Global
 	GLuint ParticleOffsetLocColor, ParticleOffsetLocTexture;
 
 	// Level Border Objects
-	GLuint level_border_VAO;
 	GLuint level_border_camera_pos_loc;
 	GLuint level_border_screen_width_loc;
 	GLuint level_border_screen_height_loc;
+	GLuint level_border_level_width_loc;
+	GLuint level_border_level_height_loc;
+	GLuint level_border_render_distance_loc;
 
 	// Shaders List
 	Shader::Shader FramebufferShader_Core;

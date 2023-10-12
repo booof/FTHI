@@ -9,6 +9,7 @@
 #include "Source/Rendering/Initialize.h"
 #include "Render/Editor/ProjectSelector.h"
 #include "Render/GUI/AdvancedString.h"
+#include "SceneController.h"
 
 void Editor::Debugger::readErrorLog()
 {
@@ -636,6 +637,89 @@ void Editor::Debugger::drawCompilerStatus()
 	{
 		Source::Fonts::renderText("--COMPILATION COMPLETE--", -89.0f, 47.0f, 0.075f, glm::vec4(0.0f, 0.8f, 0.0f, 1.0f), true);
 	}
+}
+
+void Editor::Debugger::getTextPosition(std::string& header_string, glm::vec2& position)
+{
+	// Get the Level Coordinates of the Position
+	glm::i16vec2 level_pos = glm::vec2(0.0f);
+	level_pos.x = floor(position.x / level_width);
+	level_pos.y = floor(position.y / level_height);
+
+	// Clear the String
+	header_string.clear();
+
+	// Generate the New String
+	header_string += std::to_string(position.x) + ", " + std::to_string(position.y) + " [" + std::to_string(level_pos.x) + ", " + std::to_string(level_pos.y) + "]";
+}
+
+void Editor::Debugger::drawHeader()
+{
+	// Things That Will be Drawn:
+	// Compiler Status
+	// Camera Position
+	// Mouse Position
+	// Level / Scene Name
+	// Object Count
+
+	// Possible Future Idea:
+	// Multiple States That Determine What Will be Shown
+	// States are Cycled Through a Keybind
+
+	// Draw the Compiler Status
+	drawCompilerStatus();
+
+	// Draw Camera Position
+	Source::Fonts::renderText("Camera:", -89.0f, 44.0f, 0.075f, glm::vec4(0.0f, 0.0f, 0.95f, 1.0f), true);
+	Source::Fonts::renderText(header_cam_pos, -79.0f, 44.0f, 0.075f, glm::vec4(0.0f, 0.0f, 0.85f, 1.0f), true);
+
+	// Draw Mouse Position
+	Source::Fonts::renderText("Mouse:", -89.0f, 41.0f, 0.075f, glm::vec4(0.0f, 0.85f, 0.85f, 1.0f), true);
+	Source::Fonts::renderText(header_mouse_pos, -80.5f, 41.0f, 0.075f, glm::vec4(0.0f, 0.75f, 0.75f, 1.0f), true);
+
+	// Draw Object Count
+	Source::Fonts::renderText("Object Count:", -89.0f, 38.0f, 0.075f, glm::vec4(0.85f, 0.0f, 0.85f, 1.0f), true);
+	Source::Fonts::renderText(header_object_count, -74.0f, 38.0f, 0.075f, glm::vec4(0.75f, 0.0f, 0.75f, 1.0f), true);
+
+	// Draw Project Path
+	Source::Fonts::renderText("Project Path:", -89.0f, -49.0f, 0.075f, glm::vec4(0.0f, 0.35f, 0.35f, 1.0f), true);
+	Source::Fonts::renderText(Global::project_file_path, -75.0f, -49.0f, 0.075f, glm::vec4(0.0f, 0.25f, 0.25f, 1.0f), true);
+
+	// Draw Project Name
+	Source::Fonts::renderText("Project Name:", -89.0f, -46.0f, 0.075f, glm::vec4(0.0f, 0.35f, 0.0f, 1.0f), true);
+	Source::Fonts::renderText(Global::project_name , -73.5f, -46.0f, 0.075f, glm::vec4(0.0f, 0.25f, 0.0f, 1.0f), true);
+
+	// Draw Scene Name
+	Source::Fonts::renderText("Scene Name:", -89.0f, -43.0f, 0.075f, glm::vec4(0.35f, 0.0f, 0.0f, 1.0f), true);
+	Source::Fonts::renderText(scene_controller->getCurrentInstanceName(), -75.0f, -43.0f, 0.075f, glm::vec4(0.25f, 0.0f, 0.0f, 1.0f), true);
+}
+
+void Editor::Debugger::setCameraPosition(glm::vec2 position)
+{
+	getTextPosition(header_cam_pos, position);
+}
+
+void Editor::Debugger::setMousePosition(glm::vec2 position)
+{
+	getTextPosition(header_mouse_pos, position);
+}
+
+void Editor::Debugger::cycleHeaderState()
+{
+	header_state++;
+	if (header_state == 2)
+		header_state = 0;
+}
+
+void Editor::Debugger::storeLevelPositions(float width, float height)
+{
+	level_width = width;
+	level_height = height;
+}
+
+void Editor::Debugger::storeObjectCount(int count)
+{
+	header_object_count = std::to_string(count);
 }
 
 bool Editor::Debugger::returnIfLookedOver()

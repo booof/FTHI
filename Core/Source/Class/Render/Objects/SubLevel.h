@@ -34,23 +34,26 @@ namespace Render::Objects
 		bool initialized = false;
 
 		// Path to Level File
-		std::string path;
+		std::string path = "";
 
 		// Coordinates of Level
-		int16_t level_x;
-		int16_t level_y;
-		int16_t level_version;
+		int16_t level_x = 0;
+		int16_t level_y = 0;
+		int16_t level_version = 0;
 
 		// Header Data
 		//LevelHeader header;
 		uint32_t number_of_loaded_objects = 0;
 
 		// The Array of All Active Objects
-		Object::Active* active_objects;
+		Object::Active* active_objects = nullptr;
 
 		// The Number of New Active Objects
 		int16_t new_active_objects = 0;
 		int16_t removed_count = 0;
+
+		// Default Constructor for the Object
+		SubLevel() {}
 
 #ifdef EDITOR
 
@@ -95,7 +98,7 @@ namespace Render::Objects
 		void subtractHeader(uint32_t& object_count);
 
 		// Deactivate All Objects Belonging To This Level
-		void deactivateObjects();
+		void* deactivateObjects();
 
 		// Include New Objects Into Active Object Array
 		void includeNewActives(Object::Active* new_actives, int new_active_count, Level* level);
@@ -104,7 +107,7 @@ namespace Render::Objects
 		void resetCounts();
 
 		// Delete Level
-		~SubLevel();
+		void deleteSubLevel();
 	};
 }
 
