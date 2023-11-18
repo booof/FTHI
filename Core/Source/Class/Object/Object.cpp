@@ -451,6 +451,7 @@ Object::Object* DataClass::Data_Object::generateObject(glm::vec2& offset)
 	new_pointer->lock = editor_data.lock;
 	new_pointer->object_index = object_index;
 	new_pointer->group_object = group_object;
+	std::cout << "\n\ngenerating object: " << object_index << "  at: " << new_pointer->returnPosition().x << " " << new_pointer->returnPosition().y << "\n\n\n";
 
 	// If Object Pointers is Null, Generate the Vector
 	if (object_pointers == nullptr)

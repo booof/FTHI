@@ -35,21 +35,25 @@
 
 #ifdef EDITOR
 
-Render::Objects::SubLevel::SubLevel(std::string& level_data_path, int x, int y)
+Render::Objects::SubLevel::SubLevel(std::string& level_data_path, glm::i16vec4 pos, glm::vec2& wrapping_offset)
 {
 	// Store Coordinates of Level
-	level_x = x;
-	level_y = y;
+	level_x = pos.x;
+	level_y = pos.y;
+
+	// Calculate the Object Offsets
+	object_offsets.x = (float)pos.z * wrapping_offset.x;
+	object_offsets.y = (float)pos.w * wrapping_offset.y;
 
 #ifdef SHOW_LEVEL_LOADING
-	std::cout << "loading level: " << level_x << " " << level_y << "\n";
+	std::cout << "loading level: " << level_x << " " << level_y << "  Offset: " << object_offsets.x << " " << object_offsets.y << "\n";
 #endif
 
 	// Get Path of Level
 	path = level_data_path;
-	path.append(Source::Algorithms::Common::removeTrailingZeros(std::to_string(x)));
+	path.append(Source::Algorithms::Common::removeTrailingZeros(std::to_string(level_x)));
 	path.append(",");
-	path.append(Source::Algorithms::Common::removeTrailingZeros(std::to_string(y)));
+	path.append(Source::Algorithms::Common::removeTrailingZeros(std::to_string(level_y)));
 
 	// If File Does Not Exist, Create File
 	//std::ofstream file(path, std::ios::binary | std::ios::ate);
@@ -68,7 +72,7 @@ void Render::Objects::SubLevel::readLevel(Object::Object** objects, uint16_t& in
 	unsaved_level->active_objects = &active_objects;
 
 	// Read Unsaved Level
-	unsaved_level->buildObjects(objects, index, physics, entities);
+	unsaved_level->buildObjects(objects, index, physics, entities, object_offsets);
 
 	// Level Has Been Initialized
 	initialized = true;
@@ -402,12 +406,12 @@ void Render::Objects::SubLevel::resetCounts()
 
 void Render::Objects::SubLevel::deleteSubLevel()
 {
-
+	std::cout << "deleting level: " << level_x << " " << level_y << "   " << path << "\n";
 #ifdef SHOW_LEVEL_LOADING
 	std::cout << "deleting level: " << level_x << " " << level_y << "   " << path << "\n";
 #endif
 
 	// Delete Active Objects Array
-	//if (number_of_loaded_objects)
-	//	delete[] active_objects;
+	if (number_of_loaded_objects)
+		delete[] active_objects;
 }

@@ -26,36 +26,46 @@ namespace Render::Camera
 		// Position of Camera
 		glm::vec3 Position = glm::vec3(0.0f);
 
-		// The Currently Activated Level
-		glm::vec2 level;
-
 		// Scales How Much the Camera is Zoomed 
 		float zoomScale; // Default is 1 during normal gameplay
+
+		// The Currently Activated Level
+		glm::vec2 level;
 
 		// How Fast the Camera Moves
 		float accelerationL;
 		float accelerationR;
 		float accelerationY;
 
-		// Determines if the Camera Should Move or Not
-		bool Stationary = false;
-
 		// Variables Used to Stabilize Camera
 		float constantX;
+
+		// Determines if the Camera Should Move or Not
+		bool Stationary = false;
 
 		// Determines if the Camera Should Fall
 		bool fall;
 
+		// Determines if the Camera Moved
+		bool moved = false;
+
+		// Determines if Camera Should Wrap
+		bool wrap = false;
+
+		// Determines if the Camera Actually Wrapped
+		bool wrapped = false;
+
 		// View Matrix
 		glm::mat4 view;
 
-		// Determines if the Camera Moved
-		bool moved = false;
+		// The Min/Max Values in Each Direction
+		// -Horizontal, +Horizontal, +Vertical, -Vertical
+		glm::vec4 scene_bounderies = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 #ifndef DLL_HEADER
 
 		// Initialize Camera
-		Camera(float initialX, float initialY, bool stationary);
+		Camera(float initialX, float initialY, bool stationary, bool wrap_, glm::vec4 scene_bounderies_);
 
 #endif
 

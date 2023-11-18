@@ -36,8 +36,27 @@
 
 void Render::Objects::Level::updateLevelPos(glm::vec2 position, glm::i16vec2& level)
 {
+	// Get Level Position Object is In
 	level.x = floor(position.x / scene_data.sublevel_width);
 	level.y = floor(position.y / scene_data.sublevel_height);
+
+	// If Wrapping is Not Enabled, Return Position
+	if (!scene_data.wrap_sublevels)
+		return;
+
+	// Test For Horizontal Wrapping
+	if (level.x > scene_data.sublevel_count_east)
+		level.x -= scene_data.sublevel_count_east + scene_data.sublevel_count_west + 1;
+	else if (level.x < -scene_data.sublevel_count_west)
+		level.x += scene_data.sublevel_count_east + scene_data.sublevel_count_west + 1;
+
+	// Test For Vertical Wrapping
+	if (level.y > scene_data.sublevel_count_north)
+		level.y -= scene_data.sublevel_count_north + scene_data.sublevel_count_south + 1;
+	else if (level.y < -scene_data.sublevel_count_south)
+		level.y += scene_data.sublevel_count_north + scene_data.sublevel_count_south + 1;
+
+	std::cout << "\nposition: " << position.x << " " << position.y << "   level: " << level.x << " " << level.y << "\n";
 }
 
 int8_t Render::Objects::Level::getIndexFromLevel(glm::i16vec2 level_coords)
@@ -78,15 +97,72 @@ glm::i16vec2 Render::Objects::Level::getLevelFromIndex(int8_t index)
 	return coords;
 }
 
+glm::i16vec4 Render::Objects::Level::wrapLevelPos(int x, int y)
+{
+	// If Wrapping is Not Enabled, Return The Coords
+	if (!scene_data.wrap_sublevels)
+		return glm::i16vec4(x, y, 0, 0);
+
+	// The Two Variables That Determine Which Axis is Wrapped, and in Which Direction
+	// Sign Determines The Sign of the Value Added to the Objects
+	short wrapped_horizontal = 0;
+	short wrapped_vertical = 0;
+
+	// Test For Horizontal Wrapping
+	if (x > scene_data.sublevel_count_east) {
+		x -= scene_data.sublevel_count_east + scene_data.sublevel_count_west + 1;
+		wrapped_horizontal = 1;
+	} else if (x < -scene_data.sublevel_count_west) {
+		x += scene_data.sublevel_count_east + scene_data.sublevel_count_west + 1;
+		wrapped_horizontal = -1;
+	}
+
+	// Test For Vertical Wrapping
+	if (y > scene_data.sublevel_count_north) {
+		y -= scene_data.sublevel_count_north + scene_data.sublevel_count_south + 1;
+		wrapped_vertical = 1;
+	} else if (y < -scene_data.sublevel_count_south) {
+		y += scene_data.sublevel_count_north + scene_data.sublevel_count_south + 1;
+		wrapped_vertical = -1;
+	}
+
+	// Return Wrapped Coords
+	return glm::i16vec4(x, y, wrapped_horizontal, wrapped_vertical);
+}
+
+void Render::Objects::Level::wrapObjectPos(glm::vec2& pos)
+{
+	// If Wrapping is Not Enabled, Do Nothing
+	if (!scene_data.wrap_sublevels)
+		return;
+
+	// Test if Object X is Beyond Level Width
+	if (pos.x < level_size.x)
+		pos.x += (level_size.y - level_size.x);
+	else if (pos.x > level_size.y)
+		pos.x -= (level_size.y - level_size.x);
+
+	// Test if Object Y is Beyond Level Height
+	if (pos.y < level_size.z)
+		pos.y += (level_size.w - level_size.z);
+	else if (pos.y > level_size.w)
+		pos.y -= (level_size.w - level_size.z);
+}
+
 void Render::Objects::Level::testReload()
 {
 	// Get Level Coordinates of Camera
 	glm::i16vec2 new_level;
-	updateLevelPos(camera->Position, new_level);
+	new_level.x = floor(camera->Position.x / scene_data.sublevel_width);
+	new_level.y = floor(camera->Position.y / scene_data.sublevel_height);
+	//updateLevelPos(camera->Position, new_level);
 
 	// Test if Reloading Of Level is Needed
 	if (new_level != level_position)
 	{
+		std::cout << "\nold: " << level_position.x << " " << level_position.y << "\n";
+		std::cout << "new: " << new_level.x << " " << new_level.y << "\n";
+
 		// Reload Levels
 		reloadLevels(level_position, new_level, false);
 
@@ -140,7 +216,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 	int used_index = 0;
 
 	// Test if Handler Should do a Complete Map Reset
-	if ((abs(level_old.x - level_new.x) > 1 || abs(level_old.y - level_new.y) > 1) || (level_old == level_new) || reload_all)
+	if (((abs(level_old.x - level_new.x) > 1 || abs(level_old.y - level_new.y) > 1) || (level_old == level_new) || reload_all) && !camera->wrapped)
 	{
 		// Reset Physics
 		physics_list.erase();
@@ -156,7 +232,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 			{
 				SubLevel& new_level = sublevels[iterater];
 				new_level.deleteSubLevel();
-				new_level = SubLevel(level_data_path, (int)level_new.x + level_x, (int)level_new.y + level_y);
+				new_level = SubLevel(level_data_path, wrapLevelPos((int)level_new.x + level_x, (int)level_new.y + level_y), scene_size);
 				new_level.addHeader(total_object_count_new);
 				iterater++;
 			}
@@ -180,18 +256,23 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 	// Load and Unload Selected Levels
 	
 	// Move to the Left
-	if (level_old.x - level_new.x > 0)
+	if ((!camera->wrapped && level_old.x - level_new.x > 0) || (camera->wrapped && level_old.x < level_new.x))
 	{
 #ifdef SHOW_LEVEL_LOADING
 		std::cout << "moving west\n\n";
 #endif
+
+		// If Wrapped, Move All Objects in the Positive Horizontal Direction
+		if (camera->wrapped) {
+			for (int i = 0; i < container.total_object_count; i++)
+				container.object_array[i]->pointerToPosition()->x += scene_size.x;
+		}
 
 		// Deconstruct Old Levels
 		for (int i = 2; i < 9; i += 3)
 		{
 			sublevels[i].subtractHeader(container.total_object_count);
 			used_arrays[used_index++] = sublevels[i].deactivateObjects();
-			sublevels[i].deleteSubLevel();
 		}
 
 		// Shift Loaded Levels to the Right
@@ -206,7 +287,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 			if (!(i % 3))
 			{
 				SubLevel& new_level = sublevels[i];
-				new_level = SubLevel(level_data_path, (int)level_new.x - 1, (int)level_new.y + next_level_location);
+				new_level = SubLevel(level_data_path, wrapLevelPos((int)level_new.x - 1, (int)level_new.y + next_level_location), scene_size);
 				new_level.addHeader(container.total_object_count);
 				next_level_location++;
 			}
@@ -223,18 +304,23 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 	}
 
 	// Move to the Right
-	else if (level_old.x - level_new.x < 0)
+	else if ((!camera->wrapped && level_old.x - level_new.x < 0) || (camera->wrapped && level_old.x > level_new.x))
 	{
 #ifdef SHOW_LEVEL_LOADING
 		std::cout << "moving east\n";
 #endif
+
+		// If Wrapped, Move All Objects in the Negative Horizontal Direction
+		if (camera->wrapped) {
+			for (int i = 0; i < container.total_object_count; i++)
+				container.object_array[i]->pointerToPosition()->x -= scene_size.x;
+		}
 
 		// Deconstruct Old Levels
 		for (int i = 0; i < 9; i += 3)
 		{
 			sublevels[i].subtractHeader(container.total_object_count);
 			used_arrays[used_index++] = sublevels[i].deactivateObjects();
-			sublevels[i].deleteSubLevel();
 		}
 
 		// Shift Loaded Levels to the Left
@@ -249,7 +335,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 			if ((i % 3) == 2)
 			{
 				SubLevel& new_level = sublevels[i];
-				new_level = SubLevel(level_data_path, (int)level_new.x + 1, (int)level_new.y + next_level_location);
+				new_level = SubLevel(level_data_path, wrapLevelPos((int)level_new.x + 1, (int)level_new.y + next_level_location), scene_size);
 				new_level.addHeader(container.total_object_count);
 				next_level_location--;
 			}
@@ -266,18 +352,23 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 	}
 
 	// Move to the North
-	if (level_old.y - level_new.y < 0)
+	if ((!camera->wrapped && level_old.y - level_new.y < 0) || (camera->wrapped && level_old.y > level_new.y))
 	{
 #ifdef SHOW_LEVEL_LOADING
 		std::cout << "moving north\n";
 #endif
+
+		// If Wrapped, Move All Objects in the Negative Vertical Direction
+		if (camera->wrapped) {
+			for (int i = 0; i < container.total_object_count; i++)
+				container.object_array[i]->pointerToPosition()->y -= scene_size.y;
+		}
 
 		// Deconstruct Old Levels
 		for (int i = 6; i < 9; i++)
 		{
 			sublevels[i].subtractHeader(container.total_object_count);
 			used_arrays[used_index++] = sublevels[i].deactivateObjects();
-			sublevels[i].deleteSubLevel();
 		}
 
 		// Shift Loaded Levels to the South
@@ -292,7 +383,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 			if (i < 3)
 			{
 				SubLevel& new_level = sublevels[i];
-				new_level = SubLevel(level_data_path, (int)level_new.x + next_level_location, (int)level_new.y + 1);
+				new_level = SubLevel(level_data_path, wrapLevelPos((int)level_new.x + next_level_location, (int)level_new.y + 1), scene_size);
 				new_level.addHeader(container.total_object_count);
 				next_level_location--;
 			}
@@ -309,18 +400,23 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 	}
 
 	// Move to the South
-	else if (level_old.y - level_new.y > 0)
+	else if ((!camera->wrapped && level_old.y - level_new.y > 0) || (camera->wrapped && level_old.y < level_new.y))
 	{
 #ifdef SHOW_LEVEL_LOADING
 		std::cout << "moving south\n";
 #endif
+
+		// If Wrapped, Move All Objects in the Positive Vertical Direction
+		if (camera->wrapped) {
+			for (int i = 0; i < container.total_object_count; i++)
+				container.object_array[i]->pointerToPosition()->y += scene_size.y;
+		}
 
 		// Deconstruct Old Levels
 		for (int i = 0; i < 3; i++)
 		{
 			sublevels[i].subtractHeader(container.total_object_count);
 			used_arrays[used_index++] = sublevels[i].deactivateObjects();
-			sublevels[i].deleteSubLevel();
 		}
 
 		// Shift Loaded Levels to the North
@@ -335,7 +431,7 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 			if (i > 5)
 			{
 				SubLevel& new_level = sublevels[i];
-				new_level = SubLevel(level_data_path, (int)level_new.x + next_level_location, (int)level_new.y - 1);
+				new_level = SubLevel(level_data_path, wrapLevelPos((int)level_new.x + next_level_location, (int)level_new.y - 1), scene_size);
 				new_level.addHeader(container.total_object_count);
 				next_level_location++;
 			}
@@ -466,6 +562,10 @@ void Render::Objects::Level::reallocatePostReload(uint32_t old_object_count)
 	container.total_object_count = new_object_count;
 	container.object_array = old_object_array;
 
+	std::cout << "begin reallocate\n";
+	std::cout << "old size: " << old_object_count << "\n";
+	std::cout << "new size: " << new_object_count << "\n"; 
+
 	// Reallocate Main Object List
 	temp_index_holder = 0;
 	Object::Object** new_list = new Object::Object*[container.total_object_count];
@@ -477,18 +577,33 @@ void Render::Objects::Level::reallocatePostReload(uint32_t old_object_count)
 			// Copy Pointer of Active Object Into Array, If Object is Active
 			if (container.object_array[i]->active_ptr->active)
 			{
+				std::cout << "\nUnharmed Object: " << container.object_array[i]->object_index << "  at: " << container.object_array[i]->returnPosition().x << " " << container.object_array[i]->returnPosition().y << "\n\n";
 				new_list[temp_index_holder] = container.object_array[i];
 				temp_index_holder++;
 			}
 
 			// Else, Delete Pointer to New Object Since It is No Longer Being Used
-			else
+			else {
+				std::cout << "\ndeleting Object: " << container.object_array[i]->object_index << "  at: " << container.object_array[i]->returnPosition().x << " " << container.object_array[i]->returnPosition().y << "\n\n";
 				delete container.object_array[i];
+			}
 		}
 
 		// Delete Old Array
 		delete container.object_array;
 	}
+
+	// Else, Delete All Objects in Array and Delete the Original Containter
+	else if (old_object_count != 0)
+	{
+		for (uint16_t i = 0; i < old_object_count; i++) {
+			std::cout << "\ndeleting Object: " << container.object_array[i]->object_index << "  at: " << container.object_array[i]->returnPosition().x << " " << container.object_array[i]->returnPosition().y << "\n\n";
+			delete container.object_array[i];
+		}
+		delete container.object_array;
+	}
+
+	std::cout << "end allocate\n";
 
 	// Swap Arrays
 	container.object_array = new_list;
@@ -936,6 +1051,18 @@ Render::Objects::Level::Level(std::string& level_path, float initial_x, float in
 	// Close the File
 	scene_data_file.close();
 
+	// Calculate the Sizes for the Entire Level in Object Coordinates
+	level_size.x = -scene_data.sublevel_count_west * scene_data.sublevel_width;
+	level_size.y = (scene_data.sublevel_count_east + 1) * scene_data.sublevel_width;
+	level_size.z = -scene_data.sublevel_count_south * scene_data.sublevel_height;
+	level_size.w = (scene_data.sublevel_count_north + 1) * scene_data.sublevel_height;
+
+	// Calculate the Scene Size
+	scene_size.x = level_size.y - level_size.x;
+	scene_size.y = level_size.w - level_size.z;
+	//scene_size.x = (scene_data.sublevel_count_west + 1 + scene_data.sublevel_count_east) * scene_data.sublevel_width;
+	//scene_size.y = (scene_data.sublevel_count_north + 1 + scene_data.sublevel_count_south) * scene_data.sublevel_height;
+
 	// Calculate the Sizes for the Sublevel Holder
 	level_diameter = (scene_data.render_distance << 1) - 1;
 	level_count = level_diameter * level_diameter;
@@ -965,10 +1092,14 @@ Render::Objects::Level::Level(std::string& level_path, float initial_x, float in
 		projection[i] = Global::projection;
 
 	// Create Camera
+	glm::vec4 scene_bounderies = glm::vec4(-scene_data.sublevel_count_west * scene_data.sublevel_width,
+		(scene_data.sublevel_count_east + 1) * scene_data.sublevel_width,
+		(scene_data.sublevel_count_north + 1) * scene_data.sublevel_height,
+		-scene_data.sublevel_count_south * scene_data.sublevel_height);
 	if (force_coords)
-		camera = new Camera::Camera(initial_x, initial_y, scene_data.stationary);
+		camera = new Camera::Camera(initial_x, initial_y, scene_data.stationary, scene_data.wrap_sublevels, scene_bounderies);
 	else
-		camera = new Camera::Camera(scene_data.initial_camera_x, scene_data.initial_camera_y, scene_data.stationary);
+		camera = new Camera::Camera(scene_data.initial_camera_x, scene_data.initial_camera_y, scene_data.stationary, scene_data.wrap_sublevels, scene_bounderies);
 
 	// Generate Terrain Buffer Object
 	glGenVertexArrays(1, &terrainVAO);
@@ -1065,7 +1196,7 @@ Render::Objects::Level::Level(std::string& level_path, float initial_x, float in
 	for (int i = 0; i < level_count; i++)
 	{
 		glm::vec2 coords = getLevelFromIndex(i);
-		sublevels[i] = SubLevel(level_data_path, (int)coords.x, (int)coords.y);
+		sublevels[i] = SubLevel(level_data_path, wrapLevelPos((int)coords.x, (int)coords.y), scene_size);
 		sublevels[i].addHeader(container.total_object_count);
 	}
 

@@ -277,6 +277,13 @@ namespace Render::Objects
 		// The Coordinate Offset for Level Index
 		int8_t level_coord_offset = 0;
 
+		// The Size of the Entire Scene, Width and Height
+		glm::vec2 scene_size = glm::vec2(0.0f, 0.0f);
+
+		// Dimensions for the Entire Level
+		// MinX, MaxX, MinY, MaxY
+		glm::vec4 level_size = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
 		// Test if SubLevels Should be Reloaded
 		void testReload();
 
@@ -344,6 +351,12 @@ namespace Render::Objects
 
 		// Return Coordinates of Sublevel from Corrisponding Sublevel Index
 		glm::i16vec2 getLevelFromIndex(int8_t index);
+
+		// Wrap the Coordinates of a Sublevel
+		glm::i16vec4 wrapLevelPos(int x, int y);
+
+		// Wrap the Coordinates of an Object in Level
+		void wrapObjectPos(glm::vec2& pos);
 
 #ifdef EDITOR
 

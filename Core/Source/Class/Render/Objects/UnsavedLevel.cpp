@@ -105,7 +105,7 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(ObjectsInstanc
 		change_controller->transferObject(object.data_object, object.object_x, object.object_y, 0);
 }
 
-void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, ObjectsInstance& instance)
+void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, ObjectsInstance& instance, glm::vec2& object_offset)
 {
 	// Allocate Memory for Active Array
 	if (instance.data_objects.size())
@@ -113,8 +113,10 @@ void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects,
 	Object::Active* active_array = *active_objects;
 	uint16_t active_index = 0;
 
+	std::cout << "Building: " << level_x << " " << level_y << "  OFFSETS: " << object_offset.x << " " << object_offset.y << "\n";
+
 	// Generate Objects
-	buildObjectsGenerator(instance.data_objects, objects, index, physics, entities, active_array, active_index, nullptr, glm::vec2(0.0f, 0.0f));
+	buildObjectsGenerator(instance.data_objects, objects, index, physics, entities, active_array, active_index, nullptr, object_offset);
 }
 
 void Render::Objects::UnsavedLevel::buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Active* active_array, uint16_t& active_index, Object::Object* parent, glm::vec2 position_offset)
@@ -334,10 +336,10 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y
 	constructUnmodifiedDataHelper(instance_with_changes);
 }
 
-void Render::Objects::UnsavedLevel::buildObjects(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities)
+void Render::Objects::UnsavedLevel::buildObjects(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, glm::vec2& object_offset)
 {
 	// Construct Objects
-	buildObjectsHelper(objects, index, physics, entities, instance_with_changes);
+	buildObjectsHelper(objects, index, physics, entities, instance_with_changes, object_offset);
 }
 
 uint16_t Render::Objects::UnsavedLevel::returnObjectHeader()

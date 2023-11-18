@@ -59,12 +59,16 @@ void Render::Objects::ChangeController::addToUnsaved(DataClass::Data_Object* dat
 	// Object is in the Level
 	else
 	{
+		// Fix the Coordinates of the Object if It has been Wrapped
+		level->wrapObjectPos(data_object->getPosition());
+
 		// Get Position of Object in Terms of Level
 		glm::i16vec2 object_level_position;
 		level->updateLevelPos(data_object->getPosition(), object_level_position);
 
 		//std::cout << "Adding To Level: " << object_level_position.x << " " << object_level_position.y << "  At Index: " << (int)level->getIndexFromLevel(object_level_position) << "\n";
-		std::cout << "Adding To Level: " << object_level_position.x << " " << object_level_position.y << "  At Index: "  << "\n";
+		std::cout << "Adding To Level: " << object_level_position.x << " " << object_level_position.y << "  At Index: " << "\n";
+		std::cout << "Object is " << data_object->getObjectIndex() << "  at coords: " << data_object->getPosition().x << " " << data_object->getPosition().y << "\n";
 
 		// Get Unsaved Level of Where Object is Now
 		UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);

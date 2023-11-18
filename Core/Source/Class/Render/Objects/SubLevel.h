@@ -52,13 +52,16 @@ namespace Render::Objects
 		int16_t new_active_objects = 0;
 		int16_t removed_count = 0;
 
+		// The Offset of the Sublevel Objects When Building Sublevel
+		glm::vec2 object_offsets = glm::vec2(0.0f, 0.0f);
+
 		// Default Constructor for the Object
 		SubLevel() {}
 
 #ifdef EDITOR
 
 		// Initialize SubLevel
-		SubLevel(std::string& level_data_path, int x, int y);
+		SubLevel(std::string& level_data_path, glm::i16vec4 pos, glm::vec2& wrapping_offset);
 
 		// Read Level
 		void readLevel(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities);

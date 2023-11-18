@@ -15,10 +15,12 @@ extern "C" {
 #include "Class/Render/Shader/Shader.h"
 #include "Class\Render\Editor\Debugger.h"
 
-Render::Camera::Camera::Camera(float initialX, float initialY, bool stationary)
+Render::Camera::Camera::Camera(float initialX, float initialY, bool stationary, bool wrap_, glm::vec4 scene_bounderies_)
 {
 	Position = glm::vec3(initialX, initialY, 0.0f);
 	Stationary = stationary;
+	wrap = wrap_;
+	scene_bounderies = scene_bounderies_;
 	zoomScale = 1;
 	accelerationL = 1;
 	accelerationR = 1;
@@ -68,7 +70,36 @@ void Render::Camera::Camera::updatePosition()
 {
 	// This Should Only be Executed Once Per Frame At the Start of Rendering
 
+	// If Wrapping is Enabled, Test if Camera Should be Wrapped
+	if (wrap)
+	{
+		// Reset Wrapping Flag
+		wrapped = false;
+
+		// Test Horizontal Wrap
+		if (Position.x < scene_bounderies.x) {
+			Position.x += scene_bounderies.y - scene_bounderies.x;
+			wrapped = true;
+		} else if (Position.x > scene_bounderies.y) {
+			Position.x += scene_bounderies.x - scene_bounderies.y;
+			wrapped = true;
+		}
+
+		// Test Vertical Wrap
+		if (Position.y < scene_bounderies.w) {
+			Position.y += scene_bounderies.z - scene_bounderies.w;
+			wrapped = true;
+		} else if (Position.y > scene_bounderies.z) {
+			Position.y += scene_bounderies.w - scene_bounderies.z;
+			wrapped = true;
+		}
+	}
+
 	// TODO: If Wrapping is Dissabled, Prevent Camera from Observing Any Levels That Are Outside Range
+	else
+	{
+
+	}
 
 	// Calculate View Matrix
 	view = glm::translate(glm::mat4(1.0f), glm::vec3(-Position.x, -Position.y, Position.z));
