@@ -59,8 +59,12 @@ namespace Render::Camera
 		glm::mat4 view;
 
 		// The Min/Max Values in Each Direction
-		// -Horizontal, +Horizontal, +Vertical, -Vertical
+		// -Horizontal, +Horizontal, -Vertical, +Vertical
 		glm::vec4 scene_bounderies = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+		// The Distance the Camera Can See In Each Direction From Center
+		// Center Position to Position at Edge of Screen
+		glm::vec2 camera_radius = glm::vec2(0.0f, 0.0f);
 
 #ifndef DLL_HEADER
 

@@ -86,19 +86,44 @@ void Render::Camera::Camera::updatePosition()
 		}
 
 		// Test Vertical Wrap
-		if (Position.y < scene_bounderies.w) {
-			Position.y += scene_bounderies.z - scene_bounderies.w;
-			wrapped = true;
-		} else if (Position.y > scene_bounderies.z) {
+		if (Position.y < scene_bounderies.z) {
 			Position.y += scene_bounderies.w - scene_bounderies.z;
+			wrapped = true;
+		} else if (Position.y > scene_bounderies.w) {
+			Position.y += scene_bounderies.z - scene_bounderies.w;
 			wrapped = true;
 		}
 	}
 
-	// TODO: If Wrapping is Dissabled, Prevent Camera from Observing Any Levels That Are Outside Range
+	// If Wrapping is Dissabled, Prevent Camera from Observing Any Levels That Are Outside Range
 	else
 	{
+		// If Scene Was Zoomed, Update Radius
+		if (Global::zoom)
+		{
+			camera_radius.x = Global::halfScalarX * Global::zoom_scale;
+			camera_radius.y = 50.0f * Global::zoom_scale;
+		}
 
+		// If Camera X-Position is Offscreen, Set Camera Position to be Onscreen
+		if (Position.x - camera_radius.x < scene_bounderies.x) {
+			Position.x = scene_bounderies.x + camera_radius.x;
+			Global::Keys[GLFW_KEY_A] = false;
+		}
+		else if (Position.x + camera_radius.x > scene_bounderies.y) {
+			Position.x = scene_bounderies.y - camera_radius.x;
+			Global::Keys[GLFW_KEY_D] = false;
+		}
+
+		// If Camera X-Position is Offscreen, Set Camera Position to be Onscreen
+		if (Position.y - camera_radius.y < scene_bounderies.z) {
+			Position.y = scene_bounderies.z + camera_radius.y;
+			Global::Keys[GLFW_KEY_S] = false;
+		}
+		else if (Position.y + camera_radius.y > scene_bounderies.y) {
+			Position.y = scene_bounderies.w - camera_radius.y;
+			Global::Keys[GLFW_KEY_W] = false;
+		}
 	}
 
 	// Calculate View Matrix

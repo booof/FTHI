@@ -1110,14 +1110,10 @@ Render::Objects::Level::Level(std::string& level_path, float initial_x, float in
 		projection[i] = Global::projection;
 
 	// Create Camera
-	glm::vec4 scene_bounderies = glm::vec4(-scene_data.sublevel_count_west * scene_data.sublevel_width,
-		(scene_data.sublevel_count_east + 1) * scene_data.sublevel_width,
-		(scene_data.sublevel_count_north + 1) * scene_data.sublevel_height,
-		-scene_data.sublevel_count_south * scene_data.sublevel_height);
 	if (force_coords)
-		camera = new Camera::Camera(initial_x, initial_y, scene_data.stationary, scene_data.wrap_sublevels, scene_bounderies);
+		camera = new Camera::Camera(initial_x, initial_y, scene_data.stationary, scene_data.wrap_sublevels, level_size);
 	else
-		camera = new Camera::Camera(scene_data.initial_camera_x, scene_data.initial_camera_y, scene_data.stationary, scene_data.wrap_sublevels, scene_bounderies);
+		camera = new Camera::Camera(scene_data.initial_camera_x, scene_data.initial_camera_y, scene_data.stationary, scene_data.wrap_sublevels, level_size);
 
 	// Generate Terrain Buffer Object
 	glGenVertexArrays(1, &terrainVAO);
