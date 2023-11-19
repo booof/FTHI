@@ -17,6 +17,11 @@
 #include "Render/GUI/VerticalScrollBar.h"
 #include "Render/GUI/Box.h"
 
+namespace Render::Objects
+{
+	class Level;
+}
+
 namespace Editor
 {
 	// Debugger Object
@@ -106,6 +111,9 @@ namespace Editor
 		float level_width = 0.0f;
 		float level_height = 0.0f;
 
+		// Pointer to the Level
+		Render::Objects::Level* main_level = nullptr;
+
 		// Initial Constructor
 		Debugger() {};
 
@@ -167,6 +175,9 @@ namespace Editor
 
 		// Returns True if Project Has No Errors
 		bool returnNoErrors();
+
+		// Store the Level Object Currently Being Debugged
+		void storeCurrentLevel(Render::Objects::Level* level);
 	};
 }
 

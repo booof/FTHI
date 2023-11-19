@@ -96,6 +96,11 @@ void Render::Objects::SubLevel::drawVisualizer()
 	unsaved_level->drawVisualizer();
 }
 
+void Render::Objects::SubLevel::updateModelMatrix()
+{
+	unsaved_level->updateModelMatrix();
+}
+
 #else
 
 Render::Objects::SubLevel::SubLevel(int x, int y)
@@ -406,7 +411,6 @@ void Render::Objects::SubLevel::resetCounts()
 
 void Render::Objects::SubLevel::deleteSubLevel()
 {
-	std::cout << "deleting level: " << level_x << " " << level_y << "   " << path << "\n";
 #ifdef SHOW_LEVEL_LOADING
 	std::cout << "deleting level: " << level_x << " " << level_y << "   " << path << "\n";
 #endif

@@ -6,6 +6,8 @@
 #include "Source/Vertices/Rectangle/RectangleVertices.h"
 #include "Source/Algorithms/Common/Common.h"
 #include "EditorOptions.h"
+#include "Render\Objects\Level.h"
+#include "Render\Objects\ChangeController.h"
 
 #define DEFAULT_TEXT_HEIGHT 25
 #define MAX_TEXT_SIZE 43.875f
@@ -289,6 +291,28 @@ void Editor::ObjectInfo::editColorValue(int index, glm::vec4* value)
 
 	// Get Reference to Object
 	TextColor& object = *static_cast<TextColor*>(text_objects[index]);
+
+	// Store Data
+	object.setValue(value);
+}
+
+void Editor::ObjectInfo::addPositionValue(std::string identifier, glm::vec4 identifier_color, glm::vec4 label_color_1, glm::vec4 label_color_2, glm::vec4 value_color, glm::vec2* value, bool is_int)
+{
+	// Generate and Store Text Object
+	text_objects.push_back(new TextPosition(identifier, identifier_color, label_color_1, label_color_2, value_color, value, is_int));
+
+	// Enable Flag
+	should_restructure = true;
+}
+
+void Editor::ObjectInfo::editPositionValue(int index, glm::vec2* value)
+{
+	// Return if Index is Greater or Equal to Size of Text Array
+	if (index > text_objects.size())
+		return;
+
+	// Get Reference to Object
+	TextPosition& object = *static_cast<TextPosition*>(text_objects[index]);
 
 	// Store Data
 	object.setValue(value);
@@ -715,3 +739,82 @@ Editor::ObjectInfo::TEXT_OBJECTS Editor::ObjectInfo::TextColor::getTextType()
 uint8_t Editor::ObjectInfo::TextColor::color_count;
 GLuint Editor::ObjectInfo::TextColor::VAO;
 GLuint Editor::ObjectInfo::TextColor::VBO;
+
+Editor::ObjectInfo::TextPosition::TextPosition(std::string identifier_, glm::vec4 identifier_color_, glm::vec4 label_color_1_, glm::vec4 label_color_2_, glm::vec4 value_color_, glm::vec2* position, bool is_int)
+{
+	// Store Values
+	identifier = identifier_;
+	identifier_color = identifier_color_;
+	label_color_1 = label_color_1_;
+	label_color_2 = label_color_2_;
+	value_color = value_color_;
+	position_data = position;
+	interpret_as_int = is_int;
+
+	// Store Level
+	level = change_controller->getCurrentLevel();
+}
+
+Editor::ObjectInfo::TEXT_OBJECTS Editor::ObjectInfo::TextPosition::getTextType()
+{
+	return TEXT_OBJECTS::TEXT_POSITION;
+}
+
+void Editor::ObjectInfo::TextPosition::blitzText(float x, float& y, float max_height)
+{
+	// Render Text
+	y -= returnHeightOffset(max_height);
+	x = Source::Fonts::renderText(identifier, x, y, text_scale, identifier_color, true);
+	x = Source::Fonts::renderText("x: ", x, y, text_scale, label_color_1, true);
+	x = Source::Fonts::renderText(position_string_x, x, y, text_scale, value_color, true);
+	x = Source::Fonts::renderText(" y: ", x, y, text_scale, label_color_2, true);
+	Source::Fonts::renderText(position_string_y, x, y, text_scale, value_color, true);
+}
+
+float Editor::ObjectInfo::TextPosition::getTextSize(float max_width)
+{
+	// If Value is an int, Convert Position Into Level Coords
+	if (interpret_as_int)
+	{
+		// Get Coords of Object in Terms of Level
+		glm::i16vec2 level_coords;
+		level->updateLevelPos(*position_data, level_coords);
+
+		// Convert to String
+		position_string_x = std::to_string(level_coords.x);
+		position_string_y = std::to_string(level_coords.y);
+	}
+
+	// Else, Use Normal Object Position
+	else
+	{
+		// Wrap the Position Data, if Needed
+		glm::vec2 position_data_copy = *position_data;
+		level->wrapObjectPos(position_data_copy);
+
+		// Convert Wrapped Position Data to Text		
+		std::stringstream value_stream1, value_stream2;
+		value_stream1 << std::fixed << std::setprecision(4) << position_data_copy.x;
+		position_string_x = value_stream1.str();
+		value_stream2 << std::fixed << std::setprecision(4) << position_data_copy.y;
+		position_string_y = value_stream2.str();
+	}
+
+	// Get Size of Text
+	text_size = Source::Fonts::getTextSize(identifier + "x:  y: " + position_string_x + position_string_y, text_scale);
+
+	// Clamp Size and Scale, If Needed
+	if (text_size > max_width)
+	{
+		text_scale = (max_width * text_scale) / text_size;
+		text_size = max_width;
+	}
+
+	// Return Size of Text
+	return text_size;
+}
+
+void Editor::ObjectInfo::TextPosition::setValue(glm::vec2* position)
+{
+	position_data = position;
+}

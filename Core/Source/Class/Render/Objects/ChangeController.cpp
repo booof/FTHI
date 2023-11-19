@@ -133,7 +133,7 @@ Render::Objects::UnsavedLevel* Render::Objects::ChangeController::generateUnsave
 	// Generate Object
 	glm::vec2 sizes = glm::vec2(0.0f, 0.0f);
 	level->getSublevelSize(sizes);
-	UnsavedLevel* new_unsaved_level = new UnsavedLevel(sizes);
+	UnsavedLevel* new_unsaved_level = new UnsavedLevel(sizes, level);
 
 	// Generate Unmodified Data
 	new_unsaved_level->constructUnmodifiedData(x, y, z, sizes.x, sizes.y, level->getLevelDataPath(), level->getEditorLevelDataPath());
@@ -641,6 +641,11 @@ void Render::Objects::ChangeController::drawVisualizers()
 	// Draw Visualizers for Complex Objects
 	for (std::vector<UnsavedComplex*>::iterator it = unsaved_complex.begin(); it != unsaved_complex.end(); it++)
 		(*it)->drawVisualizer();
+}
+
+Render::Objects::Level* Render::Objects::ChangeController::getCurrentLevel()
+{
+	return level;
 }
 
 void Render::Objects::ChangeController::MasterStack::deleteInstance(uint8_t index)

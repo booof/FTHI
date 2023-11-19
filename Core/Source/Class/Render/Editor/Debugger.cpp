@@ -10,6 +10,7 @@
 #include "Render/Editor/ProjectSelector.h"
 #include "Render/GUI/AdvancedString.h"
 #include "SceneController.h"
+#include "Render\Objects\Level.h"
 
 void Editor::Debugger::readErrorLog()
 {
@@ -701,6 +702,8 @@ void Editor::Debugger::setCameraPosition(glm::vec2 position)
 
 void Editor::Debugger::setMousePosition(glm::vec2 position)
 {
+	// Wrap Mouse Coordinates First
+	main_level->wrapObjectPos(position);
 	getTextPosition(header_mouse_pos, position);
 }
 
@@ -730,6 +733,11 @@ bool Editor::Debugger::returnIfLookedOver()
 bool Editor::Debugger::returnNoErrors()
 {
 	return !look_at_build;
+}
+
+void Editor::Debugger::storeCurrentLevel(Render::Objects::Level* level)
+{
+	main_level = level;
 }
 
 Editor::Debugger Editor::Debugger::instance;

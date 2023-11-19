@@ -5,6 +5,7 @@
 #include "Globals.h"
 #include "Render/Struct/DataClasses.h"
 #include "UnsavedGroup.h"
+#include "Level.h"
 
 void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(ObjectsInstance& instance)
 {
@@ -55,8 +56,7 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(ObjectsInstanc
 	std::vector<InvalidObject> invalid_location;
 
 	// Level Pos of Object
-	int16_t object_x = 0;
-	int16_t object_y = 0;
+	glm::i16vec2 object_level_pos;
 
 	// Stack Used to Add Children
 	AddChildrenStack add_child_stack;
@@ -67,7 +67,6 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(ObjectsInstanc
 	{
 		// Read Object
 		object_file.read((char*)&object_identifier, 4);
-		//object_identifier[3] = 0;
 		DataClass::Data_Object* object = lambdaDataObject(object_identifier);
 		object->readObject(object_file, editor_file);
 
@@ -76,10 +75,10 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(ObjectsInstanc
 		{
 			// If Read Object's Position Does Not Match the Current Level,
 			// Find a Way to Transfer Between Unsaved Levels
-			object_x = (int16_t)floor(object->getPosition().x / 128.0f);
-			object_y = (int16_t)floor(object->getPosition().y / 64.0f);
-			if (object_x != level_x || object_y != level_y)
-				invalid_location.push_back(InvalidObject(object, object_x, object_y));
+			main_level->wrapObjectPos(object->getPosition());
+			main_level->updateLevelPos(object->getPosition(), object_level_pos);
+			if (object_level_pos.x != level_x || object_level_pos.y != level_y)
+				invalid_location.push_back(InvalidObject(object, object_level_pos.x, object_level_pos.y));
 			else
 				instance.data_objects.push_back(object);
 		}
@@ -112,8 +111,6 @@ void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects,
 		*active_objects = new Object::Active[instance.number_of_loaded_objects];
 	Object::Active* active_array = *active_objects;
 	uint16_t active_index = 0;
-
-	std::cout << "Building: " << level_x << " " << level_y << "  OFFSETS: " << object_offset.x << " " << object_offset.y << "\n";
 
 	// Generate Objects
 	buildObjectsGenerator(instance.data_objects, objects, index, physics, entities, active_array, active_index, nullptr, object_offset);
@@ -261,8 +258,11 @@ bool Render::Objects::UnsavedLevel::testValidSelection(DataClass::Data_Object* p
 	return true;
 }
 
-Render::Objects::UnsavedLevel::UnsavedLevel(glm::vec2& sizes)
+Render::Objects::UnsavedLevel::UnsavedLevel(glm::vec2& sizes, Level* level)
 {
+	// Store Level Object
+	main_level = level;
+
 	// Decrement Sizes by 0.1
 	sizes.x -= 0.1f;
 	sizes.y -= 0.1f;
@@ -382,6 +382,18 @@ void Render::Objects::UnsavedLevel::drawVisualizer()
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_LINES, 0, 8);
 	glBindVertexArray(0);
+}
+
+void Render::Objects::UnsavedLevel::updateModelMatrix()
+{
+	// Get the Object Position of Level
+	glm::vec2 object_pos = main_level->getObjectPos(glm::i16vec2(level_x, level_y));
+
+	// Unwrap the Positions
+	main_level->unwrapObjectPos(object_pos);
+
+	// Update Model Matrix
+	model = glm::translate(glm::mat4(1.0f), glm::vec3(object_pos.x, object_pos.y, 0.0f));
 }
 
 void Render::Objects::UnsavedLevel::write(bool& save)

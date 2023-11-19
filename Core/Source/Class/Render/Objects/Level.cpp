@@ -55,8 +55,11 @@ void Render::Objects::Level::updateLevelPos(glm::vec2 position, glm::i16vec2& le
 		level.y -= scene_data.sublevel_count_north + scene_data.sublevel_count_south + 1;
 	else if (level.y < -scene_data.sublevel_count_south)
 		level.y += scene_data.sublevel_count_north + scene_data.sublevel_count_south + 1;
+}
 
-	std::cout << "\nposition: " << position.x << " " << position.y << "   level: " << level.x << " " << level.y << "\n";
+glm::vec2 Render::Objects::Level::getObjectPos(glm::i16vec2 level_coords)
+{
+	return glm::vec2(level_coords.x * scene_data.sublevel_width, level_coords.y * scene_data.sublevel_height);
 }
 
 int8_t Render::Objects::Level::getIndexFromLevel(glm::i16vec2 level_coords)
@@ -149,20 +152,39 @@ void Render::Objects::Level::wrapObjectPos(glm::vec2& pos)
 		pos.y -= (level_size.w - level_size.z);
 }
 
+void Render::Objects::Level::unwrapObjectPos(glm::vec2& pos)
+{
+	// If Wrapping is Not Enabled, Do Nothing
+	if (!scene_data.wrap_sublevels)
+		return;
+
+	// Get The Level Coordinates Object is In
+	glm::i16vec2 level_pos;
+	updateLevelPos(pos, level_pos);
+
+	// Test if X-Position Should be Unwrapped
+	if (level_pos.x == scene_data.sublevel_count_east && camera->Position.x < 0)
+		pos.x -= scene_size.x;
+	else if (level_pos.x == -scene_data.sublevel_count_west && camera->Position.x > 0)
+		pos.x += scene_size.x;
+
+	// Test if X-Position Should be Unwrapped
+	if (level_pos.y == scene_data.sublevel_count_north && camera->Position.y < 0)
+		pos.y -= scene_size.y;
+	else if (level_pos.y == -scene_data.sublevel_count_south && camera->Position.y > 0)
+		pos.y += scene_size.y;
+}
+
 void Render::Objects::Level::testReload()
 {
 	// Get Level Coordinates of Camera
 	glm::i16vec2 new_level;
 	new_level.x = floor(camera->Position.x / scene_data.sublevel_width);
 	new_level.y = floor(camera->Position.y / scene_data.sublevel_height);
-	//updateLevelPos(camera->Position, new_level);
 
 	// Test if Reloading Of Level is Needed
 	if (new_level != level_position)
 	{
-		std::cout << "\nold: " << level_position.x << " " << level_position.y << "\n";
-		std::cout << "new: " << new_level.x << " " << new_level.y << "\n";
-
 		// Reload Levels
 		reloadLevels(level_position, new_level, false);
 
@@ -479,6 +501,13 @@ void Render::Objects::Level::segregateObjects()
 	// Importance. There will be a Data Structure That Contains the Start/End Indicies for Each Important
 	// Object Group i.e. Terrain, Lights, Masks
 
+	// Update Unsaved Level Model Matrices
+	if (Global::editing)
+	{
+		for (int i = 0; i < level_count; i++)
+			sublevels[i].updateModelMatrix();
+	}
+
 	// Sort the Objects Through Quick Sort
 	Algorithms::Sorting::quickIdentifierSort(container.object_array, container.total_object_count);
 
@@ -562,10 +591,6 @@ void Render::Objects::Level::reallocatePostReload(uint32_t old_object_count)
 	container.total_object_count = new_object_count;
 	container.object_array = old_object_array;
 
-	std::cout << "begin reallocate\n";
-	std::cout << "old size: " << old_object_count << "\n";
-	std::cout << "new size: " << new_object_count << "\n"; 
-
 	// Reallocate Main Object List
 	temp_index_holder = 0;
 	Object::Object** new_list = new Object::Object*[container.total_object_count];
@@ -577,16 +602,13 @@ void Render::Objects::Level::reallocatePostReload(uint32_t old_object_count)
 			// Copy Pointer of Active Object Into Array, If Object is Active
 			if (container.object_array[i]->active_ptr->active)
 			{
-				std::cout << "\nUnharmed Object: " << container.object_array[i]->object_index << "  at: " << container.object_array[i]->returnPosition().x << " " << container.object_array[i]->returnPosition().y << "\n\n";
 				new_list[temp_index_holder] = container.object_array[i];
 				temp_index_holder++;
 			}
 
 			// Else, Delete Pointer to New Object Since It is No Longer Being Used
-			else {
-				std::cout << "\ndeleting Object: " << container.object_array[i]->object_index << "  at: " << container.object_array[i]->returnPosition().x << " " << container.object_array[i]->returnPosition().y << "\n\n";
+			else
 				delete container.object_array[i];
-			}
 		}
 
 		// Delete Old Array
@@ -596,14 +618,10 @@ void Render::Objects::Level::reallocatePostReload(uint32_t old_object_count)
 	// Else, Delete All Objects in Array and Delete the Original Containter
 	else if (old_object_count != 0)
 	{
-		for (uint16_t i = 0; i < old_object_count; i++) {
-			std::cout << "\ndeleting Object: " << container.object_array[i]->object_index << "  at: " << container.object_array[i]->returnPosition().x << " " << container.object_array[i]->returnPosition().y << "\n\n";
+		for (uint16_t i = 0; i < old_object_count; i++)
 			delete container.object_array[i];
-		}
 		delete container.object_array;
 	}
-
-	std::cout << "end allocate\n";
 
 	// Swap Arrays
 	container.object_array = new_list;
@@ -1182,6 +1200,7 @@ Render::Objects::Level::Level(std::string& level_path, float initial_x, float in
 	change_controller->storeLevelPointer(this);
 
 	// Store Level Width for Debugger
+	debugger->storeCurrentLevel(this);
 	debugger->storeLevelPositions(scene_data.sublevel_width, scene_data.sublevel_height);
 	camera->updateDebugPositions(true);
 

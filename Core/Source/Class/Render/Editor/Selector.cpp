@@ -1117,6 +1117,9 @@ void Editor::Selector::initializeSelector()
 
 	for (DataClass::Data_Object* data_object : unadded_data_objects)
 	{
+		// In the Event that an Object Has been Wrapped, Unwrrap the Object
+		change_controller->getCurrentLevel()->unwrapObjectPos(data_object->getPosition());
+
 		// Move Data Object to Data Object Array
 		data_objects.push_back(data_object);
 

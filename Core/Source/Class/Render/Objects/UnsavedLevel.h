@@ -22,6 +22,8 @@
 
 namespace Render::Objects
 {
+	class Level;
+
 	class UnsavedLevel : public UnsavedBase
 	{
 		// Possible Change to Method of Switching Between Instances (More Memory / Performance Friendly)
@@ -82,8 +84,11 @@ namespace Render::Objects
 		int16_t level_y = 0;
 		int8_t level_version = 0;
 
+		// Pointer to Main Level Object
+		Level* main_level = nullptr;
+
 		// Initialize Object
-		UnsavedLevel(glm::vec2& sizes);
+		UnsavedLevel(glm::vec2& sizes, Level* level);
 
 		// Deconstructor
 		~UnsavedLevel();
@@ -117,6 +122,9 @@ namespace Render::Objects
 
 		// Draw Object State Visualizer
 		void drawVisualizer();
+
+		// Update the Outline Model In Case of Wrapping
+		void updateModelMatrix();
 	};
 }
 

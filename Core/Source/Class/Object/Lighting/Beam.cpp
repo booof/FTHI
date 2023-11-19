@@ -217,7 +217,8 @@ void DataClass::Data_Beam::info(Editor::ObjectInfo& object_info)
 	object_info.clearAll();
 	object_info.setObjectType("Beam Light", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 	object_info.addTextValue("Name: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &name, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	object_info.addDoubleValue("Pos: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &light_data.position.x, &light_data.position.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addPositionValue("Pos1: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), &light_data.position, false);
+	object_info.addPositionValue("Pos2: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), &beam.position2, false);
 	infoColors(object_info);
 	object_info.addSingleValue("Index: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object_index, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 }

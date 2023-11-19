@@ -75,6 +75,9 @@ namespace Render::Objects
 		// Draw Level Visualizer
 		void drawVisualizer();
 
+		// Update Model Matrix of Unsaved Level
+		void updateModelMatrix();
+
 #else
 
 		// Initialize SubLevel

@@ -346,6 +346,9 @@ namespace Render::Objects
 		// Update Level Location
 		void updateLevelPos(glm::vec2 position, glm::i16vec2& level);
 
+		// Get the Object Position From Level Post
+		glm::vec2 getObjectPos(glm::i16vec2 level_coords);
+
 		// Return Index of Corrisponding SubLevel from Level Coords
 		int8_t getIndexFromLevel(glm::i16vec2 level_coords);
 
@@ -357,6 +360,9 @@ namespace Render::Objects
 
 		// Wrap the Coordinates of an Object in Level
 		void wrapObjectPos(glm::vec2& pos);
+
+		// Unwrrap the Coordinates of an Object in Level
+		void unwrapObjectPos(glm::vec2& pos);
 
 #ifdef EDITOR
 

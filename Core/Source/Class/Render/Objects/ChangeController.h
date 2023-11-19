@@ -221,6 +221,9 @@ namespace Render::Objects
 
 		// Draw Visualizers for Unsaved Objects
 		void drawVisualizers();
+
+		// Returns the Pointer to the Current Level
+		Level* getCurrentLevel();
 	};
 }
 

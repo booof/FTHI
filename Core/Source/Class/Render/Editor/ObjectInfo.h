@@ -8,6 +8,12 @@
 
 // Idea: The size of Background Vertex Object Changes as More or Less Text is Used
 
+// Declaration for Level Object
+namespace Render::Objects
+{
+	class Level;
+}
+
 namespace Editor
 {
 	// The Object Info Class
@@ -20,7 +26,8 @@ namespace Editor
 			TEXT_SINGLE_VALUE,
 			TEXT_DOUBLE_VALUE,
 			TEXT_BOOL,
-			TEXT_COLOR
+			TEXT_COLOR,
+			TEXT_POSITION
 		};
 
 		// Master Class for Text Objects
@@ -255,6 +262,44 @@ namespace Editor
 			void setVAOOffset(int new_offset);
 		};
 
+		// Class for Position Values
+		class TextPosition : public TextMaster
+		{
+			// Pointer to the Level Object
+			Render::Objects::Level* level;
+
+			// Label Colors
+			glm::vec4 label_color_1;
+			glm::vec4 label_color_2;
+
+			// Value Color
+			glm::vec4 value_color;
+
+			// Position Data
+			glm::vec2* position_data;
+
+			// Position Strings
+			std::string position_string_x = "";
+			std::string position_string_y = "";
+
+		public:
+
+			// Constructor
+			TextPosition(std::string identifier_, glm::vec4 identifier_color_, glm::vec4 label_color_1_, glm::vec4 label_color_2_, glm::vec4 value_color_, glm::vec2* position, bool is_int);
+
+			// Returns the Type of Text Object
+			TEXT_OBJECTS getTextType();
+
+			// Blitz Text
+			void blitzText(float x, float& y, float max_height);
+
+			// Get Size of Text
+			float getTextSize(float max_width);
+
+			// Set Values
+			void setValue(glm::vec2* position);
+		};
+
 		// Vertex Object
 		GLuint VAO, VBO;
 
@@ -344,6 +389,12 @@ namespace Editor
 
 		// Edit Color Value
 		void editColorValue(int index, glm::vec4* value);
+
+		// Add Position Value
+		void addPositionValue(std::string identifier, glm::vec4 identifier_color, glm::vec4 label_color_1, glm::vec4 label_color_2, glm::vec4 value_color, glm::vec2* value, bool is_int);
+
+		// Edit Position Data
+		void editPositionValue(int index, glm::vec2* value);
 
 		// Remove Value
 		void removeValueAtIndex(int index);

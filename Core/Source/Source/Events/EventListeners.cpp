@@ -840,12 +840,16 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 		// Disable Key
 		Global::Keys[GLFW_KEY_Q] = false;
 
+		// Wrap Mouse Position, if Needed
+		glm::vec2 relativeMousePos = glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY);
+		level.wrapObjectPos(relativeMousePos);
+
 		// Get Level Location
 		glm::i16vec2 coords;
-		level.updateLevelPos(glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY), coords);
+		level.updateLevelPos(relativeMousePos, coords);
 
 		// Print Location
-		std::cout << "Location X: " << Global::mouseRelativeX << "  Location Y: " << Global::mouseRelativeY << "  Level Coords: " << coords.x << "," << coords.y << "\n";
+		std::cout << "Location X: " << relativeMousePos.x << "  Location Y: " << relativeMousePos.y << "  Level Coords: " << coords.x << "," << coords.y << "\n";
 	}
 
 	// Toggle Level Border Visualizer

@@ -37,8 +37,8 @@ void Shape::Triangle::writeShape(std::ofstream& object_file)
 
 void Shape::Triangle::selectInfo(Editor::ObjectInfo& object_info)
 {
-	object_info.addDoubleValue("Pos2: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &position2.x, &position2.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
-	object_info.addDoubleValue("Pos3: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), "x: ", glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), " y: ", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), &position3.x, &position3.y, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), false);
+	object_info.addPositionValue("Pos2: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), &position2, false);
+	object_info.addPositionValue("Pos3: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(0.9f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), &position3, false);
 }
 
 bool Shape::Triangle::testMouseCollisions(float x, float y, float object_x, float object_y)
