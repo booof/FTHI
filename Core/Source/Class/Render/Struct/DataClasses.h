@@ -3,6 +3,7 @@
 #define DATA_CLASSES_H
 
 #include "ExternalLibs.h"
+#include "Render\Container\Container.h"
 #include "Render/Objects/UnsavedBase.h"
 #include "Object/Object.h"
 #include "Render/Shape/Rectangle.h"
@@ -31,6 +32,11 @@
 #include "Object/Entity/Interactables.h"
 #include "Object/Entity/Dynamics.h"
 #include "Object/Group/GroupObject.h"
+#include "Render\GUI\Element.h"
+#include "Render\GUI\MasterElement.h"
+#include "Render\GUI\Box.h"
+#include "Render\GUI\TextObject.h"
+#include "Render\GUI\ScrollBar.h"
 
 // This File Contains the Classes that Only Contain the Data for Engine Objects With Some Helper Functions
 // This is to be Used for the Improved Unsaved Level and Allow for Multiple Objects to be Selected at Once
@@ -85,7 +91,7 @@ namespace DataClass
 		Data_Object* parent = nullptr;
 
 		// Determines if the Object Should Move With Its Parent
-		Render::Objects::MOVE_WITH_PARENT move_with_parent = Render::Objects::MOVE_WITH_PARENT::MOVE_ENABLED;
+		Render::MOVE_WITH_PARENT move_with_parent = Render::MOVE_WITH_PARENT::MOVE_ENABLED;
 
 		// The Layer the Object is in In a Group
 		int8_t group_layer = 0;
@@ -139,7 +145,7 @@ namespace DataClass
 		void addChild(DataClass::Data_Object* data_object);
 
 		// Function to Add a Child to a Data Object Via Selection
-		void addChildViaSelection(DataClass::Data_Object* data_object, Render::Objects::MOVE_WITH_PARENT disable_move);
+		void addChildViaSelection(DataClass::Data_Object* data_object, Render::MOVE_WITH_PARENT disable_move);
 
 		// Function to Draw Group Visualizer Points and Lines With the Given Offsets
 		void drawGroupVisualizerHelper(glm::vec2& left_offset, glm::vec2& right_offset, glm::vec2& point_offset, glm::vec2 new_offset);
@@ -166,13 +172,13 @@ namespace DataClass
 		Data_Object* getParent();
 
 		// Disable the Move With Parent Feature
-		void disableMoveWithParent(Render::Objects::MOVE_WITH_PARENT mode);
+		void disableMoveWithParent(Render::MOVE_WITH_PARENT mode);
 
 		// Re-Enable the Move With Parent Feature
 		void enableMoveWithParent();
 
 		// Get the Move With Parent Flag
-		Render::Objects::MOVE_WITH_PARENT getMoveWithParent();
+		Render::MOVE_WITH_PARENT getMoveWithParent();
 
 		// Set the Layer the Object is in a Group
 		virtual void setGroupLayer(int8_t new_layer);
@@ -1518,6 +1524,191 @@ namespace DataClass
 		void setGroupLayer(int8_t new_layer);
 
 		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
+	};
+
+	// The Base DataClass for an Element in a GUI
+	// All Elements Must be a Child to A Master Element
+	class Data_Element : public Data_Object
+	{
+	protected:
+
+		// Element Data
+		Render::GUI::ElementData element_data;
+
+	public:
+
+		Render::GUI::ElementData& getElementData();
+
+		int& getScript();
+
+		glm::vec2& getPosition();
+
+		// Update the Selected Position of an Object
+		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+
+		// Store the Element Position Pointer
+		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
+	};
+
+	// The DataClass for the Master Elements of a GUI
+	// Must be A Parent of Other Elements
+	class Data_MasterElement : public Data_Element
+	{
+		// Master Element Data
+		Render::GUI::MasterData data;
+
+		// The Current Offset From Scroll Bars
+		// Used During Editing to Help Move Children Objects
+		glm::vec2 scroll_offsets = glm::vec2(0.0f, 0.0f);
+
+		// Function to Read Data and Create an Object
+		Object::Object* genObject(glm::vec2& offset);
+
+		// Function to Write Data to File
+		void writeObjectData(std::ofstream& object_file);
+
+		// Function to Read Data From File
+		void readObjectData(std::ifstream& object_file);
+
+	public:
+
+		Render::GUI::MasterData& getMasterData();
+
+		// Master Element Data Object
+		Data_MasterElement(uint8_t children_size);
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
+		// Get the Scroll Offsets
+		glm::vec2& getScrollOffsets();
+	};
+	
+	// The DataClass for the Text Elements of a GUI
+	class Data_TextElement : public Data_Element
+	{
+		// Text Data
+		Render::GUI::TextData data;
+
+		// Calculated Width Value
+		float calculated_width = 0.0f;
+
+		// Function to Read Data and Create an Object
+		Object::Object* genObject(glm::vec2& offset);
+
+		// Function to Write Data to File
+		void writeObjectData(std::ofstream& object_file);
+
+		// Function to Read Data From File
+		void readObjectData(std::ifstream& object_file);
+
+	public:
+
+		// Master Element Data Object
+		Data_TextElement(uint8_t children_size);
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
+		// Get the Text Data
+		Render::GUI::TextData& getTextData();
+
+		// Store Initial Values
+		void generateInitialValues(glm::vec2 initial_position);
+
+		// Force Update the Width of the Text Object
+		void forceWidthRecalculation();
+
+		// Get the Calculated Width Value
+		float& getCalculatedWidth();
+
+		// Render Text
+		void renderText();
+	};
+
+	// The DataClass for the Box Elements of a GUI
+	class Data_BoxElement : public Data_Element
+	{
+		// Box Data
+		Render::GUI::BoxData data;
+
+		// Drop Down Menu Data (If Needed)
+		Render::GUI::DropDownData* drop_down_data;
+
+		// Function to Read Data and Create an Object
+		Object::Object* genObject(glm::vec2& offset);
+
+		// Function to Write Data to File
+		void writeObjectData(std::ofstream& object_file);
+
+		// Function to Read Data From File
+		void readObjectData(std::ifstream& object_file);
+
+	public:
+
+		// Master Element Data Object
+		Data_BoxElement(uint8_t children_size);
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
+		// Get the Box Data
+		Render::GUI::BoxData& getBoxData();
+
+		// Get the Drop Down Data
+		Render::GUI::DropDownData* getDropDownData();
+
+		// Store Initial Values
+		void generateInitialValues(glm::vec2 initial_position, glm::vec2 initial_size);
+
+		// Render Text
+		void renderText();
+	};
+
+	// The DataClass for the Scroll Bar Elements of a GUI
+	class Data_ScrollBarElement : public Data_Element
+	{
+		// Scroll Bar Data
+		Render::GUI::ScrollData data;
+
+		// Function to Read Data and Create an Object
+		Object::Object* genObject(glm::vec2& offset);
+
+		// Function to Write Data to File
+		void writeObjectData(std::ofstream& object_file);
+
+		// Function to Read Data From File
+		void readObjectData(std::ifstream& object_file);
+
+	public:
+
+		// Master Element Data Object
+		Data_ScrollBarElement(uint8_t bar_type, uint8_t children_size);
+
+		// Set the Object Info of the Object
+		void info(Editor::ObjectInfo& object_info);
+
+		// Create a Copy of the Object
+		Data_Object* makeCopy();
+
+		// Get the Bar Data
+		Render::GUI::ScrollData& getScrollData();
+
+		// Store Initial Values
+		void generateInitialValues(glm::vec2 initial_position, glm::vec2 initial_size);
+
+		// Calculate the Default Position and Size of the Bar
+		// x = xpos, y = ypos, z = width, w = height
+		glm::vec4 calculateDefaultBar();
 	};
 }
 

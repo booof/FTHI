@@ -16,14 +16,14 @@
 int main()
 {
 	// Initialize Program
-	if (!Source::Render::Initialize::initialize())
+	if (!Source::Rendering::Initialize::initialize())
 	{
 		// Execute Main Loop
 		Loop::loop();
 	}
 
 	// End Program
-	Source::Render::Exit::exitProgram();
+	Source::Rendering::Exit::exitProgram();
 
 	system("pause");
 

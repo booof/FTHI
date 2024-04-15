@@ -20,10 +20,10 @@ namespace Source::Fonts
 	float renderTextAdvanced(std::string text, GLfloat x, GLfloat y, GLfloat maxLength, GLfloat scale, glm::vec4 color, bool centered);
 
 	// Renders Text Offset by a Model Matrix
-	float renderTextOffset(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color);
+	float renderTextOffset(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color, bool Static);
 
 	// Renders Text Offset by a Model Matrix That Allows for Centering and Text Length
-	float renderTextOffsetAdvanced(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color, GLfloat maxLength, bool centered);
+	float renderTextOffsetAdvanced(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color, GLfloat maxLength, bool centered, bool Static);
 
 	// Draws Text in World
 	float renderTextGlobal(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color);

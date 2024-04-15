@@ -39,7 +39,7 @@ namespace Editor
 		GLuint labelVAO = NULL, labelVBO = NULL;
 
 		// Label Text
-		GUI::TextObject label_text;
+		Render::GUI::TextObject label_text;
 
 		// Error Texture
 		Struct::SingleTexture texture_error = Struct::SingleTexture();
@@ -51,13 +51,13 @@ namespace Editor
 		Struct::SingleTexture texture_message = Struct::SingleTexture();
 
 		// Master Element for Buttons
-		GUI::MasterElement master;
+		Render::GUI::MasterElement master;
 
 		// OK Button
-		GUI::Box box_ok;
+		Render::GUI::Box box_ok;
 
 		// Cancel Button
-		GUI::Box box_cancel;
+		Render::GUI::Box box_cancel;
 
 		// Audio Source
 		ALuint notificationBuffer = NULL, notificationSource = NULL;
@@ -66,7 +66,7 @@ namespace Editor
 		Notification() {};
 
 		// Prepare Object to Display a Message
-		void prepareForMessage(NOTIFICATION_MESSAGES type, Struct::SingleTexture** texture, GUI::TextObject** text, uint8_t& text_size, std::string& message);
+		void prepareForMessage(NOTIFICATION_MESSAGES type, Struct::SingleTexture** texture, Render::GUI::TextObject** text, uint8_t& text_size, std::string& message);
 
 	public:
 

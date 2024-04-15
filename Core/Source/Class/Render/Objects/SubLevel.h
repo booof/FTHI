@@ -60,11 +60,17 @@ namespace Render::Objects
 
 #ifdef EDITOR
 
-		// Initialize SubLevel
+		// Initialize SubLevel for Level Container
 		SubLevel(std::string& level_data_path, glm::i16vec4 pos, glm::vec2& wrapping_offset);
+
+		// Initialize SubLevel for GUI Container
+		SubLevel(std::string& gui_path);
 
 		// Read Level
 		void readLevel(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities);
+
+		// Read GUI
+		void readGUI(Object::Object** objects);
 
 		// Pointer to Unsaved Level
 		UnsavedLevel* unsaved_level;

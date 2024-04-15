@@ -7,7 +7,7 @@
 // A Child of the ScrollBar Class that Scroll Horizontally
 // Percent Increses from Left to Right
 
-namespace GUI
+namespace Render::GUI
 {
 	// Horizontal ScrollBar Class
 	class HorizontalScrollBar : public ScrollBar
@@ -20,7 +20,7 @@ namespace GUI
 	public:
 
 		// Constructor for Horizontally Scrolling Scroll Bar
-		HorizontalScrollBar(float xPos, float yPos, float width, float height, float size, float per);
+		HorizontalScrollBar(float xPos, float yPos, float width, float height, float size, float per, int16_t bar_identifier);
 
 		// Default Constructor
 		HorizontalScrollBar();
@@ -31,8 +31,17 @@ namespace GUI
 		// Test Collisions
 		bool TestColloisions();
 
+		// Test if Mouse Intersects Object
+		bool testMouseCollisions(float x, float y);
+
 		// Move Bar
 		float Scroll(float newY);
+
+		// Helper Function to Move Bar
+		void ScrollHelper();
+
+		// Move the Bar With a Change in Position
+		void deltaScroll(float delta);
 	};
 }
 

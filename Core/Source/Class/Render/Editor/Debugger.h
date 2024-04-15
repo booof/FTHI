@@ -17,9 +17,9 @@
 #include "Render/GUI/VerticalScrollBar.h"
 #include "Render/GUI/Box.h"
 
-namespace Render::Objects
+namespace Render
 {
-	class Level;
+	class Container;
 }
 
 namespace Editor
@@ -83,21 +83,21 @@ namespace Editor
 		int errors_size = 0;
 
 		// Master Element
-		GUI::MasterElement master;
+		Render::GUI::MasterElement master;
 
 		// ScrollBar
-		GUI::VerticalScrollBar bar;
+		Render::GUI::VerticalScrollBar bar;
 		bool scrolling = false;
 		float scoll_offset = 0.0f;
 
 		// Box to Open File of Error
-		GUI::Box box_open_file;
+		Render::GUI::Box box_open_file;
 
 		// Box to Recompile Project
-		GUI::Box box_recompile_project;
+		Render::GUI::Box box_recompile_project;
 
 		// Box to Exit GUI
-		GUI::Box box_exit;
+		Render::GUI::Box box_exit;
 
 		// Strings for Header
 		std::string header_cam_pos = "";
@@ -112,7 +112,7 @@ namespace Editor
 		float level_height = 0.0f;
 
 		// Pointer to the Level
-		Render::Objects::Level* main_level = nullptr;
+		Render::Container* main_level = nullptr;
 
 		// Initial Constructor
 		Debugger() {};
@@ -177,7 +177,7 @@ namespace Editor
 		bool returnNoErrors();
 
 		// Store the Level Object Currently Being Debugged
-		void storeCurrentLevel(Render::Objects::Level* level);
+		void storeCurrentLevel(Render::Container* level);
 	};
 }
 

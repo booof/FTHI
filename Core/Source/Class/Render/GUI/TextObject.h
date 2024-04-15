@@ -3,30 +3,35 @@
 #define TEXT_OBJECT_H
 
 #include "ExternalLibs.h"
+#include "Element.h"
 
-namespace GUI
+namespace Render::GUI
 {
 	// Struct for Initializing Text
 	struct TextData
 	{
-		// Position
-		glm::vec2 position = glm::vec2(0.0f, 0.0f);
-
-		// Scale
+		// Scale of Text
 		float scale = NULL;
+
+		// Number of Characters in Initial Text
+		int text_size = 0;
 
 		// Color
 		glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-		// Static
-		bool static_ = false;
 
 		// Text
 		std::string text = "";
 	};
 
+	// Combined Struct for Full Box Data
+	struct TextDataBundle
+	{
+		ElementData data1;
+		TextData data2;
+	};
+
 	// Object for Rendering Text
-	class TextObject
+	class TextObject : public Element
 	{
 		// Text Data
 		TextData data;
@@ -34,7 +39,7 @@ namespace GUI
 	public:
 
 		// Initialize Text
-		TextObject(TextData data_);
+		TextObject(ElementData& data1, TextData& data2);
 
 		// Default Constructor
 		TextObject() {}
@@ -50,6 +55,21 @@ namespace GUI
 
 		// Swap Text
 		void swapText(std::string new_text);
+
+		// Test if Mouse Intersects Object
+		bool testMouseCollisions(float x, float y);
+
+		// Update Function
+		bool updateElement();
+
+		// Blitz Function
+		void blitzElement();
+
+		// Link Value Through a Pointer
+		void linkValue(void* value_ptr);
+
+		// Move the GUI Element
+		void moveElement(float newX, float newY);
 	};
 }
 

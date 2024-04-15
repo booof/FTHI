@@ -13,7 +13,7 @@
 // Render Text Function by Making the Size Calculation and Centering a
 // One-And-Done Operation, Unless the Text is Edited or the Font is Changed
 
-namespace GUI
+namespace Render::GUI
 {
 	// The Advanced String Wrapper Class
 	class AdvancedString

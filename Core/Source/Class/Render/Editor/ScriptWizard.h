@@ -98,42 +98,42 @@ namespace Editor
 		int selected_column = -1;
 
 		// Master Element
-		GUI::MasterElement master;
+		Render::GUI::MasterElement master;
 
 		// ScrollBar
-		GUI::VerticalScrollBar bar;
+		Render::GUI::VerticalScrollBar bar;
 		bool scrolling = false;
 		float scoll_offset = 0.0f;
 		
 		// Search Box
 
 		// Add Instance Box
-		GUI::Box box_add_instance;
+		Render::GUI::Box box_add_instance;
 
 		// Remove Instance Box
-		GUI::Box box_remove_instance;
+		Render::GUI::Box box_remove_instance;
 
 		// Load Instance Box
-		GUI::Box box_load_instance;
+		Render::GUI::Box box_load_instance;
 
 		// Modify Instance Box
-		GUI::Box box_modify_instance;
+		Render::GUI::Box box_modify_instance;
 
 		// Modify Instance Box Has Been Replaced With a New Box
 		// To Modify a Value, Double Click on the Value You Want to Change
 		// For Objects and Globls, This Box is Now A Box That Allows The Creation of Function Definitions
 
 		// Move Instance Box
-		GUI::Box box_move_instance;
+		Render::GUI::Box box_move_instance;
 
 		// Open Instance Box
-		GUI::Box box_open_instance;
+		Render::GUI::Box box_open_instance;
 
 		// Exit Box
-		GUI::Box box_exit;
+		Render::GUI::Box box_exit;
 
 		// Edit Value Box
-		GUI::Box box_edit_value;
+		Render::GUI::Box box_edit_value;
 
 		// The Current Loop to Interact With
 		uint8_t current_loop = 0;

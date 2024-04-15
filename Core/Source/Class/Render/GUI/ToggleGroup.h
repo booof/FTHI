@@ -5,7 +5,7 @@
 #include "ExternalLibs.h"
 #include "Box.h"
 
-namespace GUI
+namespace Render::GUI
 {
 	// Struct for Grouping Multiple Toggle Boxes
 	struct ToggleGroupData
@@ -18,7 +18,7 @@ namespace GUI
 	};
 
 	// Toggle Group Object
-	class ToggleGroup
+	class ToggleGroup : public Element
 	{
 		// Object Data
 		ToggleGroupData data;
@@ -38,7 +38,7 @@ namespace GUI
 		ToggleGroup(ToggleGroupData& data_, Box* box_array, uint8_t first_box_index, std::ifstream& file);
 
 		// Initialize Object With Box Data
-		ToggleGroup(ToggleGroupData& data_, Box* box_array, uint8_t first_box_index, BoxData* datas);
+		ToggleGroup(ToggleGroupData& data_, Box* box_array, uint8_t first_box_index, BoxDataBundle* datas);
 
 		// Default Constructor
 		ToggleGroup();
@@ -48,6 +48,21 @@ namespace GUI
 
 		// Get Change State from Grouped Boxes
 		void changeState(uint8_t index);
+
+		// Test if Mouse Intersects Object
+		bool testMouseCollisions(float x, float y);
+
+		// Update Function
+		bool updateElement();
+
+		// Blitz Function
+		void blitzElement();
+
+		// Link Value Through a Pointer
+		void linkValue(void* value_ptr);
+
+		// Move the GUI Element
+		void moveElement(float newX, float newY);
 	};
 }
 

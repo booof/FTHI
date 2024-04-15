@@ -149,7 +149,7 @@ void Editor::Debugger::readErrorLog()
 	//std::cout << "end error\n\n\n\n\n";
 
 	// Generate ScrollBar
-	bar = GUI::VerticalScrollBar(60.0f, 26.0f, 1.0f, 56.0f, 5.0f * errors.size(), 0.0f);
+	bar = Render::GUI::VerticalScrollBar(60.0f, 26.0f, 1.0f, 56.0f, 5.0f * errors.size(), 0.0f, -1);
 }
 
 void Editor::Debugger::initializeDebugger()
@@ -275,23 +275,24 @@ void Editor::Debugger::initializeDebugger()
 	glBindVertexArray(0);
 
 	// Generate Master Element
-	master = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 80.0f);
+	master = Render::GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 80.0f);
 
 	// Generate Scroll Bar
-	bar = GUI::VerticalScrollBar(60.0f, 26.0f, 1.0f, 56.0f, 100.0f, 0.0f);
+	bar = Render::GUI::VerticalScrollBar(60.0f, 26.0f, 1.0f, 56.0f, 100.0f, 0.0f, -1);
 
 	// Open File Box
-	GUI::BoxData temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::NULL_BOX, 18.0f, -33.5f, -1.0f, 20.0f, 5.0f, true, "Open", glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 0.7f), glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
-	box_open_file = GUI::Box(temp_box_data);
+	Render::GUI::BoxDataBundle temp_box_data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::BOX_MODES::NULL_BOX, 18.0f, -33.5f, -1.0f, 20.0f, 5.0f, true, "Open", glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 0.7f), glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
+	temp_box_data.data1.is_static = true;
+	box_open_file = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
 	// Compile Box
-	temp_box_data.position.x = 48.0f;
-	temp_box_data.button_text = GUI::AdvancedString("Compile");
-	box_recompile_project = GUI::Box(temp_box_data);
+	temp_box_data.data1.position.x = 48.0f;
+	temp_box_data.data2.button_text = Render::GUI::AdvancedString("Compile");
+	box_recompile_project = Render:: GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
 	// Exit Box
-	temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::NULL_BOX, 60.0f, 33.0f, -1.0f, 4.0f, 4.0f, false, "", glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 0.7f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-	box_exit = GUI::Box(temp_box_data);
+	temp_box_data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::BOX_MODES::NULL_BOX, 60.0f, 33.0f, -1.0f, 4.0f, 4.0f, false, "", glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 0.7f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	box_exit = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 }
 
 Editor::Debugger* Editor::Debugger::get()
@@ -371,7 +372,7 @@ void Editor::Debugger::updateWindow()
 	glDisable(GL_DEPTH_TEST);
 
 	// Bind ScrollBar
-	Global::scroll_bar = static_cast<GUI::ScrollBar*>(&bar);
+	Global::scroll_bar = static_cast<Render::GUI::ScrollBar*>(&bar);
 	glfwSetScrollCallback(Global::window, Source::Listeners::ScrollBarCallback);
 
 	Global::colorShaderStatic.Use();
@@ -441,7 +442,7 @@ void Editor::Debugger::updateWindow()
 		box_exit.blitzElement();
 
 		// Calculate the Translated Model Matrix for Loop Bodies
-		float offset = bar.BarOffset;
+		float offset = bar.getOffset();
 		while (offset > 10.0f)
 			offset -= 10.0f;
 		body_offset = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, offset, 0.0f));
@@ -458,7 +459,7 @@ void Editor::Debugger::updateWindow()
 		// Draw Highlighter, If Enabled
 		if (selected_row != -1)
 		{
-			highlight_offset = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 18.5f + bar.BarOffset - selected_row * 5.0f, 0.0f));
+			highlight_offset = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 18.5f + bar.getOffset() - selected_row * 5.0f, 0.0f));
 			glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(highlight_offset));
 			glBindVertexArray(highlightVAO);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -477,7 +478,7 @@ void Editor::Debugger::updateWindow()
 			if (Global::LeftClick)
 			{
 				scrolling = true;
-				scoll_offset = bar.BarPosY - modified_mouse_y;
+				//scoll_offset = bar.BarPosY - modified_mouse_y;
 			}
 		}
 
@@ -504,7 +505,7 @@ void Editor::Debugger::updateWindow()
 			{
 				// Get Index of Current Row
 				Global::LeftClick = false;
-				int temp_selected_row = (int)floor((21.0f - modified_mouse_y + bar.BarOffset) / 5.0f);
+				int temp_selected_row = (int)floor((21.0f - modified_mouse_y + bar.getOffset()) / 5.0f);
 				if (temp_selected_row >= errors.size())
 					temp_selected_row = -1;
 
@@ -556,31 +557,31 @@ void Editor::Debugger::updateWindow()
 
 		// Draw Global Text
 		Global::fontShader.Use();
-		Source::Fonts::renderText("Debugger", -62.0f, 30.0f, 0.23f, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), true);
-		Source::Fonts::renderText("Type", -59.0f, 22.5f, 0.07f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
-		Source::Fonts::renderText("Code", -45.5f, 22.5f, 0.07f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
-		Source::Fonts::renderText("Message", -9.0f, 22.5f, 0.07f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
-		Source::Fonts::renderText("File", 35.0f, 22.5f, 0.07f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
-		Source::Fonts::renderText("Line", 52.5f, 22.5f, 0.07f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
+		Source::Fonts::renderText("Debugger", -62.0f, 30.0f, 5.52f, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), true);
+		Source::Fonts::renderText("Type", -59.0f, 22.5f, 1.68f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
+		Source::Fonts::renderText("Code", -45.5f, 22.5f, 1.68f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
+		Source::Fonts::renderText("Message", -9.0f, 22.5f, 1.68f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
+		Source::Fonts::renderText("File", 35.0f, 22.5f, 1.68f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
+		Source::Fonts::renderText("Line", 52.5f, 22.5f, 1.68f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
 		if (!looked_at_least_once)
-			Source::Fonts::renderText("Compiling", -60.0f, -35.0f, 0.12f, glm::vec4(0.0f, 0.9f, 0.9f, 1.0f), true);
+			Source::Fonts::renderText("Compiling", -60.0f, -35.0f, 2.88f, glm::vec4(0.0f, 0.9f, 0.9f, 1.0f), true);
 		else if (look_at_build)
-			Source::Fonts::renderText("Errors: " + std::to_string(errors.size()), -60.0f, -35.0f, 0.12f, glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Errors: " + std::to_string(errors.size()), -60.0f, -35.0f, 2.88f, glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), true);
 		else
-			Source::Fonts::renderText("No Errors :)", -60.0f, -35.0f, 0.12f, glm::vec4(0.0f, 0.9f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("No Errors :)", -60.0f, -35.0f, 2.88f, glm::vec4(0.0f, 0.9f, 0.0f, 1.0f), true);
 
 		// Set Clipping Area
 		glScissor(203, 147, 860, 364);
 
 		// Draw Error Text
-		float y_offset = 18.0f + bar.BarOffset;
+		float y_offset = 18.0f + bar.getOffset();
 		for (int i = 0; i < errors.size(); i++)
 		{
-			Source::Fonts::renderText(error_map[errors[i].error_type], -60.0f, y_offset, 0.07f, glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), true);
-			Source::Fonts::renderText(errors[i].error_name, -47.5f, y_offset, 0.07f, glm::vec4(0.0f, 0.0f, 0.7f, 1.0f), true);
-			Source::Fonts::renderText(errors[i].error_message, -33.0f, y_offset, 0.055f, glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), true);
-			Source::Fonts::renderText(errors[i].file_name, 26.0f, y_offset, 0.055f, glm::vec4(0.2f, 0.2f, 0.5f, 1.0f), true);
-			Source::Fonts::renderText(std::to_string(errors[i].line), 52.5f, y_offset, 0.07f, glm::vec4(0.7f, 0.7f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText(error_map[errors[i].error_type], -60.0f, y_offset, 1.68f, glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText(errors[i].error_name, -47.5f, y_offset, 1.68f, glm::vec4(0.0f, 0.0f, 0.7f, 1.0f), true);
+			Source::Fonts::renderText(errors[i].error_message, -33.0f, y_offset, 1.32f, glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), true);
+			Source::Fonts::renderText(errors[i].file_name, 26.0f, y_offset, 1.32f, glm::vec4(0.2f, 0.2f, 0.5f, 1.0f), true);
+			Source::Fonts::renderText(std::to_string(errors[i].line), 52.5f, y_offset, 1.68f, glm::vec4(0.7f, 0.7f, 0.0f, 1.0f), true);
 			y_offset -= 5.0f;
 		}
 
@@ -618,25 +619,25 @@ void Editor::Debugger::drawCompilerStatus()
 	// Currently Running
 	if (!Global::editing)
 	{
-		Source::Fonts::renderText("--CURRENTLY EXECUTING--", -89.0f, 47.0f, 0.075f, glm::vec4(0.9f, 0.0f, 0.9f, 1.0f), true);
+		Source::Fonts::renderText("--CURRENTLY EXECUTING--", -89.0f, 47.0f, 1.8f, glm::vec4(0.9f, 0.0f, 0.9f, 1.0f), true);
 	}
 
 	// Currently Compiling
 	else if (!looked_at_least_once)
 	{
-		Source::Fonts::renderText("--CURRENTLY COMPILING--", -89.0f, 47.0f, 0.075f, glm::vec4(0.0f, 0.9f, 0.9f, 1.0f), true);
+		Source::Fonts::renderText("--CURRENTLY COMPILING--", -89.0f, 47.0f, 1.8f, glm::vec4(0.0f, 0.9f, 0.9f, 1.0f), true);
 	}
 
 	// Compiler Error
 	else if (look_at_build)
 	{
-		Source::Fonts::renderText("--COMPILATION FAILED--", -89.0f, 47.0f, 0.075f, glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), true);
+		Source::Fonts::renderText("--COMPILATION FAILED--", -89.0f, 47.0f, 1.8f, glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), true);
 	}
 
 	// Compiler Success
 	else
 	{
-		Source::Fonts::renderText("--COMPILATION COMPLETE--", -89.0f, 47.0f, 0.075f, glm::vec4(0.0f, 0.8f, 0.0f, 1.0f), true);
+		Source::Fonts::renderText("--COMPILATION COMPLETE--", -89.0f, 47.0f, 1.8f, glm::vec4(0.0f, 0.8f, 0.0f, 1.0f), true);
 	}
 }
 
@@ -671,28 +672,28 @@ void Editor::Debugger::drawHeader()
 	drawCompilerStatus();
 
 	// Draw Camera Position
-	Source::Fonts::renderText("Camera:", -89.0f, 44.0f, 0.075f, glm::vec4(0.0f, 0.0f, 0.95f, 1.0f), true);
-	Source::Fonts::renderText(header_cam_pos, -79.0f, 44.0f, 0.075f, glm::vec4(0.0f, 0.0f, 0.85f, 1.0f), true);
+	Source::Fonts::renderText("Camera:", -89.0f, 44.0f, 1.8f, glm::vec4(0.0f, 0.0f, 0.95f, 1.0f), true);
+	Source::Fonts::renderText(header_cam_pos, -79.0f, 44.0f, 1.8f, glm::vec4(0.0f, 0.0f, 0.85f, 1.0f), true);
 
 	// Draw Mouse Position
-	Source::Fonts::renderText("Mouse:", -89.0f, 41.0f, 0.075f, glm::vec4(0.0f, 0.85f, 0.85f, 1.0f), true);
-	Source::Fonts::renderText(header_mouse_pos, -80.5f, 41.0f, 0.075f, glm::vec4(0.0f, 0.75f, 0.75f, 1.0f), true);
+	Source::Fonts::renderText("Mouse:", -89.0f, 41.0f, 1.8f, glm::vec4(0.0f, 0.85f, 0.85f, 1.0f), true);
+	Source::Fonts::renderText(header_mouse_pos, -80.5f, 41.0f, 1.8f, glm::vec4(0.0f, 0.75f, 0.75f, 1.0f), true);
 
 	// Draw Object Count
-	Source::Fonts::renderText("Object Count:", -89.0f, 38.0f, 0.075f, glm::vec4(0.85f, 0.0f, 0.85f, 1.0f), true);
-	Source::Fonts::renderText(header_object_count, -74.0f, 38.0f, 0.075f, glm::vec4(0.75f, 0.0f, 0.75f, 1.0f), true);
+	Source::Fonts::renderText("Object Count:", -89.0f, 38.0f, 1.8f, glm::vec4(0.85f, 0.0f, 0.85f, 1.0f), true);
+	Source::Fonts::renderText(header_object_count, -74.0f, 38.0f, 1.8f, glm::vec4(0.75f, 0.0f, 0.75f, 1.0f), true);
 
 	// Draw Project Path
-	Source::Fonts::renderText("Project Path:", -89.0f, -49.0f, 0.075f, glm::vec4(0.0f, 0.35f, 0.35f, 1.0f), true);
-	Source::Fonts::renderText(Global::project_file_path, -75.0f, -49.0f, 0.075f, glm::vec4(0.0f, 0.25f, 0.25f, 1.0f), true);
+	Source::Fonts::renderText("Project Path:", -89.0f, -49.0f, 1.8f, glm::vec4(0.0f, 0.35f, 0.35f, 1.0f), true);
+	Source::Fonts::renderText(Global::project_file_path, -75.0f, -49.0f, 1.8f, glm::vec4(0.0f, 0.25f, 0.25f, 1.0f), true);
 
 	// Draw Project Name
-	Source::Fonts::renderText("Project Name:", -89.0f, -46.0f, 0.075f, glm::vec4(0.0f, 0.35f, 0.0f, 1.0f), true);
-	Source::Fonts::renderText(Global::project_name , -73.5f, -46.0f, 0.075f, glm::vec4(0.0f, 0.25f, 0.0f, 1.0f), true);
+	Source::Fonts::renderText("Project Name:", -89.0f, -46.0f, 1.8f, glm::vec4(0.0f, 0.35f, 0.0f, 1.0f), true);
+	Source::Fonts::renderText(Global::project_name , -73.5f, -46.0f, 1.8f, glm::vec4(0.0f, 0.25f, 0.0f, 1.0f), true);
 
 	// Draw Scene Name
-	Source::Fonts::renderText("Scene Name:", -89.0f, -43.0f, 0.075f, glm::vec4(0.35f, 0.0f, 0.0f, 1.0f), true);
-	Source::Fonts::renderText(scene_controller->getCurrentInstanceName(), -75.0f, -43.0f, 0.075f, glm::vec4(0.25f, 0.0f, 0.0f, 1.0f), true);
+	Source::Fonts::renderText("Scene Name:", -89.0f, -43.0f, 1.8f, glm::vec4(0.35f, 0.0f, 0.0f, 1.0f), true);
+	Source::Fonts::renderText(scene_controller->getCurrentInstanceName(), -75.0f, -43.0f, 1.8f, glm::vec4(0.25f, 0.0f, 0.0f, 1.0f), true);
 }
 
 void Editor::Debugger::setCameraPosition(glm::vec2 position)
@@ -703,7 +704,8 @@ void Editor::Debugger::setCameraPosition(glm::vec2 position)
 void Editor::Debugger::setMousePosition(glm::vec2 position)
 {
 	// Wrap Mouse Coordinates First
-	main_level->wrapObjectPos(position);
+	if (main_level->getContainerType() == Render::CONTAINER_TYPES::LEVEL)
+		static_cast<Render::Objects::Level*>(main_level)->wrapObjectPos(position);
 	getTextPosition(header_mouse_pos, position);
 }
 
@@ -735,7 +737,7 @@ bool Editor::Debugger::returnNoErrors()
 	return !look_at_build;
 }
 
-void Editor::Debugger::storeCurrentLevel(Render::Objects::Level* level)
+void Editor::Debugger::storeCurrentLevel(Render::Container* level)
 {
 	main_level = level;
 }

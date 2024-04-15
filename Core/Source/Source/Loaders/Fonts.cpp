@@ -4,6 +4,16 @@
 
 void Source::Fonts::loadFont(FT_Face face, int length)
 {
+	// The Max Height of the Loaded Characters
+	int max = 0;
+
+	// Free the Memory of the Previous Font
+	for (const std::pair<GLchar, Struct::Character>& it : Global::Current_Font)
+		glDeleteTextures(1, &it.second.TextureID);
+
+	int test = 0;
+
+	// Reset the Current List of Font Textures
 	Global::Current_Font.clear();
 
 	for (GLubyte chr = 0; chr < length; chr++)
@@ -18,6 +28,15 @@ void Source::Fonts::loadFont(FT_Face face, int length)
 		GLuint texture;
 		glGenTextures(1, &texture);
 		glBindTexture(GL_TEXTURE_2D, texture);
+
+		// Specify Number of Levels
+		glTexStorage2D(
+			GL_TEXTURE_2D,
+			5,
+			GL_RED,
+			face->glyph->bitmap.width,
+			face->glyph->bitmap.rows
+		);
 
 		// Assign Glyph to Texture
 		glTexImage2D
@@ -37,7 +56,10 @@ void Source::Fonts::loadFont(FT_Face face, int length)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+		// Generate MipMaps for Lower Resolutions
+		glGenerateMipmap(GL_TEXTURE_2D);
 
 		// Generate Character in Structure
 		Struct::Character character =
@@ -48,11 +70,25 @@ void Source::Fonts::loadFont(FT_Face face, int length)
 			(GLuint)face->glyph->advance.x
 		};
 
+		// If A New Max Height is Fount, Store it
+		if (character.Bearing.y > max)
+			max = character.Bearing.y;
+
+		if (face->glyph->bitmap.width * face->glyph->bitmap.rows > test)
+			test = face->glyph->bitmap.width * face->glyph->bitmap.rows;
+
 		// Store Character in Map
 		Global::Current_Font.insert(std::pair<GLchar, Struct::Character>(chr, character));
 	}
 
+	// Unbind Texture
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// Store the Character Ratios
+	Global::font_ratio = 1.0f / max;
+	Global::font_offset_ratio = Global::font_ratio * 24.0f;
+
+	std::cout << "Test Size: " << test << "\n";
 }
 
 void Source::Fonts::changeFont(std::string font, int width, int height)
@@ -65,7 +101,8 @@ void Source::Fonts::changeFont(std::string font, int width, int height)
 	case 0:
 	{
 		// Set Size of Font
-		FT_Set_Pixel_Sizes(Global::Arial, width, height);
+		//FT_Set_Pixel_Sizes(Global::Arial, width, height);
+		FT_Set_Char_Size(Global::Arial, 0, 1024, 0, 720);
 
 		// Load as Usable Font
 		loadFont(Global::Arial, 128);
@@ -76,15 +113,18 @@ void Source::Fonts::changeFont(std::string font, int width, int height)
 	// Change to Cambria
 	case 1:
 	{
-		FT_Set_Pixel_Sizes(Global::CambriaMath, width, height);
+		//FT_Set_Pixel_Sizes(Global::CambriaMath, width, height);
+		FT_Set_Char_Size(Global::CambriaMath, 0, 1024 * 2, 0, 720);
 		loadFont(Global::CambriaMath, 128);
+
 		break;
 	}
 
 	// Change to SEGOEUI
 	case 2:
 	{
-		FT_Set_Pixel_Sizes(Global::SEGOEUI, width, height);
+		//FT_Set_Pixel_Sizes(Global::SEGOEUI, width, height);
+		FT_Set_Char_Size(Global::SEGOEUI, 0, 1024, 0, 720);
 		loadFont(Global::SEGOEUI, 128);
 		break;
 	}
@@ -92,7 +132,8 @@ void Source::Fonts::changeFont(std::string font, int width, int height)
 	// Change to test
 	case 3:
 	{
-		FT_Set_Pixel_Sizes(Global::TEST, width, height);
+		//FT_Set_Pixel_Sizes(Global::TEST, width, height);
+		FT_Set_Char_Size(Global::TEST, 0, 1024, 0, 720);
 		loadFont(Global::TEST, 185);
 		break;
 	}
@@ -128,10 +169,11 @@ float Source::Fonts::renderTextAdvanced(std::string text, GLfloat x, GLfloat y, 
 	return renderTextHelper(text, x, y, scale);
 }
 
-float Source::Fonts::renderTextOffset(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color)
+float Source::Fonts::renderTextOffset(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color, bool Static)
 {
 	// Send Projection Matrix to Shader
-	glUniformMatrix4fv(Global::projectionLocRelativeFont, 1, GL_FALSE, glm::value_ptr(Global::projectionStatic));
+	if (Static) { glUniformMatrix4fv(Global::projectionLocRelativeFont, 1, GL_FALSE, glm::value_ptr(Global::projectionStatic)); } // Use the Static Projection Matrix
+	else { glUniformMatrix4fv(Global::projectionLocRelativeFont, 1, GL_FALSE, glm::value_ptr(Global::projection)); } // Use the Standard Dynamic Projection Matrix
 
 	// Send Colors to Shader
 	glUniform3f(Global::texcolorLocRelativeFont, color.x, color.y, color.z);
@@ -140,10 +182,11 @@ float Source::Fonts::renderTextOffset(std::string text, GLfloat x, GLfloat y, GL
 	return renderTextHelper(text, x, y, scale);
 }
 
-float Source::Fonts::renderTextOffsetAdvanced(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color, GLfloat maxLength, bool centered)
+float Source::Fonts::renderTextOffsetAdvanced(std::string text, GLfloat x, GLfloat y, GLfloat scale, glm::vec4 color, GLfloat maxLength, bool centered, bool Static)
 {
 	// Send Projection Matrix to Shader
-	glUniformMatrix4fv(Global::projectionLocRelativeFont, 1, GL_FALSE, glm::value_ptr(Global::projectionStatic));
+	if (Static) { glUniformMatrix4fv(Global::projectionLocRelativeFont, 1, GL_FALSE, glm::value_ptr(Global::projectionStatic)); } // Use the Static Projection Matrix
+	else { glUniformMatrix4fv(Global::projectionLocRelativeFont, 1, GL_FALSE, glm::value_ptr(Global::projection)); } // Use the Standard Dynamic Projection Matrix
 
 	// Send Colors to Shader
 	glUniform3f(Global::texcolorLocRelativeFont, color.x, color.y, color.z);
@@ -175,6 +218,9 @@ std::string Source::Fonts::centerTextHelper(std::string text, GLfloat& x, GLfloa
 {
 	// The Character in Text
 	std::string::const_iterator c;
+
+	// Normalize Scale
+	scale *= Global::font_ratio;
 
 	// Temporary Width of Decimal Points at End of Text
 	float DecimalPointWidth = (Global::Current_Font[46].Advance >> 6) * scale * 2;
@@ -217,6 +263,9 @@ float Source::Fonts::renderTextHelper(std::string text, GLfloat x, GLfloat y, GL
 	// Bind Texture and Buffer Object
 	glActiveTexture(GL_TEXTURE0);
 	glBindVertexArray(Global::fontVAO);
+
+	// Normalize Scale
+	scale *= Global::font_ratio;
 
 	// Iterate Through all Characters
 	std::string::const_iterator c;
@@ -289,7 +338,7 @@ float Source::Fonts::getTextSize(std::string text, GLfloat scale)
 	}
 
 	// Scale the Text Size
-	size *= scale;
+	size *= scale * Global::font_ratio;
 
 	// Return the Size
 	return size;

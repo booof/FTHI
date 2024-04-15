@@ -17,6 +17,7 @@
 #include "Render/Struct/DataClasses.h"
 #include "Render/GUI/SelectedText.h"
 #include "Render/Editor/SceneController.h"
+#include "Source\Algorithms\Transformations\Transformations.h"
 
 void Source::Listeners::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -435,6 +436,8 @@ void Source::Listeners::CursorCallback(GLFWwindow* window, double xPos, double y
 	double temp_mouseX = (double)(xPos - Global::screenWidth * 0.5f) / Global::screenHeight * 101 * Global::zoom_scale;
 	double temp_mouseY = (double)(Global::screenHeight * 0.5f - yPos) / Global::screenHeight * 100 * Global::zoom_scale;
 
+	//std::cout << xPos << " " << yPos << "  " << temp_mouseX << " " << temp_mouseY << "\n";
+
 	// Calculate Change in Mouse Positions
 	Global::deltaMouse = glm::vec2(temp_mouseX - Global::mouseX, temp_mouseY - Global::mouseY);
 
@@ -447,6 +450,10 @@ void Source::Listeners::CursorCallback(GLFWwindow* window, double xPos, double y
 
 void Source::Listeners::ScrollCallback(GLFWwindow* window, double offsetX, double offsetY)
 {
+	// If Zoom is Dissabled, Return
+	if (Global::force_dissable_zoom)
+		return;
+
 	// Show That the Cursor Updated
 	Global::cursor_Move = true;
 
@@ -475,9 +482,7 @@ void Source::Listeners::ScrollBarCallback(GLFWwindow* window, double offsetX, do
 
 	// Move ScrollBar
 	if (Global::scroll_bar != nullptr)
-	{
-		Global::scroll_bar->Scroll(Global::scroll_bar->BarPosY + (float)offsetY * Global::editor_options->option_scroll_speed);
-	}
+		Global::scroll_bar->deltaScroll(offsetY);
 }
 
 void Source::Listeners::MouseCallback(GLFWwindow* window, int button, int action, int mods)
@@ -623,7 +628,7 @@ void APIENTRY Source::Listeners::MessageCallback(GLenum source, GLenum type, GLu
 		<< message << "\n \n";
 }
 
-void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera, Editor::Selector& selector, Render::Objects::Level& level, glm::i16vec4& acceleration_timer)
+void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera, Editor::Selector& selector, Render::Container& container, glm::i16vec4& acceleration_timer)
 {
 	// Perform All Keybind Operations Used in Minimal Editing First
 	smoothKeyCallbackEditorSimplified(camera, &selector, acceleration_timer);
@@ -644,7 +649,7 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 			Global::Keys[GLFW_KEY_R] = false;
 
 			// Force the Reload by Reloading All on Level Object
-			level.reloadAll();
+			container.reloadAll();
 		}
 
 		// Force a Reload on Project
@@ -842,14 +847,17 @@ void Source::Listeners::SmoothKeyCallback_Editor(Render::Camera::Camera& camera,
 
 		// Wrap Mouse Position, if Needed
 		glm::vec2 relativeMousePos = glm::vec2(Global::mouseRelativeX, Global::mouseRelativeY);
-		level.wrapObjectPos(relativeMousePos);
+		if (container.getContainerType() == Render::CONTAINER_TYPES::LEVEL)
+			static_cast<Render::Objects::Level*>(&container)->wrapObjectPos(relativeMousePos);
 
 		// Get Level Location
 		glm::i16vec2 coords;
-		level.updateLevelPos(relativeMousePos, coords);
+		container.updateLevelPos(relativeMousePos, coords);
 
 		// Print Location
 		std::cout << "Location X: " << relativeMousePos.x << "  Location Y: " << relativeMousePos.y << "  Level Coords: " << coords.x << "," << coords.y << "\n";
+		//std::cout << "Screen X: " << Algorithms::Transformations::transformRelativeScreenCoordsX(relativeMousePos.x) << "  Screen Y: " << Algorithms::Transformations::transformRelativeScreenCoordsY(relativeMousePos.y) << "\n";
+		//std::cout << "Screen Size: " << Global::screenWidth << " " << Global::screenHeight << "\n\n";
 	}
 
 	// Toggle Level Border Visualizer

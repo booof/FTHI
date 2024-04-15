@@ -142,6 +142,10 @@ out vec4 FragColor;
 
 void main()
 {
+	// Discard if Alpha is Below a Threshold
+	if (fs_in.Color.a < 0.1)
+		discard;
+
 	// Update Several Values
 	//vec4 viewDir = normalize(view_pos - fs_in.FragPos);
 	vec4 viewDir = vec4(normalize(view_pos.xyz - fs_in.FragPos.xyz), 0.0); 

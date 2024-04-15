@@ -221,46 +221,47 @@ void Editor::ScriptWizard::initializeScriptWizard()
     glBindVertexArray(0);
 
     // Generate Master Element
-    master = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 80.0f);
+    master = Render::GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 80.0f);
 
     // Generate ScrollBar
-    bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 100.0f, 0.0f);
+    bar = Render::GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 100.0f, 0.0f, -1);
 
     // Generate Add Instance Box
-    GUI::BoxData temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::NULL_BOX, -46.5f, -35.5f, -1.0f, 20.0f, 5.0, true, "Add", glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 0.7f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-    box_add_instance = GUI::Box(temp_box_data);
+    Render::GUI::BoxDataBundle temp_box_data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::BOX_MODES::NULL_BOX, -46.5f, -35.5f, -1.0f, 20.0f, 5.0, true, "Add", glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 0.7f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    temp_box_data.data1.is_static = true;
+    box_add_instance = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Remove Instance Box
-    temp_box_data.position.x += 23.0f;
-    temp_box_data.button_text = GUI::AdvancedString("Remove");
-    box_remove_instance = GUI::Box(temp_box_data);
+    temp_box_data.data1.position.x += 23.0f;
+    temp_box_data.data2.button_text = Render::GUI::AdvancedString("Remove");
+    box_remove_instance = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Load Instance Box
-    temp_box_data.position.x += 23.0f;
-    temp_box_data.button_text = GUI::AdvancedString("Load");
-    box_load_instance = GUI::Box(temp_box_data);
+    temp_box_data.data1.position.x += 23.0f;
+    temp_box_data.data2.button_text = Render::GUI::AdvancedString("Load");
+    box_load_instance = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Modify Instance Box
-    temp_box_data.button_text = GUI::AdvancedString("Modify");
-    box_modify_instance = GUI::Box(temp_box_data);
+    temp_box_data.data2.button_text = Render::GUI::AdvancedString("Modify");
+    box_modify_instance = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Move Instance Box
-    temp_box_data.position.x += 23.0f;
-    temp_box_data.button_text = GUI::AdvancedString("Move");
-    box_move_instance = GUI::Box(temp_box_data);
+    temp_box_data.data1.position.x += 23.0f;
+    temp_box_data.data2.button_text = Render::GUI::AdvancedString("Move");
+    box_move_instance = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Open Instance Box
-    temp_box_data.position.x += 23.0f;
-    temp_box_data.button_text = GUI::AdvancedString("Open");
-    box_open_instance = GUI::Box(temp_box_data);
+    temp_box_data.data1.position.x += 23.0f;
+    temp_box_data.data2.button_text = Render::GUI::AdvancedString("Open");
+    box_open_instance = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Exit Box
-    temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::NULL_BOX, 56.0f, 35.5f, -1.0f, 4.0f, 4.0, true, "", glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 0.7f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-    box_exit = GUI::Box(temp_box_data);
+    temp_box_data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::BOX_MODES::NULL_BOX, 56.0f, 35.5f, -1.0f, 4.0f, 4.0, true, "", glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 0.7f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    box_exit = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Edit Box
-    temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::GENERAL_TEXT_BOX, 0.0f, 0.f, -1.0f, 75.0f, 5.0, true, "", glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 0.7f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-    box_edit_value = GUI::Box(temp_box_data);
+    temp_box_data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::BOX_MODES::GENERAL_TEXT_BOX, 0.0f, 0.f, -1.0f, 75.0f, 5.0, true, "", glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 0.7f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    box_edit_value = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 }
 
 void Editor::ScriptWizard::updateScriptWizard()
@@ -277,7 +278,7 @@ void Editor::ScriptWizard::updateScriptWizard()
 	// File Loop
 	if (current_loop == 0)
 	{
-		bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
+		bar = Render::GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f, -1);
 		numbers_size = files_size;
 
 	}
@@ -285,14 +286,14 @@ void Editor::ScriptWizard::updateScriptWizard()
 	// Global Loop
 	else if (current_loop == 1)
 	{
-		bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f);
+		bar = Render::GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f, -1);
 		numbers_size = globals_size;
 	}
 
 	// Object Loop
 	else
 	{
-		bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f);
+		bar = Render::GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f, -1);
 		numbers_size = objects_size;
 	}
 
@@ -347,7 +348,7 @@ void Editor::ScriptWizard::updateScriptWizard()
 		// Draw Loop Specific Objects
 
 		// Calculate the Translated Model Matrix for Loop Bodies
-		float offset = bar.BarOffset;
+		float offset = bar.getOffset();
 		while (offset > 5.5f)
 			offset -= 6.0f;
 		glm::mat4 body_offset = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, offset, 0.0f));
@@ -415,7 +416,7 @@ void Editor::ScriptWizard::updateScriptWizard()
 			if (Global::LeftClick)
 			{
 				scrolling = true;
-				scoll_offset = bar.BarPosY - modified_mouse_y;
+				//scoll_offset = bar.BarPosY - modified_mouse_y;
 			}
 		}
 
@@ -455,7 +456,7 @@ void Editor::ScriptWizard::updateScriptWizard()
 				// File Loop
 				if (current_loop == 0)
 				{
-					bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
+					bar = Render::GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f, -1);
 					numbers_size = files_size;
 
 				}
@@ -463,14 +464,14 @@ void Editor::ScriptWizard::updateScriptWizard()
 				// Global Loop
 				else if (current_loop == 1)
 				{
-					bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f);
+					bar = Render::GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f, -1);
 					numbers_size = globals_size;
 				}
 
 				// Object Loop
 				else
 				{
-					bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f);
+					bar = Render::GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f, -1);
 					numbers_size = objects_size;
 				}
 
@@ -491,7 +492,7 @@ void Editor::ScriptWizard::updateScriptWizard()
                 Global::LeftClick = false;
 
                 // Determine the Row Index
-                int temp_new_row = (int)floor((23.5f - modified_mouse_y + bar.BarOffset) / 6.0f);
+                int temp_new_row = (int)floor((23.5f - modified_mouse_y + bar.getOffset()) / 6.0f);
                 if (temp_new_row >= numbers_size)
                     temp_new_row = -1;
                 if (current_loop && !temp_new_row)
@@ -504,14 +505,14 @@ void Editor::ScriptWizard::updateScriptWizard()
                     if (current_loop == 0)
                     {
                         highlighter_index = (modified_mouse_x < -27.0f) ? 2 : 3;
-                        highlighter_offset = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 21.0f - 6.0f * temp_new_row - bar.BarOffset, 0.0f));
+                        highlighter_offset = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 21.0f - 6.0f * temp_new_row - bar.getOffset(), 0.0f));
                     }
 
                     // Global Loop
 					else if (current_loop == 1)
 					{
                         highlighter_index = 0;
-						highlighter_offset = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 21.0f - 6.0f * temp_new_row - bar.BarOffset, 0.0f));
+						highlighter_offset = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 21.0f - 6.0f * temp_new_row - bar.getOffset(), 0.0f));
 
                         // If Value Was Double-Clicked, Allow Editing of Object
                         if (selected_row == temp_new_row)
@@ -526,8 +527,8 @@ void Editor::ScriptWizard::updateScriptWizard()
                     {
                         // Enable Highlighter
                         highlighter_index = 1;
-                        int temp_new_column = (int)floor((modified_mouse_x + 53.5f + bar.BarOffset) / 27.0f);
-                        highlighter_offset = glm::translate(glm::mat4(1.0f), glm::vec3(-39.5f + 27.0f * temp_new_column, 21.0f - 6.0f * temp_new_row - bar.BarOffset, 0.0f));
+                        int temp_new_column = (int)floor((modified_mouse_x + 53.5f + bar.getOffset()) / 27.0f);
+                        highlighter_offset = glm::translate(glm::mat4(1.0f), glm::vec3(-39.5f + 27.0f * temp_new_column, 21.0f - 6.0f * temp_new_row - bar.getOffset(), 0.0f));
 
                         // If Value Was Double-Clicked, Allow Editing of Object
                         if (selected_column == temp_new_column && selected_row == temp_new_row)
@@ -588,7 +589,7 @@ void Editor::ScriptWizard::updateScriptWizard()
                 {
                     if (addFile())
                     {
-                        bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
+                        bar = Render::GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f, -1);
                         numbers_size = files_size;
                     }
                 }
@@ -597,7 +598,7 @@ void Editor::ScriptWizard::updateScriptWizard()
                 else if (current_loop == 1)
                 {
                     addGlobal();
-                    bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f);
+                    bar = Render::GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * globals_size, 0.0f, -1);
                     numbers_size = globals_size;
                 }
 
@@ -605,7 +606,7 @@ void Editor::ScriptWizard::updateScriptWizard()
                 else
                 {
                     addObject();
-                    bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f);
+                    bar = Render::GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * objects_size, 0.0f, -1);
                     numbers_size = objects_size;
                 }
 
@@ -625,7 +626,7 @@ void Editor::ScriptWizard::updateScriptWizard()
                 Global::LeftClick = false;
                 if (loadFile())
                 {
-                    bar = GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f);
+                    bar = Render::GUI::VerticalScrollBar(55.0f, 24.0f, 1.0f, 56.0f, 6.0f * files_size, 0.0f, -1);
                     numbers_size = files_size;
                     Global::scroll_bar = &bar;
                 }
@@ -660,16 +661,16 @@ void Editor::ScriptWizard::updateScriptWizard()
 
         // Draw Global Text
         Global::fontShader.Use();
-        Source::Fonts::renderText("Project Wizard", -58.5f, 31.0f, 0.23f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
+        Source::Fonts::renderText("Project Wizard", -58.5f, 31.0f, 5.52f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
 
 		// Set Clipping Area
 		glScissor((GLint)242, (GLint)133, (GLsizei)782, (GLsizei)396);
 
 		// Draw Number Labels
-        GLfloat j = 20.0f + bar.BarOffset;
+        GLfloat j = 20.0f + bar.getOffset();
 		for (int i = 0; i < numbers_size; i++, j -= 6.0f)
 		{
-			Source::Fonts::renderText(std::to_string(i), -55.5f, j, 0.05f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText(std::to_string(i), -55.5f, j, 1.2f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
 		}
 
 		// Draw Loop Specific Text
@@ -677,34 +678,34 @@ void Editor::ScriptWizard::updateScriptWizard()
 		// File Loop
 		if (current_loop == 0)
 		{
-            j = 20.0f + bar.BarOffset;
+            j = 20.0f + bar.getOffset();
 			for (int i = 0; i < files_size; i++, j -= 6.0f)
 			{
-				Source::Fonts::renderText(files[i].name, -50.5f, j, 0.05f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
-                Source::Fonts::renderText(files[i].path, -25.5f, j, 0.05f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText(files[i].name, -50.5f, j, 1.2f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
+                Source::Fonts::renderText(files[i].path, -25.5f, j, 1.2f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
 			}
 		}
 
 		// Global Loop
 		else if (current_loop == 1)
 		{
-            j = 20.0f + bar.BarOffset;
+            j = 20.0f + bar.getOffset();
             for (int i = 0; i < globals_size; i++, j -= 6.0f)
             {
-                Source::Fonts::renderText(globals[i], -50.5f, j, 0.05f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
+                Source::Fonts::renderText(globals[i], -50.5f, j, 1.2f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
             }
 		}
 
 		// Object Loop
 		else
 		{
-            j = 20.0f + bar.BarOffset;
+            j = 20.0f + bar.getOffset();
             for (int i = 0; i < objects_size; i++, j -= 6.0f)
             {
-                Source::Fonts::renderText(objects[i].name, -50.5f, j, 0.05f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
-                Source::Fonts::renderText(objects[i].initializer, -23.5f, j, 0.05f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
-                Source::Fonts::renderText(objects[i].update, 3.5f, j, 0.05f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
-                Source::Fonts::renderText(objects[i].uninitializer, 30.5f, j, 0.05f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
+                Source::Fonts::renderText(objects[i].name, -50.5f, j, 1.2f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
+                Source::Fonts::renderText(objects[i].initializer, -23.5f, j, 1.2f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
+                Source::Fonts::renderText(objects[i].update, 3.5f, j, 1.2f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
+                Source::Fonts::renderText(objects[i].uninitializer, 30.5f, j, 1.2f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true);
             }
 		}
 

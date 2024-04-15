@@ -131,35 +131,39 @@ namespace Editor
 		// A Nullified View Matrix for GUI
 		glm::mat4 view_null = glm::mat4(1.0f);
 
+		// Temporary Holder for Common Element Values
+		Render::GUI::ElementData temp_element_data;
+
 		// Temporary Holder for Box Values
-		GUI::BoxData temp_box_data;
+		Render::GUI::BoxData temp_box_data;
 
 		// Temporary Holder for Text Values
-		GUI::TextData temp_text_data;
+		Render::GUI::TextData temp_text_data;
 
 		// Master Element
-		GUI::MasterElement master;
+		Render::GUI::MasterElement master;
 
 		// Array of Boxes
-		GUI::Box** boxes;
+		Render::GUI::Box** boxes;
 		uint8_t boxes_size = 0;
 
 		// Array of Box Values
 		void** box_values;
 
 		// Array of Text Objects
-		GUI::TextObject** texts;
+		Render::GUI::TextObject** texts;
 		uint8_t texts_size = 0;
 
 		// Scroll Bar 
-		GUI::VerticalScrollBar bar1;
-		GUI::VerticalScrollBar bar2;
+		Render::GUI::VerticalScrollBar bar1;
+		Render::GUI::VerticalScrollBar bar2;
 
 		// Color Wheel
-		ColorWheel wheel;
-		ColorWheel wheelAmbient, wheelDiffuse, wheelSpecular;
+		Render::GUI::ColorWheel wheel;
+		Render::GUI::ColorWheel wheelAmbient, wheelDiffuse, wheelSpecular;
 		bool wheel_active = false;
 		bool light_active = false;
+		bool box_active = false;
 
 		// Starting Index for Color Boxes
 		uint8_t wheel_box_start = 0;
@@ -199,14 +203,18 @@ namespace Editor
 		// Determines Which Object Index to Modify During New Object Creation
 		uint8_t object_identifier_index = 0;
 
+		// The Maximum Index Possible to Select When Selecting a New Object
+		uint8_t object_index_max = 0;
+
 		// Colors for Each Terrain Layer Type
-		const glm::vec4 terrain_layer_colors[6] = {
+		const glm::vec4 terrain_layer_colors[7] = {
 			glm::vec4(0.8f, 0.8f, 0.8f, 1.0f),
 			glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
 			glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
 			glm::vec4(0.4f, 0.4f, 0.4f, 1.0f),
 			glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-			glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
+			glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+			glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
 		};
 
 		// Top of Window
@@ -376,8 +384,30 @@ namespace Editor
 		// Boxes = 1, Text = 1
 		void genBoxesGroup(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
 
+		// Gen Element Boxes
+		// Boxes = 1, Text = 1;
+		void genBoxesElement(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
+
+		// Gen Master Element Boxes
+		// Boxes = 6, Text = 6
+		void genBoxesMaster(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
+
+		// Gen Box Boxes
+		// Boxes = 20, Text = 24;
+		void genBoxesBox(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
+
+		// Gen Text Boxes
+		// Boxes = 6, Text = 7;
+		void genBoxesText(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
+
+		// Gen Toggle Group Boxes
+
+		// Gen Scroll Bar Boxes
+		// Boxes = 5, Text = 5
+		void genBoxesScrollBar(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object);
+
 		// Assign Color Wheel
-		void assignColorWheel(ColorWheel* wheel_, uint8_t& box_offset, uint8_t& text_offset, unsigned int* color, float height_offset);
+		void assignColorWheel(Render::GUI::ColorWheel* wheel_, uint8_t& box_offset, uint8_t& text_offset, unsigned int* color, float height_offset);
 
 		// Display Text
 		void displayText();
@@ -388,8 +418,47 @@ namespace Editor
 		// Update New Object Mode
 		void updateNewObject();
 
+		// Determine What the Correct Object Index Should be
+		void determineCorrectObjectIndex();
+
 		// Change New Object Data
 		void changeNewObject();
+
+		// Change New Object GUI to Show Base Level Objects
+		void changeNewObjectLevelBase(float& distance, int& offset);
+
+		// Change New Object GUI to Show Base GUI Objects
+		void changeNewObjectGUIBase(float& distance, int& offset);
+
+		// Change New Object GUI to Show Directions for Masks
+		void changeNewObjectMasks(float& distance, int& offset);
+
+		// Change New Object GUI to Show Terrain Layers
+		void changeNewObjectTerrain(float& distance, int& offset);
+
+		// Change New Object GUI to Show Lighting Types
+		void changeNewObjectLighting(float& distance, int& offset);
+
+		// Change New Object GUI to Show Physics Types
+		void changeNewObjectPhysics(float& distance, int& offset);
+
+		// Change New Object GUI to Show Entity Types
+		void changeNewObjectEntity(float& distance, int& offset);
+
+		// Change New Object GUI to Show Effect Types
+		void changeNewObjectEffect(float& distance, int& offset);
+
+		// Change New Object GUI to Show GUI Elements
+		void changeNewObjectElement(float& distance, int& offset);
+
+		// Change New Object GUI to Show Any Possible Secondary GUI Elements
+		void changeNewObjectSecondaryElements(float& distance, int& offset);
+
+		// Change New Object GUI to Show Mask Shapes
+		void changeNewObjectMaskShapes(float& distance, int& offset);
+
+		// Change New Object GUI to Show Either Physics Shapes or Group Objects
+		void changeNewObjectPhysicsShapes(float& distance, int& offset);
 
 		// Change New Object to SpringMass Objects
 		void changeNewObjectSpringMass();
@@ -425,7 +494,7 @@ namespace Editor
 		void updateEditorMode();
 
 		// Update Color Wheels
-		void updateColorWheels(ColorWheel& wheel_, glm::vec4& color, unsigned int* wheel_color_, double mouseStaticX, double mouseStaticY, int offsetx, bool update);
+		void updateColorWheels(Render::GUI::ColorWheel& wheel_, glm::vec4& color, unsigned int* wheel_color_, double mouseStaticX, double mouseStaticY, int offsetx, bool update);
 
 		// Selected Text Closer
 		void textCloser();

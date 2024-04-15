@@ -75,8 +75,9 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(ObjectsInstanc
 		{
 			// If Read Object's Position Does Not Match the Current Level,
 			// Find a Way to Transfer Between Unsaved Levels
-			main_level->wrapObjectPos(object->getPosition());
-			main_level->updateLevelPos(object->getPosition(), object_level_pos);
+			if (main_container->getContainerType() == CONTAINER_TYPES::LEVEL)
+				static_cast<Render::Objects::Level*>(main_container)->wrapObjectPos(object->getPosition());
+			main_container->updateLevelPos(object->getPosition(), object_level_pos);
 			if (object_level_pos.x != level_x || object_level_pos.y != level_y)
 				invalid_location.push_back(InvalidObject(object, object_level_pos.x, object_level_pos.y));
 			else
@@ -104,7 +105,7 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(ObjectsInstanc
 		change_controller->transferObject(object.data_object, object.object_x, object.object_y, 0);
 }
 
-void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, ObjectsInstance& instance, glm::vec2& object_offset)
+void Render::Objects::UnsavedLevel::buildObjectsLevelHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, ObjectsInstance& instance, glm::vec2& object_offset)
 {
 	// Allocate Memory for Active Array
 	if (instance.data_objects.size())
@@ -113,10 +114,19 @@ void Render::Objects::UnsavedLevel::buildObjectsHelper(Object::Object** objects,
 	uint16_t active_index = 0;
 
 	// Generate Objects
-	buildObjectsGenerator(instance.data_objects, objects, index, physics, entities, active_array, active_index, nullptr, object_offset);
+	buildObjectsGeneratorLevel(instance.data_objects, objects, index, physics, entities, active_array, active_index, nullptr, object_offset);
 }
 
-void Render::Objects::UnsavedLevel::buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Active* active_array, uint16_t& active_index, Object::Object* parent, glm::vec2 position_offset)
+void Render::Objects::UnsavedLevel::buildObjectsGUIHelper(Object::Object** objects, ObjectsInstance& instance)
+{
+	// The Index For Adding Objects Into Buffer
+	uint16_t index = 0;
+
+	// Generate Objects
+	buildObjectsGeneratorGUI(instance.data_objects, objects, index, nullptr, glm::vec2(0.0f, 0.0f));
+}
+
+void Render::Objects::UnsavedLevel::buildObjectsGeneratorLevel(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Active* active_array, uint16_t& active_index, Object::Object* parent, glm::vec2 position_offset)
 {
 	for (DataClass::Data_Object* data_object : data_object_array)
 	{
@@ -177,7 +187,47 @@ void Render::Objects::UnsavedLevel::buildObjectsGenerator(std::vector<DataClass:
 				new_offset = new_object->returnPosition();
 
 			// Recursively Generate Children
-			buildObjectsGenerator(group->getChildren(), objects, index, physics, entities, active_array, active_index, new_object, new_offset);
+			buildObjectsGeneratorLevel(group->getChildren(), objects, index, physics, entities, active_array, active_index, new_object, new_offset);
+		}
+	}
+}
+
+void Render::Objects::UnsavedLevel::buildObjectsGeneratorGUI(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Object::Object* parent, glm::vec2 position_offset)
+{
+	for (DataClass::Data_Object* data_object : data_object_array)
+	{
+		// Generate Object and Attach Data Object
+		Object::Object* new_object = data_object->generateObject(position_offset);
+		new_object->parent = parent;
+
+		// If Parent != Nullptr, Add to Parent's Children Array
+		if (parent != nullptr)
+		{
+			parent->children[parent->children_size] = new_object;
+			parent->children_size++;
+		}
+
+		// If Move With Parent is Ever Set to False, ReEnable it Here
+		data_object->enableMoveWithParent();
+
+		// Add Object Into Object Array
+		objects[index] = new_object;
+		index++;
+
+		// Generate Children, if Applicable
+		UnsavedCollection* group = data_object->getGroup();
+		if (group != nullptr)
+		{
+			// Generate the Children Array in Object
+			new_object->children = new Object::Object*[group->getChildren().size()];
+
+			// Get the Potential Offset of the Object
+			glm::vec2 new_offset = position_offset;
+			if (group->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
+				new_offset = new_object->returnPosition();
+
+			// Recursively Generate Children
+			buildObjectsGeneratorGUI(group->getChildren(), objects, index, new_object, new_offset);
 		}
 	}
 }
@@ -258,10 +308,10 @@ bool Render::Objects::UnsavedLevel::testValidSelection(DataClass::Data_Object* p
 	return true;
 }
 
-Render::Objects::UnsavedLevel::UnsavedLevel(glm::vec2& sizes, Level* level)
+Render::Objects::UnsavedLevel::UnsavedLevel(glm::vec2& sizes, Container* container)
 {
 	// Store Level Object
-	main_level = level;
+	main_container = container;
 
 	// Decrement Sizes by 0.1
 	sizes.x -= 0.1f;
@@ -312,7 +362,7 @@ Render::Objects::UnsavedLevel::~UnsavedLevel()
 	slave_stack.deleteStack();
 }
 
-void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y, uint8_t z, float width, float height, std::string level_data_path, std::string editor_level_data_path)
+void Render::Objects::UnsavedLevel::constructUnmodifiedDataLevel(int16_t x, int16_t y, uint8_t z, float width, float height, std::string level_data_path, std::string editor_level_data_path)
 {
 	// Store Coordinates of Level
 	level_x = x;
@@ -336,10 +386,34 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedData(int16_t x, int16_t y
 	constructUnmodifiedDataHelper(instance_with_changes);
 }
 
-void Render::Objects::UnsavedLevel::buildObjects(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, glm::vec2& object_offset)
+void Render::Objects::UnsavedLevel::contructUnmodifiedDataGUI(std::string gui_path)
+{
+	// Coordinates of Level are All 0
+	level_x = 0;
+	level_y = 0;
+	level_version = 0;
+
+	// Model Matrix is Unused
+	model = glm::mat4(1.0f);
+
+	// Get Paths for Data Files
+	object_path = gui_path + "Object.dat";
+	editor_path = gui_path + "Editor.dat";
+
+	// Read Unmodified Data
+	constructUnmodifiedDataHelper(instance_with_changes);
+}
+
+void Render::Objects::UnsavedLevel::buildObjectsLevel(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, glm::vec2& object_offset)
 {
 	// Construct Objects
-	buildObjectsHelper(objects, index, physics, entities, instance_with_changes, object_offset);
+	buildObjectsLevelHelper(objects, index, physics, entities, instance_with_changes, object_offset);
+}
+
+void Render::Objects::UnsavedLevel::buildObjectsGUI(Object::Object** objects)
+{
+	// Construct Objects
+	buildObjectsGUIHelper(objects, instance_with_changes);
 }
 
 uint16_t Render::Objects::UnsavedLevel::returnObjectHeader()
@@ -386,6 +460,13 @@ void Render::Objects::UnsavedLevel::drawVisualizer()
 
 void Render::Objects::UnsavedLevel::updateModelMatrix()
 {
+	// GUIs Don't Utilize Level Borders, Return Early
+	if (main_container->getContainerType() == CONTAINER_TYPES::GUI)
+		return;
+
+	// Get Level Object
+	Render::Objects::Level* main_level = static_cast<Render::Objects::Level*>(main_container);
+
 	// Get the Object Position of Level
 	glm::vec2 object_pos = main_level->getObjectPos(glm::i16vec2(level_x, level_y));
 

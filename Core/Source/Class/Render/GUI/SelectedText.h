@@ -32,7 +32,7 @@
 
 #define USE_BACKSLASH true
 
-namespace GUI
+namespace Render::GUI
 {
 	// Declaration for Advanced String
 	class AdvancedString;

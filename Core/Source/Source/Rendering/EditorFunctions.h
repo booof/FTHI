@@ -2,9 +2,9 @@
 #ifndef EDITOR_FUNCTIONS_H
 #define EDITOR_FUNCTIONS_H
 
-namespace Render::Objects
+namespace Render
 {
-	class Level;
+	class Container;
 }
 
 namespace Editor
@@ -21,10 +21,10 @@ namespace Render::Camera
 namespace Source::Rendering::Editing
 {
 	// Main Function for Editor
-	void edit(Render::Objects::Level* level, Editor::Selector* selector, Editor::ObjectInfo* object_info);
+	void edit(Render::Container* container, Editor::Selector* selector, Editor::ObjectInfo* object_info);
 
 	// Main Function for Drawing Editor Related Things
-	void renderEditor(Render::Objects::Level* level, Editor::Selector* selector, Editor::ObjectInfo* object_info);
+	void renderEditor(Render::Container* container, Editor::Selector* selector, Editor::ObjectInfo* object_info);
 }
 
 #endif

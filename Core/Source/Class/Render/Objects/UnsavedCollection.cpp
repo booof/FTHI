@@ -107,7 +107,7 @@ void Render::Objects::UnsavedCollection::makeOrphans(Editor::Selector* selector,
 		data_object->offsetOppositePosition(offset);
 
 		// Remove Object From This Group
-		createChangePop(data_object, Render::Objects::MOVE_WITH_PARENT::MOVE_SECONDARY_ONLY);
+		createChangePop(data_object, Render::MOVE_WITH_PARENT::MOVE_SECONDARY_ONLY);
 
 		// Add Object Into Level
 		level->createChangeAppend(data_copy, MOVE_WITH_PARENT::MOVE_DISSABLED);

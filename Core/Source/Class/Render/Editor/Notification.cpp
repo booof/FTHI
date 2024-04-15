@@ -8,7 +8,7 @@
 #include "Source/Loaders/Audio.h"
 #include "OPENAL/OPENAL/include/AL/alext.h"
 
-void Editor::Notification::prepareForMessage(NOTIFICATION_MESSAGES type, Struct::SingleTexture** texture, GUI::TextObject** text, uint8_t& text_size, std::string& message)
+void Editor::Notification::prepareForMessage(NOTIFICATION_MESSAGES type, Struct::SingleTexture** texture, Render::GUI::TextObject** text, uint8_t& text_size, std::string& message)
 {
     // Stop Playing the Current Notification Message or Program will Crash
     alSourceStop(notificationSource);
@@ -66,31 +66,31 @@ void Editor::Notification::prepareForMessage(NOTIFICATION_MESSAGES type, Struct:
             text_size++;
 
     // Allocate Memory for Text Objects
-    GUI::TextObject* text_;
-    text_ = new GUI::TextObject[text_size];
+    Render::GUI::TextObject* text_;
+    text_ = new Render::GUI::TextObject[text_size];
 
     // Store Message in Text Objects
     uint8_t current_line = 0;
-    GUI::TextData text_data;
-    text_data = Source::Render::Initialize::constructText(-18.0f, 9.0f, 0.072f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true, "");
+    Render::GUI::TextDataBundle text_data;
+    text_data = Source::Rendering::Initialize::constructText(-18.0f, 9.0f, 1.728f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), true, "");
     for (int i = 0; i < message.size(); i++)
     {
         // If Current Character is the New Line Character, Store Text and Increment Current Line
         if (message[i] == '\n')
         {
-            text_[current_line] = GUI::TextData(text_data);
-            text_data.position.y -= 3.0f;
-            text_data.text = "";
+            text_[current_line] = Render::GUI::TextObject(text_data.data1, text_data.data2);
+            text_data.data1.position.y -= 3.0f;
+            text_data.data2.text = "";
             current_line++;
         }
 
         // Else, Append Character to String
         else
         {
-            text_data.text += message[i];
+            text_data.data2.text += message[i];
         }
     }
-    text_[current_line] = GUI::TextData(text_data);
+    text_[current_line] = Render::GUI::TextObject(text_data.data1, text_data.data2);
 
     // Store Pointer to Text in Text Array
     *text = text_;
@@ -168,18 +168,21 @@ void Editor::Notification::initializeNotification()
     glBindVertexArray(0);
 
     // Generate Label Text
-    label_text = GUI::TextObject(Source::Render::Initialize::constructText(-34.0f, 17.0f, 0.12f, glm::vec4(0.0, 0.0f, 0.0f, 1.0f), true, ""));
+    Render::GUI::TextDataBundle temp_text_data = Source::Rendering::Initialize::constructText(-34.0f, 17.0f, 2.88f, glm::vec4(0.0, 0.0f, 0.0f, 1.0f), true, "");
+    temp_text_data.data1.is_static = true;
+    label_text = Render::GUI::TextObject(temp_text_data.data1, temp_text_data.data2);
 
     // Generate Master Element
-    master = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 70.0f, 40.0f);
+    master = Render::GUI::MasterElement(glm::vec2(0.0f, 0.0f), 70.0f, 40.0f);
 
     // Generate OK Box
-    GUI::BoxData temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::NULL_BOX, 0.0f, 0.0f, -1.0f, 20.0f, 4.0f, true, "OK", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-    box_ok = GUI::Box(temp_box_data);
+    Render::GUI::BoxDataBundle temp_box_data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::BOX_MODES::NULL_BOX, 0.0f, 0.0f, -1.0f, 20.0f, 4.0f, true, "OK", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    temp_box_data.data1.is_static = true;
+    box_ok = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Cancel Box
-    temp_box_data.button_text = GUI::AdvancedString("Cancel");
-    box_cancel = GUI::Box(temp_box_data);
+    temp_box_data.data2.button_text = Render::GUI::AdvancedString("Cancel");
+    box_cancel = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Error Image
     Source::Textures::loadSingleTexture("../Resources/Textures/Notifications/Error.png", texture_error);
@@ -221,7 +224,7 @@ void Editor::Notification::deleteNotification()
 void Editor::Notification::notificationMessage(NOTIFICATION_MESSAGES type, std::string& message)
 {
     Struct::SingleTexture* texture = NULL;
-    GUI::TextObject* text = NULL;
+    Render::GUI::TextObject* text = NULL;
     uint8_t text_size = 1;
     glm::mat4 temp = glm::mat4(1.0f);
 
@@ -298,7 +301,7 @@ void Editor::Notification::notificationMessage(NOTIFICATION_MESSAGES type, std::
 bool Editor::Notification::notificationCancelOption(NOTIFICATION_MESSAGES type, std::string& message)
 {
     Struct::SingleTexture* texture = NULL;
-    GUI::TextObject* text = NULL;
+    Render::GUI::TextObject* text = NULL;
     uint8_t text_size = 1;
     glm::mat4 temp = glm::mat4(1.0f);
 

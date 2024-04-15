@@ -63,6 +63,19 @@ Render::Objects::SubLevel::SubLevel(std::string& level_data_path, glm::i16vec4 p
 	readHeaders();
 }
 
+Render::Objects::SubLevel::SubLevel(std::string& gui_path)
+{
+	// Coordinates of Level Are Set to 0,0
+	level_x = 0;
+	level_y = 0;
+
+	// Get Path of Object Data
+	path = gui_path + "Object.dat";
+
+	// Read Headers
+	readHeaders();
+}
+
 void Render::Objects::SubLevel::readLevel(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities)
 {
 	// Get Pointer to Unsaved Level
@@ -72,7 +85,22 @@ void Render::Objects::SubLevel::readLevel(Object::Object** objects, uint16_t& in
 	unsaved_level->active_objects = &active_objects;
 
 	// Read Unsaved Level
-	unsaved_level->buildObjects(objects, index, physics, entities, object_offsets);
+	unsaved_level->buildObjectsLevel(objects, index, physics, entities, object_offsets);
+
+	// Level Has Been Initialized
+	initialized = true;
+}
+
+void Render::Objects::SubLevel::readGUI(Object::Object** objects)
+{
+	// Get Pointer to Unsaved Level
+	unsaved_level = change_controller->getUnsavedLevel(level_x, level_y, level_version);
+
+	// Set the Active Objects Pointer of Unsaved Level to Null
+	unsaved_level->active_objects = nullptr;
+
+	// Read Unsaved Level
+	unsaved_level->buildObjectsGUI(objects);
 
 	// Level Has Been Initialized
 	initialized = true;
@@ -85,7 +113,7 @@ void Render::Objects::SubLevel::readHeaders()
 	unsaved_level = change_controller->getUnsavedLevel(level_x, level_y, level_version);
 
 	// Store Pointer to Active Objects
-	unsaved_level->active_objects = &active_objects;
+	//unsaved_level->active_objects = &active_objects;
 
 	// Get Header From Unsaved Level
 	number_of_loaded_objects = unsaved_level->returnObjectHeader();

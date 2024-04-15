@@ -4,6 +4,11 @@
 
 #include "Class/Render/Editor/EditorWindow.h"
 
+namespace Render
+{
+	class Container;
+}
+
 namespace Render::Camera
 {
 	class Camera;
@@ -11,7 +16,6 @@ namespace Render::Camera
 
 namespace Render::Objects
 {
-	class Level;
 	class UnsavedLevel;
 }
 
@@ -40,7 +44,8 @@ namespace Editor
 		SPRINGMASS_OBJECT,
 		SPRINGMASS_NODE,
 		SPRINGMASS_SPRING,
-		HINGE
+		HINGE,
+		RECTANGLE_DOUBLE_RESIZE
 	};
 
 	// List of Movement Directions
@@ -69,6 +74,20 @@ namespace Editor
 		PREVIOUS_SELECTION,
 		INVALID_SELECTION,
 		ADD_CHILDREN
+	};
+
+	// List of Different 
+	enum SelectedPositionOffsetTypes : uint8_t
+	{
+		CENTERED = 0,
+		TOP_LEFT,
+		TOP_RIGHT,
+		BOTTOM_LEFT,
+		BOTTOM_RIGHT,
+		MID_TOP,
+		MID_BOTTOM,
+		MID_LEFT,
+		MID_RIGHT
 	};
 
 	// A Struct for a Pointer to Limb Attatched to Currently Selected Object
@@ -176,8 +195,15 @@ namespace Editor
 			float change_horizontal = 0.0f;
 			float change_vertical = 0.0f;
 
+			// Offsets Caused by Master Element Scrolling
+			float master_offset_x = 0.0f;
+			float master_offset_y = 0.0f;
+
 			// Shape of Editing Object
 			unsigned char editing_shape;
+
+			// Determines if Object Has Text (Only Some for GUI Elements)
+			bool has_text = false;
 
 			// Determines if an Object is Moving
 			static bool moving;
@@ -239,12 +265,21 @@ namespace Editor
 
 		class Selected_Rectangle : public Selected_Object
 		{
+			// Update the Offset of the Rectangle if Not Centered
+			void updatePositionOffsets();
 
 		public:
 
 			// Size of the Object
 			float* object_width = nullptr;
 			float* object_height = nullptr;
+
+			// Determines if Object is Centered
+			uint8_t position_offset_type = SelectedPositionOffsetTypes::CENTERED;
+
+			// Position Offset of the Rectangle (If Not Centered)
+			float position_offset_x = 0.0f;
+			float position_offset_y = 0.0f;
 
 			// Determines if Rectangle can Resize
 			bool enable_resize = true;
@@ -259,7 +294,7 @@ namespace Editor
 			void moveObject();
 
 			// Function to Resize a Rectangle
-			void testResizeRectangle(bool enable_horizontal, bool enable_vertical);
+			virtual void testResizeRectangle(bool enable_horizontal, bool enable_vertical);
 
 			// Function to Set Horizontal Group Resize
 			void setHorizontalGroupResize();
@@ -524,6 +559,21 @@ namespace Editor
 			void setVerticalGroupResize() {}
 		};
 
+		class Selected_RectangleDoubleResize : public Selected_Rectangle
+		{
+
+		public:
+
+			// Determines What Size Will be Used
+			bool use_horizontal = true;
+
+			// A Temporary Variable to for Extra Size, If Needed
+			float opposite_size = 0.0f;
+
+			// Modified Resize Function to Allways Resize Both at Once if Resizing
+			void testResizeRectangle(bool enable_horizontal, bool enable_vertical);
+		};
+
 		// The Group Selector
 		Group_Selector group_selector;
 
@@ -683,6 +733,15 @@ namespace Editor
 		// Store Data for Groups
 		Selected_Object* storeSelectorDataGroup(DataClass::Data_Object* data_object);
 
+		// Allocate Memory for Elements
+		void alocateSelectorVerticesElement(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects);
+
+		// Generate Selector Vertices for Elements
+		void genSelectorVerticesElement(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects);
+
+		// Store Data for Elements
+		Selected_Object* storeSelectorDataElement(DataClass::Data_Object* data_object);
+		
 		
 		// End of Storing Data Functions
 
@@ -696,6 +755,7 @@ namespace Editor
 		// Update the Group Selector
 		void updateGroupSelector();
 
+		// Update Positions of Children Objects
 		void updateSelectedPositions(DataClass::Data_Object* data_object, float deltaX, float deltaY);
 
 		// Edit Object

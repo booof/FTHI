@@ -66,90 +66,25 @@ void Editor::SceneController::genBackground()
 void Editor::SceneController::prepareLevelCreation()
 {
     // Data Structures for Elements
-    GUI::TextData text_data;
-    GUI::BoxData box_data;
+    Render::GUI::TextDataBundle text_data;
+    Render::GUI::BoxDataBundle box_data;
+    box_data.data1.is_static = true;
 
-    // Generate the Background Only
-    genBackgroundOnly();
-
-    // Generate the Title
-    genTitle();
-
-    // Generate the Level Creator Text
-    text_data.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    text_data.static_ = true;
-    text_data.scale = 0.2f;
-    text_data.position = glm::vec2(-70.0f, 27.0f);
-    text_data.text = "Scene Creator";
-    text.push_back(GUI::TextObject(text_data));
-
-    // Generate the Level Creator Underline
-    text_data.scale = 0.1f;
-    text_data.position = glm::vec2(-70.0f, 25.0f);
-    text_data.text = "-----------------------------------";
-    text.push_back(GUI::TextObject(text_data));
-
-    // Generate the Level Name Text
-    text_data.scale = 0.12f;
-    text_data.position = glm::vec2(-70.0f, 20.0f);
-    text_data.text = "Scene Name: ";
-    text.push_back(GUI::TextObject(text_data));
-
-    // Generate the Level Name Box
-    box_data.width = 100.0f;
-    box_data.height = 5.0f;
-    box_data.zpos = -0.9f;
-    box_data.outline_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    box_data.background_color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
-    box_data.text_color = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
-    box_data.highlight_color = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
-    box_data.centered = false;
-    box_data.position = glm::vec2(5.0f, 21.0f);
-    box_data.button_text = std::string("");
-    box_data.mode = GUI::BOX_MODES::GENERAL_TEXT_BOX;
-    boxes.push_back(GUI::Box(box_data));
-    boxes.at(1).setDataPointer(instance_name);
-
-    // Generate the Chunk Size Text
-    text_data.position = glm::vec2(-70.0f, 7.0f);
-    text_data.text = "Chunk Dimensions:";
-    text.push_back(GUI::TextObject(text_data));
-
-    // Generate the Chunk Width Text
-    text_data.position = glm::vec2(-30.0f, 10.0f);
-    text_data.text = "Width  [X-Axis]:";
-    text.push_back(GUI::TextObject(text_data));
-
-    // Generate the Chunk Width Box
-    box_data.width = 40.0f;
-    box_data.centered = true;
-    box_data.position = glm::vec2(20.0f, 11.0f);
-    box_data.mode = GUI::BOX_MODES::ABSOLUTE_NUMERICAL_TEXT_BOX;
-    boxes.push_back(GUI::Box(box_data));
-    boxes.at(2).setDataPointer(&level_data->sublevel_width);
-
-    // Generate the Chunk Height Text
-    text_data.position = glm::vec2(-30.0f, 4.0f);
-    text_data.text = "Height [Y-Axis]:";
-    text.push_back(GUI::TextObject(text_data));
-
-    // Generate the Chunk Height Box
-    box_data.position = glm::vec2(20.0f, 5.0f);
-    boxes.push_back(GUI::Box(box_data));
-    boxes.at(3).setDataPointer(&level_data->sublevel_height);
+    // Generate Basic Things
+    genBasicLayoutElements(text_data, box_data, "Scene", "Chunk", &level_data->sublevel_width, &level_data->sublevel_height);
 
     // Generate the Rest of the Chunk Elements
     genChunkLayoutElements(-8.0f, 4, text_data, box_data);
 
     // Generate the Finish Creation Button
-    box_data.width = 80.0f;
-    box_data.position = glm::vec2(0.0f, -55.0f);
-    box_data.mode = GUI::BOX_MODES::FUNCTION_BOX;
-    box_data.button_text = std::string("Finish Scene");
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data2.width = 80.0f;
+    box_data.data1.position = glm::vec2(0.0f, -55.0f);
+    box_data.data2.mode = Render::GUI::BOX_MODES::FUNCTION_BOX;
+    box_data.data2.button_text = std::string("Finish Scene");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
 
     // Generate the Scroll Bar
-    bar = GUI::VerticalScrollBar(74.0f, 32.5f, 2.0f, 75.5f, 95.0f, 0.0f);
+    bar = Render::GUI::VerticalScrollBar(74.0f, 32.5f, 2.0f, 75.5f, 95.0f, 0.0f, -1);
 
     // Store Dynamic Starts
     dynamic_text_start = 3;
@@ -161,30 +96,102 @@ void Editor::SceneController::genTitle()
     // Clear GUI Elements
     boxes.clear();
     text.clear();
-    bar.percent = 0.0f;
+    bar.resetBar();
 
     // Generate the Title 
-    GUI::TextData title;
-    title.scale = 0.25f;
-    title.static_ = true;
-    title.color = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
-    title.position = glm::vec2(-73.0f, 35.3f);
-    title.text = "Scene Controller";
-    text.push_back(GUI::TextObject(title));
+    Render::GUI::TextDataBundle title;
+    title.data2.scale = 6.0f;
+    title.data1.is_static = true;
+    title.data2.color = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
+    title.data1.position = glm::vec2(-73.0f, 35.3f);
+    title.data2.text = "Scene Controller";
+    text.push_back(Render::GUI::TextObject(title.data1, title.data2));
 
     // Generate the Exit Box
-    GUI::BoxData exit_box;
-    exit_box.outline_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    exit_box.background_color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
-    exit_box.text_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-    exit_box.button_text = std::string("X");
-    exit_box.centered = true;
-    exit_box.mode = GUI::BOX_MODES::FUNCTION_BOX;
-    exit_box.width = 5.0f;
-    exit_box.height = 5.0f;
-    exit_box.highlight_color = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
-    exit_box.position = glm::vec2(70.5f, 39.0f);
-    boxes.push_back(GUI::Box(exit_box));
+    Render::GUI::BoxDataBundle exit_box;
+    exit_box.data2.outline_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    exit_box.data2.background_color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
+    exit_box.data2.text_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    exit_box.data2.button_text = std::string("X");
+    exit_box.data2.centered = true;
+    exit_box.data2.mode = Render::GUI::BOX_MODES::FUNCTION_BOX;
+    exit_box.data2.width = 5.0f;
+    exit_box.data2.height = 5.0f;
+    exit_box.data2.highlight_color = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
+    exit_box.data1.position = glm::vec2(70.5f, 39.0f);
+    boxes.push_back(Render::GUI::Box(exit_box.data1, exit_box.data2));
+}
+
+void Editor::SceneController::genBasicLayoutElements(Render::GUI::TextDataBundle& text_data, Render::GUI::BoxDataBundle& box_data, std::string instance_name_, std::string chunk_name_, float* width, float* height)
+{
+    // Generate the Background Only
+    genBackgroundOnly();
+
+    // Generate the Title
+    genTitle();
+
+    // Generate the Level Creator Text
+    text_data.data2.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    text_data.data1.is_static = true;
+    text_data.data2.scale = 4.8f;
+    text_data.data1.position = glm::vec2(-70.0f, 27.0f);
+    text_data.data2.text = instance_name_ + " Creator";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
+
+    // Generate the Level Creator Underline
+    text_data.data2.scale = 2.4f;
+    text_data.data1.position = glm::vec2(-70.0f, 25.0f);
+    text_data.data2.text = "-----------------------------------";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
+
+    // Generate the Level Name Text
+    text_data.data2.scale = 2.88f;
+    text_data.data1.position = glm::vec2(-70.0f, 20.0f);
+    text_data.data2.text = instance_name_ + " Name: ";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
+
+    // Generate the Level Name Box
+    box_data.data2.width = 100.0f;
+    box_data.data2.height = 5.0f;
+    box_data.data2.zpos = -0.9f;
+    box_data.data2.outline_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    box_data.data2.background_color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
+    box_data.data2.text_color = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
+    box_data.data2.highlight_color = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
+    box_data.data2.centered = false;
+    box_data.data1.position = glm::vec2(5.0f, 21.0f);
+    box_data.data2.button_text = std::string("");
+    box_data.data2.mode = Render::GUI::BOX_MODES::GENERAL_TEXT_BOX;
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
+    boxes.at(1).setDataPointer(instance_name);
+
+    // Generate the Chunk Size Text
+    text_data.data1.position = glm::vec2(-70.0f, 7.0f);
+    text_data.data2.text = chunk_name_ + " Dimensions:";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
+
+    // Generate the Chunk Width Text
+    text_data.data1.position = glm::vec2(-30.0f, 10.0f);
+    text_data.data2.text = "Width  [X-Axis]:";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
+
+    // Generate the Chunk Width Box
+    box_data.data2.width = 40.0f;
+    box_data.data2.centered = true;
+    box_data.data1.position = glm::vec2(20.0f, 11.0f);
+    box_data.data2.mode = Render::GUI::BOX_MODES::ABSOLUTE_NUMERICAL_TEXT_BOX;
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
+    boxes.at(2).setDataPointer(&level_data->sublevel_width);
+
+    // Generate the Chunk Height Text
+    text_data.data1.position = glm::vec2(-30.0f, 4.0f);
+    text_data.data2.text = "Height [Y-Axis]:";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
+
+    // Generate the Chunk Height Box
+    box_data.data1.position = glm::vec2(20.0f, 5.0f);
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
+    boxes.at(3).setDataPointer(&level_data->sublevel_height);
 }
 
 void Editor::SceneController::genBackgroundOnly()
@@ -204,7 +211,27 @@ void Editor::SceneController::genBackgroundOnly()
 
 void Editor::SceneController::prepareGUICreation()
 {
+    // Data Structures for Elements
+    Render::GUI::TextDataBundle text_data;
+    Render::GUI::BoxDataBundle box_data;
+    box_data.data1.is_static = true;
 
+    // Generate Basic Things
+    genBasicLayoutElements(text_data, box_data, "GUI", "GUI", &gui_data->gui_width, &gui_data->gui_height);
+
+    // Generate the Finish Creation Button
+    box_data.data2.width = 80.0f;
+    box_data.data1.position = glm::vec2(0.0f, -55.0f);
+    box_data.data2.mode = Render::GUI::BOX_MODES::FUNCTION_BOX;
+    box_data.data2.button_text = std::string("Finish GUI");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
+
+    // Generate the Scroll Bar
+    bar = Render::GUI::VerticalScrollBar(74.0f, 32.5f, 2.0f, 75.5f, 95.0f, 0.0f, -1);
+
+    // Store Dynamic Starts
+    dynamic_text_start = 3;
+    dynamic_box_start = 1;
 }
 
 void Editor::SceneController::prepareEditing()
@@ -302,8 +329,8 @@ void Editor::SceneController::initializeSceneController()
     glBindVertexArray(0);
 
     // Generate the Master Objects
-    master_element_static = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 150.0f, 86.0f);
-    master_element_dynamic = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 150.0f, 86.0f);
+    master_element_static = Render::GUI::MasterElement(glm::vec2(0.0f, 0.0f), 150.0f, 86.0f);
+    master_element_dynamic = Render::GUI::MasterElement(glm::vec2(0.0f, 0.0f), 150.0f, 86.0f);
 }
 
 Editor::SceneController* Editor::SceneController::get()
@@ -359,6 +386,11 @@ void Editor::SceneController::genLevelPath(int index)
     instance_path = Global::project_resources_path + "\\Data\\Scenes\\" + levels.at(index).name.c_str() + "\\";
 }
 
+void Editor::SceneController::genGUIPath(int index)
+{
+    instance_path = Global::project_resources_path + "\\Data\\GUIs\\" + guis.at(index).name.c_str() + "\\";
+}
+
 void Editor::SceneController::initializeLoop(SCENE_MODES mode, bool& looping, std::function<void()>& exit_function)
 {
     // Enter Mode First
@@ -372,7 +404,7 @@ void Editor::SceneController::initializeLoop(SCENE_MODES mode, bool& looping, st
     boxes.at(0).setFunctionPointer(exit_function);
 
     // Bind Vertical Scroll Bar
-    master_element_dynamic.linkValue(new GUI::DefaultElements{ &bar, nullptr, &bar });
+    master_element_dynamic.linkValue(new Render::GUI::DefaultElements{ &bar, nullptr, &bar });
     glfwSetScrollCallback(Global::window, Source::Listeners::ScrollBarCallback);
     Global::scroll_bar = &bar;
 }
@@ -601,7 +633,7 @@ void* Editor::SceneController::genBackupData()
         return new Render::Objects::SceneData;
 
     // Else, Generate a New GUI Data Structure
-    return new GUI::GUIData;
+    return new Render::GUI::GUIData;
 }
 
 bool Editor::SceneController::testInvalidInputs(void* backup)
@@ -659,7 +691,7 @@ bool Editor::SceneController::testInvalidInputs(void* backup)
     else
     {
         // Get GUI Data
-        GUI::GUIData& data = *static_cast<GUI::GUIData*>(backup);
+        Render::GUI::GUIData& data = *static_cast<Render::GUI::GUIData*>(backup);
     }
 
     //
@@ -707,7 +739,7 @@ void Editor::SceneController::writeGUIData()
     std::ofstream gui_file = std::ofstream(path);
 
     // Write the GI Data
-    gui_file.write((char*)gui_data, sizeof(GUI::GUIData));
+    gui_file.write((char*)gui_data, sizeof(Render::GUI::GUIData));
 
     // Write the GUI Name
     gui_file.write(instance_name->c_str(), gui_data->name_size);
@@ -780,7 +812,7 @@ void Editor::SceneController::loadInstance()
     }
 
     // Test if the Currently Loaded Instance is Not Saved
-    if (!Source::Render::Exit::determineSafeToExit())
+    if (!Source::Rendering::Exit::determineSafeToExit())
         return;
 
     // If the Currently Loaded Instance is Not Nullptr, Delete it
@@ -823,6 +855,21 @@ void Editor::SceneController::loadLevel(int index)
 
 void Editor::SceneController::loadGUI(int index)
 {
+    // Get the GUI Path at the GUI Index
+    genGUIPath(index);
+
+    // Generate the GUI
+    Render::GUI::GUI* new_gui = new Render::GUI::GUI(instance_path, true);
+
+    // Retrieve the GUI Data
+    new_gui->getGUIInfo(&gui_data, &instance_name);
+
+    // Set the Mode to Editing GUI
+    current_instance_type = INSTANCE_TYPES::GUI;
+
+    // Save the New Instance
+    currently_loaded_instance = new_gui;
+    current_instance = &guis.at(index);
 }
 
 void Editor::SceneController::addInstance()
@@ -1118,28 +1165,28 @@ void Editor::SceneController::prepareEditingSubMode(EDITING_MODES mode, bool for
     genTitle();
 
     // Generate the Variables Label 
-    GUI::TextData tab;
-    tab.scale = 0.2f;
-    tab.static_ = true;
-    tab.color = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
-    tab.position = glm::vec2(-69.5f, 27.3f);
-    tab.text = "Variables";
-    text.push_back(GUI::TextObject(tab));
+    Render::GUI::TextDataBundle tab;
+    tab.data2.scale = 4.8f;
+    tab.data1.is_static = true;
+    tab.data2.color = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);
+    tab.data1.position = glm::vec2(-69.5f, 27.3f);
+    tab.data2.text = "Variables";
+    text.push_back(Render::GUI::TextObject(tab.data1, tab.data2));
 
     // Generate the Scripts Label 
-    tab.position = glm::vec2(-28.2f, 27.3f);
-    tab.text = "Scripts";
-    text.push_back(GUI::TextObject(tab));
+    tab.data1.position = glm::vec2(-28.2f, 27.3f);
+    tab.data2.text = "Scripts";
+    text.push_back(Render::GUI::TextObject(tab.data1, tab.data2));
 
     // Generate the Scenes Label 
-    tab.position = glm::vec2(9.1f, 27.3f);
-    tab.text = "Scenes";
-    text.push_back(GUI::TextObject(tab));
+    tab.data1.position = glm::vec2(9.1f, 27.3f);
+    tab.data2.text = "Scenes";
+    text.push_back(Render::GUI::TextObject(tab.data1, tab.data2));
 
     // Generate the GUIs Label 
-    tab.position = glm::vec2(49.0f, 27.3f);
-    tab.text = "GUIs";
-    text.push_back(GUI::TextObject(tab));
+    tab.data1.position = glm::vec2(49.0f, 27.3f);
+    tab.data2.text = "GUIs";
+    text.push_back(Render::GUI::TextObject(tab.data1, tab.data2));
 
     // Generate the Elements of the Specified Mode
     switch (editing_mode)
@@ -1151,92 +1198,92 @@ void Editor::SceneController::prepareEditingSubMode(EDITING_MODES mode, bool for
     }
 }
 
-void Editor::SceneController::genChunkLayoutElements(float initial_y, int initial_box, GUI::TextData& text_data, GUI::BoxData& box_data)
+void Editor::SceneController::genChunkLayoutElements(float initial_y, int initial_box, Render::GUI::TextDataBundle& text_data, Render::GUI::BoxDataBundle& box_data)
 {
     // Generate Stationary Text
-    text_data.position = glm::vec2(-70.0f, initial_y);
-    text_data.text = "Enable Stationary Camera";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-70.0f, initial_y);
+    text_data.data2.text = "Enable Stationary Camera";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate Stationary Box
-    box_data.position = glm::vec2(-50.0f, initial_y - 5.0f);
-    box_data.mode = GUI::BOX_MODES::TOGGLE_BOX;
-    box_data.button_text = std::string("Stationary?");
-    box_data.centered = true;
-    box_data.width = 25.0f;
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(-50.0f, initial_y - 5.0f);
+    box_data.data2.mode = Render::GUI::BOX_MODES::TOGGLE_BOX;
+    box_data.data2.button_text = std::string("Stationary?");
+    box_data.data2.centered = true;
+    box_data.data2.width = 25.0f;
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(initial_box++).setDataPointer(&level_data->stationary);
 
     // Generate Wrapping Text
-    text_data.position = glm::vec2(-1.0f, initial_y);
-    text_data.text = "Enable Chunk Wrapping";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-1.0f, initial_y);
+    text_data.data2.text = "Enable Chunk Wrapping";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate Wrapping Box
-    box_data.position = glm::vec2(20.0f, initial_y - 5.0f);
-    box_data.button_text = std::string("Wrapping?");
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(20.0f, initial_y - 5.0f);
+    box_data.data2.button_text = std::string("Wrapping?");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(initial_box++).setDataPointer(&level_data->wrap_sublevels);
 
     // Generate Sublevel Count Text
-    text_data.position = glm::vec2(-70.0f, initial_y - 15.0f);
-    text_data.text = "Number of Chunks From Origin";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-70.0f, initial_y - 15.0f);
+    text_data.data2.text = "Number of Chunks From Origin";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate North Text
-    text_data.position = glm::vec2(-65.0f, initial_y - 21.0f);
-    text_data.text = "North  [+Y]:";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-65.0f, initial_y - 21.0f);
+    text_data.data2.text = "North  [+Y]:";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate North Box
-    box_data.mode = GUI::BOX_MODES::ABSOLUTE_INTEGER_TEXT_BOX;
-    box_data.position = glm::vec2(-27.0f, initial_y - 20.0f);
-    box_data.width = 30.0f;
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data2.mode = Render::GUI::BOX_MODES::ABSOLUTE_INTEGER_TEXT_BOX;
+    box_data.data1.position = glm::vec2(-27.0f, initial_y - 20.0f);
+    box_data.data2.width = 30.0f;
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(initial_box++).setDataPointer(&level_data->sublevel_count_north);
 
     // Generate South Text
-    text_data.position = glm::vec2(-65.0f, initial_y - 27.0f);
-    text_data.text = "South  [-Y]:";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-65.0f, initial_y - 27.0f);
+    text_data.data2.text = "South  [-Y]:";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate South Box
-    box_data.position = glm::vec2(-27.0f, initial_y - 26.0f);
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(-27.0f, initial_y - 26.0f);
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(initial_box++).setDataPointer(&level_data->sublevel_count_south);
 
     // Generate East Text
-    text_data.position = glm::vec2(-65.0f, initial_y - 33.0f);
-    text_data.text = "East    [+Y]:";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-65.0f, initial_y - 33.0f);
+    text_data.data2.text = "East    [+Y]:";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate East Box
-    box_data.position = glm::vec2(-27.0f, initial_y - 32.0f);
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(-27.0f, initial_y - 32.0f);
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(initial_box++).setDataPointer(&level_data->sublevel_count_east);
 
     // Generate West Text
-    text_data.position = glm::vec2(-65.0f, initial_y - 39.0f);
-    text_data.text = "West   [-X]:";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-65.0f, initial_y - 39.0f);
+    text_data.data2.text = "West   [-X]:";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate West Box
-    box_data.position = glm::vec2(-27.0f, initial_y - 38.0f);
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(-27.0f, initial_y - 38.0f);
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(initial_box++).setDataPointer(&level_data->sublevel_count_west);
 
     // Generate Render Distance Text
-    text_data.position = glm::vec2(13.0f, initial_y - 22.0f);
-    text_data.text = "Render Distance";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(13.0f, initial_y - 22.0f);
+    text_data.data2.text = "Render Distance";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate Clarification Text
-    text_data.position = glm::vec2(5.0f, initial_y - 26.0f);
-    text_data.text = "(Radius of Loaded Chunks)";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(5.0f, initial_y - 26.0f);
+    text_data.data2.text = "(Radius of Loaded Chunks)";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
-    box_data.position = glm::vec2(27.25f, initial_y - 32.0f);
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(27.25f, initial_y - 32.0f);
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(initial_box++).setDataPointer(&level_data->render_distance);
 }
 
@@ -1250,10 +1297,10 @@ void Editor::SceneController::genSelectionList(std::vector<Instance>& vec)
     float y_offset = 7.0f;
 
     // Text Data
-    GUI::TextData data;
-    data.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    data.scale = 0.2f;
-    data.static_ = true;
+    Render::GUI::TextDataBundle data;
+    data.data2.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    data.data2.scale = 4.8f;
+    data.data1.is_static = true;
 
     // From the Vector Size, Determine the Total Number of Vertices to Generate
     int vertex_count = vec.size() * 42 + 42 * 10;
@@ -1323,9 +1370,9 @@ void Editor::SceneController::genSelectionList(std::vector<Instance>& vec)
     for (Instance& instance : vec)
     {
         // Generate the Name Text Object
-        data.position = glm::vec2(-68.0f, 21.0f - y_offset);
-        data.text = instance.name;
-        text.push_back(data);
+        data.data1.position = glm::vec2(-68.0f, 21.0f - y_offset);
+        data.data2.text = instance.name;
+        text.push_back(Render::GUI::TextObject(data.data1, data.data2));
 
         // Generate the Bottom Rectangle for the Instance
         Vertices::Rectangle::genRectColor(-20.0f, 20.0f - y_offset, -1.0f, 100.0f, 1.0f, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), vertices);
@@ -1339,105 +1386,106 @@ void Editor::SceneController::genSelectionList(std::vector<Instance>& vec)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Generate the Scroll Bar
-    bar = GUI::VerticalScrollBar(31.0f, 20.5f, 2.0f, 59.0f, background_height + 200.0f, 0.0f);
+    bar = Render::GUI::VerticalScrollBar(31.0f, 20.5f, 2.0f, 59.0f, background_height + 200.0f, 0.0f, -1);
 }
 
 void Editor::SceneController::genVariableMode()
 {
     // Data Structures for Elements
-    GUI::TextData text_data;
-    GUI::BoxData box_data;
+    Render::GUI::TextDataBundle text_data;
+    Render::GUI::BoxDataBundle box_data;
 
     // Resize Vectors
 
     // Generate Level Name Text
-    text_data.position = glm::vec2(-70.0f, 18.0f);
-    text_data.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    text_data.scale = 0.18f;
-    text_data.static_ = true;
-    text_data.text = std::string("Scene Name: " + *instance_name);
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-70.0f, 18.0f);
+    text_data.data2.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    text_data.data2.scale = 4.32f;
+    text_data.data1.is_static = true;
+    text_data.data2.text = std::string("Scene Name: " + *instance_name);
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate Time Created Text
-    text_data.position = glm::vec2(-70.0f, 8.0f);
-    text_data.text = "Date Created: ";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-70.0f, 8.0f);
+    text_data.data2.text = "Date Created: ";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate the Local Variables Seperator
-    text_data.position = glm::vec2(-68.0f, 3.0f);
-    text_data.scale = 0.12f;
-    text_data.text = "----------------------------------------  Local Variables  ----------------------------------------";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-68.0f, 3.0f);
+    text_data.data2.scale = 2.88f;
+    text_data.data2.text = "----------------------------------------  Local Variables  ----------------------------------------";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate Gravity Text
-    text_data.position = glm::vec2(-70.0f, -2.0f);
-    text_data.text = "Gravity Scale Factor (Default 1.0)";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-70.0f, -2.0f);
+    text_data.data2.text = "Gravity Scale Factor (Default 1.0)";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate Gravity Box
-    box_data.width = 40.0f;
-    box_data.height = 5.0f;
-    box_data.zpos = -0.9f;
-    box_data.outline_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    box_data.background_color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
-    box_data.text_color = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
-    box_data.highlight_color = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
-    box_data.centered = false;
-    box_data.position = glm::vec2(-45.0f, -7.0f);
-    box_data.mode = GUI::BOX_MODES::NUMERICAL_TEXT_BOX;
-    box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(level_data->gravity_scale));
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data2.width = 40.0f;
+    box_data.data2.height = 5.0f;
+    box_data.data2.zpos = -0.9f;
+    box_data.data2.outline_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    box_data.data2.background_color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
+    box_data.data2.text_color = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
+    box_data.data2.highlight_color = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
+    box_data.data2.centered = false;
+    box_data.data1.position = glm::vec2(-45.0f, -7.0f);
+    box_data.data2.mode = Render::GUI::BOX_MODES::NUMERICAL_TEXT_BOX;
+    box_data.data2.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(level_data->gravity_scale));
+    box_data.data1.is_static = true;
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(1).setDataPointer(&level_data->gravity_scale);
 
     // Generate Initial Zoom Scale Text
-    text_data.position = glm::vec2(10.0f, -2.0f);
-    text_data.text = "Initial Zoom Scale (Default 0.2)";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(10.0f, -2.0f);
+    text_data.data2.text = "Initial Zoom Scale (Default 0.2)";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate Initial Zoom Scale Box
-    box_data.width = 40.0f;
-    box_data.position = glm::vec2(35.0f, -7.0f);
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data2.width = 40.0f;
+    box_data.data1.position = glm::vec2(35.0f, -7.0f);
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(2).setDataPointer(&level_data->initial_scale);
 
     // Generate Camera Position Text
-    text_data.position = glm::vec2(-70.0f, -19.0f);
-    text_data.text = "Initial Camera Position:";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-70.0f, -19.0f);
+    text_data.data2.text = "Initial Camera Position:";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate Camera X Text
-    text_data.position = glm::vec2(-26.0f, -16.0f);
-    text_data.text = "Camera X:";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-26.0f, -16.0f);
+    text_data.data2.text = "Camera X:";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate Camera X Box
-    box_data.width = 40.0f;
-    box_data.centered = true;
-    box_data.position = glm::vec2(16.0f, -15.0f);
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data2.width = 40.0f;
+    box_data.data2.centered = true;
+    box_data.data1.position = glm::vec2(16.0f, -15.0f);
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(3).setDataPointer(&level_data->initial_camera_x);
 
     // Generate Camera Y Text
-    text_data.position = glm::vec2(-26.0f, -22.0f);
-    text_data.text = "Camera Y:";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-26.0f, -22.0f);
+    text_data.data2.text = "Camera Y:";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate Camera Y Box
-    box_data.position = glm::vec2(16.0f, -21.0f);
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(16.0f, -21.0f);
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(4).setDataPointer(&level_data->initial_camera_y);
 
     // Generate Chunk Elements
     genChunkLayoutElements(-32.0f, 5, text_data, box_data);
 
     // Generate the Global Variables Seperator
-    text_data.position = glm::vec2(-69.0f, -79.0f);
-    text_data.scale = 0.12f;
-    text_data.text = "----------------------------------------  Global Variables  ----------------------------------------";
-    text.push_back(GUI::TextObject(text_data));
+    text_data.data1.position = glm::vec2(-69.0f, -79.0f);
+    text_data.data2.scale = 2.88f;
+    text_data.data2.text = "----------------------------------------  Global Variables  ----------------------------------------";
+    text.push_back(Render::GUI::TextObject(text_data.data1, text_data.data2));
 
     // Generate the Scroll Bar
-    bar = GUI::VerticalScrollBar(74.0f, 26.0f, 2.0f, 69.0f, 115.0f, 0.0f);
+    bar = Render::GUI::VerticalScrollBar(74.0f, 26.0f, 2.0f, 69.0f, 115.0f, 0.0f, -1);
 
     // Store Dynamic Starts
     dynamic_text_start = 5;
@@ -1452,52 +1500,53 @@ void Editor::SceneController::genScriptMode()
 void Editor::SceneController::genLevelMode()
 {
     // Data Structures for Elements
-    GUI::TextData text_data;
-    GUI::BoxData box_data;
+    Render::GUI::TextDataBundle text_data;
+    Render::GUI::BoxDataBundle box_data;
 
     // Generate Set Default Box
-    box_data.width = 30.0f;
-    box_data.height = 7.0f;
-    box_data.zpos = -0.9f;
-    box_data.outline_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    box_data.background_color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
-    box_data.text_color = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
-    box_data.highlight_color = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
-    box_data.centered = true;
-    box_data.position = glm::vec2(54.0f, 17.0f);
-    box_data.mode = GUI::BOX_MODES::FUNCTION_BOX;
-    box_data.button_text = std::string("Set Default");
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data2.width = 30.0f;
+    box_data.data2.height = 7.0f;
+    box_data.data2.zpos = -0.9f;
+    box_data.data2.outline_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    box_data.data2.background_color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
+    box_data.data2.text_color = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
+    box_data.data2.highlight_color = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
+    box_data.data2.centered = true;
+    box_data.data1.position = glm::vec2(54.0f, 17.0f);
+    box_data.data2.mode = Render::GUI::BOX_MODES::FUNCTION_BOX;
+    box_data.data2.button_text = std::string("Set Default");
+    box_data.data1.is_static = true;
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(1).setFunctionPointer([&]()->void { setDefault(); });
 
     // Generate Load Level Box 
-    box_data.position = glm::vec2(54.0f, 7.0f);
-    box_data.button_text = std::string("Load Level");
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(54.0f, 7.0f);
+    box_data.data2.button_text = std::string("Load Level");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(2).setFunctionPointer([&]()->void { loadInstance(); });
 
     // Generate Add Level Box
-    box_data.position = glm::vec2(54.0f, -3.0f);
-    box_data.button_text = std::string("Add Level");
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(54.0f, -3.0f);
+    box_data.data2.button_text = std::string("Add Level");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(3).setFunctionPointer([this]()->void { addInstance(); });
 
     // Generate Create Level Box
-    box_data.position = glm::vec2(54.0f, -13.0f);
-    box_data.button_text = std::string("Create Level");
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(54.0f, -13.0f);
+    box_data.data2.button_text = std::string("Create Level");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(4).setFunctionPointer([this]()->void { generateNewLevel(); });
 
     // Generate Remove Level Box
-    box_data.position = glm::vec2(54.0f, -23.0f);
-    box_data.button_text = std::string("Remove Level");
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(54.0f, -23.0f);
+    box_data.data2.button_text = std::string("Remove Level");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(5).setFunctionPointer([this]()->void { removeInstance(); });
 
     // Generate Delete Level Box
-    box_data.position = glm::vec2(54.0f, -33.0f);
-    box_data.button_text = std::string("Delete Level");
-    boxes.push_back(GUI::Box(box_data));
+    box_data.data1.position = glm::vec2(54.0f, -33.0f);
+    box_data.data2.button_text = std::string("Delete Level");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
     boxes.at(6).setFunctionPointer([this]()->void { deleteInstance(); });
 
     // Generate the Level List
@@ -1510,7 +1559,56 @@ void Editor::SceneController::genLevelMode()
 
 void Editor::SceneController::genGUIMode()
 {
+    // Data Structures for Elements
+    Render::GUI::TextDataBundle text_data;
+    Render::GUI::BoxDataBundle box_data;
 
+    // Generate Load Level Box 
+    box_data.data2.width = 30.0f;
+    box_data.data2.height = 7.0f;
+    box_data.data2.zpos = -0.9f;
+    box_data.data2.outline_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    box_data.data2.background_color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
+    box_data.data2.text_color = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
+    box_data.data2.highlight_color = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
+    box_data.data2.centered = true;
+    box_data.data1.position = glm::vec2(54.0f, 17.0f);
+    box_data.data2.mode = Render::GUI::BOX_MODES::FUNCTION_BOX;
+    box_data.data2.button_text = std::string("Load GUI");
+    box_data.data1.is_static = true;
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
+    boxes.at(1).setFunctionPointer([&]()->void { loadInstance(); });
+
+    // Generate Add Level Box
+    box_data.data1.position = glm::vec2(54.0f, 7.0f);
+    box_data.data2.button_text = std::string("Add GUI");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
+    boxes.at(2).setFunctionPointer([this]()->void { addInstance(); });
+
+    // Generate Create Level Box
+    box_data.data1.position = glm::vec2(54.0f, -3.0f);
+    box_data.data2.button_text = std::string("Create GUI");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
+    boxes.at(3).setFunctionPointer([this]()->void { generateNewGUI(); });
+
+    // Generate Remove Level Box
+    box_data.data1.position = glm::vec2(54.0f, -13.0f);
+    box_data.data2.button_text = std::string("Remove GUI");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
+    boxes.at(4).setFunctionPointer([this]()->void { removeInstance(); });
+
+    // Generate Delete Level Box
+    box_data.data1.position = glm::vec2(54.0f, -23.0f);
+    box_data.data2.button_text = std::string("Delete GUI");
+    boxes.push_back(Render::GUI::Box(box_data.data1, box_data.data2));
+    boxes.at(5).setFunctionPointer([this]()->void { deleteInstance(); });
+
+    // Generate the Level List
+    genSelectionList(guis);
+
+    // Store Dynamic Starts
+    dynamic_text_start = 5;
+    dynamic_box_start = 6;
 }
 
 void Editor::SceneController::loadDefault()
@@ -1721,6 +1819,9 @@ void Editor::SceneController::startEditingMode()
             glBindVertexArray(0);
         }
 
+        // Update Master Element
+        master_element_dynamic.updateElement();
+
         // If Cursor Moved, Update Mouse Location
         if (!bar.updateElement() && (Global::cursor_Move || Global::LeftClick))
         {
@@ -1776,7 +1877,7 @@ void Editor::SceneController::startEditingMode()
     glUniform1i(Global::staticLocColor, 0);
 
     // In the Event a Box is Active, Deactivate It
-    for (GUI::Box& box_object : boxes)
+    for (Render::GUI::Box& box_object : boxes)
         box_object.updateElement();
 
     // Unbind Bind ScrollBar
@@ -1857,8 +1958,8 @@ void Editor::SceneController::generateNewGUI()
     // Generate the New GUI Data Struct
     INSTANCE_TYPES old_type = current_instance_type;
     current_instance_type = INSTANCE_TYPES::GUI;
-    GUI::GUIData* old_data = gui_data;
-    GUI::GUIData new_data;
+    Render::GUI::GUIData* old_data = gui_data;
+    Render::GUI::GUIData new_data;
     std::string* old_name = instance_name;
     std::string new_name = "New GUI";
     gui_data = &new_data;
@@ -1873,6 +1974,7 @@ void Editor::SceneController::generateNewGUI()
     // Bind the Success Lambda
     bool successfull = false;
     std::function success = [&]()->void { successfull = testValidGUI(backup); };
+    boxes.at(4).setFunctionPointer(success);
 
     // GUI Loop
     loopCreation(looping, successfull, backup);

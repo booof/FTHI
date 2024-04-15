@@ -81,6 +81,9 @@ namespace Render::Camera
 		// Occours Whenever the Camera is Moved
 		void updatePosition();
 
+		// Update the Position of the Mouse
+		void updateMousePosition();
+
 		// Only Use This Function While Debugging
 		void testForCringe();
 

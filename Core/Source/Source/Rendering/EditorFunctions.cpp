@@ -10,7 +10,7 @@
 #include "Class/Render/Editor/ObjectInfo.h"
 #include "Class/Render/GUI/SelectedText.h"
 
-void Source::Rendering::Editing::edit(Render::Objects::Level* level, Editor::Selector* selector, Editor::ObjectInfo* object_info)
+void Source::Rendering::Editing::edit(Render::Container* container, Editor::Selector* selector, Editor::ObjectInfo* object_info)
 {
 	// Update Debugger
 	debugger->update();
@@ -23,13 +23,13 @@ void Source::Rendering::Editing::edit(Render::Objects::Level* level, Editor::Sel
 
 	// Test if Engine is Paused
 	if (Global::paused)
-		Source::Listeners::smoothKeyCallbackEditorSimplified(*level->camera, nullptr, accelerationTimer);
+		Source::Listeners::smoothKeyCallbackEditorSimplified(*container->camera, nullptr, accelerationTimer);
 
 	else if (!Global::editor_options->Active)
 	{
 		// Perform Editor Key Callback
 		if (!selected_text->isActive())
-			Source::Listeners::SmoothKeyCallback_Editor(*level->camera, *selector, *level, accelerationTimer);
+			Source::Listeners::SmoothKeyCallback_Editor(*container->camera, *selector, *container, accelerationTimer);
 
 		// If Selector is Inactive, Perform Selecting
 		bool complex_selection = ((Global::Keys[GLFW_KEY_LEFT_CONTROL] || Global::Keys[GLFW_KEY_RIGHT_CONTROL])
@@ -37,7 +37,7 @@ void Source::Rendering::Editing::edit(Render::Objects::Level* level, Editor::Sel
 		if ((!selector->active && !selector->editing) || complex_selection)
 		{
 			// Test Selection
-			uint8_t result = level->testSelector(*selector, *object_info);
+			uint8_t result = container->testSelector(*selector, *object_info);
 
 			// If Selection Was Invalid and Complex Selection, Disable Left Click
 			if (result == 1 && complex_selection)
@@ -63,10 +63,10 @@ void Source::Rendering::Editing::edit(Render::Objects::Level* level, Editor::Sel
 	}
 }
 
-void Source::Rendering::Editing::renderEditor(Render::Objects::Level* level, Editor::Selector* selector, Editor::ObjectInfo* object_info)
+void Source::Rendering::Editing::renderEditor(Render::Container* container, Editor::Selector* selector, Editor::ObjectInfo* object_info)
 {
 	// Render Level Visualizers
-	level->drawVisualizers();
+	container->drawVisualizers();
 
 	// Test if Editor Options Should be Displayed
 	if (Global::editor_options->Active)

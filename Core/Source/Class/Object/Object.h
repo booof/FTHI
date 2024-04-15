@@ -35,7 +35,8 @@ namespace Object
 		PHYSICS,
 		ENTITY,
 		EFFECT,
-		GROUP
+		GROUP,
+		ELEMENT
 	};
 
 	// Enumerated Index for Header Counts
@@ -54,7 +55,8 @@ namespace Object
 		BEAM_COUNT,
 		PHYSICS_COUNT,
 		ENTITY_COUNT,
-		GROUP_COUNT
+		GROUP_COUNT,
+		ELEMENT_COUNT
 	};
 
 	// Definition for the Garbage Collection Structure
@@ -115,7 +117,7 @@ namespace Object
 #ifdef EDITOR
 
 		// Pointer to the Data Class
-		DataClass::Data_Object* data_object;
+		DataClass::Data_Object* data_object = nullptr;
 
 		// Editor Data
 		std::string name = "";           // The User Given Name to the Object for Easy Identification
@@ -161,6 +163,11 @@ namespace Object
 
 		// Return Pointer to Position
 		virtual glm::vec2* pointerToPosition() = 0;
+
+		// Generate Terrain Recursively for GUIs
+		// TODO: Add Seperation for Static and Dynamic VBOs to Accomplish Both at Once (Both VBOs Passed Through at Once)
+		// TODO: Add Override for Boxes and Similar Elements to Generate Vertices as Static Terrain
+		virtual void genTerrainRecursively(int& offset_static, int& offset_dynamic, int& instance, int& instance_index);
 
 #ifdef EDITOR
 

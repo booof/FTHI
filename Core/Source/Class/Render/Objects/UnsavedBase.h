@@ -4,6 +4,7 @@
 
 #include "Macros.h"
 #include "ExternalLibs.h"
+#include "Render\Container\Container.h"
 
 // This is a Base Class for All Unsaved Object Types.
 //
@@ -95,15 +96,6 @@ namespace Render::Objects
 		unsigned int object_count;
 		unsigned int byte_count;
 		unsigned int checksum;
-	};
-
-	// The Modes That Can Occour When Moving Child Objects
-	enum MOVE_WITH_PARENT : uint8_t
-	{
-		MOVE_ENABLED = 0,
-		MOVE_DISSABLED,
-		MOVE_SECONDARY_ONLY,
-		MOVE_SECONDARY_ONLY_NO_OFFSET
 	};
 
 	// Unsaved Base Object

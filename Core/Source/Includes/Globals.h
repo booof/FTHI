@@ -6,7 +6,7 @@
 #include "Macros.h"
 #include "Constants.h"
 
-namespace GUI
+namespace Render::GUI
 {
 	class Box;
 	class ScrollBar;
@@ -100,7 +100,7 @@ namespace Global
 	extern bool Keys[1024];
 
 	// The ScrollBar Object Used for Scrolling
-	extern GUI::ScrollBar* scroll_bar;
+	extern Render::GUI::ScrollBar* scroll_bar;
 
 	// Values of Current Screen Width and Height
 	extern unsigned int screenWidth;
@@ -152,6 +152,9 @@ namespace Global
 
 	// If True, Zoom Scale Changed
 	extern bool zoom;
+
+	// Set to True to Dissable Zoom Scaling
+	extern bool force_dissable_zoom;
 
 	// Pointer to Camera
 	extern Render::Camera::Camera* camera_pointer;
@@ -360,6 +363,8 @@ namespace Global
 	// Fonts
 	extern std::map<std::string, int> FontList;
 	extern std::map<GLchar, Struct::Character> Current_Font;
+	extern float font_ratio;
+	extern float font_offset_ratio;
 
 	// Audio Device
 	extern ALCdevice* audio_device;

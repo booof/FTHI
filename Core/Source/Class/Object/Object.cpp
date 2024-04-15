@@ -26,7 +26,8 @@ Object::Object::~Object()
 		delete[] children;
 
 	// Remove Self from DataObject List
-	data_object->removeObject(this);
+	if (data_object != nullptr)
+		data_object->removeObject(this);
 
 	// Mark Object is Dead
 	if (active_ptr != nullptr)
@@ -39,6 +40,16 @@ Object::Object::~Object()
 	}
 }
 
+void Object::Object::genTerrainRecursively(int& offset_static, int& offset_dynamic, int& instance, int& instance_index)
+{
+	// Current Implementation Does a Depth-First Search, Might Change to Breadth-First Search Later
+	// BFS would Require Custum Queue Data Structure
+
+	// Iterate Through Children to Generate Possible Terrain
+	for (int i = 0; i < children_size; i++)
+		children[i]->genTerrainRecursively(offset_static, offset_dynamic, instance, instance_index);
+}
+
 bool Object::Object::select(Editor::Selector& selector, Editor::ObjectInfo& object_info, bool add_children)
 {
 	// Determine the Offset for the Highlighter
@@ -46,8 +57,12 @@ bool Object::Object::select(Editor::Selector& selector, Editor::ObjectInfo& obje
 	Object* current_parent = parent;
 	while (current_parent != nullptr)
 	{
+		// If Parent is a Master Element, Add Offset
+		if (current_parent->data_object->getObjectIdentifier()[0] == ELEMENT && current_parent->data_object->getObjectIdentifier()[1] == Render::GUI::MASTER)
+			highlight_offset += static_cast<DataClass::Data_MasterElement*>(current_parent->data_object)->getScrollOffsets();
+
 		// If Parent is Complex, Add Position To Offset
-		if ((current_parent->data_object->getGroup() != nullptr && current_parent->data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+		else if ((current_parent->data_object->getGroup() != nullptr && current_parent->data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
 			|| (current_parent->group_object != nullptr && current_parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX))
 		{
 			// Provide Offset
@@ -207,10 +222,10 @@ void DataClass::Data_Object::updateSelectedPositionsHelper(float deltaX, float d
 	{
 		for (DataClass::Data_Object* child : group_object->getChildren())
 		{
-			if (child->move_with_parent == Render::Objects::MOVE_WITH_PARENT::MOVE_ENABLED)
+			if (child->move_with_parent == Render::MOVE_WITH_PARENT::MOVE_ENABLED)
 				child->updateSelectedPosition(deltaX, deltaY, update_real);
 			else
-				child->move_with_parent = Render::Objects::MOVE_WITH_PARENT::MOVE_ENABLED;
+				child->move_with_parent = Render::MOVE_WITH_PARENT::MOVE_ENABLED;
 		}
 	}
 
@@ -304,7 +319,7 @@ void DataClass::Data_Object::addChild(DataClass::Data_Object* data_object)
 	if (group_object == nullptr)
 	{
 		Render::Objects::UnsavedGroup* new_unsaved_group = new Render::Objects::UnsavedGroup(object_identifier[3]);
-		new_unsaved_group->setParent(this, Render::Objects::MOVE_WITH_PARENT::MOVE_DISSABLED);
+		new_unsaved_group->setParent(this, Render::MOVE_WITH_PARENT::MOVE_DISSABLED);
 		group_object = new_unsaved_group;
 	}
 
@@ -312,13 +327,13 @@ void DataClass::Data_Object::addChild(DataClass::Data_Object* data_object)
 	group_object->addChild(data_object);
 }
 
-void DataClass::Data_Object::addChildViaSelection(DataClass::Data_Object* data_object, Render::Objects::MOVE_WITH_PARENT disable_move)
+void DataClass::Data_Object::addChildViaSelection(DataClass::Data_Object* data_object, Render::MOVE_WITH_PARENT disable_move)
 {
 	// If Group Has Not Been Initialized, Allocate Memory and Create Group
 	if (group_object == nullptr)
 	{
 		Render::Objects::UnsavedGroup* new_unsaved_group = new Render::Objects::UnsavedGroup(object_identifier[3]);
-		new_unsaved_group->setParent(this, Render::Objects::MOVE_WITH_PARENT::MOVE_ENABLED);
+		new_unsaved_group->setParent(this, Render::MOVE_WITH_PARENT::MOVE_ENABLED);
 		group_object = new_unsaved_group;
 	}
 
@@ -394,17 +409,17 @@ DataClass::Data_Object* DataClass::Data_Object::getParent()
 	return parent;
 }
 
-void DataClass::Data_Object::disableMoveWithParent(Render::Objects::MOVE_WITH_PARENT mode)
+void DataClass::Data_Object::disableMoveWithParent(Render::MOVE_WITH_PARENT mode)
 {
 	move_with_parent = mode;
 }
 
 void DataClass::Data_Object::enableMoveWithParent()
 {
-	move_with_parent = Render::Objects::MOVE_WITH_PARENT::MOVE_ENABLED;
+	move_with_parent = Render::MOVE_WITH_PARENT::MOVE_ENABLED;
 }
 
-Render::Objects::MOVE_WITH_PARENT DataClass::Data_Object::getMoveWithParent()
+Render::MOVE_WITH_PARENT DataClass::Data_Object::getMoveWithParent()
 {
 	return move_with_parent;
 }
@@ -491,7 +506,7 @@ DataClass::Data_Object* DataClass::Data_Object::makeCopySelected(Editor::Selecto
 	if (group_object != nullptr && group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
 	{
 		// Set Parent for Objects In the Group
-		static_cast<Render::Objects::UnsavedGroup*>(group_object)->setParent(selected_copy, Render::Objects::MOVE_WITH_PARENT::MOVE_DISSABLED);
+		static_cast<Render::Objects::UnsavedGroup*>(group_object)->setParent(selected_copy, Render::MOVE_WITH_PARENT::MOVE_DISSABLED);
 
 		// For Any Group Objects Currently Selected, Also Update Their Parents
 		selector.updateParentofSelected(selected_copy);

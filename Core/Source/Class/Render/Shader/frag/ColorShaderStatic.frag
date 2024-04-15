@@ -14,4 +14,6 @@ void main()
 {
 	//FragColor = brightness + fs_in.Color;
 	FragColor = fs_in.Color;
+	if (FragColor.a < 0.1)
+		discard;
 }

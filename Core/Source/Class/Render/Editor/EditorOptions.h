@@ -190,7 +190,7 @@ namespace Editor
 		float y_offset = 0.0f;
 
 		// Scrollbar
-		GUI::VerticalScrollBar bar;
+		Render::GUI::VerticalScrollBar bar;
 
 		// Offset of Scroll Bar
 		float bar_offset = 0.0f;
@@ -216,17 +216,17 @@ namespace Editor
 		std::function<void()> text_renderers[4] = { [this]()->void {this->Render_Common_Text(); }, [this]()->void {this->Render_Object_Text(); }, [this]()->void {this->Render_Function_Text(); }, [this]()->void {this->Render_Extra_Text(); } };
 
 		// Arrays of Objects
-		GUI::Box* box_array;
-		GUI::ToggleGroup* group_array;
+		Render::GUI::Box* box_array;
+		Render::GUI::ToggleGroup* group_array;
 
 		// Size of Object Arrays
 		uint8_t box_count;
 		uint8_t group_count;
 
 		// Test Horizontal Scroll Bar
-		GUI::HorizontalScrollBar test_bar;
-		GUI::HorizontalScrollBar test_bar2;
-		GUI::MasterElement master;
+		Render::GUI::HorizontalScrollBar test_bar;
+		Render::GUI::HorizontalScrollBar test_bar2;
+		Render::GUI::MasterElement master;
 	};
 }
 

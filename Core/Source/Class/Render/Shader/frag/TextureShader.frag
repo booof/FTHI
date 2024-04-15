@@ -125,6 +125,8 @@ void main()
 
 	// Calculate Colors
 	vec4 color_diffuse =  (texture(material.texture1, fs_in.TexPos) * int(not_animated)) + (texture(material.texture2, vec3(fs_in.TexPos, material.texture_layer - 1)) * int(animated));
+	if (color_diffuse.a < 0.1)
+		discard;
 	vec4 color_ambient = color_diffuse * material.ambient;
 	vec4 color_specular = texture(material.texture3, fs_in.TexPos);//color_diffuse;
 

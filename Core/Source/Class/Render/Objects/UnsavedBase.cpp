@@ -261,7 +261,17 @@ DataClass::Data_Object* Render::Objects::UnsavedBase::lambdaDataObject(uint8_t o
 		return new DataClass::Data_GroupObject();
 	};
 
-	std::function<DataClass::Data_Object* ()> objects[7] = { readMasks, readTerrain, readLights, readPhysics, readEntities, readEffects, readGroups };
+	auto readElements = [&object_identifier]()->DataClass::Data_Object* {
+		switch (object_identifier[1])
+		{
+		case ((int)Render::GUI::MASTER): return new DataClass::Data_MasterElement(object_identifier[3]);
+		case ((int)Render::GUI::TEXT): return new DataClass::Data_TextElement(object_identifier[3]);
+		case ((int)Render::GUI::BOX): return new DataClass::Data_BoxElement(object_identifier[3]);
+		case ((int)Render::GUI::SCROLL_BAR): return new DataClass::Data_ScrollBarElement(object_identifier[2], object_identifier[3]);
+		}
+	};
+
+	std::function<DataClass::Data_Object* ()> objects[8] = { readMasks, readTerrain, readLights, readPhysics, readEntities, readEffects, readGroups, readElements };
 	return objects[object_identifier[0]]();
 
 #else

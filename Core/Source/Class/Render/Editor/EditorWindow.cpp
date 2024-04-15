@@ -165,11 +165,15 @@ void Editor::EditorWindow::initializeWindow()
 	}
 	*/
 
+	Render::GUI::Element** test = new Render::GUI::Element*[1];
+	test[0] = &bar1;
+
 	// Generate the Master Element
-	GUI::DefaultElements* default_elements = new GUI::DefaultElements();
+	Render::GUI::DefaultElements* default_elements = new Render::GUI::DefaultElements();
 	default_elements->vertical_bar = &bar1;
 	default_elements->default_bar = &bar1;
-	master = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 100.0f, default_elements);
+	master = Render::GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 100.0f, default_elements);
+	master.storeElements(test, 1);
 }
 
 void Editor::EditorWindow::genBackground()
@@ -231,7 +235,7 @@ void Editor::EditorWindow::genBackground()
 	glBindVertexArray(0);
 
 	// Create Scroll Bars
-	bar1 = GUI::VerticalScrollBar();
+	bar1 = Render::GUI::VerticalScrollBar();
 }
 
 void Editor::EditorWindow::genSegregators()
@@ -469,8 +473,8 @@ void Editor::EditorWindow::resetBoxes(uint8_t new_box_size, uint8_t new_text_siz
 	texts_size = new_text_size;
 
 	// Allocate Memory for Array
-	boxes = new GUI::Box*[boxes_size];
-	texts = new GUI::TextObject*[texts_size];
+	boxes = new Render::GUI::Box*[boxes_size];
+	texts = new Render::GUI::TextObject*[texts_size];
 }
 
 void Editor::EditorWindow::genBoxesCommon(uint8_t& box_offset, uint8_t& text_offset, float* posX, float* posY, DataClass::Data_Object* data_object)
@@ -482,89 +486,89 @@ void Editor::EditorWindow::genBoxesCommon(uint8_t& box_offset, uint8_t& text_off
 	temp_box_data.centered = true;
 
 	// Clamp Box
-	temp_box_data.position = glm::vec2(32.0f * scale, windowTop - 5.0f);
-	temp_box_data.button_text = GUI::AdvancedString("");
-	temp_box_data.mode = GUI::TOGGLE_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_element_data.position = glm::vec2(32.0f * scale, windowTop - 5.0f);
+	temp_box_data.button_text = Render::GUI::AdvancedString("");
+	temp_box_data.mode = Render::GUI::TOGGLE_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_object->getEditorData().clamp);
 	box_offset++;
 
 	// Clamp Text
-	temp_text_data.position = glm::vec2(15.0f * scale, windowTop - 6.0);
+	temp_element_data.position = glm::vec2(15.0f * scale, windowTop - 6.0);
 	temp_text_data.text = "Clamp:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Lock Box
-	temp_box_data.position = glm::vec2(32.0f * scale, windowTop - 9.0f);
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_element_data.position = glm::vec2(32.0f * scale, windowTop - 10.0f);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_object->getEditorData().lock);
 	box_offset++;
 
 	// Lock Text
-	temp_text_data.position = glm::vec2(15.0f * scale, windowTop - 10.0f);
+	temp_element_data.position = glm::vec2(15.0f * scale, windowTop - 11.0f);
 	temp_text_data.text = "Lock:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// X-Pos Box
 	temp_box_data.width = 45.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-18.0f * scale, windowTop - 32.0f);
+	temp_element_data.position = glm::vec2(-18.0f * scale, windowTop - 32.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*posX));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(posX);
 	box_offset++;
 
 	// X-Pos Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 33.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, windowTop - 33.0f);
 	temp_text_data.text = "xPos:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Y-Pos Box
-	temp_box_data.position = glm::vec2(-18.0f * scale, windowTop - 39.0f);
+	temp_element_data.position = glm::vec2(-18.0f * scale, windowTop - 39.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*posY));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(posY);
 	box_offset++;
 
 	// Y-Pos Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 40.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, windowTop - 40.0f);
 	temp_text_data.text = "yPos:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Name Box
 	temp_box_data.width = 70.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-2.0f * scale, windowTop - 46.0f);
+	temp_element_data.position = glm::vec2(-2.0f * scale, windowTop - 46.0f);
 	temp_box_data.button_text = data_object->getName();
-	temp_box_data.mode = GUI::ALPHABETICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ALPHABETICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_object->getName());
 	box_offset++;
 
 	// Name Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 47.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, windowTop - 47.0f);
 	temp_text_data.text = "Name:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Script Box
-	temp_box_data.position = glm::vec2(-2.0f * scale, windowTop - 53.0f);
+	temp_element_data.position = glm::vec2(-2.0f * scale, windowTop - 53.0f);
 	temp_box_data.button_text = script_path;
-	temp_box_data.mode = GUI::GENERAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::GENERAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&script_path);
 	update_script = box_offset;
 	box_offset++;
 
 	// Script Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 54.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, windowTop - 54.0f);
 	temp_text_data.text = "Script:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -576,17 +580,17 @@ void Editor::EditorWindow::genBoxesHorizontalLine(uint8_t& box_offset, uint8_t& 
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-20.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_horizontal_line.getHorizontalLineData().width));
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_horizontal_line.getHorizontalLineData().width);
 	box_offset++;
 
 	// Width Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Width:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -598,30 +602,30 @@ void Editor::EditorWindow::genBoxesSlant(uint8_t& box_offset, uint8_t& text_offs
 	// X-Pos Box
 	temp_box_data.width = 45.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-16.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_slant.getSlantData().position2.x));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_slant.getSlantData().position2.x);
 	box_offset++;
 
 	// X-Pos Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "xPos2:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Y-Pos Box
-	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-16.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_slant.getSlantData().position2.y));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_slant.getSlantData().position2.y);
 	box_offset++;
 
 	// Y-Pos Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "yPos2:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -633,30 +637,30 @@ void Editor::EditorWindow::genBoxesSlope(uint8_t& box_offset, uint8_t& text_offs
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-20.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_slope.getSlopeData().width));
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_slope.getSlopeData().width);
 	box_offset++;
 
 	// Width Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Width:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Height Box
-	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-20.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_slope.getSlopeData().height));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_slope.getSlopeData().height);
 	box_offset++;
 
 	// Width Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "Height:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -674,10 +678,10 @@ void Editor::EditorWindow::genBoxesPlatform(uint8_t& box_offset, uint8_t& text_o
 	// Platform Box
 	temp_box_data.width = 20.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-42.0f * scale, height_offset);
-	temp_box_data.button_text = GUI::AdvancedString("Platform?");
-	temp_box_data.mode = GUI::TOGGLE_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_element_data.position = glm::vec2(-42.0f * scale, height_offset);
+	temp_box_data.button_text = Render::GUI::AdvancedString("Platform?");
+	temp_box_data.mode = Render::GUI::TOGGLE_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(floor_mask_platform);
 	box_offset++;
 }
@@ -690,17 +694,17 @@ void Editor::EditorWindow::genBoxesVerticalLine(uint8_t& box_offset, uint8_t& te
 	// Height Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-20.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_vertical_line.getVerticalLineData().height));
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_vertical_line.getVerticalLineData().height);
 	box_offset++;
 
 	// Height Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Height:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -712,47 +716,47 @@ void Editor::EditorWindow::genBoxesCurve(uint8_t& box_offset, uint8_t& text_offs
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-20.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_curve.getCurveData().width));
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_curve.getCurveData().width);
 	box_offset++;
 
 	// Width Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Width:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Height Box
-	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-20.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_curve.getCurveData().height));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_curve.getCurveData().height);
 	box_offset++;
 
 	// Width Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "Height:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
 void Editor::EditorWindow::genBoxesMaterial(uint8_t& box_offset, uint8_t& text_offset, float height_offset)
 {
 	// Physics Material Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1);
 	temp_text_data.text = "Physics Material";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Physics Material Box
 	temp_box_data.width = 60.0f;
-	temp_box_data.position = glm::vec2(-20.0f * scale, height_offset - 6.0f);
+	temp_element_data.position = glm::vec2(-20.0f * scale, height_offset - 6.0f);
 	temp_box_data.button_text = texture_path;
-	temp_box_data.mode = GUI::ALPHABETICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ALPHABETICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&physics_material_name);
 	box_offset++;
 }
@@ -765,30 +769,30 @@ void Editor::EditorWindow::genBoxesTrigger(uint8_t& box_offset, uint8_t& text_of
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_trigger.getTriggerData().width));
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_trigger.getTriggerData().width);
 	box_offset++;
 
 	// Width Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Width:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Height Box
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_trigger.getTriggerData().height));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_trigger.getTriggerData().height);
 	box_offset++;
 
 	// Width Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "Height:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -811,96 +815,96 @@ void Editor::EditorWindow::genBoxesObject(uint8_t& box_offset, uint8_t& text_off
 	assignColorWheel(&wheel, box_offset, text_offset, wheel_color, height_offset);
 
 	// Normals Text
-	temp_text_data.position = glm::vec2(-50.0f * scale, height_offset - 25.0f);
+	temp_element_data.position = glm::vec2(-50.0f * scale, height_offset - 25.0f);
 	temp_text_data.text = "Normals";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Normal X Box
 	temp_box_data.width = 20.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-35.0f * scale, height_offset - 30.0f);
+	temp_element_data.position = glm::vec2(-35.0f * scale, height_offset - 30.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(object_data.normals.x));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&object_data.normals.x);
 	box_offset++;
 
 	// Normal X Text
-	temp_text_data.position = glm::vec2(-50.0f * scale, height_offset - 31.0f);
+	temp_element_data.position = glm::vec2(-50.0f * scale, height_offset - 31.0f);
 	temp_text_data.text = "X:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Normal Y Box
-	temp_box_data.position.x = -8.0f * scale;
+	temp_element_data.position.x = -8.0f * scale;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(object_data.normals.y));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&object_data.normals.y);
 	box_offset++;
 
 	// Normal Y Text
-	temp_text_data.position.x = -23.0f * scale;
+	temp_element_data.position.x = -23.0f * scale;
 	temp_text_data.text = "Y:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Normal Z Box
-	temp_box_data.position.x = 19.0f * scale;
+	temp_element_data.position.x = 19.0f * scale;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(object_data.normals.z));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&object_data.normals.z);
 	box_offset++;
 
 	// Normal Z Text
-	temp_text_data.position.x = 4.0f * scale;
+	temp_element_data.position.x = 4.0f * scale;
 	temp_text_data.text = "Z:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Texture Text
-	temp_text_data.position = glm::vec2(-50.0f * scale, height_offset - 40.0f);
+	temp_element_data.position = glm::vec2(-50.0f * scale, height_offset - 40.0f);
 	temp_text_data.text = "Texture";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Texture Box
 	temp_box_data.width = 60.0f;
-	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset - 45.0f);
+	temp_element_data.position = glm::vec2(-15.0f * scale, height_offset - 45.0f);
 	temp_box_data.button_text = texture_path;
-	temp_box_data.mode = GUI::GENERAL_TEXT_BOX;
+	temp_box_data.mode = Render::GUI::GENERAL_TEXT_BOX;
 	temp_box_data.text_color = glm::vec4(0.88f, 0.42f, 0.0f, 1.0f);
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&texture_path);
 	box_offset++;
 
 	// Material Text
-	temp_text_data.position.y = height_offset - 55.0f;
+	temp_element_data.position.y = height_offset - 55.0f;
 	temp_text_data.text = "Material";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Material Box
-	temp_box_data.position.y = height_offset - 60.0f;
+	temp_element_data.position.y = height_offset - 60.0f;
 	temp_box_data.button_text = material_path;
 	temp_box_data.text_color = glm::vec4(0.62f, 0.13f, 0.49f, 1.0f);
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&material_path);
 	box_offset++;
 
 	// Z-Percent Text
-	temp_text_data.position.y = height_offset - 70.0f;
+	temp_element_data.position.y = height_offset - 70.0f;
 	temp_text_data.text = "Z-Percent";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Z-Percent Box
 	temp_box_data.width = 20.0f;
-	temp_box_data.position = glm::vec2(-35.0f * scale, height_offset - 75.0f);
+	temp_element_data.position = glm::vec2(-35.0f * scale, height_offset - 75.0f);
 	temp_box_data.button_text = std::to_string(object_data.zpos);
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
 	temp_box_data.text_color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&object_data.zpos);
 	box_offset++;
 }
@@ -913,30 +917,30 @@ void Editor::EditorWindow::genBoxesRectangle(uint8_t& box_offset, uint8_t& text_
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*rectangle_data.pointerToWidth()));
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(rectangle_data.pointerToWidth());
 	box_offset++;
 
 	// Width Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Width:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Height Box
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*rectangle_data.pointerToHeight()));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(rectangle_data.pointerToHeight());
 	box_offset++;
 
 	// Height Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "Height:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -948,57 +952,57 @@ void Editor::EditorWindow::genBoxesTrapezoid(uint8_t& box_offset, uint8_t& text_
 	// Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*trapezoid_data.pointerToWidth()));
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(trapezoid_data.pointerToWidth());
 	box_offset++;
 
 	// Width Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Width:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Height Box
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*trapezoid_data.pointerToHeight()));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(trapezoid_data.pointerToHeight());
 	box_offset++;
 
 	// Height Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "Height:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Width Offset Box
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset - 14.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 14.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*trapezoid_data.pointerToWidthOffset()));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(trapezoid_data.pointerToWidthOffset());
 	box_offset++;
 
 	// Width Offset Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
 	temp_text_data.text = "Width Offset:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Height Offset Box
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset - 21.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 21.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*trapezoid_data.pointerToHeightOffset()));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(trapezoid_data.pointerToHeightOffset());
 	box_offset++;
 
 	// Height Offset Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 22.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 22.0f);
 	temp_text_data.text = "Height Offset:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -1010,56 +1014,56 @@ void Editor::EditorWindow::genBoxesTriangle(uint8_t& box_offset, uint8_t& text_o
 	// xPos 2 Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(triangle_data.pointerToSecondPosition()->x));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&triangle_data.pointerToSecondPosition()->x);
 	box_offset++;
 
 	// xPos 2 Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "xPos 2:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// yPos 2 Box
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(triangle_data.pointerToSecondPosition()->y));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&triangle_data.pointerToSecondPosition()->y);
 	box_offset++;
 
 	// yPos 2 Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "yPos 2:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// xPos 3 Box
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset - 14.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 14.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(triangle_data.pointerToThirdPosition()->x));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&triangle_data.pointerToThirdPosition()->x);
 	box_offset++;
 
 	// xPos 3 Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
 	temp_text_data.text = "xPos 3:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// yPos 3 Box
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset - 21.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 21.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(triangle_data.pointerToThirdPosition()->y));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&triangle_data.pointerToThirdPosition()->y);
 	box_offset++;
 
 	// yPos 3 Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 22.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 22.0f);
 	temp_text_data.text = "yPos 3:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -1071,17 +1075,17 @@ void Editor::EditorWindow::genBoxesCircle(uint8_t& box_offset, uint8_t& text_off
 	// Radius Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*circle_data.pointerToRadius()));
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(circle_data.pointerToRadius());
 	box_offset++;
 
 	// Radius Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Radius:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -1093,49 +1097,49 @@ void Editor::EditorWindow::genBoxesPolygon(uint8_t& box_offset, uint8_t& text_of
 	// Radius Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*polygon_data.pointerToRadius()));
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(polygon_data.pointerToRadius());
 	box_offset++;
 
 	// Radius Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Radius:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Offset Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*polygon_data.pointerToAngleOffset()));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(polygon_data.pointerToAngleOffset());
 	box_offset++;
 
 	// Offset Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "Offset:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Number of Sides Box
 	temp_box_data.width = 12.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset - 14.0f);
+	temp_element_data.position = glm::vec2(-16.0f * scale, height_offset - 14.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(*polygon_data.pointerToNumberOfSides()));
-	temp_box_data.mode = GUI::ABSOLUTE_INTEGER_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_INTEGER_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(polygon_data.pointerToNumberOfSides());
 	box_offset++;
 
 	// Number of Sides Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
 	temp_text_data.text = "Number of Sides:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -1148,35 +1152,35 @@ void Editor::EditorWindow::genBoxesLight(uint8_t& box_offset, uint8_t& text_offs
 	light_active = true;
 
 	// Ambient Text
-	temp_text_data.position = glm::vec2(-50.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-50.0f * scale, height_offset);
 	temp_text_data.text = "Ambient";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Diffuse Text
-	temp_text_data.position.y = height_offset - 37.0f;
+	temp_element_data.position.y = height_offset - 37.0f;
 	temp_text_data.text = "Diffuse";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Ambient Text
-	temp_text_data.position.y = height_offset - 74.0f;
+	temp_element_data.position.y = height_offset - 74.0f;
 	temp_text_data.text = "Specular";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Intensity Text
-	temp_text_data.position.y = height_offset - 111.0f;
+	temp_element_data.position.y = height_offset - 111.0f;
 	temp_text_data.text = "Intensity";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Intensity Box
 	temp_box_data.width = 20.0f;
-	temp_box_data.position = glm::vec2(-35.0f * scale, height_offset - 116.0f);
+	temp_element_data.position = glm::vec2(-35.0f * scale, height_offset - 116.0f);
 	temp_box_data.button_text = std::to_string(light_data.intensity);
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&light_data.intensity);
 	box_offset++;
 
@@ -1215,31 +1219,31 @@ void Editor::EditorWindow::genBoxesDirectional(uint8_t& box_offset, uint8_t& tex
 	DataClass::Data_Directional& data_directional = *static_cast<DataClass::Data_Directional*>(data_object);
 
 	// X-Pos Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "xPos2:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// X-Pos Box
 	temp_box_data.width = 45.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-16.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_directional.getDirectionalData().position2.x));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_directional.getDirectionalData().position2.x);
 	box_offset++;
 
 	// Y-Pos Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "yPos2:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Y-Pos Box
-	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-16.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_directional.getDirectionalData().position2.y));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_directional.getDirectionalData().position2.y);
 	box_offset++;
 }
@@ -1250,31 +1254,31 @@ void Editor::EditorWindow::genBoxesPoint(uint8_t& box_offset, uint8_t& text_offs
 	DataClass::Data_Point& data_point = *static_cast<DataClass::Data_Point*>(data_object);
 
 	// Linear Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Linear:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Linear Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-15.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_point.getPointData().linear));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_point.getPointData().linear);
 	box_offset++;
 
 	// Quadratic Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "Quadratic:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Quadratic Box
-	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-15.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_point.getPointData().quadratic));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_point.getPointData().quadratic);
 	box_offset++;
 }
@@ -1285,108 +1289,108 @@ void Editor::EditorWindow::genBoxesSpot(uint8_t& box_offset, uint8_t& text_offse
 	DataClass::Data_Spot& data_spot = *static_cast<DataClass::Data_Spot*>(data_object);
 
 	// Linear Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Linear:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Linear Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-15.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().linear));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().linear);
 	box_offset++;
 
 	// Quadratic Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "Quadratic:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Quadratic Box
-	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-15.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().quadratic));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().quadratic);
 	box_offset++;
 
 	// Direction Text
-	temp_text_data.position = glm::vec2(-50.0f * scale, height_offset - 14.0f);
+	temp_element_data.position = glm::vec2(-50.0f * scale, height_offset - 14.0f);
 	temp_text_data.text = "Direction";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Direction X Text
-	temp_text_data.position = glm::vec2(-50.0f * scale, height_offset - 20.0f);
+	temp_element_data.position = glm::vec2(-50.0f * scale, height_offset - 20.0f);
 	temp_text_data.text = "X:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Direction X Box
 	temp_box_data.width = 20.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-35.0f * scale, height_offset - 19.0f);
+	temp_element_data.position = glm::vec2(-35.0f * scale, height_offset - 19.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().direction.x));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().direction.x);
 	box_offset++;
 
 	// Direction Y Text
-	temp_text_data.position.x = -23.0f * scale;
+	temp_element_data.position.x = -23.0f * scale;
 	temp_text_data.text = "Y:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Direction Y Box
-	temp_box_data.position.x = -8.0f * scale;
+	temp_element_data.position.x = -8.0f * scale;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().direction.y));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().direction.y);
 	box_offset++;
 
 	// Direction Z Text
-	temp_text_data.position.x = 4.0f * scale;
+	temp_element_data.position.x = 4.0f * scale;
 	temp_text_data.text = "Z:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Direction Z Box
-	temp_box_data.position.x = 19.0f * scale;
+	temp_element_data.position.x = 19.0f * scale;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().direction.z));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().direction.z);
 	box_offset++;
 	
 	// Angle1 Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 28.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 28.0f);
 	temp_text_data.text = "Angle1:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Angle1 Box
 	temp_box_data.width = 45.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset - 27.0f);
+	temp_element_data.position = glm::vec2(-16.0f * scale, height_offset - 27.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().angle1));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().angle1);
 	box_offset++;
 
 	// Angle2 Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 35.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 35.0f);
 	temp_text_data.text = "Angle2:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Angle2 Box
-	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset - 34.0f);
+	temp_element_data.position = glm::vec2(-16.0f * scale, height_offset - 34.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_spot.getSpotData().angle2));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_spot.getSpotData().angle2);
 	box_offset++;
 }
@@ -1397,60 +1401,60 @@ void Editor::EditorWindow::genBoxesBeam(uint8_t& box_offset, uint8_t& text_offse
 	DataClass::Data_Beam& data_beam = *static_cast<DataClass::Data_Beam*>(data_object);
 
 	// X-Pos Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "xPos2:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// X-Pos Box
 	temp_box_data.width = 45.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-16.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_beam.getBeamData().position2.x));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_beam.getBeamData().position2.x);
 	box_offset++;
 
 	// Y-Pos Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "yPos2:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Y-Pos Box
-	temp_box_data.position = glm::vec2(-16.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-16.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_beam.getBeamData().position2.y));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_beam.getBeamData().position2.y);
 	box_offset++;
 
 	// Linear Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
 	temp_text_data.text = "Linear:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Linear Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset - 14.0f);
+	temp_element_data.position = glm::vec2(-15.0f * scale, height_offset - 14.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_beam.getBeamData().linear));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_beam.getBeamData().linear);
 	box_offset++;
 
 	// Quadratic Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 22.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 22.0f);
 	temp_text_data.text = "Quadratic:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Quadratic Box
-	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset - 21.0f);
+	temp_element_data.position = glm::vec2(-15.0f * scale, height_offset - 21.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_beam.getBeamData().quadratic));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_beam.getBeamData().quadratic);
 	box_offset++;
 }
@@ -1463,106 +1467,106 @@ void Editor::EditorWindow::genBoxesRigidBody(uint8_t& box_offset, uint8_t& text_
 	// Mass Box
 	temp_box_data.width = 25.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-26.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-26.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_rigid_body.getRigidData().mass));
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().mass);
 	box_offset++;
 
 	// Mass Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Mass:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Health Box
-	temp_box_data.position = glm::vec2(16.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(16.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_rigid_body.getRigidData().max_health));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().max_health);
 	box_offset++;
 
 	// Health Text
-	temp_text_data.position = glm::vec2(-10.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Health:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Center of Gravity Text
-	temp_text_data.position = glm::vec2(-49.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-49.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "Center of Gravity";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Center of Gravity X Box
-	temp_box_data.position = glm::vec2(-26.0f * scale, height_offset - 13.0f);
+	temp_element_data.position = glm::vec2(-26.0f * scale, height_offset - 13.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_rigid_body.getRigidData().center_of_gravity.x));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().center_of_gravity.x);
 	box_offset++;
 
 	// Center of Gravity X Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 14.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 14.0f);
 	temp_text_data.text = " X:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Center of Gravity Y Box
-	temp_box_data.position = glm::vec2(16.0f * scale, height_offset - 13.0f);
+	temp_element_data.position = glm::vec2(16.0f * scale, height_offset - 13.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_rigid_body.getRigidData().center_of_gravity.y));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().center_of_gravity.y);
 	box_offset++;
 
 	// Center of Gravity Y Text
-	temp_text_data.position = glm::vec2(-10.0f * scale, height_offset - 14.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 14.0f);
 	temp_text_data.text = " Y:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Offset Box
-	temp_box_data.position = glm::vec2(-26.0f * scale, height_offset - 20.0f);
+	temp_element_data.position = glm::vec2(-26.0f * scale, height_offset - 20.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_rigid_body.getRigidData().initial_rotation));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().initial_rotation);
 	box_offset++;
 
 	// Offset Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 21.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 21.0f);
 	temp_text_data.text = "Offset:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Fluid Box
 	temp_box_data.width = 5.0f * scale;
-	temp_box_data.position = glm::vec2(5.0f * scale, height_offset - 20.0f);
-	temp_box_data.button_text = GUI::AdvancedString("");
-	temp_box_data.mode = GUI::TOGGLE_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_element_data.position = glm::vec2(5.0f * scale, height_offset - 20.0f);
+	temp_box_data.button_text = Render::GUI::AdvancedString("");
+	temp_box_data.mode = Render::GUI::TOGGLE_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_rigid_body.getRigidData().fluid);
 	box_offset++;
 
 	// Fluid Text
-	temp_text_data.position = glm::vec2(-10.0f * scale, height_offset - 21.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 21.0f);
 	temp_text_data.text = "Fluid:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Physics Material Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 28.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 28.0f);
 	temp_text_data.text = "Physics Material";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Physics Material Box
 	temp_box_data.width = 60.0f;
-	temp_box_data.position = glm::vec2(-15.0f * scale, height_offset - 33.0f);
+	temp_element_data.position = glm::vec2(-15.0f * scale, height_offset - 33.0f);
 	temp_box_data.button_text = texture_path;
-	temp_box_data.mode = GUI::ALPHABETICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ALPHABETICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&physics_material_name);
 	box_offset++;
 }
@@ -1573,28 +1577,28 @@ void Editor::EditorWindow::genBoxesSpringMass(uint8_t& box_offset, uint8_t& text
 	DataClass::Data_SpringMass& data_spring_mass = *static_cast<DataClass::Data_SpringMass*>(data_object);
 
 	// Generate File Path Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "File:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Generate File Path Box
 	temp_box_data.width = 70.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-2.0f * scale, height_offset);
 	temp_box_data.button_text = data_spring_mass.getFile();
-	temp_box_data.mode = GUI::GENERAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::GENERAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_spring_mass.getFile());
 	update_script = box_offset;
 	box_offset++;
 
 	// Generate Generate New Component Box
 	temp_box_data.width = 50.0f;
-	temp_box_data.position = glm::vec2(0.0f, height_offset - 7.0f);
-	temp_box_data.button_text = GUI::AdvancedString("Generate Object");
-	temp_box_data.mode = GUI::FUNCTION_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_element_data.position = glm::vec2(0.0f, height_offset - 7.0f);
+	temp_box_data.button_text = Render::GUI::AdvancedString("Generate Object");
+	temp_box_data.mode = Render::GUI::FUNCTION_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setFunctionPointer([this]()->void {this->initializeSpringMassSelection(); });
 	update_script = box_offset;
 	box_offset++;
@@ -1612,81 +1616,81 @@ void Editor::EditorWindow::genBoxesSpringMassNode(uint8_t& box_offset, uint8_t& 
 	// X-Pos Box
 	temp_box_data.width = 45.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-15.0f * scale, windowTop - 32.0f);
+	temp_element_data.position = glm::vec2(-15.0f * scale, windowTop - 32.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(node_data.position.x));
-	temp_box_data.mode = GUI::NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&node_data.position.x);
 	box_offset++;
 
 	// X-Pos Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 33.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, windowTop - 33.0f);
 	temp_text_data.text = "OffsetX:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Y-Pos Box
-	temp_box_data.position = glm::vec2(-15.0f * scale, windowTop - 39.0f);
+	temp_element_data.position = glm::vec2(-15.0f * scale, windowTop - 39.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(node_data.position.y));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&node_data.position.y);
 	box_offset++;
 
 	// Y-Pos Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 40.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, windowTop - 40.0f);
 	temp_text_data.text = "OffsetY:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Name Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 47.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, windowTop - 47.0f);
 	temp_text_data.text = "Name:         " + std::to_string(node_data.name);
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// File Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 54.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, windowTop - 54.0f);
 	temp_text_data.text = "File:         " + static_cast<DataClass::Data_SpringMass*>(data_object)->getFile();
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Radius Box
-	temp_box_data.position.y = windowTop - 61.0f;
+	temp_element_data.position.y = windowTop - 61.0f;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(node_data.radius));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&node_data.radius);
 	box_offset++;
 
 	// Radius Text
-	temp_text_data.position.y = windowTop - 62.0f;
+	temp_element_data.position.y = windowTop - 62.0f;
 	temp_text_data.text = "Radius: ";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Mass Box
-	temp_box_data.position.y = windowTop - 68.0f;
+	temp_element_data.position.y = windowTop - 68.0f;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(node_data.mass));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&node_data.mass);
 	box_offset++;
 
 	// Mass Text
-	temp_text_data.position.y = windowTop - 69.0f;
+	temp_element_data.position.y = windowTop - 69.0f;
 	temp_text_data.text = "Mass: ";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Health Box
-	temp_box_data.position.y = windowTop - 75.0f;
+	temp_element_data.position.y = windowTop - 75.0f;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(node_data.health));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&node_data.health);
 	box_offset++;
 
 	// Health Text
-	temp_text_data.position.y = windowTop - 76.0f;
+	temp_element_data.position.y = windowTop - 76.0f;
 	temp_text_data.text = "Health: ";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -1700,84 +1704,84 @@ void Editor::EditorWindow::genBoxesSpringMassSpring(uint8_t& box_offset, uint8_t
 	// Node1 Name Box
 	temp_box_data.width = 45.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-16.0f * scale, windowTop - 32.0f);
+	temp_element_data.position = glm::vec2(-16.0f * scale, windowTop - 32.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spring_data.Node1));
-	temp_box_data.mode = GUI::ABSOLUTE_INTEGER_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_INTEGER_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&spring_data.Node1);
 	box_offset++;
 
 	// Node1 Name Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 33.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, windowTop - 33.0f);
 	temp_text_data.text = "Node1:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Node2 Name Box
-	temp_box_data.position = glm::vec2(-16.0f * scale, windowTop - 39.0f);
+	temp_element_data.position = glm::vec2(-16.0f * scale, windowTop - 39.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spring_data.Node2));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&spring_data.Node2);
 	box_offset++;
 
 	// Node2 Name Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, windowTop - 40.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, windowTop - 40.0f);
 	temp_text_data.text = "Node2:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Stiffness Box
-	temp_box_data.position = glm::vec2(-10.0f * scale, windowTop - 46.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, windowTop - 46.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spring_data.Stiffness));
 	temp_box_data.width = 40.0f;
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&spring_data.Stiffness);
 	box_offset++;
 
 	// Stiffness Text
-	temp_text_data.position.y = windowTop - 47.0f;
+	temp_element_data.position.y = windowTop - 47.0f;
 	temp_text_data.text = "Stiffness: ";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Dampening Box
-	temp_box_data.position.y = windowTop - 53.0f;
+	temp_element_data.position.y = windowTop - 53.0f;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spring_data.Dampening));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&spring_data.Dampening);
 	box_offset++;
 
 	// Dampening Text
-	temp_text_data.position.y = windowTop - 54.0f;
+	temp_element_data.position.y = windowTop - 54.0f;
 	temp_text_data.text = "Dampening: ";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Rest Length Box
-	temp_box_data.position = glm::vec2(-10.0f * scale, windowTop - 61.0f);
+	temp_element_data.position = glm::vec2(-10.0f * scale, windowTop - 61.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spring_data.RestLength));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&spring_data.RestLength);
 	box_offset++;
 
 	// Rest Length Text
-	temp_text_data.position.y = windowTop - 62.0f;
+	temp_element_data.position.y = windowTop - 62.0f;
 	temp_text_data.text = "Rest Length: ";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Max Length Box
-	temp_box_data.position.y = windowTop - 68.0f;
+	temp_element_data.position.y = windowTop - 68.0f;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(spring_data.MaxLength));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&spring_data.MaxLength);
 	box_offset++;
 
 	// Max Length Text
-	temp_text_data.position.y = windowTop - 69.0f;
+	temp_element_data.position.y = windowTop - 69.0f;
 	temp_text_data.text = "Max Length: ";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
@@ -1795,57 +1799,57 @@ void Editor::EditorWindow::genBoxesEntity(uint8_t& box_offset, uint8_t& text_off
 	DataClass::Data_Entity& data_entity = *static_cast<DataClass::Data_Entity*>(data_object);
 
 	// Half Width Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
 	temp_text_data.text = "Half Visual Width:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Half Width Box
 	temp_box_data.width = 35.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset);
+	temp_element_data.position = glm::vec2(-2.0f * scale, height_offset);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_entity.getEntityData().half_width));
-	temp_box_data.mode = GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_entity.getEntityData().half_width);
 	box_offset++;
 
 	// Half Height Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
 	temp_text_data.text = "Half Visual Height:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Half Height Box
-	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset - 7.0f);
+	temp_element_data.position = glm::vec2(-2.0f * scale, height_offset - 7.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_entity.getEntityData().half_height));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_entity.getEntityData().half_height);
 	box_offset++;
 
 	// Half Collision Width Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
 	temp_text_data.text = "Half Collision Width:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Half Collision Width Box
-	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset - 14.0f);
+	temp_element_data.position = glm::vec2(-2.0f * scale, height_offset - 14.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_entity.getEntityData().half_collision_width));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_entity.getEntityData().half_collision_width);
 	box_offset++;
 
 	// Half Collision Height Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 22.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 22.0f);
 	temp_text_data.text = "Half Collision Height:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Half Collision Height Box
-	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset - 21.0f);
+	temp_element_data.position = glm::vec2(-2.0f * scale, height_offset - 21.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data_entity.getEntityData().half_collision_height));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&data_entity.getEntityData().half_collision_height);
 	box_offset++;
 }
@@ -1859,84 +1863,498 @@ void Editor::EditorWindow::genBoxesGroup(uint8_t& box_offset, uint8_t& text_offs
 	// File Box
 	temp_box_data.width = 70.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-2.0f * scale, height_offset - 2);
+	temp_element_data.position = glm::vec2(-2.0f * scale, height_offset - 2);
 	temp_box_data.button_text = static_cast<DataClass::Data_GroupObject*>(data_object)->getFilePath();
-	temp_box_data.mode = GUI::FILE_PATH_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::FILE_PATH_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(&static_cast<DataClass::Data_GroupObject*>(data_object)->getFilePath());
 	box_offset++;
 
 	// File Text
-	temp_text_data.position = glm::vec2(-52.0f * scale, height_offset - 3.0f);
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 3.0f);
 	temp_text_data.text = " File:";
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 }
 
-void Editor::EditorWindow::assignColorWheel(ColorWheel* wheel_, uint8_t& box_offset, uint8_t& text_offset, unsigned int* color, float height_offset)
+void Editor::EditorWindow::genBoxesElement(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
+{
+	// Get the Element Data
+	Render::GUI::ElementData& element_data = static_cast<DataClass::Data_Element*>(data_object)->getElementData();
+
+	// Get Same Box Size as Clamp/Lock Boxes
+	temp_box_data.width = 3.0f;
+	temp_box_data.height = 3.0f;
+	temp_box_data.zpos = -1.0f;
+	temp_box_data.centered = true;
+
+	// Static Box (Check Box Below Other Check Boxes)
+	temp_element_data.position = glm::vec2(32.0f * scale, windowTop - 15.0f);
+	temp_box_data.button_text = Render::GUI::AdvancedString("");
+	temp_box_data.mode = Render::GUI::TOGGLE_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&element_data.is_static);
+	box_offset++;
+
+	// Static Text
+	temp_element_data.position = glm::vec2(15.0f * scale, windowTop - 16.0);
+	temp_text_data.text = "Static:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+}
+
+void Editor::EditorWindow::genBoxesMaster(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
+{
+	static Render::GUI::MasterData* master_data_ptr = nullptr;
+	static int vertical_bar = -1;
+	static int horizontal_bar = -1;
+	auto vertical_bar_closer = [&]()->void {master_data_ptr->initial_vertical_bar = vertical_bar; };
+	auto horizontal_bar_closer = [&]()->void {master_data_ptr->initial_horizontal_bar = horizontal_bar; };
+
+	// Get Master Data
+	Render::GUI::MasterData& master_data = static_cast<DataClass::Data_MasterElement*>(data_object)->getMasterData();
+	master_data_ptr = &master_data;
+	vertical_bar = master_data.initial_vertical_bar;
+	horizontal_bar = master_data.initial_horizontal_bar;
+
+	// Width Box
+	temp_box_data.width = 50.0f * scale;
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset);
+	temp_box_data.height = 5.0f;
+	temp_box_data.centered = true;
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(master_data.width));
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&master_data.width);
+	box_offset++;
+
+	// Width Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_text_data.text = "Width:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Height Box
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(master_data.height));
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&master_data.height);
+	box_offset++;
+
+	// Height Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_text_data.text = "Height:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// TODO: Convert Object Index to Object Name to Identify Scroll Bar Objects
+	// Implement Once Unique Names are Added for Objects
+	// Object Index Will Still be the Value Stored, But Will be Mapped to Names
+
+	// Vertical Scroll Bar Index Box
+	temp_box_data.width = 30.0f * scale;
+	temp_element_data.position = glm::vec2(0.0f * scale, height_offset - 14.0f);
+	temp_box_data.button_text = std::to_string(vertical_bar);
+	temp_box_data.mode = Render::GUI::INTEGER_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&vertical_bar);
+	boxes[box_offset]->setFunctionPointer(vertical_bar_closer);
+	box_offset++;
+
+	// Vertical Scroll Bar Index Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
+	temp_text_data.text = "Vertical Scroll Bar:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Horizontal Scroll Bar Index Box
+	temp_element_data.position = glm::vec2(0.0f * scale, height_offset - 21.0f);
+	temp_box_data.button_text = std::to_string(horizontal_bar);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&horizontal_bar);
+	boxes[box_offset]->setFunctionPointer(horizontal_bar_closer);
+	box_offset++;
+
+	// Horizontal Scroll Bar Index Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 22.0f);
+	temp_text_data.text = "Horizontal Scroll Bar:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Initially Active Box
+	temp_box_data.width = 3.0f * scale;
+	temp_box_data.height = temp_box_data.width;
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 28.0f);
+	temp_box_data.mode = Render::GUI::TOGGLE_BOX;
+	temp_box_data.button_text = std::string("");
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&master_data.vertical_is_default);
+	box_offset++;
+
+	// Initially Active Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 29.0f);
+	temp_text_data.text = "Default to Vertical Scroll?:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Initially Active Box
+	temp_element_data.position = glm::vec2(-26.0f * scale, height_offset - 35.0f);
+	temp_box_data.mode = Render::GUI::TOGGLE_BOX;
+	temp_box_data.button_text = std::string("");
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&master_data.initially_active);
+	box_offset++;
+
+	// Initially Active Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 36.0f);
+	temp_text_data.text = "Initially Active:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+}
+
+void Editor::EditorWindow::genBoxesBox(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
+{
+	// Get the Box Data
+	Render::GUI::BoxData& box_data = static_cast<DataClass::Data_BoxElement*>(data_object)->getBoxData();
+
+	// The List of Box Modes For the Drop Down Menu
+	static char* box_mode_items[] =
+	{
+		(char*)"Null Box",
+		(char*)"Toggle Box",
+		(char*)"Function Box",
+		(char*)"Drop Down Box",
+		(char*)"General Text Box",
+		(char*)"Alphabetical Text Box",
+		(char*)"Numerical Text Box",
+		(char*)"Absolute Numerical Text Box",
+		(char*)"Integer Text Box",
+		(char*)"Absolute Integer Text Box",
+		(char*)"File Path Box",
+	};
+
+	// Generate the Drop Down Menu of Box Modes
+	static Render::GUI::DropDownData temp_drop_down_data;
+	temp_drop_down_data.bar_width = 2.0f;
+	temp_drop_down_data.item_count = 11;
+	temp_drop_down_data.item_height = 5.0f;
+	temp_drop_down_data.max_menu_height = 15.0f;
+	temp_drop_down_data.menu_background_color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
+	temp_drop_down_data.current_index = box_data.mode;
+	temp_drop_down_data.text = box_mode_items;
+
+	// Generate the Box Modes Box
+	temp_element_data.position = glm::vec2(-27.0f * scale, height_offset - 6.0f);
+	temp_box_data.width = 50.0f * scale;
+	temp_box_data.height = 5.0f;
+	temp_box_data.centered = false;
+	temp_box_data.mode = Render::GUI::BOX_MODES::DROP_DOWN_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&box_data.mode); // TODO: Add Some Method to Choose the Size of the Variable Being Pointed To
+	boxes[box_offset]->storeDropDownData(&temp_drop_down_data);
+	box_offset++;
+
+	// Generate the Box Modes Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_text_data.text = std::string("Box Type:");
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Width Box
+	temp_box_data.width = 50.0f * scale;
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 14.0f);
+	temp_box_data.centered = true;
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(box_data.width));
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&box_data.width);
+	box_offset++;
+
+	// Width Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
+	temp_text_data.text = "Width:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Height Box
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 21.0f);
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(box_data.height));
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&box_data.height);
+	box_offset++;
+
+	// Height Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 22.0f);
+	temp_text_data.text = "Height:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Generate the Initial Text Box
+	temp_element_data.position = glm::vec2(-27.0f * scale, height_offset - 33.0f);
+	temp_box_data.width = 50.0f * scale;
+	temp_box_data.centered = false;
+	temp_box_data.button_text = box_data.button_text;
+	temp_box_data.mode = Render::GUI::GENERAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&box_data.button_text);
+	box_offset++;
+	
+	// Initial Text Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 28.0f);
+	temp_text_data.text = "Initial Box Text:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Look-Up Tables for the Color Wheels
+	Render::GUI::ColorWheel* wheel_lookup[] = { &wheel, &wheelAmbient, &wheelDiffuse, &wheelSpecular };
+	unsigned int* wheel_color_lookup[] = { wheel_color, ambient_color, diffuse_color, specular_color };
+	glm::vec4 box_color_lookup[] = { box_data.background_color, box_data.outline_color, box_data.text_color, box_data.highlight_color };
+	const char* labels_lookup[] = { "Background Color", "Outline Color", "Text Color", "Highlight Color" };
+
+	// Assign the Starting Box for Colors
+	light_wheel_box_start = box_offset;
+	box_active = true;
+	temp_box_data.centered = true;
+
+	// Generate All 4 Color Wheels
+	float color_offset = height_offset - 53.0f;
+	for (int i = 0; i < 4; i++, color_offset -= 37.0f)
+	{
+		// Assign the Label
+		temp_element_data.position = glm::vec2(-50.0f * scale, color_offset + 12.0f);
+		temp_text_data.text = labels_lookup[i];
+		texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+		text_offset++;
+
+		// Set Un-Normalized Wheel Color Data
+		wheel_color_lookup[i][0] = (unsigned int)(box_color_lookup[i].r * 255.0f);
+		wheel_color_lookup[i][1] = (unsigned int)(box_color_lookup[i].g * 255.0f);
+		wheel_color_lookup[i][2] = (unsigned int)(box_color_lookup[i].b * 255.0f);
+		wheel_color_lookup[i][3] = (unsigned int)(box_color_lookup[i].a * 255.0f);
+
+		// Assign the Color Wheel
+		assignColorWheel(wheel_lookup[i], box_offset, text_offset, wheel_color_lookup[i], color_offset);
+	}
+
+	// Z-Pos Box
+	
+	// Z-Pos Text 
+
+	// Centered Box (Same Y Position as Z-Pos Box)
+
+	// Centered Text
+
+	// If Box Mode is Set to Drop Down, Add Resizable Grid to Allow for Creation of GUI Element
+	if (box_data.mode == Render::GUI::BOX_MODES::DROP_DOWN_BOX)
+	{
+		// TODO: Figure Out How to Create the Grid
+	}
+}
+
+void Editor::EditorWindow::genBoxesText(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
+{
+	// Get Text Data
+	Render::GUI::TextData& data = static_cast<DataClass::Data_TextElement*>(data_object)->getTextData();
+
+	// Text Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_text_data.text = "Text Value:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Text Box
+	temp_element_data.position = glm::vec2(-20.0f * scale, height_offset - 6.0f);
+	temp_box_data.width = 64.0f * scale;
+	temp_box_data.height = 5.0f;
+	temp_box_data.centered = false;
+	temp_box_data.button_text = data.text;
+	temp_box_data.mode = Render::GUI::BOX_MODES::GENERAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&data.text);
+	box_offset++;
+
+	// Scale Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
+	temp_text_data.text = "Scale:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Scale Box
+	temp_box_data.width = 35.0f * scale;
+	temp_element_data.position = glm::vec2(-20.0f * scale, height_offset - 14.0f);
+	temp_box_data.centered = true;
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(data.scale));
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&data.scale);
+	box_offset++;
+
+	// Text Color Label
+	temp_element_data.position = glm::vec2(-50.0f * scale, height_offset - 23.0f);
+	temp_text_data.text = "Text Color:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Setup Colors
+	wheel_color[0] = (unsigned int)(data.color.r * 255.0f);
+	wheel_color[1] = (unsigned int)(data.color.g * 255.0f);
+	wheel_color[2] = (unsigned int)(data.color.b * 255.0f);
+	wheel_color[3] = (unsigned int)(data.color.a * 255.0f);
+	light_wheel_box_start = box_offset;
+	wheel_active = true;
+
+	// Generate Color Wheel
+	assignColorWheel(&wheel, box_offset, text_offset, wheel_color, height_offset - 35.0f);
+}
+
+void Editor::EditorWindow::genBoxesScrollBar(uint8_t& box_offset, uint8_t& text_offset, float height_offset, DataClass::Data_Object* data_object)
+{
+	static Render::GUI::ScrollData* scroll_data_ptr = nullptr;
+	static int bar_identifier = -1;
+	auto bar_identifier_closer = [&]()->void {scroll_data_ptr->bar_identifier = bar_identifier; };
+
+	// Get the Bar Data
+	Render::GUI::ScrollData& bar_data = static_cast<DataClass::Data_ScrollBarElement*>(data_object)->getScrollData();
+	scroll_data_ptr = &bar_data;
+	bar_identifier = bar_data.bar_identifier;
+
+	// Width Box
+	temp_box_data.width = 50.0f * scale;
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset);
+	temp_box_data.height = 5.0f;
+	temp_box_data.centered = true;
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(bar_data.background_width));
+	temp_box_data.mode = Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&bar_data.background_width);
+	box_offset++;
+
+	// Width Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 1.0f);
+	temp_text_data.text = "Width:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Height Box
+	temp_element_data.position = glm::vec2(-10.0f * scale, height_offset - 7.0f);
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(bar_data.background_height));
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&bar_data.background_height);
+	box_offset++;
+
+	// Height Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 8.0f);
+	temp_text_data.text = "Height:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Scroll Region Size Box
+	temp_element_data.position = glm::vec2(-24.0f * scale, height_offset - 19.0f);
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(bar_data.size));
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&bar_data.size);
+	box_offset++;
+
+	// Scroll Region Size Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 15.0f);
+	temp_text_data.text = "Size of Moveable Region:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Initial Percent Box
+	temp_element_data.position = glm::vec2(-24.0f * scale, height_offset - 31.0f);
+	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(bar_data.initial_percent));
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&bar_data.initial_percent);
+	box_offset++;
+
+	// Initial Percent Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 27.0f);
+	temp_text_data.text = "Initial Scroll Percentage:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+
+	// Vertical Scroll Bar Index Box
+	temp_box_data.width = 30.0f * scale;
+	temp_element_data.position = glm::vec2(0.0f * scale, height_offset - 38.0f);
+	temp_box_data.button_text = std::to_string(bar_identifier);
+	temp_box_data.mode = Render::GUI::INTEGER_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
+	boxes[box_offset]->setDataPointer(&bar_identifier);
+	boxes[box_offset]->setFunctionPointer(bar_identifier_closer);
+	box_offset++;
+
+	// Vertical Scroll Bar Index Text
+	temp_element_data.position = glm::vec2(-52.0f * scale, height_offset - 39.0f);
+	temp_text_data.text = "Scroll Bar Identifier:";
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
+	text_offset++;
+}
+
+void Editor::EditorWindow::assignColorWheel(Render::GUI::ColorWheel* wheel_, uint8_t& box_offset, uint8_t& text_offset, unsigned int* color, float height_offset)
 {
 	// Move Color Wheel
 	glm::vec4 temp_color = glm::vec4(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f, color[3] / 255.0f);
-	*wheel_ = ColorWheel(20.0f * scale, height_offset, -1.2f, 20.0f * scale, -20.0f * scale, -30.0f * scale, -60 * scale, scale, temp_color);
+	*wheel_ = Render::GUI::ColorWheel(20.0f * scale, height_offset, -1.2f, 20.0f * scale, -20.0f * scale, -30.0f * scale, -60 * scale, scale, temp_color);
 	wheel_->FindColors(temp_color);
 
 	// Red Box
 	temp_box_data.width = 15.0f * scale;
 	temp_box_data.height = 5.0f;
-	temp_box_data.position = glm::vec2(-37.5f * scale, height_offset - 15.0f);
+	temp_element_data.position = glm::vec2(-37.5f * scale, height_offset - 16.0f);
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(color[0]));
-	temp_box_data.mode = GUI::ABSOLUTE_INTEGER_TEXT_BOX;
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	temp_box_data.mode = Render::GUI::ABSOLUTE_INTEGER_TEXT_BOX;
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(color);
 	box_offset++;
 
 	// Red Text
 	temp_text_data.text = "R:";
-	temp_text_data.position = glm::vec2(-50.0f * scale, height_offset - 16.0f);
+	temp_element_data.position = glm::vec2(-50.0f * scale, height_offset - 16.0f);
 	temp_text_data.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Green Box
-	temp_box_data.position.x = -15.5f * scale;
+	temp_element_data.position.x = -15.5f * scale;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(color[1]));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(color + 1);
 	box_offset++;
 
 	// Green Text
 	temp_text_data.text = "G:";
-	temp_text_data.position.x = -28.0f * scale;
+	temp_element_data.position.x = -28.0f * scale;
 	temp_text_data.color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Blue Box
-	temp_box_data.position.x = 6.5f * scale;
+	temp_element_data.position.x = 6.5f * scale;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(color[2]));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(color + 2);
 	box_offset++;
 
 	// Blue Text
 	temp_text_data.text = "B:";
-	temp_text_data.position.x = -6.0f * scale;
+	temp_element_data.position.x = -6.0f * scale;
 	temp_text_data.color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Alpha Box
-	temp_box_data.position.x = 28.5f * scale;
+	temp_element_data.position.x = 28.5f * scale;
 	temp_box_data.button_text = Source::Algorithms::Common::removeTrailingZeros(std::to_string(color[3]));
-	boxes[box_offset] = new GUI::Box(temp_box_data);
+	boxes[box_offset] = new Render::GUI::Box(temp_element_data, temp_box_data);
 	boxes[box_offset]->setDataPointer(color + 3);
 	box_offset++;
 
 	// Alpha Text
 	temp_text_data.text = "A:";
-	temp_text_data.position.x = 16.0f * scale;
+	temp_element_data.position.x = 16.0f * scale;
 	temp_text_data.color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	texts[text_offset] = new GUI::TextObject(temp_text_data);
+	texts[text_offset] = new Render::GUI::TextObject(temp_element_data, temp_text_data);
 	text_offset++;
 
 	// Reset Text Color
@@ -1950,7 +2368,10 @@ void Editor::EditorWindow::displayText()
 
 	// Calculate the Change in Height Between Labels
 	float change_in_height = 15.0f * scale;
-	float initial_height = 20.0f + bar1.BarOffset;
+	float initial_height = 20.0f + bar1.getOffset();
+
+	// Determine if Level or GUI
+	bool is_GUI = change_controller->getCurrentContainer()->getContainerType() == Render::CONTAINER_TYPES::GUI;
 
 	// Parse Index in Object Identifier
 	switch (object_identifier_index)
@@ -1959,32 +2380,40 @@ void Editor::EditorWindow::displayText()
 	// Primary Object Types
 	case 0:
 	{
+		// Draw Element Label
+		if (is_GUI)
+			Source::Fonts::renderText("GUI Elements", -48.0f, initial_height, 3.12f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
 		// Draw Mask Label
-		Source::Fonts::renderText("Collision Masks", -48.0f, initial_height, 0.13f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), true);
+		else
+			Source::Fonts::renderText("Collision Masks", -48.0f, initial_height, 3.12f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), true);
 		initial_height -= change_in_height;
 
 		// Draw Terrain Label
-		Source::Fonts::renderText("Terrain", -48.0f, initial_height, 0.13f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
+		Source::Fonts::renderText("Terrain", -48.0f, initial_height, 3.12f, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), true);
 		initial_height -= change_in_height;
 
 		// Draw Light Lable
-		Source::Fonts::renderText("Lights", -48.0f, initial_height, 0.13f, glm::vec4(0.9f, 0.9f, 0.0f, 1.0f), true);
+		Source::Fonts::renderText("Lights", -48.0f, initial_height, 3.12f, glm::vec4(0.9f, 0.9f, 0.0f, 1.0f), true);
 		initial_height -= change_in_height;
 
-		// Draw Physics Objects Label
-		Source::Fonts::renderText("Physics Objects", -48.0f, initial_height, 0.13f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
-		initial_height -= change_in_height;
+		// Next Two Objects Are Only for Level
+		if (!is_GUI)
+		{
+			// Draw Physics Objects Label
+			Source::Fonts::renderText("Physics Objects", -48.0f, initial_height, 3.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+			initial_height -= change_in_height;
 
-		// Draw Entity Lable
-		Source::Fonts::renderText("Entities", -48.0f, initial_height, 0.13f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
-		initial_height -= change_in_height;
+			// Draw Entity Lable
+			Source::Fonts::renderText("Entities", -48.0f, initial_height, 3.12f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
+			initial_height -= change_in_height;
+		}
 
 		// Draw Effect Label
-		Source::Fonts::renderText("Effects", -48.0f, initial_height, 0.13f, glm::vec4(0.0f, 0.8f, 0.8f, 1.0f), true);
+		Source::Fonts::renderText("Effects", -48.0f, initial_height, 3.12f, glm::vec4(0.0f, 0.8f, 0.8f, 1.0f), true);
 		initial_height -= change_in_height;
 
 		// Draw Group Label
-		Source::Fonts::renderText("Effects", -48.0f, initial_height, 0.13f, glm::vec4(0.0f, 0.8f, 0.6f, 1.0f), true);
+		Source::Fonts::renderText("Groups", -48.0f, initial_height, 3.12f, glm::vec4(0.0f, 0.8f, 0.6f, 1.0f), true);
 
 		break;
 	}
@@ -1995,28 +2424,28 @@ void Editor::EditorWindow::displayText()
 		// Parse Primary Object Types
 		switch (new_object_identifier[0])
 		{
-			
-		// Collision Masks
+
+			// Collision Masks
 		case Object::MASK:
 		{
 			// Draw Floor Masks
-			Source::Fonts::renderText("Floor Masks", -48.0f, initial_height, 0.13f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Floor Masks", -48.0f, initial_height, 3.12f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Left Wall Masks
-			Source::Fonts::renderText("Left Wall Masks", -48.0f, initial_height, 0.13f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Left Wall Masks", -48.0f, initial_height, 3.12f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Right Wall Masks
-			Source::Fonts::renderText("Right wall Masks", -48.0f, initial_height, 0.13f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), true);
+			Source::Fonts::renderText("Right wall Masks", -48.0f, initial_height, 3.12f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Ceiling Masks
-			Source::Fonts::renderText("Ceiling Masks", -48.0f, initial_height, 0.13f, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), true);
+			Source::Fonts::renderText("Ceiling Masks", -48.0f, initial_height, 3.12f, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Trigger Masks
-			Source::Fonts::renderText("Trigger Masks", -48.0f, initial_height, 0.13f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Trigger Masks", -48.0f, initial_height, 3.12f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
 
 			break;
 		}
@@ -2025,34 +2454,45 @@ void Editor::EditorWindow::displayText()
 		case Object::TERRAIN:
 		{
 			// Draw Foreground Terrain Label
-			Source::Fonts::renderText("Foreground", -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[0], true);
-			Source::Fonts::renderText(" Terrain", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[0], true);
+			Source::Fonts::renderText("Foreground", -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[0], true);
+			Source::Fonts::renderText(" Terrain", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[0], true);
 			initial_height -= change_in_height;
 
-			// Draw Formerground Terrain Label
-			Source::Fonts::renderText("Formerground", -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[1], true);
-			Source::Fonts::renderText("  Terrain", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[1], true);
-			initial_height -= change_in_height;
+			// If GUI, Only Render Static Terrain
+			if (is_GUI)
+			{
+				Source::Fonts::renderText("Static", -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[1], true);
+				Source::Fonts::renderText("Terrain", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[1], true);
+			}
 
-			// Draw Background 1 Terrain Label
-			Source::Fonts::renderText("Background 1", -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[2], true);
-			Source::Fonts::renderText("  Terrain", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[2], true);
-			initial_height -= change_in_height;
+			// Else, Render All Other Layer Labels
+			else
+			{
+				// Draw Formerground Terrain Label
+				Source::Fonts::renderText("Formerground", -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[1], true);
+				Source::Fonts::renderText("  Terrain", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[1], true);
+				initial_height -= change_in_height;
 
-			// Draw Background 2 Terrain Label
-			Source::Fonts::renderText("Background 2", -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[3], true);
-			Source::Fonts::renderText("  Terrain", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[3], true);
-			initial_height -= change_in_height;
+				// Draw Background 1 Terrain Label
+				Source::Fonts::renderText("Background 1", -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[2], true);
+				Source::Fonts::renderText("  Terrain", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[2], true);
+				initial_height -= change_in_height;
 
-			// Draw Background 3 Terrain Label
-			Source::Fonts::renderText("Background 3", -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[4], true);
-			Source::Fonts::renderText("  Terrain", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[4], true);
-			initial_height -= change_in_height;
+				// Draw Background 2 Terrain Label
+				Source::Fonts::renderText("Background 2", -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[3], true);
+				Source::Fonts::renderText("  Terrain", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[3], true);
+				initial_height -= change_in_height;
 
-			// Draw Backdrop Terrain Label
-			Source::Fonts::renderText("Backdrop", -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[5], true);
-			Source::Fonts::renderText(" Terrain", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[5], true);
-			initial_height -= change_in_height;
+				// Draw Background 3 Terrain Label
+				Source::Fonts::renderText("Background 3", -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[4], true);
+				Source::Fonts::renderText("  Terrain", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[4], true);
+				initial_height -= change_in_height;
+
+				// Draw Backdrop Terrain Label
+				Source::Fonts::renderText("Backdrop", -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[5], true);
+				Source::Fonts::renderText(" Terrain", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[5], true);
+				initial_height -= change_in_height;
+			}
 
 			break;
 		}
@@ -2061,23 +2501,23 @@ void Editor::EditorWindow::displayText()
 		case Object::LIGHT:
 		{
 			// Draw Directional Light Label
-			Source::Fonts::renderText("Directional", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
-			Source::Fonts::renderText("  Light", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Directional", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("  Light", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Point Light Label
-			Source::Fonts::renderText("Point", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
-			Source::Fonts::renderText("Light", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Point", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Light", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Spot Light Label
-			Source::Fonts::renderText("Spot", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
-			Source::Fonts::renderText("Light", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Spot", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Light", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Beam Light Label
-			Source::Fonts::renderText("Beam", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
-			Source::Fonts::renderText("Light", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Beam", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Light", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.0f, 1.0f), true);
 
 			break;
 		}
@@ -2086,17 +2526,17 @@ void Editor::EditorWindow::displayText()
 		case Object::PHYSICS:
 		{
 			// Draw Rigid Body Label
-			Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
-			Source::Fonts::renderText("Physics Object", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+			Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+			Source::Fonts::renderText("Physics Object", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Soft Body Label
-			Source::Fonts::renderText("Soft Body", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
-			Source::Fonts::renderText("Physics Object", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+			Source::Fonts::renderText("Soft Body", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+			Source::Fonts::renderText("Physics Object", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Hinge Label
-			Source::Fonts::renderText("Hinge", -48.0f, initial_height, 0.13f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+			Source::Fonts::renderText("Hinge", -48.0f, initial_height, 3.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 
 			break;
 		}
@@ -2105,22 +2545,22 @@ void Editor::EditorWindow::displayText()
 		case Object::ENTITY:
 		{
 			// Draw Directional Light Label
-			Source::Fonts::renderText("NPC", -48.0f, initial_height, 0.13f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("NPC", -48.0f, initial_height, 3.12f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Point Light Label
-			Source::Fonts::renderText("Controllable", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
-			Source::Fonts::renderText("  Entity", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Controllable", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("  Entity", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Spot Light Label
-			Source::Fonts::renderText("Interactable", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
-			Source::Fonts::renderText("  Entity", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Interactable", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("  Entity", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
 			initial_height -= change_in_height;
 
 			// Draw Beam Light Label
-			Source::Fonts::renderText("Dynamic", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
-			Source::Fonts::renderText(" Enity", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText("Dynamic", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
+			Source::Fonts::renderText(" Enity", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f), true);
 
 			break;
 		}
@@ -2128,6 +2568,47 @@ void Editor::EditorWindow::displayText()
 		// Effects
 		case Object::EFFECT:
 		{
+			break;
+		}
+
+		// Elements
+		case Object::ELEMENT:
+		{
+			// Draw Master Element Label
+			Source::Fonts::renderText("Master", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			Source::Fonts::renderText("Element", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			initial_height -= change_in_height;
+
+			// Draw Text Element Label
+			Source::Fonts::renderText(" Text", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			Source::Fonts::renderText("Element", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			Source::Fonts::renderText("Abc...", 3.0f, initial_height, 3.84f, glm::vec4(0.97f, 0.0f, 0.0f, 1.0f), true);
+			initial_height -= change_in_height;
+
+			// Draw Box Element Label
+			Source::Fonts::renderText("  Box", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			Source::Fonts::renderText("Element", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			initial_height -= change_in_height;
+
+			// Draw Toggle Group Label
+			Source::Fonts::renderText("Toggle", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			Source::Fonts::renderText("Element", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			initial_height -= change_in_height;
+
+			// Draw Scroll Bar Label
+			Source::Fonts::renderText("Scroll bar", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			Source::Fonts::renderText(" Element", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			initial_height -= change_in_height;
+
+			// Draw Grid Element Label
+			Source::Fonts::renderText(" Grid", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			Source::Fonts::renderText("Element", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			initial_height -= change_in_height;
+
+			// Draw Color Wheel Label
+			Source::Fonts::renderText("Color Wheel", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+			Source::Fonts::renderText("  Element", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+
 			break;
 		}
 			
@@ -2154,18 +2635,18 @@ void Editor::EditorWindow::displayText()
 			case Object::Mask::FLOOR:
 			{
 				// Draw Horizontal Line Label
-				Source::Fonts::renderText("Floor Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), true);
-				Source::Fonts::renderText("Horizontal Line", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("Floor Mask", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("Horizontal Line", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Slant Label
-				Source::Fonts::renderText("Floor Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), true);
-				Source::Fonts::renderText("  Slant", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), true);
+				Source::Fonts::renderText("Floor Mask", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), true);
+				Source::Fonts::renderText("  Slant", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Slope Label
-				Source::Fonts::renderText("Floor Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.04f, 0.24f, 1.0f, 1.0f), true);
-				Source::Fonts::renderText("  Slope", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.04f, 0.24f, 1.0f, 1.0f), true);
+				Source::Fonts::renderText("Floor Mask", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.04f, 0.24f, 1.0f, 1.0f), true);
+				Source::Fonts::renderText("  Slope", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.04f, 0.24f, 1.0f, 1.0f), true);
 
 				break;
 			}
@@ -2174,13 +2655,13 @@ void Editor::EditorWindow::displayText()
 			case Object::Mask::LEFT_WALL:
 			{
 				// Draw Vertical Line Label
-				Source::Fonts::renderText("Left Wall Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), true);
-				Source::Fonts::renderText("Vertical Line", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("Left Wall Mask", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("Vertical Line", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Curve Label
-				Source::Fonts::renderText("Left Wall Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(1.0f, 0.4f, 0.0f, 1.0f), true);
-				Source::Fonts::renderText("   Curve", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(1.0f, 0.4f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("Left Wall Mask", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(1.0f, 0.4f, 0.0f, 1.0f), true);
+				Source::Fonts::renderText("   Curve", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(1.0f, 0.4f, 0.0f, 1.0f), true);
 
 				break;
 			}
@@ -2189,13 +2670,13 @@ void Editor::EditorWindow::displayText()
 			case Object::Mask::RIGHT_WALL:
 			{
 				// Draw Vertical Line Label
-				Source::Fonts::renderText("Right Wall Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), true);
-				Source::Fonts::renderText("Vertical Line", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), true);
+				Source::Fonts::renderText("Right Wall Mask", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), true);
+				Source::Fonts::renderText("Vertical Line", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Curve Label
-				Source::Fonts::renderText("Right Wall Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.04f, 0.0f, 0.27f, 1.0f), true);
-				Source::Fonts::renderText("   Curve", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.04f, 0.0f, 0.27f, 1.0f), true);
+				Source::Fonts::renderText("Right Wall Mask", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.04f, 0.0f, 0.27f, 1.0f), true);
+				Source::Fonts::renderText("   Curve", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.04f, 0.0f, 0.27f, 1.0f), true);
 
 				break;
 			}
@@ -2204,18 +2685,18 @@ void Editor::EditorWindow::displayText()
 			case Object::Mask::CEILING:
 			{
 				// Draw Horizontal Line Label
-				Source::Fonts::renderText("Ceiling Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), true);
-				Source::Fonts::renderText("Horizontal Line", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), true);
+				Source::Fonts::renderText("Ceiling Mask", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), true);
+				Source::Fonts::renderText("Horizontal Line", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Slant Label
-				Source::Fonts::renderText("Ceiling Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.28f, 0.0f, 0.34f, 1.0f), true);
-				Source::Fonts::renderText("  Slant", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.28f, 0.0f, 0.34f, 1.0f), true);
+				Source::Fonts::renderText("Ceiling Mask", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.28f, 0.0f, 0.34f, 1.0f), true);
+				Source::Fonts::renderText("  Slant", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.28f, 0.0f, 0.34f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Slope Label
-				Source::Fonts::renderText("Ceiling Mask", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.0f, 0.0f, 0.45f, 1.0f), true);
-				Source::Fonts::renderText("  Slope", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.0f, 0.0f, 0.45f, 1.0f), true);
+				Source::Fonts::renderText("Ceiling Mask", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.45f, 1.0f), true);
+				Source::Fonts::renderText("  Slope", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.45f, 1.0f), true);
 
 				break;
 			}
@@ -2228,31 +2709,31 @@ void Editor::EditorWindow::displayText()
 		case Object::TERRAIN:
 		{
 			// Map for Terrain Layer Labels
-			const std::string layer_map[6] = { "Foreground", "Formerground", "Background 1", "Background 2", "Background 3", "Backdrop" };
+			const std::string layer_map[7] = { "Foreground", "Formerground", "Background 1", "Background 2", "Background 3", "Backdrop", "Static"};
 
 			// Draw Rectangle Label
-			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
-			Source::Fonts::renderText("Rectangle", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText("Rectangle", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[new_object_identifier[1]], true);
 			initial_height -= change_in_height;
 
 			// Draw Trapezoid Label
-			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
-			Source::Fonts::renderText("Trapezoid", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText("Trapezoid", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[new_object_identifier[1]], true);
 			initial_height -= change_in_height;
 
 			// Draw Triangle Label
-			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
-			Source::Fonts::renderText("Triangle", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText("Triangle", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[new_object_identifier[1]], true);
 			initial_height -= change_in_height;
 
 			// Draw Circle Label
-			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
-			Source::Fonts::renderText("Circle", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText("Circle", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[new_object_identifier[1]], true);
 			initial_height -= change_in_height;
 
 			// Draw Polygon Label
-			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
-			Source::Fonts::renderText("Polygon", -48.0f, initial_height - 2.0f, 0.12f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText(layer_map[new_object_identifier[1]], -48.0f, initial_height + 2.0f, 2.88f, terrain_layer_colors[new_object_identifier[1]], true);
+			Source::Fonts::renderText("Polygon", -48.0f, initial_height - 2.0f, 2.88f, terrain_layer_colors[new_object_identifier[1]], true);
 
 			break;
 		}
@@ -2268,28 +2749,28 @@ void Editor::EditorWindow::displayText()
 			case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
 			{
 				// Draw Rectangle Label
-				Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
-				Source::Fonts::renderText("Rectangle", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Rectangle", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Trapezoid Label
-				Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
-				Source::Fonts::renderText("Trapezoid", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Trapezoid", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Triangle Label
-				Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
-				Source::Fonts::renderText("Triangle", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Triangle", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Circle Label
-				Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
-				Source::Fonts::renderText("Circle", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Circle", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Polygon Label
-				Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
-				Source::Fonts::renderText("Polygon", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Rigid Body", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Polygon", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 
 				break;
 			}
@@ -2298,13 +2779,13 @@ void Editor::EditorWindow::displayText()
 			case (int)Object::Physics::PHYSICS_BASES::SOFT_BODY:
 			{
 				// Draw Spring Mass Label
-				Source::Fonts::renderText("Soft Body", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
-				Source::Fonts::renderText("Spring Mass", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Soft Body", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Spring Mass", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Wire Label
-				Source::Fonts::renderText("Soft Body", -48.0f, initial_height + 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
-				Source::Fonts::renderText("  Wire", -48.0f, initial_height - 2.0f, 0.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Soft Body", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("  Wire", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 
 				break;
 			}
@@ -2313,11 +2794,11 @@ void Editor::EditorWindow::displayText()
 			case (int)Object::Physics::PHYSICS_BASES::HINGE_BASE:
 			{
 				// Draw Anchor Label
-				Source::Fonts::renderText("Anchor", -48.0f, initial_height, 0.13f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Anchor", -48.0f, initial_height, 3.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 				initial_height -= change_in_height;
 
 				// Draw Hinge Label
-				Source::Fonts::renderText("Hinge", -48.0f, initial_height, 0.13f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
+				Source::Fonts::renderText("Hinge", -48.0f, initial_height, 3.12f, glm::vec4(0.8f, 0.8f, 0.4f, 1.0f), true);
 
 				break;
 			}
@@ -2333,6 +2814,30 @@ void Editor::EditorWindow::displayText()
 			break;
 		}
 
+		// Elements
+		case Object::ELEMENT:
+		{
+			switch (new_object_identifier[1])
+			{
+
+			// Scroll Bar
+			case Render::GUI::SCROLL_BAR:
+			{
+				// Draw Vertical Label
+				Source::Fonts::renderText("Vertical", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+				Source::Fonts::renderText("Scroll Bar", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+				initial_height -= change_in_height;
+
+				// Draw Horizontal Label
+				Source::Fonts::renderText("Horizontal", -48.0f, initial_height + 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+				Source::Fonts::renderText("Scroll Bar", -48.0f, initial_height - 2.0f, 2.88f, glm::vec4(0.0f, 0.0f, 0.9f, 1.0f), true);
+
+				break;
+			}
+
+			}
+		}
+
 		}
 
 		break;
@@ -2343,202 +2848,18 @@ void Editor::EditorWindow::displayText()
 
 void Editor::EditorWindow::updateScrollBars()
 {
-	// Location of Mouse in Window
-	double mouseStaticX, mouseStaticY;
-	mouseStaticX = Global::mouseX / Global::zoom_scale;
-	mouseStaticY = Global::mouseY / Global::zoom_scale;
+	// Update the Master Element
+	master.updateElement();
 
-	// Test if Primary ScrollBar Should Scroll
-	if (bar1.TestColloisions())
-	{
-		collision_type = 4;
-		index = 0;
-		Global::Selected_Cursor = Global::CURSORS::HAND;
-	}
+	// If the Bar was Modified, Set Moving to True
+	moving = Render::GUI::was_modified;
 
-	// Test if Secondary ScrollBar Should Scroll
-	//else if (false && bar2.TestColloisions())
-	//{
-	//	collision_type = 5;
-	//	index = 0;
-	//	Global::Selected_Cursor = Global::CURSORS::HAND;
-	//}
-
-	// Determine if Left Mouse Button is Also Being Held
-	if (Global::LeftClick && !moving && collision_type > 1)
-	{
-		// Set Moving to True
-		moving = (uint8_t)collision_type;
-
-		// Set Mouse Offset
-		offset_x = window_position.x - (float)mouseStaticX;
-		offset_y = window_position.y - (float)mouseStaticY;
-
-		// Change Offset For Scroll Bars
-		if (collision_type > 3)
-		{
-			// Primary Editor Window Scroll Bar
-			if (collision_type == 4)
-			{
-				offset_y = bar1.BarPosY - (float)mouseStaticY;
-			}
-
-			// Secondary Editor Window Scroll Bar
-			else
-			{
-				offset_y = bar2.BarPosY - (float)mouseStaticY;
-			}
-		}
-	}
-
-	// If Moving, Move Objects
+	// If the Bar Was Modified, Set Index to 0
 	if (moving)
-	{
-		// If No Longer Left Clicking, Stop Moving
-		if (!Global::LeftClick)
-			moving = false;
+		index = 0;
 
-		// Move Object if it is Still Moving
-		else
-		{
-			// Reset Models
-			model = glm::mat4(1.0f);
-			editing_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, bar1.BarOffset, 0.0f));
-			//editing_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, (editorHeightFull - editorHeight) * bar1.percent, 0.0f));
-			//texture_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, (textureHeightFull - editorHeight) * bar2.percent, 0.0f));;
-
-			switch (moving)
-			{
-
-				// Change Coordinates of Object
-			case 1:
-			{
-				// Move Coordinates of Object
-				window_position.x = (float)(mouseStaticX + offset_x);
-				window_position.y = (float)(mouseStaticY + offset_y);
-
-				break;
-			}
-
-			// Move Top of Window
-			case 2:
-			{
-				// Calculate New yPos by Taking the Average of the y Position of the Unchanging (opposite) Side and the y Position of the Mouse
-				window_position.y = ((float)mouseStaticY + (window_position.y - (height / 2))) / 2;
-
-				// Calculate New Height by Multiplying the Distance Between the Mouse and yPos by 2
-				height = 2 * (float)abs(mouseStaticY - window_position.y);
-
-				// Prevent Height From Going Negative
-				if (height <= 0)
-				{
-					height = 1;
-				}
-
-				//UpdateHeight();
-
-				break;
-			}
-
-			// Move Bottom of Window
-			case -2:
-			{
-				// Calculate New yPos by Taking the Average of the Position of the Unchanging (opposite) Side and the y Position of the Mouse
-				window_position.y = ((float)mouseStaticY + (window_position.y + (height / 2))) / 2;
-
-				// Calculate New Height by Multiplying the Distance Between the Mouse and yPos by 2
-				height = 2 * (float)abs(mouseStaticY - window_position.y);
-
-				// Prevent Height From Going Negtative
-				if (height <= 0)
-				{
-					height = 1;
-				}
-
-				//UpdateHeight();
-
-				break;
-			}
-
-			// Move Left of Window
-			case -3:
-			{
-				// Calculate New xPos by Taking the Average of the Position of the Unchanging (opposite) Side and the x Position of the Mouse
-				window_position.x = ((float)mouseStaticX + (window_position.x + (width / 2))) / 2;
-
-				// Calculate New Width by Multiplying the Distance Between the Mouse and xPos by 2
-				width = 2 * (float)abs(mouseStaticX - window_position.x);
-
-				// Prevent Width From Going Negative
-				if (width <= 0)
-				{
-					width = 1;
-				}
-
-				// Calculate Updated Scale Factor
-				scale = width / 170;
-
-				//UpdateWidth();
-
-				break;
-			}
-
-			// Move Right of Window
-			case 3:
-			{
-				// Calculate New xPos by Taking the Average of the Position of the Unchanging (oppposite) Size and the x Position of the Mouse
-				window_position.x = ((float)mouseStaticX + (window_position.x - (width / 2))) / 2;
-
-				// Calculate New Width by Multiplying the Distance Between the Mouse and xPos by 2
-				width = 2 * (float)abs(mouseStaticX - window_position.x);
-
-				// Prevent Width From Going Negative
-				if (width <= 0)
-				{
-					width = 1;
-				}
-
-				// Calculate Updated Scale Factor
-				scale = width / 170;
-
-				//UpdateWidth();
-
-				break;
-			}
-
-			// Move Primary ScrollBar
-			case 4:
-			{
-				float test = bar1.Scroll((float)(mouseStaticY + offset_y));
-				break;
-			}
-
-			// Move Secondary Scrollbar
-			case 5:
-			{
-				float test = bar2.Scroll((float)(mouseStaticY + offset_y));
-				break;
-			}
-
-			}
-
-			// Update Model Matrix
-			model = glm::translate(model, glm::vec3(window_position.x, window_position.y, 0.0f));
-			editing_model = glm::translate(editing_model, glm::vec3(window_position.x, window_position.y + (height / 2 - editingOffset), 0.0f));
-
-			// Update Scroll Bars
-			bar1.moveElement(bar1X + window_position.x, window_position.y + height / 2 - 10 * scale);
-			bar2.moveElement(bar2X + window_position.x, window_position.y + height / 2 - 10 * scale);
-		}
-	}
-
-	else
-	{
-		// Reset Collision Type
-		collision_type = 0;
-	}
-
-	editing_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, bar1.BarOffset, 0.0f));
+	// Update Model Matrix
+	editing_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, master.getVerticalOffset(), 0.0f));
 }
 
 void Editor::EditorWindow::updateNewObject()
@@ -2549,7 +2870,7 @@ void Editor::EditorWindow::updateNewObject()
 	mouseStaticY = Global::mouseY / Global::zoom_scale;
 
 	// The Offset Calculated by Scroll Bar
-	float barOffset = (editorHeightFull - editorHeight) * bar1.percent;
+	float barOffset = (editorHeightFull - editorHeight) * bar1.getPercent();
 
 	index = 0;
 	if (mouseStaticY <= (double)window_position.y + ((double)height * 0.5) - 10.0 * (double)scale && mouseStaticY >= (double)window_position.y - ((double)height * 0.5) + 2.0 * (double)scale)
@@ -2562,6 +2883,8 @@ void Editor::EditorWindow::updateNewObject()
 
 			// Calculate the Index of Which Object the Mouse is Selecting
 			index = (int)(((((double)window_position.y + height / 2 - 12 * (double)scale) - mouseStaticY) / (15 * (double)scale)) + (barOffset / (15 * scale)) + 1);
+			if (index > object_index_max)
+				index = 0;
 
 			// Generate Vertices of Highlighter
 			float vertices[42];
@@ -2579,16 +2902,16 @@ void Editor::EditorWindow::updateNewObject()
 			glBindVertexArray(0);
 
 			// If Left Click, Create New Object
-			if (Global::LeftClick)
+			if (Global::LeftClick && index != 0)
 			{
 				// Reset Some Values
 				Global::LeftClick = false;
-				bar1.percent = 0.0f;
+				bar1.resetBar();
 
 				// Update Generalized New Object
 				if (editing_mode == EDITING_MODES::NEW_OBJECT)
 				{
-					new_object_identifier[object_identifier_index] = index - 1;
+					determineCorrectObjectIndex();
 					object_identifier_index++;
 					changeNewObject();
 				}
@@ -2613,6 +2936,33 @@ void Editor::EditorWindow::updateNewObject()
 	}
 }
 
+void Editor::EditorWindow::determineCorrectObjectIndex()
+{
+	// Map for 0'th Index in Identifer for GUIs
+	uint8_t gui_map_identifier[] = { Object::ELEMENT, Object::TERRAIN, Object::LIGHT, Object::EFFECT, Object::GROUP };
+
+	// Determine if Dealing With a GUI
+	if (change_controller->getCurrentContainer()->getContainerType() == Render::CONTAINER_TYPES::GUI)
+	{
+		// Test if Attempting to Select In the 0'th Index
+		if (object_identifier_index == 0)
+		{
+			new_object_identifier[object_identifier_index] = gui_map_identifier[index - 1];
+			return;
+		}
+
+		// Test if Attempting to Select Static Terrain
+		if (object_identifier_index == 1 && new_object_identifier[0] == Object::TERRAIN && index == 2)
+		{
+			new_object_identifier[object_identifier_index] = Object::Terrain::STATIC;
+			return;
+		}
+	}
+
+	// Most Object Indicies Have No Problems
+	new_object_identifier[object_identifier_index] = index - 1;
+}
+
 void Editor::EditorWindow::changeNewObject()
 {
 	// Keeps Track of the Offset of the Vertices
@@ -2629,60 +2979,10 @@ void Editor::EditorWindow::changeNewObject()
 	// Base Object Type Object Identifier
 	case 0:
 	{
-		// Vertices of Objects
-		float vertices[42];
-
-		// Bind Array Object
-		glBindVertexArray(editing_screenVAO);
-
-		// Enable VBO and Bind Nullified Vertices
-		glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 294, NULL, GL_DYNAMIC_DRAW);
-
-		// Collision Mask Vertices
-		Vertices::Line::genLineColor(-10.0f * scale, 30.0f * scale, distance, distance, -1.1f, 1 * scale, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), vertices);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
-		offset += 42;
-		distance -= 15 * scale;
-
-		// Terrain Vertices
-		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), vertices);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
-		offset += 42;
-		distance -= 15 * scale;
-
-		// Light Vertices
-		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), vertices);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
-		offset += 42;
-		distance -= 15 * scale;
-
-		// Physics Object Vertices
-		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
-		offset += 42;
-		distance -= 15 * scale;
-
-		// Entity Vertices
-		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(0.75f, 0.1f, 0.1f, 1.0f), vertices);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
-		offset += 42;
-		distance -= 15 * scale;
-
-		// Effect Vertices
-		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), vertices);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
-		offset += 42;
-		distance -= 15 * scale;
-
-		// Group Vertices
-		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 10 * scale, 10 * scale, glm::vec4(0.0f, 0.8f, 0.6f, 1.0f), vertices);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
-		offset += 42;
-
-		// Finalize Vertices
-		finalizeNewObjectVertices(distance);
-
+		if (change_controller->getCurrentContainer()->getContainerType() == Render::CONTAINER_TYPES::LEVEL)
+			changeNewObjectLevelBase(distance, offset);
+		else
+			changeNewObjectGUIBase(distance, offset);
 		break;
 	}
 
@@ -2693,218 +2993,45 @@ void Editor::EditorWindow::changeNewObject()
 		switch (new_object_identifier[0])
 		{
 
-		// Mask Selections
+			// Mask Selections
 		case Object::MASK:
 		{
-			// Vertices of Objects
-			float vertices[42];
-
-			// Bind Array Object
-			glBindVertexArray(editing_screenVAO);
-
-			// Enable VBO and Bind Nullified Vertices
-			glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 168, NULL, GL_DYNAMIC_DRAW);
-
-			// Collision Mask Floor Vertices
-			Vertices::Line::genLineColor(-10.0f * scale, 30.0f * scale, distance - 2.0f * scale, distance - 2.0f * scale, -1.1f, 1 * scale, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
-			offset += 42;
-			distance -= 15 * scale;
-
-			// Collision Mask left Wall Vertices
-			Vertices::Line::genLineColor(0.0f, 0.0f, distance + 6.0f * scale, distance - 6 * scale, -1.1f, 1 * scale, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
-			offset += 42;
-			distance -= 15 * scale;
-
-			// Collision Mask Right Wall Vertices
-			Vertices::Line::genLineColor(20.0f * scale, 20.0f * scale, distance + 6.0f * scale, distance - 6 * scale, -1.1f, 1 * scale, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
-			offset += 42;
-			distance -= 15 * scale;
-
-			// Collision Mask Ceiling Vertices
-			Vertices::Line::genLineColor(-10.0f * scale, 30.0f * scale, distance + 2.0f * scale, distance + 2.0f * scale, -1.1f, 1 * scale, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat)* offset, sizeof(vertices), vertices);
-			offset += 42;
-
-			// Finalize Vertices
-			finalizeNewObjectVertices(distance);
-
+			changeNewObjectMasks(distance, offset);
 			break;
 		}
 
 		// Terrain Layer Selections
 		case Object::TERRAIN:
 		{
-			// Vertices of Objects
-			float vertices[42];
-
-			// Bind Array Object
-			glBindVertexArray(editing_screenVAO);
-
-			// Enable VBO and Bind Nullified Vertices
-			glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 252, NULL, GL_DYNAMIC_DRAW);
-
-			// Draw Each Rectangle With Differing Colors
-			for (int i = 0; i < 6; i++)
-			{
-				Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, terrain_layer_colors[i], vertices);
-				glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat)* offset, sizeof(vertices), vertices);
-				offset += 42;
-				distance -= 15 * scale;
-			}
-
-			// Counteract Previous Distance Change
-			distance += 15 * scale;
-
-			// Finalize Vertices
-			finalizeNewObjectVertices(distance);
-
+			changeNewObjectTerrain(distance, offset);
 			break;
 		}
 
 		// Light Selections
 		case Object::LIGHT:
 		{
-			// Vertices of Objects
-			float vertices[42];
-
-			// Bind Array Object
-			glBindVertexArray(editing_screenVAO);
-
-			// Enable VBO and Bind Nullified Vertices
-			glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 168, NULL, GL_DYNAMIC_DRAW);
-
-			// Directional Light Vertices
-			Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 1.0f * scale, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat)* offset, sizeof(vertices), vertices);
-			offset += 42;
-			distance -= 15 * scale;
-
-			// Point Light Vertices
-			Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat)* offset, sizeof(vertices), vertices);
-			offset += 42;
-			distance -= 15 * scale;
-
-			// Spot Light Vertices
-			Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 4.0f * scale, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat)* offset, sizeof(vertices), vertices);
-			offset += 42;
-			distance -= 15 * scale;
-
-			// Beam Vertices
-			Vertices::Line::genLineColor(-10.0f * scale, 30.0f * scale, distance + 5.0f * scale, distance - 2 * scale, -1.1f, 1 * scale, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat)* offset, sizeof(vertices), vertices);
-			offset += 42;
-
-			// Finalize Vertices
-			finalizeNewObjectVertices(distance);
-
+			changeNewObjectLighting(distance, offset);
 			break;
 		}
 
 		// Physics Type Selections
 		case Object::PHYSICS:
 		{
-			// Vertices of Objects
-			float vertices[42];
-
-			// Bind Array Object
-			glBindVertexArray(editing_screenVAO);
-
-			// Enable VBO and Bind Nullified Vertices
-			glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 168, NULL, GL_DYNAMIC_DRAW);
-
-			// Rigid Body
-			Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat)* offset, sizeof(vertices), vertices);
-			offset += 42;
-			distance -= 15 * scale;
-
-			// Soft Body
-			Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 5.0f, 10.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT)* offset, sizeof(vertices), vertices);
-			offset += 42;
-			distance -= 15 * scale;
-
-			// Hinge
-			Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 5.0f, 1.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * offset, sizeof(vertices), vertices);
-			offset += 42;
-			Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 1.0f, 5.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * offset, sizeof(vertices), vertices);
-			offset += 42;
-
-			// Finalize Vertices
-			finalizeNewObjectVertices(distance);
-
+			changeNewObjectPhysics(distance, offset);
 			break;
 		}
 
 		// Entity Base Selections
 		case Object::ENTITY:
 		{
-			// Vertices of Objects
-			float vertices[42];
-
-			// Bind Array Object
-			glBindVertexArray(editing_screenVAO);
-
-			// Enable VBO and Bind Nullified Vertices
-			glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 168, NULL, GL_DYNAMIC_DRAW);
-
-			// NPC
-			Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(0.75f, 0.1f, 0.1f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat)* offset, sizeof(vertices), vertices);
-			offset += 42;
-			distance -= 15 * scale;
-
-			// Controllable
-			Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(0.75f, 0.1f, 0.1f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat)* offset, sizeof(vertices), vertices);
-			offset += 42;
-			distance -= 15 * scale;
-
-			// Interactable
-			Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(0.75f, 0.1f, 0.1f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat)* offset, sizeof(vertices), vertices);
-			offset += 42;
-			distance -= 15 * scale;
-
-			// Dynamic
-			Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), vertices);
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat)* offset, sizeof(vertices), vertices);
-			distance -= 15 * scale;
-
-			// Finalize Vertices
-			finalizeNewObjectVertices(distance);
-
+			changeNewObjectEntity(distance, offset);
 			break;
 		}
 
 		// Effect Selections
 		case Object::EFFECT:
 		{
-			// Vertices of Objects
-			float vertices[42] = {0};
-
-			// Bind Array Object
-			glBindVertexArray(editing_screenVAO);
-
-			// Enable VBO and Bind Nullified Vertices
-			glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 252, NULL, GL_DYNAMIC_DRAW);
-
-			// Finalize Vertices
-			finalizeNewObjectVertices(distance);
-
+			changeNewObjectEffect(distance, offset);
 			break;
 		}
 
@@ -2912,6 +3039,13 @@ void Editor::EditorWindow::changeNewObject()
 		case Object::GROUP:
 		{
 			generateNewObject();
+			break;
+		}
+
+		// Element Selections
+		case Object::ELEMENT:
+		{
+			changeNewObjectElement(distance, offset);
 			break;
 		}
 
@@ -2930,50 +3064,7 @@ void Editor::EditorWindow::changeNewObject()
 		// Mask Selections
 		case Object::MASK:
 		{
-			switch (new_object_identifier[1])
-			{
-	
-			// Floor Mask Selections
-			case Object::Mask::FLOOR:
-			{
-				glm::vec4 floor_mask_colors[3] = { glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), glm::vec4(0.04f, 0.24f, 1.0f, 1.0f) };
-				genNewObjectHorizontalMasks(floor_mask_colors, distance, offset);
-				break;
-			}
-
-			// Left Mask Selections
-			case Object::Mask::LEFT_WALL:
-			{
-				glm::vec4 left_wall_mask_colors[2] = { glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.4f, 0.0f, 1.0f) };
-				genNewObjectVerticalMasks(left_wall_mask_colors, distance, offset, 1);
-				break;
-			}
-
-			// Right Mask Selections
-			case Object::Mask::RIGHT_WALL:
-			{
-				glm::vec4 right_wall_mask_colors[2] = { glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), glm::vec4(0.04f, 0.0f, 0.27f, 1.0f) };
-				genNewObjectVerticalMasks(right_wall_mask_colors, distance, offset, -1);
-				break;
-			}
-
-			// Ceiling Mask Selections
-			case Object::Mask::CEILING:
-			{
-				glm::vec4 ceiling_mask_colors[3] = { glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), glm::vec4(0.28f, 0.0f, 0.34f, 1.0f), glm::vec4(0.0f, 0.0f, 0.45f, 1.0f) };
-				genNewObjectHorizontalMasks(ceiling_mask_colors, distance, offset);
-				break;
-			}
-
-			// Generate Trigger Object
-			case Object::Mask::TRIGGER:
-			{
-				generateNewObject();
-				break;
-			}
-
-			}
-
+			changeNewObjectMaskShapes(distance, offset);
 			break;
 		}
 
@@ -2994,81 +3085,7 @@ void Editor::EditorWindow::changeNewObject()
 		// Physics Selections
 		case Object::PHYSICS:
 		{
-			switch (new_object_identifier[1])
-			{
-
-			// Rigid Bodies
-			case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
-			{
-				genNewObjectShapes(glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), distance, offset);
-				break;
-			}
-
-			// Soft Bodies
-			case (int)Object::Physics::PHYSICS_BASES::SOFT_BODY:
-			{
-				// Vertices of Objects
-				float vertices[42];
-
-				// Bind Array Object
-				glBindVertexArray(editing_screenVAO);
-
-				// Enable VBO and Bind Nullified Vertices
-				glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 84, NULL, GL_DYNAMIC_DRAW);
-
-				// Soft Body Vertices
-				Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 5.0f, 10.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
-				glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT)* offset, sizeof(vertices), vertices);
-				offset += 42;
-				distance -= 15 * scale;
-
-				// Wire Vertices
-				Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f, 1.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
-				glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT)* offset, sizeof(vertices), vertices);
-				offset += 42;
-
-				// Finalize Vertices
-				finalizeNewObjectVertices(distance);
-
-				break;
-			}
-
-			// Hinge
-			case (int)Object::Physics::PHYSICS_BASES::HINGE_BASE:
-			{
-				// Vertices of Objects
-				float vertices[42];
-
-				// Bind Array Object
-				glBindVertexArray(editing_screenVAO);
-
-				// Enable VBO and Bind Nullified Vertices
-				glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 126, NULL, GL_DYNAMIC_DRAW);
-
-				// Anchor Vertices
-				Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f, 2.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
-				glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT)* offset, sizeof(vertices), vertices);
-				offset += 42;
-				distance -= 15 * scale;
-
-				// Hinge Vertieces
-				Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 5.0f, 1.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
-				glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT)* offset, sizeof(vertices), vertices);
-				offset += 42;
-				Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 1.0f, 5.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
-				glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT)* offset, sizeof(vertices), vertices);
-				offset += 42;
-				
-				// Finalize Vertices
-				finalizeNewObjectVertices(distance);
-
-				break;
-			}
-
-			}
-
+			changeNewObjectPhysicsShapes(distance, offset);
 			break;
 		}
 
@@ -3082,6 +3099,13 @@ void Editor::EditorWindow::changeNewObject()
 		// Effect Selections
 		case Object::EFFECT:
 		{
+			break;
+		}
+
+		// Generate Elements
+		case Object::ELEMENT:
+		{
+			changeNewObjectSecondaryElements(distance, offset);
 			break;
 		}
 
@@ -3103,6 +3127,580 @@ void Editor::EditorWindow::changeNewObject()
 
 	// Store Pointer to ScrollBar
 	Global::scroll_bar = &bar1;
+}
+
+void Editor::EditorWindow::changeNewObjectLevelBase(float& distance, int& offset)
+{
+	// Vertices of Objects
+	float vertices[42];
+
+	// Bind Array Object
+	glBindVertexArray(editing_screenVAO);
+
+	// Enable VBO and Bind Nullified Vertices
+	glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 294, NULL, GL_DYNAMIC_DRAW);
+
+	// Collision Mask Vertices
+	Vertices::Line::genLineColor(-10.0f * scale, 30.0f * scale, distance, distance, -1.1f, 1 * scale, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Terrain Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Light Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Physics Object Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Entity Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(0.75f, 0.1f, 0.1f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Effect Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Group Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 10 * scale, 10 * scale, glm::vec4(0.0f, 0.8f, 0.6f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+
+	// Store Max Index
+	object_index_max = 7;
+
+	// Finalize Vertices
+	finalizeNewObjectVertices(distance);
+}
+
+void Editor::EditorWindow::changeNewObjectGUIBase(float& distance, int& offset)
+{
+	// Vertices of Objects
+	float vertices[42];
+
+	// Bind Array Object
+	glBindVertexArray(editing_screenVAO);
+
+	// Enable VBO and Bind Nullified Vertices
+	glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 252, NULL, GL_DYNAMIC_DRAW);
+
+	// Element Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 25.0f * scale, 8.0f * scale, glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 24.0f * scale, 7.0f * scale, glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Terrain Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Light Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Effect Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Group Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 10 * scale, 10 * scale, glm::vec4(0.0f, 0.8f, 0.6f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+
+	// Store Max Index
+	object_index_max = 5;
+
+	// Finalize Vertices
+	finalizeNewObjectVertices(distance);
+}
+
+void Editor::EditorWindow::changeNewObjectMasks(float& distance, int& offset)
+{
+	// Vertices of Objects
+	float vertices[42];
+
+	// Bind Array Object
+	glBindVertexArray(editing_screenVAO);
+
+	// Enable VBO and Bind Nullified Vertices
+	glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 168, NULL, GL_DYNAMIC_DRAW);
+
+	// Collision Mask Floor Vertices
+	Vertices::Line::genLineColor(-10.0f * scale, 30.0f * scale, distance - 2.0f * scale, distance - 2.0f * scale, -1.1f, 1 * scale, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Collision Mask left Wall Vertices
+	Vertices::Line::genLineColor(0.0f, 0.0f, distance + 6.0f * scale, distance - 6 * scale, -1.1f, 1 * scale, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Collision Mask Right Wall Vertices
+	Vertices::Line::genLineColor(20.0f * scale, 20.0f * scale, distance + 6.0f * scale, distance - 6 * scale, -1.1f, 1 * scale, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Collision Mask Ceiling Vertices
+	Vertices::Line::genLineColor(-10.0f * scale, 30.0f * scale, distance + 2.0f * scale, distance + 2.0f * scale, -1.1f, 1 * scale, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+
+	// Store Max Index
+	object_index_max = 4;
+
+	// Finalize Vertices
+	finalizeNewObjectVertices(distance);
+}
+
+void Editor::EditorWindow::changeNewObjectTerrain(float& distance, int& offset)
+{
+	// Vertices of Objects
+	float vertices[42];
+
+	// Bind Array Object
+	glBindVertexArray(editing_screenVAO);
+
+	// Enable VBO and Bind Nullified Vertices
+	glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 252, NULL, GL_DYNAMIC_DRAW);
+
+	// Determine How Many Layers to Test
+	int layer_count = (change_controller->getCurrentContainer()->getContainerType() == Render::CONTAINER_TYPES::GUI) ? 2 : 6;
+
+	// Draw Each Rectangle With Differing Colors
+	for (int i = 0; i < layer_count; i++)
+	{
+		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, terrain_layer_colors[i], vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+		offset += 42;
+		distance -= 15 * scale;
+	}
+
+	// Counteract Previous Distance Change
+	distance += 15 * scale;
+
+	// Store Max Index
+	object_index_max = layer_count;
+
+	// Finalize Vertices
+	finalizeNewObjectVertices(distance);
+}
+
+void Editor::EditorWindow::changeNewObjectLighting(float& distance, int& offset)
+{
+	// Vertices of Objects
+	float vertices[42];
+
+	// Bind Array Object
+	glBindVertexArray(editing_screenVAO);
+
+	// Enable VBO and Bind Nullified Vertices
+	glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 168, NULL, GL_DYNAMIC_DRAW);
+
+	// Directional Light Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 1.0f * scale, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Point Light Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Spot Light Vertices
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 4.0f * scale, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Beam Vertices
+	Vertices::Line::genLineColor(-10.0f * scale, 30.0f * scale, distance + 5.0f * scale, distance - 2 * scale, -1.1f, 1 * scale, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+
+	// Store Max Index
+	object_index_max = 4;
+
+	// Finalize Vertices
+	finalizeNewObjectVertices(distance);
+}
+
+void Editor::EditorWindow::changeNewObjectPhysics(float& distance, int& offset)
+{
+	// Vertices of Objects
+	float vertices[42];
+
+	// Bind Array Object
+	glBindVertexArray(editing_screenVAO);
+
+	// Enable VBO and Bind Nullified Vertices
+	glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 168, NULL, GL_DYNAMIC_DRAW);
+
+	// Rigid Body
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Soft Body
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 5.0f, 10.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Hinge
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 5.0f, 1.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 1.0f, 5.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * offset, sizeof(vertices), vertices);
+	offset += 42;
+
+	// Store Max Index
+	object_index_max = 3;
+
+	// Finalize Vertices
+	finalizeNewObjectVertices(distance);
+}
+
+void Editor::EditorWindow::changeNewObjectEntity(float& distance, int& offset)
+{
+	// Vertices of Objects
+	float vertices[42];
+
+	// Bind Array Object
+	glBindVertexArray(editing_screenVAO);
+
+	// Enable VBO and Bind Nullified Vertices
+	glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 168, NULL, GL_DYNAMIC_DRAW);
+
+	// NPC
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(0.75f, 0.1f, 0.1f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Controllable
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(0.75f, 0.1f, 0.1f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Interactable
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(0.75f, 0.1f, 0.1f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Dynamic
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 3.0f * scale, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	distance -= 15 * scale;
+
+	// Store Max Index
+	object_index_max = 4;
+
+	// Finalize Vertices
+	finalizeNewObjectVertices(distance);
+}
+
+void Editor::EditorWindow::changeNewObjectEffect(float& distance, int& offset)
+{
+	// Vertices of Objects
+	float vertices[42];
+
+	// Bind Array Object
+	glBindVertexArray(editing_screenVAO);
+
+	// Enable VBO and Bind Nullified Vertices
+	glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 252, NULL, GL_DYNAMIC_DRAW);
+
+	// Store Max Index
+	object_index_max = 0;
+
+	// Finalize Vertices
+	finalizeNewObjectVertices(distance);
+}
+
+void Editor::EditorWindow::changeNewObjectElement(float& distance, int& offset)
+{
+	// Vertices of Objects
+	float vertices[42];
+
+	// Bind Array Object
+	glBindVertexArray(editing_screenVAO);
+
+	// Enable VBO and Bind Nullified Vertices
+	glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 882, NULL, GL_DYNAMIC_DRAW);
+
+	// Master Element 
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 10.0f * scale, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Text Object (Rendered in Text Renderer)
+	distance -= 15 * scale;
+
+	// Box
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 25.0f * scale, 8.0f * scale, glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 24.0f * scale, 7.0f * scale, glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Toggle Group
+	Vertices::Rectangle::genRectColor(3.0f * scale, distance, -1.1f, 11.0f * scale, 8.0f * scale, glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	Vertices::Rectangle::genRectColor(3.0f * scale, distance, -1.1f, 10.0f * scale, 7.0f * scale, glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	Vertices::Rectangle::genRectColor(17.0f * scale, distance, -1.1f, 11.0f * scale, 8.0f * scale, glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	Vertices::Rectangle::genRectColor(17.0f * scale, distance, -1.1f, 10.0f * scale, 7.0f * scale, glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+	
+	// Scroll Bar
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 2.0f * scale, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Grid
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 25.0f * scale, 8.0f * scale, glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 24.0f * scale, 7.0f * scale, glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 0.5f * scale, 7.0f * scale, glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+	offset += 42;
+	distance -= 15 * scale;
+
+	// Color Wheel
+	float vertices2[420];
+	Vertices::Circle::genCircleColorWheel(10.0f * scale, distance, -1.1f, 5.0f, 20, vertices2);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices2), vertices2);
+
+	// Store Max Index
+	object_index_max = 7;
+
+	// Finalize Vertices
+	finalizeNewObjectVertices(distance);
+}
+
+void Editor::EditorWindow::changeNewObjectSecondaryElements(float& distance, int& offset)
+{
+	// Vertices
+	float vertices[42];
+
+	// Scroll Bar
+	if (new_object_identifier[1] == Render::GUI::SCROLL_BAR)
+	{
+		// Bind Array Object
+		glBindVertexArray(editing_screenVAO);
+
+		// Enable VBO and Bind Nullified Vertices
+		glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 336, NULL, GL_DYNAMIC_DRAW);
+
+		// Vertical Scroll Bar
+		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f * scale, 10.0f * scale, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+		offset += 42;
+		distance -= 15 * scale;
+
+		// Horizontal Scroll Bar
+		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f * scale, 2.0f * scale, glm::vec4(0.8f, 0.8f, 0.8f, 1.0f), vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices), vertices);
+		offset += 42;
+		distance -= 15 * scale;
+
+		// Store Max Index
+		object_index_max = 2;
+
+		// Finalize Vertices
+		finalizeNewObjectVertices(distance);
+	}
+
+	// All Other Objects Can Be Immediately Generated
+	else
+		generateNewObject();
+}
+
+void Editor::EditorWindow::changeNewObjectMaskShapes(float& distance, int& offset)
+{
+	// Vertices of Objects
+	float vertices[42];
+
+	switch (new_object_identifier[1])
+	{
+
+	// Floor Mask Selections
+	case Object::Mask::FLOOR:
+	{
+		glm::vec4 floor_mask_colors[3] = { glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), glm::vec4(0.0f, 1.0f, 1.0f, 1.0f), glm::vec4(0.04f, 0.24f, 1.0f, 1.0f) };
+		genNewObjectHorizontalMasks(floor_mask_colors, distance, offset);
+		break;
+	}
+
+	// Left Mask Selections
+	case Object::Mask::LEFT_WALL:
+	{
+		glm::vec4 left_wall_mask_colors[2] = { glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.4f, 0.0f, 1.0f) };
+		genNewObjectVerticalMasks(left_wall_mask_colors, distance, offset, 1);
+		break;
+	}
+
+	// Right Mask Selections
+	case Object::Mask::RIGHT_WALL:
+	{
+		glm::vec4 right_wall_mask_colors[2] = { glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), glm::vec4(0.04f, 0.0f, 0.27f, 1.0f) };
+		genNewObjectVerticalMasks(right_wall_mask_colors, distance, offset, -1);
+		break;
+	}
+
+	// Ceiling Mask Selections
+	case Object::Mask::CEILING:
+	{
+		glm::vec4 ceiling_mask_colors[3] = { glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), glm::vec4(0.28f, 0.0f, 0.34f, 1.0f), glm::vec4(0.0f, 0.0f, 0.45f, 1.0f) };
+		genNewObjectHorizontalMasks(ceiling_mask_colors, distance, offset);
+		break;
+	}
+
+	// Generate Trigger Object
+	case Object::Mask::TRIGGER:
+	{
+		generateNewObject();
+		break;
+	}
+
+	}
+}
+
+void Editor::EditorWindow::changeNewObjectPhysicsShapes(float& distance, int& offset)
+{
+	// Vertices of Objects
+	float vertices[42];
+
+	switch (new_object_identifier[1])
+	{
+
+		// Rigid Bodies
+	case (int)Object::Physics::PHYSICS_BASES::RIGID_BODY:
+	{
+		genNewObjectShapes(glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), distance, offset);
+		break;
+	}
+
+	// Soft Bodies
+	case (int)Object::Physics::PHYSICS_BASES::SOFT_BODY:
+	{
+		// Bind Array Object
+		glBindVertexArray(editing_screenVAO);
+
+		// Enable VBO and Bind Nullified Vertices
+		glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 84, NULL, GL_DYNAMIC_DRAW);
+
+		// Soft Body Vertices
+		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 5.0f, 10.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * offset, sizeof(vertices), vertices);
+		offset += 42;
+		distance -= 15 * scale;
+
+		// Wire Vertices
+		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 30.0f, 1.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * offset, sizeof(vertices), vertices);
+		offset += 42;
+
+		// Store Max Index
+		object_index_max = 2;
+
+		// Finalize Vertices
+		finalizeNewObjectVertices(distance);
+
+		break;
+	}
+
+	// Hinge
+	case (int)Object::Physics::PHYSICS_BASES::HINGE_BASE:
+	{
+		// Bind Array Object
+		glBindVertexArray(editing_screenVAO);
+
+		// Enable VBO and Bind Nullified Vertices
+		glBindBuffer(GL_ARRAY_BUFFER, editing_screenVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 126, NULL, GL_DYNAMIC_DRAW);
+
+		// Anchor Vertices
+		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 2.0f, 2.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * offset, sizeof(vertices), vertices);
+		offset += 42;
+		distance -= 15 * scale;
+
+		// Hinge Vertieces
+		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 5.0f, 1.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * offset, sizeof(vertices), vertices);
+		offset += 42;
+		Vertices::Rectangle::genRectColor(10.0f * scale, distance, -1.1f, 1.0f, 5.0f, glm::vec4(1.0f, 0.5f, 0.0f, 1.0f), vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * offset, sizeof(vertices), vertices);
+		offset += 42;
+
+		// Store Max Index
+		object_index_max = 2;
+
+		// Finalize Vertices
+		finalizeNewObjectVertices(distance);
+
+		break;
+	}
+
+	}
 }
 
 void Editor::EditorWindow::changeNewObjectSpringMass()
@@ -3138,6 +3736,9 @@ void Editor::EditorWindow::changeNewObjectSpringMass()
 		glBufferSubData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * offset, sizeof(vertices), vertices);
 		offset += 42;
 
+		// Store Max Index
+		object_index_max = 2;
+
 		// Finalize Vertices
 		finalizeNewObjectVertices(distance);
 	}
@@ -3166,7 +3767,8 @@ void Editor::EditorWindow::changeNewObjectSpringMass()
 
 void Editor::EditorWindow::changeNewObjectHinge()
 {
-
+	// Store Max Index
+	object_index_max = 0;
 }
 
 void Editor::EditorWindow::initializeSpringMassSelection()
@@ -3250,6 +3852,9 @@ void Editor::EditorWindow::genNewObjectShapes(glm::vec4 color, float& distance, 
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(vertices3), vertices3);
 	offset += 105;
 
+	// Store Max Index
+	object_index_max = 5;
+
 	// Finalize Vertices
 	finalizeNewObjectVertices(distance);
 }
@@ -3286,6 +3891,9 @@ void Editor::EditorWindow::genNewObjectHorizontalMasks(glm::vec4 colors[3], floa
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(largerVertices), largerVertices);
 	offset += 462;
 
+	// Store Max Index
+	object_index_max = 3;
+
 	// Finalize Vertices
 	finalizeNewObjectVertices(distance);
 }
@@ -3316,6 +3924,9 @@ void Editor::EditorWindow::genNewObjectVerticalMasks(glm::vec4 colors[2], float&
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(GLfloat) * offset, sizeof(largerVertices), largerVertices);
 	offset += 462;
 
+	// Store Max Index
+	object_index_max = 2;
+
 	// Finalize Vertices
 	finalizeNewObjectVertices(distance);
 }
@@ -3334,7 +3945,7 @@ void Editor::EditorWindow::finalizeNewObjectVertices(float distance)
 
 	// Create ScrollBar
 	bar1X = border2X - 2 * scale;
-	bar1 = GUI::VerticalScrollBar(bar1X, position.y + height / 2 - 10 * scale, 2.0f * scale, editorHeight, editorHeightFull, 0);
+	bar1 = Render::GUI::VerticalScrollBar(bar1X, position.y + height / 2 - 10 * scale, 2.0f * scale, editorHeight, editorHeightFull, 0, -1);
 
 	if (!active_window && false)
 	{
@@ -3684,6 +4295,72 @@ void Editor::EditorWindow::generateNewObject()
 		break;
 	}
 
+	// Elements
+	case Object::ELEMENT:
+	{
+		switch (new_object_identifier[1])
+		{
+
+		// Master Element
+		case Render::GUI::MASTER:
+		{
+			DataClass::Data_MasterElement* new_master = new DataClass::Data_MasterElement(0);
+			new_data_object = new_master;
+
+			break;
+		}
+
+		// Text
+		case Render::GUI::TEXT:
+		{
+			DataClass::Data_TextElement* new_text = new DataClass::Data_TextElement(0);
+			new_text->generateInitialValues(new_position);
+			new_data_object = new_text;
+
+			break;
+		}
+
+		// Box
+		case Render::GUI::BOX:
+		{
+			DataClass::Data_BoxElement* new_box = new DataClass::Data_BoxElement(0);
+			new_box->generateInitialValues(new_position, glm::vec2(new_size * 2.0f, new_size));
+			new_data_object = new_box;
+
+			break;
+		}
+
+		// Toggle Group
+		case Render::GUI::TOGGLE_GROUP:
+		{
+			break;
+		}
+
+		// Scroll Bar
+		case Render::GUI::SCROLL_BAR:
+		{
+			DataClass::Data_ScrollBarElement* new_bar = new DataClass::Data_ScrollBarElement(new_object_identifier[2], 0);
+			new_bar->generateInitialValues(new_position, glm::vec2(new_size * 2.0f, new_size));
+			new_data_object = new_bar;
+
+			break;
+		}
+
+		// Grid
+		case Render::GUI::GRID:
+		{
+			break;
+		}
+
+		// Color Wheel
+		case Render::GUI::COLOR_WHEEL:
+		{
+			break;
+		}
+
+		}
+	}
+
 	}
 
 	// Store New Data Object
@@ -3735,7 +4412,7 @@ void Editor::EditorWindow::updateEditorMode()
 	// Location of Mouse in Window
 	double mouseStaticX, mouseStaticY;
 	mouseStaticX = (float)Global::mouseX / Global::zoom_scale;
-	mouseStaticY = (float)Global::mouseY / Global::zoom_scale - (editorHeightFull - editorHeight) * bar1.percent;
+	mouseStaticY = (float)Global::mouseY / Global::zoom_scale - (editorHeightFull - editorHeight) * bar1.getPercent();
 
 	// Set Closing Function of Selected Text
 	selected_text->assignCloser([this]()->void { textCloser(); });
@@ -3767,6 +4444,19 @@ void Editor::EditorWindow::updateEditorMode()
 						update_diffuse = i;
 
 					// Update Specular
+					else
+						update_specular = i;
+				}
+
+				// If Box Active and Index is a Color Box, Update Box Wheel
+				if (box_active && i >= light_wheel_box_start && i < light_wheel_box_start + 16)
+				{
+					if (i - light_wheel_box_start < 4)
+						update_wheel = i;
+					else if (i - light_wheel_box_start < 8)
+						update_ambient = i;
+					else if (i - light_wheel_box_start < 12)
+						update_diffuse = i;
 					else
 						update_specular = i;
 				}
@@ -3813,12 +4503,16 @@ void Editor::EditorWindow::updateEditorMode()
 	if (wheel_active)
 	{
 		DataClass::Data_Object* data_object = data_objects.at(0);
-		Object::ObjectData& object_data = static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData();
+		glm::vec4* colors = nullptr;
+		if (data_object->getObjectIdentifier()[0] == Object::ELEMENT)
+			colors = &static_cast<DataClass::Data_TextElement*>(data_object)->getTextData().color;
+		else
+			colors = &static_cast<DataClass::Data_SubObject*>(data_object)->getObjectData().colors;
 		if (update_wheel && !boxes[update_wheel]->texting) {
-			updateColorWheels(wheel, object_data.colors, wheel_color, mouseStaticX, mouseStaticY, 1, true);
+			updateColorWheels(wheel, *colors, wheel_color, mouseStaticX, mouseStaticY, 1, true);
 			update_wheel = 0;
 		} else
-			updateColorWheels(wheel, object_data.colors, wheel_color, mouseStaticX, mouseStaticY, 1, false);
+			updateColorWheels(wheel, *colors, wheel_color, mouseStaticX, mouseStaticY, 1, false);
 	}
 
 	// Same but for Light Wheels
@@ -3849,6 +4543,41 @@ void Editor::EditorWindow::updateEditorMode()
 			updateColorWheels(wheelSpecular, light_data.specular, specular_color, mouseStaticX, mouseStaticY, 7, false);
 	}
 
+	// Also for Box Wheels
+	if (box_active)
+	{
+		DataClass::Data_Object* data_object = data_objects.at(0);
+		Render::GUI::BoxData& box_data = static_cast<DataClass::Data_BoxElement*>(data_object)->getBoxData();
+
+		if (update_wheel && !boxes[update_wheel]->texting) {
+			updateColorWheels(wheel, box_data.background_color, wheel_color, mouseStaticX, mouseStaticY, 1, true);
+			update_wheel = 0;
+		}
+		else
+			updateColorWheels(wheel, box_data.background_color, wheel_color, mouseStaticX, mouseStaticY, 1, false);
+
+		if (update_ambient && !boxes[update_ambient]->texting) {
+			updateColorWheels(wheelAmbient, box_data.outline_color, ambient_color, mouseStaticX, mouseStaticY, 4, true);
+			update_ambient = 0;
+		}
+		else
+			updateColorWheels(wheelAmbient, box_data.outline_color, ambient_color, mouseStaticX, mouseStaticY, 4, false);
+
+		if (update_diffuse && !boxes[update_diffuse]->texting) {
+			updateColorWheels(wheelDiffuse, box_data.text_color, diffuse_color, mouseStaticX, mouseStaticY, 7, true);
+			update_diffuse = 0;
+		}
+		else
+			updateColorWheels(wheelDiffuse, box_data.text_color, diffuse_color, mouseStaticX, mouseStaticY, 7, false);
+
+		if (update_specular && !boxes[update_specular]->texting) {
+			updateColorWheels(wheelSpecular, box_data.highlight_color, specular_color, mouseStaticX, mouseStaticY, 10, true);
+			update_specular = 0;
+		}
+		else
+			updateColorWheels(wheelSpecular, box_data.highlight_color, specular_color, mouseStaticX, mouseStaticY, 10, false);
+	}
+
 	// If Script is Active, Find Script From Script Map
 	if (script_active && !boxes[update_script]->texting)
 		getKeyFromStringMap(STRING_MAPS::SCRIPT);
@@ -3866,7 +4595,7 @@ void Editor::EditorWindow::updateEditorMode()
 		getKeyFromStringMap(STRING_MAPS::PHYSICS_MATERIAL);
 }
 
-void Editor::EditorWindow::updateColorWheels(ColorWheel& wheel_, glm::vec4& color, unsigned int* wheel_color_, double mouseStaticX, double mouseStaticY, int offset, bool update)
+void Editor::EditorWindow::updateColorWheels(Render::GUI::ColorWheel& wheel_, glm::vec4& color, unsigned int* wheel_color_, double mouseStaticX, double mouseStaticY, int offset, bool update)
 {
 	// Test Collisions With Color Wheel
 	if (index == 0 && Global::LeftClick)
@@ -3901,7 +4630,7 @@ void Editor::EditorWindow::updateColorWheels(ColorWheel& wheel_, glm::vec4& colo
 		}
 
 		// Update Color Boxes if Wheel was Modified
-		color = wheel_.Color;
+		color = wheel_.getColor();
 		wheel_color_[0] = (unsigned int)(color.r * 255);
 		wheel_color_[1] = (unsigned int)(color.g * 255);
 		wheel_color_[2] = (unsigned int)(color.b * 255);
@@ -4032,6 +4761,7 @@ void Editor::EditorWindow::genObjectEditorWindow()
 	// Reset Some Variables
 	wheel_active = false;
 	light_active = false;
+	box_active = false;
 	update_script = 0;
 	script_active = false;
 	update_texture = 0;
@@ -4065,8 +4795,8 @@ void Editor::EditorWindow::genObjectEditorWindow()
 
 	// Reset Text Data
 	temp_text_data.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	temp_text_data.scale = 0.1f;
-	temp_text_data.static_ = true;
+	temp_text_data.scale = 2.4f;
+	temp_element_data.is_static = true;
 
 	// Parse Object Identifier
 	DataClass::Data_Object* current_data_object = data_objects.at(0);
@@ -4552,11 +5282,106 @@ void Editor::EditorWindow::genObjectEditorWindow()
 		editorHeightFull = 65.0f;
 	}
 
+	// Element Object
+	else if (object_identifier[0] == Object::ObjectList::ELEMENT)
+	{
+		// Master Element
+		if (object_identifier[1] == Render::GUI::ElementList::MASTER)
+		{
+			// Allocate Memory
+			resetBoxes(13, 13);
+
+			// Create Common Boxes
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+
+			// Create Element Boxes
+			genBoxesElement(box_offset, text_offset, windowTop - 61.0f, current_data_object);
+
+			// Create Master Boxes
+			genBoxesMaster(box_offset, text_offset, windowTop - 61.0f, current_data_object);
+
+			editorHeightFull = 100.0f;
+		}
+
+		// Text Element
+		else if (object_identifier[1] == Render::GUI::ElementList::TEXT)
+		{
+			// Allocate Memory
+			resetBoxes(13, 14);
+
+			// Create Common Boxes
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+
+			// Create Element Boxes
+			genBoxesElement(box_offset, text_offset, windowTop - 61.0f, current_data_object);
+
+			// Generate Text Data
+			genBoxesText(box_offset, text_offset, windowTop - 61.0f, current_data_object);
+
+			editorHeightFull = 120.0f;
+		}
+
+		// Box Element
+		else if (object_identifier[1] == Render::GUI::ElementList::BOX)
+		{
+			// Allocate Memory
+			resetBoxes(27, 31);
+
+			// Create Common Boxes
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+
+			// Create Element Boxes
+			genBoxesElement(box_offset, text_offset, windowTop - 61.0f, current_data_object);
+
+			// Generate Box Data
+			// CURRENT SIZE: Box = 20, Text = 24
+			genBoxesBox(box_offset, text_offset, windowTop - 61.0f, current_data_object);
+
+			editorHeightFull = 268.0f;
+		}
+
+		// Toggle Element
+		else if (object_identifier[1] == Render::GUI::ElementList::TOGGLE_GROUP)
+		{
+
+		}
+
+		// Bar Element
+		else if (object_identifier[1] == Render::GUI::ElementList::SCROLL_BAR)
+		{
+			// Allocate Memory
+			resetBoxes(12, 12);
+
+			// Create Common Boxes
+			genBoxesCommon(box_offset, text_offset, &position.x, &position.y, current_data_object);
+
+			// Create Element Boxes
+			genBoxesElement(box_offset, text_offset, windowTop - 61.0f, current_data_object);
+
+			// Generate Text Data
+			genBoxesScrollBar(box_offset, text_offset, windowTop - 61.0f, current_data_object);
+
+			editorHeightFull = 105.0f;
+		}
+
+		// Grid Element
+		else if (object_identifier[1] == Render::GUI::ElementList::GRID)
+		{
+
+		}
+
+		// Color Wheel Element
+		else if (object_identifier[1] == Render::GUI::ElementList::COLOR_WHEEL)
+		{
+
+		}
+	}
+
 	// Create ScrollBar
 	editingOffset = height / 2;
 	editorHeight = height - 12 * scale;
 	bar1X = border2X - 2 * scale;
-	bar1 = GUI::VerticalScrollBar(bar1X, position.y + height / 2 - 10 * scale, 2.0f * scale, editorHeight, editorHeightFull, bar1.percent);
+	bar1 = Render::GUI::VerticalScrollBar(bar1X, position.y + height / 2 - 10 * scale, 2.0f * scale, editorHeight, editorHeightFull, bar1.getPercent(), -1);
 	bar1.moveElement(bar1X + window_position.x, window_position.y + height / 2 - 10 * scale);
 	//editing_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	editing_model = glm::translate(editing_model, glm::vec3(window_position.x, window_position.y + (height / 2 - editingOffset), 0.0f));
@@ -4573,7 +5398,7 @@ bool Editor::EditorWindow::traverseBackNewObject()
 
 	// Else, Decrement Index, Update Window, and Return True
 	object_identifier_index--;
-	bar1.percent = 0.0f;
+	bar1.resetBar();
 	changeNewObject();
 	return true;
 }
@@ -4690,6 +5515,9 @@ void Editor::EditorWindow::drawWindow()
 		for (uint8_t i = 0; i < boxes_size; i++)
 			boxes[i]->blitzElement();
 
+		// Draw Drop Down Box
+		Render::GUI::Box::drawDropDown();
+
 		// Draw Color Wheel
 		if (wheel_active)
 		{
@@ -4699,6 +5527,18 @@ void Editor::EditorWindow::drawWindow()
 		// Draw Light Wheels
 		else if (light_active)
 		{
+			wheelAmbient.Blitz(editing_model);
+			glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(editing_model));
+			wheelDiffuse.Blitz(editing_model);
+			glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(editing_model));
+			wheelSpecular.Blitz(editing_model);
+		}
+
+		// Draw Box Wheels
+		else if (box_active)
+		{
+			wheel.Blitz(editing_model);
+			glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(editing_model));
 			wheelAmbient.Blitz(editing_model);
 			glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(editing_model));
 			wheelDiffuse.Blitz(editing_model);
@@ -4751,6 +5591,9 @@ void Editor::EditorWindow::drawWindow()
 		// Draw Box Text
 		for (uint8_t i = 0; i < boxes_size; i++)
 			boxes[i]->blitzOffsetText();
+
+		// Draw Drop Down Box Text
+		Render::GUI::Box::drawDropDownText();
 
 		// Bind Font Shader
 		//Global::fontShader.Use();

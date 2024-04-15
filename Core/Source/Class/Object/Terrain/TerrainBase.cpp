@@ -78,6 +78,10 @@ Object::Terrain::TerrainBase::~TerrainBase()
 
 void Object::Terrain::TerrainBase::initializeTerrain(int& offset_, int& instance_, int& instance_index_)
 {
+	// If Instance is Not -1, Return Since Already Initialized
+	if (instance != -1)
+		return;
+
 	static glm::mat4 model;
 	model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
 
@@ -88,6 +92,7 @@ void Object::Terrain::TerrainBase::initializeTerrain(int& offset_, int& instance
 	// Assign Vertices
 	shape->initializeVertices(data, offset_, instance_index_);
 
+	// TODO: Make a Function For This Virtual to Get Correct Z-Pos of Static Objects
 	data.zpos = -2.0f;
 
 	// Assign Instance
@@ -131,6 +136,22 @@ void Object::Terrain::TerrainBase::updateModel()
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(data.position.x, data.position.y, 0.0f));
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, instance, 64, glm::value_ptr(model));
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void Object::Terrain::TerrainBase::resetVertices()
+{
+	// NOTE: Vertices are Not Actually Reset, This Function Only Allows the "InitializeTerrain" Function to be Executed Again
+	instance = -1;
+}
+
+void Object::Terrain::TerrainBase::genTerrainRecursively(int& offset_static, int& offset_dynamic, int& instance, int& instance_index)
+{
+	// Generate the Correct Terrain Type
+	// TODO: Seperate Between Static and Dynamic Objects, Currently Only Generating Dynamic Objects
+	initializeTerrain(offset_dynamic, instance, instance_index);
+
+	// Recurse Through Children
+	Object::genTerrainRecursively(offset_static, offset_dynamic, instance, instance_index);
 }
 
 #endif

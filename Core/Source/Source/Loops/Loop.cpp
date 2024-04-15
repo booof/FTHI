@@ -24,8 +24,8 @@ void Loop::loop()
 	// Loop Condition
 	bool enable_loop = true;
 
-	// Level Object
-	Render::Objects::Level* level = nullptr;
+	// Level Object, Refactored To General Container Object
+	Render::Container* container = nullptr;
 	scene_controller->loadDefault();
 
 	// Selector Object
@@ -66,21 +66,22 @@ void Loop::loop()
 		Source::Rendering::Pre::preRender();
 
 		// Get Pointer to Level Object
-		level = static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance());
-		level->camera->testForCringe();
+		container = static_cast<Render::Container*>(scene_controller->getCurrentInstance());
+		container->camera->testForCringe();
 
 		// Update Camera
-		level->updateCamera();
-		level->camera->testForCringe();
+		container->updateCamera();
+		container->camera->testForCringe();
 
 #ifdef EDITOR
 
 		// Test if Level Should Reload
 		if (Global::reload_all)
-			level->reloadAll();
+			container->reloadAll();
 
 		// Draw Level Boarders
-		level->drawLevelBorder();
+		if (container->getContainerType() == Render::CONTAINER_TYPES::LEVEL)
+			static_cast<Render::Objects::Level*>(container)->drawLevelBorder();
 
 #endif
 
@@ -91,7 +92,7 @@ void Loop::loop()
 		if (Global::editing || Global::paused)
 		{
 			// Perform Editing Features
-			Source::Rendering::Editing::edit(level, selector, object_info);
+			Source::Rendering::Editing::edit(container, selector, object_info);
 		}
 
 		// Normal Object Updating
@@ -102,7 +103,7 @@ void Loop::loop()
 			Global::updateGlobalScripts();
 
 			// Update Objects
-			level->updateContainer();
+			container->updateContainer();
 		}
 
 #else
@@ -116,10 +117,10 @@ void Loop::loop()
 #endif
 
 		// Draw Objects
-		level->drawContainer();
+		container->drawContainer();
 
 		// Draw Editor Objects
-		Source::Rendering::Editing::renderEditor(level, selector, object_info);
+		Source::Rendering::Editing::renderEditor(container, selector, object_info);
 
 		// Post Rendering
 		Source::Rendering::Post::postRender();
@@ -146,7 +147,7 @@ void Loop::loop()
 		// Determine if Safe to Exit
 		if (glfwWindowShouldClose(Global::window))
 		{
-			if (Source::Render::Exit::determineSafeToExit())
+			if (Source::Rendering::Exit::determineSafeToExit())
 				enable_loop = false;
 			else
 				glfwSetWindowShouldClose(Global::window, false);
@@ -162,7 +163,7 @@ void Loop::loop()
 #endif
 
 	// Delete Level Container
-	delete level;
+	delete container;
 
 	// Delete Selector
 	delete selector;

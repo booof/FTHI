@@ -9,9 +9,9 @@
 // Idea: The size of Background Vertex Object Changes as More or Less Text is Used
 
 // Declaration for Level Object
-namespace Render::Objects
+namespace Render
 {
-	class Level;
+	class Container;
 }
 
 namespace Editor
@@ -265,8 +265,8 @@ namespace Editor
 		// Class for Position Values
 		class TextPosition : public TextMaster
 		{
-			// Pointer to the Level Object
-			Render::Objects::Level* level;
+			// Pointer to the Container Object
+			Render::Container* container;
 
 			// Label Colors
 			glm::vec4 label_color_1;

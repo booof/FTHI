@@ -113,6 +113,10 @@ out vec4 FragColor;
 
 void main()
 {
+	// Discard if Alpha is Below a Threshold
+	if (Alpha < 0.1)
+		discard;
+
 	// Update Several Values
 	vec4 viewDir = normalize(material.viewPos - fs_in.FragPos);
 	vec4 color_diffuse = vec4(fs_in.Color, 0);

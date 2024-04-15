@@ -25,7 +25,7 @@ inline void anoying_function2()
 		script_wizard->writeScriptData();
 }
 
-void Source::Render::Exit::exitProgram()
+void Source::Rendering::Exit::exitProgram()
 {
 	// Break the Connection to Dot Net
 	FreeLibrary(Global::framework_handle);
@@ -55,7 +55,7 @@ void Source::Render::Exit::exitProgram()
 	glfwTerminate();
 }
 
-bool Source::Render::Exit::determineSafeToExit()
+bool Source::Rendering::Exit::determineSafeToExit()
 {
 	// Test if Something is Unsaved
 	if (script_wizard->modified || anoying_function1())

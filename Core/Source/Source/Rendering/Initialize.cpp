@@ -24,7 +24,7 @@ void why_do_i_have_to_mak_a_function_to_call_this()
 
 void ErrorExit(LPTSTR lpszFunction);
 
-bool Source::Render::Initialize::initialize()
+bool Source::Rendering::Initialize::initialize()
 {
 	//////////////////////////////////
 	// Splash Screen Initialization //
@@ -360,7 +360,7 @@ bool Source::Render::Initialize::initialize()
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 	// Initialize Default Font
-	Source::Fonts::changeFont("CambriaMath", 0, 32);
+	Source::Fonts::changeFont("CambriaMath", 0, 48);
 
 	// Generate Font Buffer Objects
 	glGenVertexArrays(1, &Global::fontVAO);
@@ -791,7 +791,7 @@ bool Source::Render::Initialize::initialize()
 	return Global::project_file_path.empty();
 }
 
-bool Source::Render::Initialize::WGLExtensionSupported(const char* extension_name)
+bool Source::Rendering::Initialize::WGLExtensionSupported(const char* extension_name)
 {
 	// this is pointer to function which returns pointer to string with list of all wgl extensions
 	PFNWGLGETEXTENSIONSSTRINGEXTPROC _wglGetExtensionsStringEXT = NULL;
@@ -809,38 +809,41 @@ bool Source::Render::Initialize::WGLExtensionSupported(const char* extension_nam
 	return true;
 }
 
-GUI::BoxData Source::Render::Initialize::constrtuctBox(uint8_t mode, float xPos, float yPos, float zPos, float width, float height, bool centered, std::string text, glm::vec4 background_color, glm::vec4 outline_color, glm::vec4 highlight_color, glm::vec4 text_color)
+Render::GUI::BoxDataBundle Source::Rendering::Initialize::constrtuctBox(uint8_t mode, float xPos, float yPos, float zPos, float width, float height, bool centered, std::string text, glm::vec4 background_color, glm::vec4 outline_color, glm::vec4 highlight_color, glm::vec4 text_color)
 {
-	GUI::BoxData data;
-	data.mode = mode;
-	data.position = glm::vec2(xPos, yPos);
-	data.zpos = zPos;
-	data.width = width;
-	data.height = height;
-	data.centered = centered;
-	data.button_text = text;
-	data.background_color = background_color;
-	data.outline_color = outline_color;
-	data.highlight_color = highlight_color;
-	data.text_color = text_color;
+	Render::GUI::BoxDataBundle data;
+	data.data1.position = glm::vec2(xPos, yPos);
+	data.data1.is_static = false;
+	data.data1.script = 0;
+	data.data2.mode = mode;
+	data.data2.zpos = zPos;
+	data.data2.width = width;
+	data.data2.height = height;
+	data.data2.centered = centered;
+	data.data2.button_text = text;
+	data.data2.background_color = background_color;
+	data.data2.outline_color = outline_color;
+	data.data2.highlight_color = highlight_color;
+	data.data2.text_color = text_color;
 	return data;
 }
 
-GUI::ToggleGroupData Source::Render::Initialize::constructGrouper(uint8_t group_count, uint8_t initial_value)
+Render::GUI::ToggleGroupData Source::Rendering::Initialize::constructGrouper(uint8_t group_count, uint8_t initial_value)
 {
-	GUI::ToggleGroupData data;
+	Render::GUI::ToggleGroupData data;
 	data.group_count = group_count;
 	data.initial_value = initial_value;
 	return data;
 }
 
-GUI::TextData Source::Render::Initialize::constructText(float xPos, float yPos, float scale, glm::vec4 color, bool static_, std::string text)
+Render::GUI::TextDataBundle Source::Rendering::Initialize::constructText(float xPos, float yPos, float scale, glm::vec4 color, bool static_, std::string text)
 {
-	GUI::TextData data;
-	data.position = glm::vec2(xPos, yPos);
-	data.scale = scale;
-	data.color = color;
-	data.static_ = static_;
-	data.text = text;
+	Render::GUI::TextDataBundle data;
+	data.data1.position = glm::vec2(xPos, yPos);
+	data.data1.is_static = static_;
+	data.data1.script = 0;
+	data.data2.scale = scale;
+	data.data2.color = color;
+	data.data2.text = text;
 	return data;
 }

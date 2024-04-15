@@ -2,7 +2,7 @@
 #ifndef EXIT_H
 #define EXIT_H
 
-namespace Source::Render::Exit
+namespace Source::Rendering::Exit
 {
 	// Main Function to Uninitialize the Program
 	void exitProgram();

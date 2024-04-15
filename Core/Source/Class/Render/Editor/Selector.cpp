@@ -397,6 +397,26 @@ void Editor::Selector::blitzSelector()
 			static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelectedConnection(selected_object->data_object, delta_pos);
 		}
 	}
+
+	// Draw Text, if Avaliable
+	Global::fontOffsetShader.Use();
+	glm::mat4 temp_matrix = glm::mat4(1.0f);
+	glUniformMatrix4fv(Global::modelLocRelativeFont, 1, false, glm::value_ptr(temp_matrix));
+	glUniformMatrix4fv(Global::projectionLocRelativeFont, 1, false, glm::value_ptr(Global::projection));
+	for (Selected_Object* selected_object : selected_objects)
+	{
+		if (selected_object->has_text)
+		{
+			// Test if Box
+			if (selected_object->data_object->getObjectIdentifier()[1] == Render::GUI::ElementList::BOX)
+				static_cast<DataClass::Data_BoxElement*>(selected_object->data_object)->renderText();
+
+			// Else, Is Text
+			else
+				static_cast<DataClass::Data_TextElement*>(selected_object->data_object)->renderText();
+				
+		}
+	}
 }
 
 void Editor::Selector::blitzHighlighter()
@@ -866,7 +886,7 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 	}
 
 	// Add Child to Selected Object
-	only_one->addChildViaSelection(data_object, Render::Objects::MOVE_WITH_PARENT::MOVE_DISSABLED);
+	only_one->addChildViaSelection(data_object, Render::MOVE_WITH_PARENT::MOVE_DISSABLED);
 
 	// Update Number of Children Object Has
 	only_one->getObjectIdentifier()[3] = only_one->getGroup()->getNumberOfChildren();
@@ -1118,7 +1138,9 @@ void Editor::Selector::initializeSelector()
 	for (DataClass::Data_Object* data_object : unadded_data_objects)
 	{
 		// In the Event that an Object Has been Wrapped, Unwrrap the Object
-		change_controller->getCurrentLevel()->unwrapObjectPos(data_object->getPosition());
+		Render::Container* container = change_controller->getCurrentContainer();
+		if (container->getContainerType() == Render::CONTAINER_TYPES::LEVEL)
+			static_cast<Render::Objects::Level*>(container)->unwrapObjectPos(data_object->getPosition());
 
 		// Move Data Object to Data Object Array
 		data_objects.push_back(data_object);
@@ -1386,6 +1408,13 @@ void Editor::Selector::allocateSelectorVertices(DataClass::Data_Object* data_obj
 		break;
 	}
 
+	// Elements
+	case Object::ELEMENT:
+	{
+		alocateSelectorVerticesElement(data_object, vertex_objects);
+		break;
+	}
+
 	}
 
 	// Unbind VAO
@@ -1498,6 +1527,13 @@ void Editor::Selector::genSelectorVertices(DataClass::Data_Object* data_object, 
 		break;
 	}
 
+	// Elements
+	case Object::ELEMENT:
+	{
+		genSelectorVerticesElement(data_object, vertex_objects);
+		break;
+	}
+
 	}
 
 	// Unbind VAO
@@ -1606,6 +1642,13 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorData(DataClass
 	case Object::GROUP:
 	{
 		selected_object = storeSelectorDataGroup(data_object);
+		break;
+	}
+
+	// Elements
+	case Object::ELEMENT:
+	{
+		selected_object = storeSelectorDataElement(data_object);
 		break;
 	}
 
@@ -3994,6 +4037,371 @@ Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataGroup(Data
 	return selected_object;
 }
 
+void Editor::Selector::alocateSelectorVerticesElement(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
+{
+	// Bind Object VAO
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
+
+	// Allocate Memory for Objects
+	switch (data_object->getObjectIdentifier()[1])
+	{
+	
+	// Grid Objects
+	case Render::GUI::ElementList::GRID:
+	{
+		break;
+	}
+
+	// Color Wheels
+	case Render::GUI::ElementList::COLOR_WHEEL:
+	{
+		break;
+	}
+
+	// Scroll Bars
+	case Render::GUI::ElementList::SCROLL_BAR:
+
+	// Boxes
+	case Render::GUI::ElementList::BOX:
+	{
+		glBufferData(GL_ARRAY_BUFFER, 336, 0, GL_STATIC_DRAW);
+		vertex_objects.object_vertex_count = 12;
+		break;
+	}
+
+	// Most Other Rectangularly Shaped Objects (Not Text)
+	case Render::GUI::ElementList::TOGGLE_GROUP:
+	case Render::GUI::ElementList::MASTER:
+	{
+		glBufferData(GL_ARRAY_BUFFER, 168, NULL, GL_STATIC_DRAW);
+		vertex_objects.object_vertex_count = 6;
+		break;
+	}
+
+	// Text Should Have No Vertex Data
+	case Render::GUI::ElementList::TEXT:
+	{
+		glBufferData(GL_ARRAY_BUFFER, 0, NULL, GL_STATIC_DRAW);
+		vertex_objects.object_vertex_count = 0;
+		break;
+	}
+
+	}
+
+	// Bind Outline VAO
+	glBindVertexArray(vertex_objects.outlineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
+
+	// Allocate Memory for Color Wheel Highlighter
+	// Need Box for Each Part, Including the Circle
+	if (data_object->getObjectIdentifier()[1] == Render::GUI::COLOR_WHEEL)
+	{
+
+	}
+
+	// Allocate Memory for Highlighters of All Other Elements (Rectangular)
+	else 
+	{
+		glBufferData(GL_ARRAY_BUFFER, 224, 0, GL_STATIC_DRAW);
+		vertex_objects.outline_vertex_count = 8;
+	}
+
+
+	// Object Consists of Color Only
+	vertex_objects.visualize_object = false;
+
+	// Object is Compose of Triangles
+	vertex_objects.visualize_lines = false;
+
+	// Object Only Has Color
+	vertex_objects.visualize_texture = false;
+
+	// Unbind Highlighter VAO
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void Editor::Selector::genSelectorVerticesElement(DataClass::Data_Object* data_object, Selected_VertexObjects& vertex_objects)
+{
+	// Max Number of Vertices Needed for Larget Object (Color Wheel)
+	float vertices[56] = { 0 };
+
+	// Bind Object VAO
+	glBindVertexArray(vertex_objects.objectVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.objectVBO);
+
+	// Generate Vertices for Objects
+	switch (data_object->getObjectIdentifier()[1])
+	{
+
+	// Grid Objects
+	case Render::GUI::ElementList::GRID:
+	{
+		break;
+	}
+
+	// Color Wheels
+	case Render::GUI::ElementList::COLOR_WHEEL:
+	{
+		break;
+	}
+
+	// Scroll Bars
+	case Render::GUI::ElementList::SCROLL_BAR:
+	{
+		// Get Scroll Data
+		Render::GUI::ScrollData& scroll_data = static_cast<DataClass::Data_ScrollBarElement*>(data_object)->getScrollData();
+
+		// Get Bar Data
+		glm::vec4 bar_data = static_cast<DataClass::Data_ScrollBarElement*>(data_object)->calculateDefaultBar();
+
+		// Generate Background Vertices
+		if (data_object->getObjectIdentifier()[2] == Render::GUI::VERTICAL)
+			Vertices::Rectangle::genRectColor(0.0f, -scroll_data.background_height * 0.5f, -1.2f, scroll_data.background_width, scroll_data.background_height, glm::vec4(0.75f, 0.75f, 0.75f, 1.0f), vertices);
+		else
+			Vertices::Rectangle::genRectColor(-scroll_data.background_width * 0.5f, 0.0f, -1.2f, scroll_data.background_width, scroll_data.background_height, glm::vec4(0.75f, 0.75f, 0.75f, 1.0f), vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 168, vertices);
+
+		// Generate Bar Vertices
+		Vertices::Rectangle::genRectColor(bar_data.x, bar_data.y, -1.11f, bar_data.z, bar_data.w, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, 168, 168, vertices);
+
+		// Bind Outline VAO
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
+
+		// Generate Highlight Around Bar
+		if (data_object->getObjectIdentifier()[2] == Render::GUI::VERTICAL)
+			Vertices::Rectangle::genRectHilighter(0.0f, -scroll_data.background_height * 0.5f, -1.1f, scroll_data.background_width, scroll_data.background_height, vertices);
+		else
+			Vertices::Rectangle::genRectHilighter(-scroll_data.background_width * 0.5f, 0.0f, -1.1f, scroll_data.background_width, scroll_data.background_height, vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, vertices);
+
+		break;
+	}
+
+	// Boxes
+	case Render::GUI::ElementList::BOX:
+	{
+		// Get Box Data
+		Render::GUI::BoxData& box_data = static_cast<DataClass::Data_BoxElement*>(data_object)->getBoxData();
+
+		// Generate Outline Vertices
+		Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.41f, box_data.width + 0.6, box_data.height + 0.6, box_data.outline_color, vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 168, vertices);
+
+		// Generate Background Vertices
+		Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.4f, box_data.width, box_data.height, box_data.background_color, vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, 168, 168, vertices);
+
+		// Bind Outline VAO
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
+
+		// Generate Highlight Around Box
+		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, box_data.width + 0.6f, box_data.height + 0.6f, vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, vertices);
+
+		break;
+	}
+
+	// Most Other Rectangularly Shaped Objects (Not Text)
+	case Render::GUI::ElementList::TOGGLE_GROUP:
+	case Render::GUI::ElementList::MASTER:
+	{
+		// Generate Object Vertices
+		Vertices::Rectangle::genRectColor(0.0f, 0.0f, -1.4f, 2.0f, 2.0f, glm::vec4(0.3f, 0.3f, 0.3f, 1.0f), vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 168, vertices);
+
+		// Bind Outline VAO
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
+
+		// Generate Highlight Around Box
+		Vertices::Rectangle::genRectHilighter(0.0f, 0.0f, -1.1f, 2.6f, 2.6f, vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, vertices);
+
+		break;
+	}
+
+	// Text
+	case Render::GUI::ElementList::TEXT:
+	{
+		// Get Text Data
+		Render::GUI::TextData& text_data = static_cast<DataClass::Data_TextElement*>(data_object)->getTextData();
+
+		// Force a Width Recalculation
+		static_cast<DataClass::Data_TextElement*>(data_object)->forceWidthRecalculation();
+
+		// Get the Width Value
+		float width = static_cast<DataClass::Data_TextElement*>(data_object)->getCalculatedWidth();
+
+		// Bind Outline VAO
+		glBindVertexArray(vertex_objects.outlineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_objects.outlineVBO);
+
+		// Generate Highlight Around Box
+		Vertices::Rectangle::genRectHilighter(width * 0.5f, text_data.scale * 0.5f, -1.1f, width, text_data.scale, vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 224, vertices);
+	}
+
+	}
+
+	// Unbind Vertex Objects
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	// Get the Element Data
+	Render::GUI::ElementData& element_data = static_cast<DataClass::Data_Element*>(data_object)->getElementData();
+
+	// Set Initial Position Model Matrix
+	vertex_objects.model = glm::translate(glm::mat4(1.0f), glm::vec3(element_data.position.x, element_data.position.y, 0.0f));
+}
+
+Editor::Selector::Selected_Object* Editor::Selector::storeSelectorDataElement(DataClass::Data_Object* data_object)
+{
+	// The Selected Object
+	Selected_Object* selected_object = nullptr;
+
+	// Get the Element Data
+	Render::GUI::ElementData& element_data = static_cast<DataClass::Data_Element*>(data_object)->getElementData();
+
+	// Temp Size for Master Element
+	static float full_width, full_height;
+	full_width = 2.0f;
+	full_height = 2.0f;
+
+	// Generate the Selected Object
+	switch (data_object->getObjectIdentifier()[1])
+	{
+
+	// Grid Objects
+	case Render::GUI::ElementList::GRID:
+	{
+		break;
+	}
+
+	// Color Wheels
+	case Render::GUI::ElementList::COLOR_WHEEL:
+	{
+		break;
+	}
+
+	// Scroll Bars
+	case Render::GUI::ElementList::SCROLL_BAR:
+	{
+		// Get Scroll Data
+		Render::GUI::ScrollData& scroll_data = static_cast<DataClass::Data_ScrollBarElement*>(data_object)->getScrollData();
+
+		// Shape is a Rectangle
+		selected_object = new Selected_Rectangle();
+		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+		selected_object->editing_shape = RECTANGLE;
+
+		// Store Object Data
+		new_selected_rectangle.object_width = &scroll_data.background_width;
+		new_selected_rectangle.object_height = &scroll_data.background_height;
+
+		// Enable Resize
+		new_selected_rectangle.enable_resize = true;
+
+		// Don't Center the Bar
+		if (data_object->getObjectIdentifier()[2] == Render::GUI::VERTICAL)
+			new_selected_rectangle.position_offset_type = SelectedPositionOffsetTypes::MID_TOP;
+		else
+			new_selected_rectangle.position_offset_type = SelectedPositionOffsetTypes::MID_RIGHT;
+
+		break;
+	}
+
+	// Boxes
+	case Render::GUI::ElementList::BOX:
+	{
+		// Get Box Data
+		Render::GUI::BoxData& box_data = static_cast<DataClass::Data_BoxElement*>(data_object)->getBoxData();
+
+		// Shape is a Rectangle
+		selected_object = new Selected_Rectangle();
+		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+		selected_object->editing_shape = RECTANGLE;
+
+		// Store Object Data
+		new_selected_rectangle.object_width = &box_data.width;
+		new_selected_rectangle.object_height = &box_data.height;
+
+		// Enable Resize
+		new_selected_rectangle.enable_resize = true;
+
+		// Object Has Text
+		new_selected_rectangle.has_text = true;
+
+		break;
+	}
+
+	// Most Other Rectangularly Shaped Objects (Not Text)
+	case Render::GUI::ElementList::TOGGLE_GROUP:
+	case Render::GUI::ElementList::MASTER:
+	{
+		// For Now, Master Will Have No Size (Same Size as Group Object)
+		// Will Change Once Master Element Is Finished
+
+		// Shape is a Rectangle
+		selected_object = new Selected_Rectangle();
+		Selected_Rectangle& new_selected_rectangle = *static_cast<Selected_Rectangle*>(selected_object);
+		selected_object->editing_shape = RECTANGLE;
+
+		// Store Temp Sizes
+		new_selected_rectangle.object_width = &full_width;
+		new_selected_rectangle.object_height = &full_height;
+
+		// Dissable Resize
+		new_selected_rectangle.enable_resize = false;
+
+		break;
+	}
+
+	// Text
+	case Render::GUI::ElementList::TEXT:
+	{
+
+		// Get Text Data
+		Render::GUI::TextData& text_data = static_cast<DataClass::Data_TextElement*>(data_object)->getTextData();
+		
+		// Shape is a Double Resizable Rectangle
+		selected_object = new Selected_RectangleDoubleResize();
+		Selected_RectangleDoubleResize& new_selected_rectangle = *static_cast<Selected_RectangleDoubleResize*>(selected_object);
+		selected_object->editing_shape = RECTANGLE_DOUBLE_RESIZE;
+
+		// Bind Height and Temp Width
+		new_selected_rectangle.object_height = &text_data.scale;
+		new_selected_rectangle.object_width = &static_cast<DataClass::Data_TextElement*>(data_object)->getCalculatedWidth();
+
+		// Don't Center the Text
+		new_selected_rectangle.position_offset_type = SelectedPositionOffsetTypes::BOTTOM_LEFT;
+
+		// Object Uses Vertical Size
+		new_selected_rectangle.use_horizontal = false;
+
+		// Enable Resize
+		new_selected_rectangle.enable_resize = true;
+
+		// Object Has Text
+		new_selected_rectangle.has_text = true;
+	}
+
+	}
+
+	// Store Initial Position
+	selected_object->object_x = &element_data.position.x;
+	selected_object->object_y = &element_data.position.y;
+
+	// Store the Data Object
+	selected_object->data_object = data_object;
+
+	return selected_object;
+}
+
 void Editor::Selector::uninitializeSelector()
 {
 	glDeleteVertexArrays(1, &pivotVAO);
@@ -5979,13 +6387,78 @@ void Editor::Selector::Selected_Object::outlineChangeColor(float* colors)
 	glBindVertexArray(0);
 }
 
+void Editor::Selector::Selected_Rectangle::updatePositionOffsets()
+{
+	switch (position_offset_type)
+	{
+
+	case (SelectedPositionOffsetTypes::CENTERED): {
+		return;
+	}
+
+	case (SelectedPositionOffsetTypes::TOP_LEFT): {
+		position_offset_x = *object_width * 0.5f;
+		position_offset_y = -*object_height * 0.5f;
+		return;
+	}
+
+	case (SelectedPositionOffsetTypes::TOP_RIGHT): {
+		position_offset_x = -*object_width * 0.5f;
+		position_offset_y = -*object_height * 0.5f;
+		return;
+	}
+
+	case (SelectedPositionOffsetTypes::BOTTOM_LEFT): {
+		position_offset_x = *object_width * 0.5f;
+		position_offset_y = *object_height * 0.5f;
+		return;
+	}
+
+	case (SelectedPositionOffsetTypes::BOTTOM_RIGHT): {
+		position_offset_x = -*object_width * 0.5f;
+		position_offset_y = *object_height * 0.5f;
+		return;
+	}
+
+	case (SelectedPositionOffsetTypes::MID_TOP): {
+		position_offset_y = -*object_height * 0.5f;
+		return;
+	}
+
+	case (SelectedPositionOffsetTypes::MID_BOTTOM): {
+		position_offset_y = *object_height * 0.5f;
+		return;
+	}
+
+	case (SelectedPositionOffsetTypes::MID_LEFT): {
+		position_offset_x = *object_width * 0.5f;
+		return;
+	}
+
+	case (SelectedPositionOffsetTypes::MID_RIGHT): {
+		position_offset_x = -*object_width * 0.5f;
+		return;
+	}
+
+	}
+}
+
 uint8_t Editor::Selector::Selected_Rectangle::updateObject()
 {
 	// The Result of the Object Interaction
 	uint8_t result = ABSOLUTLY_NOTHING;
 
+	// If Not Centered, Provide Offset
+	// TODO: Make a Function to Calculate Centered Position For All Selected Object Types
+	// Implement Different Types of Centering Options, So Both Text and Scroll Bars can Use This Feature
+	updatePositionOffsets();
+	
+	// Decrement Mouse Position
+	float offset_mouse_x = Global::mouseRelativeX - position_offset_x;
+	float offset_mouse_y = Global::mouseRelativeY - position_offset_y;
+
 	// Test if Mouse is Inside Object
-	if ((*object_x - (*object_width * 0.5f) < Global::mouseRelativeX) && (*object_x + (*object_width * 0.5f) > Global::mouseRelativeX) && (*object_y - (*object_height * 0.5f) < Global::mouseRelativeY) && (*object_y + (*object_height * 0.5f) > Global::mouseRelativeY))
+	if ((*object_x - (*object_width * 0.5f) < offset_mouse_x) && (*object_x + (*object_width * 0.5f) > offset_mouse_x) && (*object_y - (*object_height * 0.5f) < offset_mouse_y) && (*object_y + (*object_height * 0.5f) > offset_mouse_y))
 	{
 		// If Object is Currently Not Being Moved, Test If It Should
 		if (!moving)
@@ -6012,7 +6485,13 @@ uint8_t Editor::Selector::Selected_Rectangle::updateObject()
 				if (change_horizontal || change_vertical)
 					return RESIZING;
 				else
-					setMouseOffset();
+				{
+					// Implementing Custom Function for Enabling Move Since Centered Objects Are Now Possible
+					offset_x = *object_x - offset_mouse_x;
+					offset_y = *object_y - offset_mouse_y;
+					change_horizontal = 0;
+					change_vertical = 0;
+				}
 				return MOVING;
 			}
 		}
@@ -6039,23 +6518,27 @@ void Editor::Selector::Selected_Rectangle::updateGroup(Group_Selector& group_sel
 {
 	float temp_compare_value = 0.0f;
 
+	// Calculate Offset Coordinates
+	float offset_x_ = *object_x + position_offset_x;
+	float offset_y_ = *object_y + position_offset_y;
+
 	// Test the North Extreme Value
-	temp_compare_value = *object_y + *object_height * 0.5f;
+	temp_compare_value = offset_y_ + *object_height * 0.5f;
 	if (temp_compare_value > group_selector.extreme_value_north)
 		group_selector.extreme_value_north = temp_compare_value;
 
 	// Test the South Extreme Value
-	temp_compare_value = *object_y - *object_height * 0.5f;
+	temp_compare_value = offset_y_ - *object_height * 0.5f;
 	if (temp_compare_value < group_selector.extreme_value_south)
 		group_selector.extreme_value_south = temp_compare_value;
 
 	// Test the East Extreme Value
-	temp_compare_value = *object_x + *object_width * 0.5f;
+	temp_compare_value = offset_x_ + *object_width * 0.5f;
 	if (temp_compare_value > group_selector.extreme_value_east)
 		group_selector.extreme_value_east = temp_compare_value;
 
 	// Test the West Extreme Value
-	temp_compare_value = *object_x - *object_width * 0.5f;
+	temp_compare_value = offset_x_ - *object_width * 0.5f;
 	if (temp_compare_value < group_selector.extreme_value_west)
 		group_selector.extreme_value_west = temp_compare_value;
 }
@@ -6063,8 +6546,10 @@ void Editor::Selector::Selected_Rectangle::updateGroup(Group_Selector& group_sel
 void Editor::Selector::Selected_Rectangle::moveObject()
 {
 	bool enable_negative = false;
-	float new_x = *object_x;
-	float new_y = *object_y;
+
+	// Center Object Position
+	float new_x = *object_x + position_offset_x;
+	float new_y = *object_y + position_offset_y;
 
 	// Shift Horizontal
 	if (change_horizontal != 0)
@@ -6075,14 +6560,14 @@ void Editor::Selector::Selected_Rectangle::moveObject()
 		// Change Relative X if Enabled
 		if (Global::editor_options->option_disable_pass_through)
 		{
-			if (change_horizontal < 0 && Global::mouseRelativeX > *object_x) { Global::mouseRelativeX = *object_x - 0.05f; }
-			else if (change_horizontal > 0 && Global::mouseRelativeX < *object_x) { Global::mouseRelativeX = *object_x + 0.05f; }
+			if (change_horizontal < 0 && Global::mouseRelativeX > new_x) { Global::mouseRelativeX = new_x - 0.05f; }
+			else if (change_horizontal > 0 && Global::mouseRelativeX < new_x) { Global::mouseRelativeX = new_x + 0.05f; }
 		}
 
 		// Calculate New xPos by Taking the Average of the x Position of the Unchanging (opposite) Side and the x Position of the Mouse
 		if (!group_selector->resizing)
 		{
-			new_x = (Global::mouseRelativeX + offset_x + (*object_x - ((*object_width * 0.5f) * change_horizontal))) * 0.5f;
+			new_x = (Global::mouseRelativeX + offset_x + (new_x - ((*object_width * 0.5f) * change_horizontal))) * 0.5f;
 
 			// Calculate New Width by Multiplying the Distance Between the Mouse and xPos by 2
 			*object_width = 2 * (Global::mouseRelativeX + offset_x - new_x) * change_horizontal;
@@ -6116,14 +6601,14 @@ void Editor::Selector::Selected_Rectangle::moveObject()
 		// Change Relative Y if Enabled
 		if (Global::editor_options->option_disable_pass_through)
 		{
-			if (change_vertical < 0 && Global::mouseRelativeY > *object_y) { Global::mouseRelativeY = *object_y - 0.05f; }
-			else if (change_vertical > 0 && Global::mouseRelativeY < *object_y) { Global::mouseRelativeY = *object_y + 0.05f; }
+			if (change_vertical < 0 && Global::mouseRelativeY > new_y) { Global::mouseRelativeY = new_y - 0.05f; }
+			else if (change_vertical > 0 && Global::mouseRelativeY < new_y) { Global::mouseRelativeY = new_y + 0.05f; }
 		}
 
 		// Calculate New yPos by Taking the Average of the y Position of the Unchanging (opposite) Side and the y Position of the Mouse
 		if (!group_selector->resizing)
 		{
-			new_y = (Global::mouseRelativeY + offset_y + (*object_y - ((*object_height * 0.5f) * change_vertical))) * 0.5f;
+			new_y = (Global::mouseRelativeY + offset_y + (new_y - ((*object_height * 0.5f) * change_vertical))) * 0.5f;
 
 			// Calculate New Height by Multiplying the Distance Between the Mouse and yPos by 2
 			*object_height = 2 * (Global::mouseRelativeY + offset_y - new_y) * change_vertical;
@@ -6151,8 +6636,8 @@ void Editor::Selector::Selected_Rectangle::moveObject()
 	// Move if Size Doesn't Change
 	if (moving && !(change_vertical || change_horizontal))
 	{
-		new_x = (float)(Global::mouseRelativeX + offset_x);
-		new_y = (float)(Global::mouseRelativeY + offset_y);
+		new_x = (float)(Global::mouseRelativeX + offset_x - position_offset_x);
+		new_y = (float)(Global::mouseRelativeY + offset_y - position_offset_y);
 		updateSelectedPositions(data_object, new_x - *object_x, new_y - *object_y);
 		*object_x = new_x;
 		*object_y = new_y;
@@ -6162,6 +6647,9 @@ void Editor::Selector::Selected_Rectangle::moveObject()
 	// Else Update Vertices and Buffer Objects
 	else
 	{
+		updatePositionOffsets();
+		new_x -= position_offset_x;
+		new_y -= position_offset_y;
 		updateSelectedPositions(data_object, new_x - *object_x, new_y - *object_y);
 		*object_x = new_x;
 		*object_y = new_y;
@@ -6180,11 +6668,14 @@ void Editor::Selector::Selected_Rectangle::testResizeRectangle(bool enable_horiz
 		// Change Horizontal Size of Object
 		if (enable_horizontal)
 		{
+			// Decrement Mouse Position
+			float offset_mouse_x = Global::mouseRelativeX - position_offset_x;
+
 			float half_absolute_width = abs(*object_width) * 0.5f;
 			int8_t size_sign = Algorithms::Math::getSign(*object_width);
 
 			// Test if Left Side Should Shift
-			if (Global::mouseRelativeX < (*object_x - half_absolute_width + resize_width))
+			if (offset_mouse_x < (*object_x - half_absolute_width + resize_width))
 			{
 				// Sign of Boolian Determines Which Side Doesn't Move
 				change_horizontal = -size_sign;
@@ -6192,7 +6683,7 @@ void Editor::Selector::Selected_Rectangle::testResizeRectangle(bool enable_horiz
 			}
 
 			// Test if Right Side Should Shift
-			else if (Global::mouseRelativeX > (*object_x + half_absolute_width - resize_width))
+			else if (offset_mouse_x > (*object_x + half_absolute_width - resize_width))
 			{
 				change_horizontal = size_sign;
 				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
@@ -6202,18 +6693,21 @@ void Editor::Selector::Selected_Rectangle::testResizeRectangle(bool enable_horiz
 		// Change Vertical Size of Object
 		if (enable_vertical)
 		{
+			// Decrement Mouse Position
+			float offset_mouse_y = Global::mouseRelativeY - position_offset_y;
+
 			float half_absolute_height = abs(*object_height) * 0.5f;
 			int8_t size_sign = Algorithms::Math::getSign(*object_height);
 
 			// Test if Top Side Should Shift
-			if (Global::mouseRelativeY > (*object_y + half_absolute_height - resize_width))
+			if (offset_mouse_y > (*object_y + half_absolute_height - resize_width))
 			{
 				change_vertical = size_sign;
 				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
 			}
 
 			// Test if Bottom Side Should Shift
-			else if (Global::mouseRelativeY < (*object_y - half_absolute_height + resize_width))
+			else if (offset_mouse_y < (*object_y - half_absolute_height + resize_width))
 			{
 				change_vertical = -size_sign;
 				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
@@ -6231,14 +6725,14 @@ void Editor::Selector::Selected_Rectangle::setHorizontalGroupResize()
 	// Resize Left
 	if (Global::mouseRelativeX < *object_x)
 	{
-		offset_x = *object_x - abs(*object_width) * 0.5f - Global::mouseRelativeX;
+		offset_x = *object_x - abs(*object_width) * 0.5f - Global::mouseRelativeX + position_offset_x;
 		change_horizontal = -Algorithms::Math::getSign(*object_width);
 	}
 
 	// Resize Right
 	else
 	{
-		offset_x = *object_x + abs(*object_width) * 0.5f - Global::mouseRelativeX;
+		offset_x = *object_x + abs(*object_width) * 0.5f - Global::mouseRelativeX + position_offset_y;
 		change_horizontal = Algorithms::Math::getSign(*object_width);
 	}
 }
@@ -6248,14 +6742,14 @@ void Editor::Selector::Selected_Rectangle::setVerticalGroupResize()
 	// Resize South
 	if (Global::mouseRelativeY < *object_y)
 	{
-		offset_y = *object_y - abs(*object_height) * 0.5f - Global::mouseRelativeY;
+		offset_y = *object_y - abs(*object_height) * 0.5f - Global::mouseRelativeY + position_offset_x;
 		change_vertical = -Algorithms::Math::getSign(*object_height);
 	}
 
 	// Resize North
 	else
 	{
-		offset_y = *object_y + abs(*object_height) * 0.5f - Global::mouseRelativeY;
+		offset_y = *object_y + abs(*object_height) * 0.5f - Global::mouseRelativeY + position_offset_y;
 		change_vertical = Algorithms::Math::getSign(*object_height);
 	}
 }
@@ -7883,6 +8377,69 @@ void Editor::Selector::Selected_SpringMassSpring::moveObject()
 			storeTempConnectionPos(left_pos, right_pos);
 			genSelectorVertices(data_object, vertex_objects);
 		}
+	}
+}
+
+void Editor::Selector::Selected_RectangleDoubleResize::testResizeRectangle(bool enable_horizontal, bool enable_vertical)
+{
+	// Test if Resizing Should be Considered
+	if (Global::editor_options->option_resize && !Global::Keys[GLFW_KEY_F] && enable_resize)
+	{
+		// How Far the Mouse Must be Inside Object to Stop Resizing
+		float resize_width = 1.5f * Global::zoom_scale;
+
+		// Change Horizontal Size of Object
+		if (enable_horizontal)
+		{
+			// Decrement Mouse Position
+			float offset_mouse_x = Global::mouseRelativeX - position_offset_x;
+
+			float half_absolute_width = abs(*object_width) * 0.5f;
+			int8_t size_sign = Algorithms::Math::getSign(*object_width);
+
+			// Test if Left Side Should Shift
+			if (offset_mouse_x < (*object_x - half_absolute_width + resize_width))
+			{
+				// Sign of Boolian Determines Which Side Doesn't Move
+				change_horizontal = -size_sign;
+				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
+			}
+
+			// Test if Right Side Should Shift
+			else if (offset_mouse_x > (*object_x + half_absolute_width - resize_width))
+			{
+				change_horizontal = size_sign;
+				Global::Selected_Cursor = Global::CURSORS::HORIZONTAL_RESIZE;
+			}
+		}
+
+		// Change Vertical Size of Object
+		if (enable_vertical)
+		{
+			// Decrement Mouse Position
+			float offset_mouse_y = Global::mouseRelativeY - position_offset_y;
+
+			float half_absolute_height = abs(*object_height) * 0.5f;
+			int8_t size_sign = Algorithms::Math::getSign(*object_height);
+
+			// Test if Top Side Should Shift
+			if (offset_mouse_y > (*object_y + half_absolute_height - resize_width))
+			{
+				change_vertical = size_sign;
+				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
+			}
+
+			// Test if Bottom Side Should Shift
+			else if (offset_mouse_y < (*object_y - half_absolute_height + resize_width))
+			{
+				change_vertical = -size_sign;
+				Global::Selected_Cursor = Global::CURSORS::VERTICAL_RESIZE;
+			}
+		}
+
+		// Test if Color of Outline Should Change
+		if (!resizing && (change_vertical || change_horizontal))
+			outlineForResize();
 	}
 }
 

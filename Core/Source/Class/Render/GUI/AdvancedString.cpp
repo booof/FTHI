@@ -1,13 +1,13 @@
 #include "AdvancedString.h"
 #include "Globals.h"
 
-GUI::AdvancedString::AdvancedString(std::string string)
+Render::GUI::AdvancedString::AdvancedString(std::string string)
 {
 	// Store String
 	data = string;
 }
 
-GUI::AdvancedString::AdvancedString(std::string string, GLfloat max_length_, GLfloat scale_, bool centered_)
+Render::GUI::AdvancedString::AdvancedString(std::string string, GLfloat max_length_, GLfloat scale_, bool centered_)
 {
 	// Store String
 	data = string;
@@ -22,13 +22,13 @@ GUI::AdvancedString::AdvancedString(std::string string, GLfloat max_length_, GLf
 		updateRenderText();
 }
 
-void GUI::AdvancedString::updateRenderText()
+void Render::GUI::AdvancedString::updateRenderText()
 {
 	// The Character in Text
 	std::string::const_iterator c;
 
 	// Temporary Width of Decimal Points at End of Text
-	float decimal_point_width = (Global::Current_Font[46].Advance >> 6) * scale * 2;
+	float decimal_point_width = (Global::Current_Font[46].Advance >> 6) * scale * 2 * Global::font_offset_ratio;
 
 	// The Current Length of the Iterated Text
 	float text_length = 0;
@@ -43,7 +43,7 @@ void GUI::AdvancedString::updateRenderText()
 	for (c = data.begin(); c != data.end(); c++)
 	{
 		// Increase Length of Text
-		text_length += (Global::Current_Font[*c].Advance >> 6) * scale;
+		text_length += (Global::Current_Font[*c].Advance >> 6) * scale * Global::font_offset_ratio;
 
 		// Append Character to newText
 		render_string += *c;
@@ -62,13 +62,13 @@ void GUI::AdvancedString::updateRenderText()
 		offset -= text_length / 2;
 }
 
-float GUI::AdvancedString::updateRenderTextSelected(float unused_space)
+float Render::GUI::AdvancedString::updateRenderTextSelected(float unused_space)
 {
 	// The Character in Text
 	std::string::const_iterator c;
 
 	// Temporary Width of Decimal Points at End of Text
-	float decimal_point_width = (Global::Current_Font[46].Advance >> 6) * scale * 2;
+	float decimal_point_width = (Global::Current_Font[46].Advance >> 6) * scale * 2 * Global::font_offset_ratio;
 
 	// The Current Length of the Iterated Text
 	float text_length = 0;
@@ -89,7 +89,7 @@ float GUI::AdvancedString::updateRenderTextSelected(float unused_space)
 	for (c = data.begin(); c != data.end(); c++)
 	{
 		// Increase Length of Text
-		text_length += (Global::Current_Font[*c].Advance >> 6) * scale;
+		text_length += (Global::Current_Font[*c].Advance >> 6) * scale * Global::font_offset_ratio;
 
 		// If Text Length is Less Than Unused Space, Don't Add Character
 		if (text_length >= unused_space)
@@ -97,7 +97,7 @@ float GUI::AdvancedString::updateRenderTextSelected(float unused_space)
 			// Provide Initial Offset
 			if (initial_offset_)
 			{
-				initial_offset = (text_length - unused_space) - (Global::Current_Font[*c].Advance >> 6) * scale;
+				initial_offset = (text_length - unused_space) - (Global::Current_Font[*c].Advance >> 6) * scale * Global::font_offset_ratio;
 				offset = initial_offset;
 				initial_offset_ = false;
 			}
@@ -130,7 +130,7 @@ float GUI::AdvancedString::updateRenderTextSelected(float unused_space)
 	return initial_offset;
 }
 
-float GUI::AdvancedString::calculateTextSize()
+float Render::GUI::AdvancedString::calculateTextSize()
 {
 	// The Character in Text
 	std::string::const_iterator c;
@@ -140,38 +140,38 @@ float GUI::AdvancedString::calculateTextSize()
 
 	// Add the Length of the Character at the Given Scale
 	for (c = data.begin(); c != data.end(); c++)
-		text_length += (Global::Current_Font[*c].Advance >> 6) * scale;
+		text_length += (Global::Current_Font[*c].Advance >> 6) * scale * Global::font_offset_ratio;
 
 	// Add 3 Blank Spaces to The End of the Size
-	text_length += 3 * (Global::Current_Font[' '].Advance >> 6) * scale;
+	text_length += 3 * (Global::Current_Font[' '].Advance >> 6) * scale * Global::font_offset_ratio;
 
 	return text_length;
 }
 
-float GUI::AdvancedString::calculateCharacterWidth(char c)
+float Render::GUI::AdvancedString::calculateCharacterWidth(char c)
 {
-	return (Global::Current_Font[c].Advance >> 6) * scale;
+	return (Global::Current_Font[c].Advance >> 6) * scale * Global::font_offset_ratio;
 }
 
-float GUI::AdvancedString::calculateCharacterWidth(int index)
+float Render::GUI::AdvancedString::calculateCharacterWidth(int index)
 {
 	return calculateCharacterWidth(data.at(index));
 }
 
-float GUI::AdvancedString::calculateSizeTillIndex(int index)
+float Render::GUI::AdvancedString::calculateSizeTillIndex(int index)
 {
 	float text_length = 0;
 	for (int i = 0; i < index; i++)
-		text_length += (Global::Current_Font[data.at(i)].Advance >> 6) * scale;
+		text_length += (Global::Current_Font[data.at(i)].Advance >> 6) * scale * Global::font_offset_ratio;
 	return text_length;
 }
 
-std::string& GUI::AdvancedString::getString()
+std::string& Render::GUI::AdvancedString::getString()
 {
 	return data;
 }
 
-void GUI::AdvancedString::setString(std::string string)
+void Render::GUI::AdvancedString::setString(std::string string)
 {
 	// Set the String
 	data = string;
@@ -181,7 +181,7 @@ void GUI::AdvancedString::setString(std::string string)
 		updateRenderText();
 }
 
-std::string& GUI::AdvancedString::getRenderString()
+std::string& Render::GUI::AdvancedString::getRenderString()
 {
 	// Return Data String if Values are Not Set
 	if (max_length == 0.0f)
@@ -189,7 +189,7 @@ std::string& GUI::AdvancedString::getRenderString()
 	return render_string;
 }
 
-void GUI::AdvancedString::clearRenderingData()
+void Render::GUI::AdvancedString::clearRenderingData()
 {
 	// Set Box Width to 0
 	max_length = 0.0f;
@@ -204,7 +204,7 @@ void GUI::AdvancedString::clearRenderingData()
 	// Clear the Render String
 	render_string = "";
 }
-void GUI::AdvancedString::setAdvancedValues(GLfloat max_length_, GLfloat scale_, bool centered_)
+void Render::GUI::AdvancedString::setAdvancedValues(GLfloat max_length_, GLfloat scale_, bool centered_)
 {
 	// Store the Values of the String
 	max_length = max_length_;
@@ -216,7 +216,7 @@ void GUI::AdvancedString::setAdvancedValues(GLfloat max_length_, GLfloat scale_,
 		updateRenderText();
 }
 
-void GUI::AdvancedString::setScale(GLfloat scale_)
+void Render::GUI::AdvancedString::setScale(GLfloat scale_)
 {
 	// Store the New Scale
 	scale = scale_;
@@ -226,27 +226,27 @@ void GUI::AdvancedString::setScale(GLfloat scale_)
 		updateRenderText();
 }
 
-float GUI::AdvancedString::getOffset()
+float Render::GUI::AdvancedString::getOffset()
 {
 	return offset;
 }
 
-float GUI::AdvancedString::getBoxSize()
+float Render::GUI::AdvancedString::getBoxSize()
 {
 	return max_length;
 }
 
-float GUI::AdvancedString::getScale()
+float Render::GUI::AdvancedString::getScale()
 {
 	return scale;
 }
 
-int GUI::AdvancedString::getCharacterCount()
+int Render::GUI::AdvancedString::getCharacterCount()
 {
 	return (int)data.size();
 }
 
-void GUI::AdvancedString::insertCharacter(char c, int index)
+void Render::GUI::AdvancedString::insertCharacter(char c, int index)
 {
 	if (index == data.size())
 		data.push_back(c);
@@ -254,7 +254,7 @@ void GUI::AdvancedString::insertCharacter(char c, int index)
 		data.insert(data.begin() + index, c);
 }
 
-void GUI::AdvancedString::removeCharacter(int index)
+void Render::GUI::AdvancedString::removeCharacter(int index)
 {
 	data.erase(data.begin() + index - 1);
 }

@@ -286,7 +286,7 @@ void Editor::ProjectSelector::loadProject()
     // If Another Project is Currently Loaded, Prompt User if They Want to Save
     if (Global::project_file_path != "")
     {
-        if (!Source::Render::Exit::determineSafeToExit())
+        if (!Source::Rendering::Exit::determineSafeToExit())
         {
             return;
         }
@@ -877,40 +877,41 @@ void Editor::ProjectSelector::initializeProjectSelector()
     glBindVertexArray(0);
 
     // Generate Search Box
-    GUI::BoxData temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::GENERAL_TEXT_BOX, 40.0f, 31.0f, -1.0f, 40.0f, 5.0f, false, "", glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-    box_search = GUI::Box(temp_box_data);
+    Render::GUI::BoxDataBundle temp_box_data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::BOX_MODES::GENERAL_TEXT_BOX, 40.0f, 31.0f, -1.0f, 40.0f, 5.0f, false, "", glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+    temp_box_data.data1.is_static = true;
+    box_search = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
     box_search.setDataPointer(&search_text);
 
     // Generate Open Project Box
-    temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::NULL_BOX, 42.0f, 20.0f, -1.0f, 35.0f, 5.0f, true, "Open Project", glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-    box_open_project = GUI::Box(temp_box_data);
+    temp_box_data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::BOX_MODES::NULL_BOX, 42.0f, 20.0f, -1.0f, 35.0f, 5.0f, true, "Open Project", glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+    box_open_project = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Open Project Directory Box
-    temp_box_data.position.y = 10.0f;
-    temp_box_data.button_text = GUI::AdvancedString("Open Directory");
-    box_open_project_directory = GUI::Box(temp_box_data);
+    temp_box_data.data1.position.y = 10.0f;
+    temp_box_data.data2.button_text = Render::GUI::AdvancedString("Open Directory");
+    box_open_project_directory = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Remove Project Box
-    temp_box_data.position.y = 0.0f;
-    temp_box_data.button_text = GUI::AdvancedString("Remove Project");
-    box_remove_project = GUI::Box(temp_box_data);
+    temp_box_data.data1.position.y = 0.0f;
+    temp_box_data.data2.button_text = Render::GUI::AdvancedString("Remove Project");
+    box_remove_project = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Create Project Box
-    temp_box_data.position.y = -10.0f;
-    temp_box_data.button_text = GUI::AdvancedString("Create Project");
-    box_create_project = GUI::Box(temp_box_data);
+    temp_box_data.data1.position.y = -10.0f;
+    temp_box_data.data2.button_text = Render::GUI::AdvancedString("Create Project");
+    box_create_project = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Add Project Box
-    temp_box_data.position.y = -20.0f;
-    temp_box_data.button_text = GUI::AdvancedString("Add Project");
-    box_add_project = GUI::Box(temp_box_data);
+    temp_box_data.data1.position.y = -20.0f;
+    temp_box_data.data2.button_text = Render::GUI::AdvancedString("Add Project");
+    box_add_project = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Add Project Box
-    temp_box_data = Source::Render::Initialize::constrtuctBox(GUI::BOX_MODES::TOGGLE_BOX, 47.0f, -30.0f, -1.0f, 3.0f, 3.0f, true, "", glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
-    box_startup_enabled = GUI::Box(temp_box_data);
+    temp_box_data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::BOX_MODES::TOGGLE_BOX, 47.0f, -30.0f, -1.0f, 3.0f, 3.0f, true, "", glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), glm::vec4(0.6f, 0.6f, 0.6f, 1.0f), glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+    box_startup_enabled = Render::GUI::Box(temp_box_data.data1, temp_box_data.data2);
 
     // Generate Master Element
-    master_element = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 100.0f);
+    master_element = Render::GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, 100.0f);
 
     // Open Project File
     std::ifstream project_list_file;
@@ -949,7 +950,7 @@ void Editor::ProjectSelector::select_project()
     readProjectListFile(&instances, instance_count);
 
     // Generate the Scroll Bar
-    project_selection_bar = GUI::VerticalScrollBar(21.0f, 24.0f, 1.0f, 59.0f, instance_count * 10.0f, 0.0f);
+    project_selection_bar = Render::GUI::VerticalScrollBar(21.0f, 24.0f, 1.0f, 59.0f, instance_count * 10.0f, 0.0f, -1);
 
     // Disable Framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1005,7 +1006,7 @@ void Editor::ProjectSelector::select_project()
         // Draw Selected, If Enabled
         if (current_project_index != -1)
         {
-            glm::mat4 selected_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 19.0f - 10.0f * current_project_index + project_selection_bar.BarOffset, 0.0f));
+            glm::mat4 selected_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 19.0f - 10.0f * current_project_index + project_selection_bar.getOffset(), 0.0f));
             glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(selected_model));
             glBindVertexArray(windowVAO);
             glDrawArrays(GL_TRIANGLES, 18, 6);
@@ -1022,7 +1023,7 @@ void Editor::ProjectSelector::select_project()
             if (Global::LeftClick)
             {
                 scrolling = true;
-                scoll_offset = project_selection_bar.BarPosY - modified_mouse_y;
+                //scoll_offset = project_selection_bar.BarPosY - modified_mouse_y;
             }
         }
 
@@ -1047,7 +1048,7 @@ void Editor::ProjectSelector::select_project()
         {
             // Distance Between Projects == 10
 
-            int index = (int)floor((24.0f - modified_mouse_y + project_selection_bar.BarOffset) / 10.0f);
+            int index = (int)floor((24.0f - modified_mouse_y + project_selection_bar.getOffset()) / 10.0f);
 
             // If Index is Not In Range, Do Nothing
             if (index >= instance_count)
@@ -1059,7 +1060,7 @@ void Editor::ProjectSelector::select_project()
             else
             {
                 // Draw Highlighter
-                glm::mat4 highlight_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 19.0f - 10.0f * index + project_selection_bar.BarOffset, 0.0f));
+                glm::mat4 highlight_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 19.0f - 10.0f * index + project_selection_bar.getOffset(), 0.0f));
                 glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(highlight_model));
                 glBindVertexArray(windowVAO);
                 glDrawArrays(GL_TRIANGLES, 12, 6);
@@ -1157,19 +1158,19 @@ void Editor::ProjectSelector::select_project()
 
         // Basic Text Rendering
         Global::fontShader.Use();
-        Source::Fonts::renderText("Project Selection", -63.0f, 30.0f, 0.2f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
-        Source::Fonts::renderText("Search:", 7.0f, 30.0f, 0.1f, glm::vec4(0.9f, 0.9f, 0.9f, 0.9f), true);
-        Source::Fonts::renderText("Startup Enabled:", 25.0f, -31.0f, 0.08f, glm::vec4(0.9f, 0.9f, 0.9f, 0.9f), true);
+        Source::Fonts::renderText("Project Selection", -63.0f, 30.0f, 4.8f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
+        Source::Fonts::renderText("Search:", 7.0f, 30.0f, 2.4f, glm::vec4(0.9f, 0.9f, 0.9f, 0.9f), true);
+        Source::Fonts::renderText("Startup Enabled:", 25.0f, -31.0f, 1.92f, glm::vec4(0.9f, 0.9f, 0.9f, 0.9f), true);
 
         // Draw Project Selection Text
         glScissor((GLint)192, (GLint)106, (GLsizei)590, (GLsizei)425);
-        float name_y_start = 20.0f + project_selection_bar.BarOffset;
-        float path_y_start = 17.0f + project_selection_bar.BarOffset;
+        float name_y_start = 20.0f + project_selection_bar.getOffset();
+        float path_y_start = 17.0f + project_selection_bar.getOffset();
         for (int i = 0; i < instance_count; i++)
         {
-            Source::Fonts::renderText(instances[i].name, -61.0, name_y_start - 10.0f * i, 0.08f, glm::vec4(0.9f, 0.9f, 0.9, 1.0f), true);
-            Source::Fonts::renderText(instances[i].access_time, 5.0f, name_y_start - 10.0f * i, 0.05f, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), true);
-            Source::Fonts::renderText(instances[i].path, -61.0, path_y_start - 10.0f * i, 0.05f, glm::vec4(0.9f, 0.9f, 0.9, 1.0f), true);
+            Source::Fonts::renderText(instances[i].name, -61.0, name_y_start - 10.0f * i, 1.92f, glm::vec4(0.9f, 0.9f, 0.9, 1.0f), true);
+            Source::Fonts::renderText(instances[i].access_time, 5.0f, name_y_start - 10.0f * i, 1.2f, glm::vec4(0.9f, 0.9f, 0.9f, 1.0f), true);
+            Source::Fonts::renderText(instances[i].path, -61.0, path_y_start - 10.0f * i, 1.2f, glm::vec4(0.9f, 0.9f, 0.9, 1.0f), true);
         }
         glScissor(0, 0, (GLsizei)Global::screenWidth, (GLsizei)Global::screenHeight);
 

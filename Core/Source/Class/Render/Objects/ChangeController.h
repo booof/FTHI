@@ -26,6 +26,11 @@ namespace Editor
 	class Selector;
 }
 
+namespace Render
+{
+	class Container;
+}
+
 namespace Render::Objects
 {
 	class UnsavedBase;
@@ -133,8 +138,8 @@ namespace Render::Objects
 		// Master Stack
 		MasterStack* master_stack = nullptr;
 
-		// Level Pointer
-		Level* level = nullptr;
+		// Pointer to the Current Container Being Edited
+		Container* container = nullptr;
 
 		// Vector of Saved Unsaved Levels
 		std::vector<SavedIdentifier> saved_levels;
@@ -159,8 +164,8 @@ namespace Render::Objects
 		// Return the Singleton
 		static ChangeController* get();
 
-		// Store Pointer to Level
-		void storeLevelPointer(Level* level_);
+		// Store Pointer to Container
+		void storeContainerPointer(Container* container_);
 
 		// Return Unsaved Level at Coords. If DNE, Create New Unsaved Level
 		UnsavedLevel* getUnsavedLevel(int16_t x, int16_t y, int8_t z);
@@ -222,8 +227,8 @@ namespace Render::Objects
 		// Draw Visualizers for Unsaved Objects
 		void drawVisualizers();
 
-		// Returns the Pointer to the Current Level
-		Level* getCurrentLevel();
+		// Returns the Pointer to the Current Container
+		Container* getCurrentContainer();
 	};
 }
 

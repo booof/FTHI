@@ -14,5 +14,7 @@ out vec4 color;
 void main()
 {
 	vec4 sampled = vec4(1.0f, 1.0f, 1.0f, texture(texture1, fs_in.TexPos).r);
+	if (sampled.a < 0.1)
+		discard;
 	color = vec4(texColor, 1.0f) * sampled;
 }

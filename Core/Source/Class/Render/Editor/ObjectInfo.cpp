@@ -91,11 +91,11 @@ void Editor::ObjectInfo::drawInfo()
 		// Determine Size of Text
 		max_width = MAX_TEXT_SIZE * Global::editor_options->option_object_info_max_width_percent;
 		max_height = DEFAULT_TEXT_HEIGHT * Global::editor_options->option_object_info_text_size_percent;
-		max_scale = 0.143f * Global::editor_options->option_object_info_text_size_percent;
+		max_scale = 3.432f * Global::editor_options->option_object_info_text_size_percent;
 
 		// Determine the Scale and Size of the Type Text Object
 		type_scale = 0.25f * Global::editor_options->option_object_info_text_size_percent;
-		float type_size = Source::Fonts::getTextSize(type_text, type_scale);
+		float type_size = Source::Fonts::getTextSize(type_text, type_scale) * 24.0f;
 		if (type_size > max_width)
 		{
 			type_scale = (max_width * type_scale) / type_size;
@@ -121,6 +121,7 @@ void Editor::ObjectInfo::drawInfo()
 		// Set Position of Text
 		type_text_position = glm::vec2(89.5f - (max_text_size + type_size) * 0.5f, 49.9f - 32.0f * type_scale);
 		first_text_position = glm::vec2((90.0f - max_text_size), (49.9f - type_height_offset));
+		type_scale *= 24.0f;
 
 		// Generate the Color Vertices
 		generateColorVertices();
@@ -157,7 +158,7 @@ void Editor::ObjectInfo::setObjectType(std::string type, glm::vec4 color)
 	type_color = color;
 
 	// Determine the Size of Text
-	float temp_size = Source::Fonts::getTextSize(type_text, 0.25f) + 1.0f;
+	float temp_size = Source::Fonts::getTextSize(type_text, 0.25f) * 24.0f + 1.0f;
 	max_text_size = (max_text_size > temp_size) ? max_text_size : temp_size;
 
 	// Enable Flag
@@ -374,11 +375,11 @@ void Editor::ObjectInfo::generateColorVertices()
 			// Calculate the Width and Height of the Boxes
 			text_width = color_instance->getTextSize(max_width);
 			width = (max_width - text_width) * 0.9f;
-			height = (color_instance->returnScale() / 0.143f) * 3.5;
+			height = (color_instance->returnScale() / 3.432f) * 3.5;
 
 			// Calculate the X/Y-Position of the Boxes
-			x = first_text_position.x + text_width * 1.3 + width * 0.5f - 1;
-			y = color_instance->returnScale() * 10;
+			x = first_text_position.x + text_width + 1.0f + width * 0.5f;
+			y = color_instance->returnScale() * 0.41667f;
 
 			// Set Black Outline
 			Vertices::Rectangle::genRectColor(x, y, -0.7f, width, height, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), vertices);
@@ -426,7 +427,8 @@ void Editor::ObjectInfo::TextMaster::setScale(float new_scale)
 
 float Editor::ObjectInfo::TextMaster::returnHeightOffset(float max_height)
 {
-	return (max_height + TEXT_HEIGHT_OFFSET) * text_scale * 1.3f;
+	//return (max_height + TEXT_HEIGHT_OFFSET) * text_scale * 1.3f;
+	return (max_height + TEXT_HEIGHT_OFFSET) * text_scale * 0.0541667;
 }
 
 Editor::ObjectInfo::TextString::TextString(std::string identifier_, glm::vec4 identifier_color_, std::string* value_, glm::vec4 value_color_)
@@ -752,7 +754,7 @@ Editor::ObjectInfo::TextPosition::TextPosition(std::string identifier_, glm::vec
 	interpret_as_int = is_int;
 
 	// Store Level
-	level = change_controller->getCurrentLevel();
+	container = change_controller->getCurrentContainer();
 }
 
 Editor::ObjectInfo::TEXT_OBJECTS Editor::ObjectInfo::TextPosition::getTextType()
@@ -778,7 +780,7 @@ float Editor::ObjectInfo::TextPosition::getTextSize(float max_width)
 	{
 		// Get Coords of Object in Terms of Level
 		glm::i16vec2 level_coords;
-		level->updateLevelPos(*position_data, level_coords);
+		container->updateLevelPos(*position_data, level_coords);
 
 		// Convert to String
 		position_string_x = std::to_string(level_coords.x);
@@ -790,7 +792,8 @@ float Editor::ObjectInfo::TextPosition::getTextSize(float max_width)
 	{
 		// Wrap the Position Data, if Needed
 		glm::vec2 position_data_copy = *position_data;
-		level->wrapObjectPos(position_data_copy);
+		if (container->getContainerType() == Render::CONTAINER_TYPES::LEVEL)
+			static_cast<Render::Objects::Level*>(container)->wrapObjectPos(position_data_copy);
 
 		// Convert Wrapped Position Data to Text		
 		std::stringstream value_stream1, value_stream2;

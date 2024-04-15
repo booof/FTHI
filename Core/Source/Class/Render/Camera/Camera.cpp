@@ -33,12 +33,18 @@ Render::Camera::Camera::Camera(float initialX, float initialY, bool stationary, 
 	glUniform4f(glGetUniformLocation(Global::objectShader.Program, "material.viewPos"), -Position.x, -Position.y, 0.0f, 0.0f);
 
 	Global::camera_pointer = this;
+
+	// Update View Matrix with Initial Values
+	updatePosition();
 }
 
 #endif
 
 void Render::Camera::Camera::moveCamera(unsigned char direction)
 {
+	// If Camera is Stationary, Code in This Function Should Not Execute
+	if (Stationary)
+		return;
 
 #ifndef DLL_HEADER
 
@@ -137,11 +143,16 @@ void Render::Camera::Camera::updatePosition()
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	// Calculate Relative World Mouse Coordinates
-	Global::mouseRelativeX = (float)Global::mouseX + Position.x;
-	Global::mouseRelativeY = (float)Global::mouseY + Position.y;
+	updateMousePosition();
 
 	//Global::objectShader.Use();
 	//glUniform4f(glGetUniformLocation(Global::objectShader.Program, "material.viewPos"), -Position.x, -Position.y, 0.0f, 0.0f);
+}
+
+void Render::Camera::Camera::updateMousePosition()
+{
+	Global::mouseRelativeX = (float)Global::mouseX + Position.x;
+	Global::mouseRelativeY = (float)Global::mouseY + Position.y;
 }
 
 void Render::Camera::Camera::testForCringe()

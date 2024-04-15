@@ -5,7 +5,7 @@
 #include "Class/Render/Shader/Shader.h"
 #include "Class/Render/Struct/Texture.h"
 
-namespace GUI
+namespace Render::GUI
 {
 	class Box;
 }
@@ -61,7 +61,7 @@ namespace Global
 	bool Keys[1024];
 
 	// The ScrollBar Object Used for Scrolling
-	GUI::ScrollBar* scroll_bar = nullptr;
+	Render::GUI::ScrollBar* scroll_bar = nullptr;
 
 	// Values of Current Screen Width and Height
 	unsigned int screenWidth = 1280;
@@ -112,6 +112,9 @@ namespace Global
 
 	// If True, Zoom Scale Changed
 	bool zoom = false;
+
+	// Set to True to Dissable Zoom Scaling
+	bool force_dissable_zoom = false;
 
 	// Pointer to Camera
 	Render::Camera::Camera* camera_pointer;
@@ -267,6 +270,8 @@ namespace Global
 	// Fonts
 	std::map<std::string, int> FontList;
 	std::map<GLchar, Struct::Character> Current_Font;
+	float font_ratio = 1.0f;
+	float font_offset_ratio = 1.0f;
 
 	// Audio Device
 	ALCdevice* audio_device = nullptr;

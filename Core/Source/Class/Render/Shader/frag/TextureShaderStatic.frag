@@ -24,5 +24,7 @@ void main()
 	//FragColor = (texture(texture1, fs_in.TexPos) * int(not_animated)) + (texture(texture2, vec3(fs_in.TexPos, texture_layer - 1)) * int(animated));
 
 	FragColor = texture(texture1, fs_in.TexPos);
+	if (FragColor.a < 0.1)
+		discard;
 	//FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

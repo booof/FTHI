@@ -7,7 +7,7 @@
 #include "Events/EventListeners.h"
 #include "Source/Loaders/Audio.h"
 
-void GUI::SelectedText::handleInvalidInput()
+void Render::GUI::SelectedText::handleInvalidInput()
 {
 	// IDEAS:
 	// Play a Sound
@@ -31,7 +31,7 @@ void GUI::SelectedText::handleInvalidInput()
 	cursor_toggle = false;
 }
 
-void GUI::SelectedText::updateSelectedText()
+void Render::GUI::SelectedText::updateSelectedText()
 {
 	// Offset for Cursor
 	float offset = 0.0f;
@@ -75,7 +75,7 @@ void GUI::SelectedText::updateSelectedText()
 	model = glm::translate(glm::mat4(1.0f), glm::vec3(text_pos.x + distance - box_x + text->getOffset() - offset, text_pos.y, 0.0f));
 }
 
-bool GUI::SelectedText::parseCharacter(char c)
+bool Render::GUI::SelectedText::parseCharacter(char c)
 {
 	// Determine if Character is Usable Through Current Mode
 	switch (mode)
@@ -181,7 +181,7 @@ bool GUI::SelectedText::parseCharacter(char c)
 	return false;
 }
 
-void GUI::SelectedText::toggleNegative()
+void Render::GUI::SelectedText::toggleNegative()
 {
 	// Determine if the First Character is Already Negative
 	bool is_negaive = character_count != 0 && text->getString().at(0) == '-';
@@ -222,7 +222,7 @@ void GUI::SelectedText::toggleNegative()
 	updateSelectedText();
 }
 
-void GUI::SelectedText::setCursorHeight(float new_scale)
+void Render::GUI::SelectedText::setCursorHeight(float new_scale)
 {
 	// Bind Vertex Objects
 	glBindVertexArray(VAO);
@@ -248,7 +248,7 @@ void GUI::SelectedText::setCursorHeight(float new_scale)
 	glBindVertexArray(0);
 }
 
-void GUI::SelectedText::initializeSelectedText()
+void Render::GUI::SelectedText::initializeSelectedText()
 {
 	// Generate the Vertex Object
 	glGenVertexArrays(1, &VAO);
@@ -289,12 +289,12 @@ void GUI::SelectedText::initializeSelectedText()
 	alSourcei(exclaimation_source, AL_LOOPING, AL_FALSE);
 }
 
-GUI::SelectedText* GUI::SelectedText::get()
+Render::GUI::SelectedText* Render::GUI::SelectedText::get()
 {
 	return &instance;
 }
 
-void GUI::SelectedText::deleteSelectedText()
+void Render::GUI::SelectedText::deleteSelectedText()
 {
 	// Delete Objects
 	glDeleteVertexArrays(1, &VAO);
@@ -303,7 +303,7 @@ void GUI::SelectedText::deleteSelectedText()
 	alDeleteBuffers(1, &exclaimation_source);
 }
 
-void GUI::SelectedText::assignText(AdvancedString* text_, glm::vec2 text_pos_, uint8_t mode_, Box* box_)
+void Render::GUI::SelectedText::assignText(AdvancedString* text_, glm::vec2 text_pos_, uint8_t mode_, Box* box_)
 {
 	// Store Pointer to Text
 	text = text_;
@@ -343,7 +343,7 @@ void GUI::SelectedText::assignText(AdvancedString* text_, glm::vec2 text_pos_, u
 	cursor_idle_toggle = false;
 }
 
-void GUI::SelectedText::forceUpdateText(std::string& new_string)
+void Render::GUI::SelectedText::forceUpdateText(std::string& new_string)
 {
 	// Only Execute if Active
 	if (active)
@@ -362,7 +362,7 @@ void GUI::SelectedText::forceUpdateText(std::string& new_string)
 	}
 }
 
-void GUI::SelectedText::stopSelecting()
+void Render::GUI::SelectedText::stopSelecting()
 {
 	// Set Object to be Inactive
 	active = false;
@@ -389,7 +389,7 @@ void GUI::SelectedText::stopSelecting()
 		text->updateRenderText();
 }
 
-void GUI::SelectedText::insertCharacter(char character)
+void Render::GUI::SelectedText::insertCharacter(char character)
 {
 	// Parse Character Based on the Mode of the Text
 	if (!parseCharacter(character))
@@ -417,7 +417,7 @@ void GUI::SelectedText::insertCharacter(char character)
 	cursor_idle_toggle = false;
 }
 
-void GUI::SelectedText::removeCharacter()
+void Render::GUI::SelectedText::removeCharacter()
 {
 	// If Currently At the 0th Index, Send Error
 	if (text_index == 0)
@@ -446,7 +446,7 @@ void GUI::SelectedText::removeCharacter()
 	cursor_idle_toggle = false;
 }
 
-void GUI::SelectedText::moveLeft()
+void Render::GUI::SelectedText::moveLeft()
 {
 	// If At Furthest Left, Error
 	if (text_index == 0)
@@ -466,7 +466,7 @@ void GUI::SelectedText::moveLeft()
 	cursor_idle_toggle = false;
 }
 
-void GUI::SelectedText::moveRight()
+void Render::GUI::SelectedText::moveRight()
 {
 	// If at Furthest Right, Error
 	if (text_index == character_count)
@@ -486,7 +486,7 @@ void GUI::SelectedText::moveRight()
 	cursor_idle_toggle = false;
 }
 
-void GUI::SelectedText::moveToTop()
+void Render::GUI::SelectedText::moveToTop()
 {
 	// If at Furthest Right, Error
 	if (text_index == character_count)
@@ -506,7 +506,7 @@ void GUI::SelectedText::moveToTop()
 	cursor_idle_toggle = false;
 }
 
-void GUI::SelectedText::moveToBottom()
+void Render::GUI::SelectedText::moveToBottom()
 {
 	// If At Furthest Left, Error
 	if (text_index == 0)
@@ -526,7 +526,7 @@ void GUI::SelectedText::moveToBottom()
 	cursor_idle_toggle = false;
 }
 
-void GUI::SelectedText::renderCursor()
+void Render::GUI::SelectedText::renderCursor()
 {
 	// Early Return if the Object is Not Active
 	if (!active)
@@ -617,23 +617,23 @@ void GUI::SelectedText::renderCursor()
 	glUniform1i(Global::staticLocColor, 0);
 }
 
-void GUI::SelectedText::assignCloser(std::function<void()> closer)
+void Render::GUI::SelectedText::assignCloser(std::function<void()> closer)
 {
 	if (!active)
 		closing_func = closer;
 }
 
-std::string& GUI::SelectedText::getString()
+std::string& Render::GUI::SelectedText::getString()
 {
 	return text->getString();
 }
 
-bool GUI::SelectedText::isActive()
+bool Render::GUI::SelectedText::isActive()
 {
 	return active;
 }
 
-void GUI::SelectedText::clearText()
+void Render::GUI::SelectedText::clearText()
 {
 	// Only Execute if Active
 	if (active)
@@ -651,19 +651,19 @@ void GUI::SelectedText::clearText()
 	}
 }
 
-void GUI::SelectedText::setBackup()
+void Render::GUI::SelectedText::setBackup()
 {
 	forceUpdateText(backup);
 }
 
-std::string& GUI::SelectedText::getBackup()
+std::string& Render::GUI::SelectedText::getBackup()
 {
 	return backup;
 }
 
-GUI::Box* GUI::SelectedText::getBox()
+Render::GUI::Box* Render::GUI::SelectedText::getBox()
 {
 	return box;
 }
 
-GUI::SelectedText GUI::SelectedText::instance;
+Render::GUI::SelectedText Render::GUI::SelectedText::instance;

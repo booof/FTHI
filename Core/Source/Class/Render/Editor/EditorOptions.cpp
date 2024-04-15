@@ -223,8 +223,8 @@ void Editor::EditorOptions::initialize_gui()
 	draw_vertices[mode]();
 
 	// Initialize Scroll Bar
-	bar = GUI::VerticalScrollBar(Global::halfScalarX - 1.0f * Scale, 40.0f, 2.0f * Scale, 90.0f, options_height, bar.percent);
-	y_offset = height_difference * bar.percent;
+	bar = Render::GUI::VerticalScrollBar(Global::halfScalarX - 1.0f * Scale, 40.0f, 2.0f * Scale, 90.0f, options_height, bar.getPercent(), -1);
+	y_offset = height_difference * bar.getPercent();
 	secondary_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, y_offset, 0.0f));
 
 	// Selected Options
@@ -316,12 +316,12 @@ void Editor::EditorOptions::initialize_gui()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	test_bar = GUI::HorizontalScrollBar(0.0f, -30.0f, 80.0f, 5.0f, 100.0f, option_object_info_max_width_percent);
-	test_bar2 = GUI::HorizontalScrollBar(0.0f, -40.0f, 80.0f, 5.0f, 100.0f, option_object_info_text_size_percent);
+	test_bar = Render::GUI::HorizontalScrollBar(0.0f, -30.0f, 80.0f, 5.0f, 100.0f, option_object_info_max_width_percent, -1);
+	test_bar2 = Render::GUI::HorizontalScrollBar(0.0f, -40.0f, 80.0f, 5.0f, 100.0f, option_object_info_text_size_percent, -1);
 	test_bar.linkValue(&option_object_info_max_width_percent);
 	test_bar2.linkValue(&option_object_info_text_size_percent);
-	master = GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, height);
-	GUI::DefaultElements* temp = new GUI::DefaultElements;
+	master = Render::GUI::MasterElement(glm::vec2(0.0f, 0.0f), 100.0f, height);
+	Render::GUI::DefaultElements* temp = new Render::GUI::DefaultElements;
 	temp->vertical_bar = &bar;
 	master.linkValue(temp);
 }
@@ -344,7 +344,7 @@ void Editor::EditorOptions::Blitz()
 	}
 
 	// Determine Section of Window to Render
-	secondary_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, bar.BarOffset, 0.0f));
+	secondary_model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, bar.getOffset(), 0.0f));
 
 	// Draw Object
 	glBindVertexArray(backgroundVAO);
@@ -393,7 +393,7 @@ void Editor::EditorOptions::Blitz()
 
 	// Render Box Text
 	for (int i = 0; i < box_count; i++)
-		box_array[i].blitzText(2.0f + bar.BarOffset);
+		box_array[i].blitzText(2.0f + bar.getOffset());
 
 	// Reset Scissor
 	glScissor(0, 0, (GLsizei)Global::screenWidth, (GLsizei)Global::screenHeight);
@@ -424,28 +424,28 @@ void Editor::EditorOptions::DisplayText()
 	// Render Header Text
 
 	// Common
-	Source::Fonts::renderTextAdvanced("Common", -3 * Global::halfScalarX / 4, 42.0f, 100.0f, Scale * 0.2f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), true);
+	Source::Fonts::renderTextAdvanced("Common", -3 * Global::halfScalarX / 4, 42.0f, 100.0f, Scale * 4.8f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), true);
 
 	// Object
-	Source::Fonts::renderTextAdvanced("Object", -1 * Global::halfScalarX / 4, 42.0f, 100.0f, Scale * 0.2f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), true);
+	Source::Fonts::renderTextAdvanced("Object", -1 * Global::halfScalarX / 4, 42.0f, 100.0f, Scale * 4.8f, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), true);
 
 	// Function
-	Source::Fonts::renderTextAdvanced("Function", 1 * Global::halfScalarX / 4, 42.0f, 100.0f, Scale * 0.2f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), true);
+	Source::Fonts::renderTextAdvanced("Function", 1 * Global::halfScalarX / 4, 42.0f, 100.0f, Scale * 4.8f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), true);
 
 	// Extra
-	Source::Fonts::renderTextAdvanced("Extra", 3 * Global::halfScalarX / 4, 42.0f, 100.0f, Scale * 0.2f, glm::vec4(1.0f, 0.4f, 0.0f, 1.0f), true);
+	Source::Fonts::renderTextAdvanced("Extra", 3 * Global::halfScalarX / 4, 42.0f, 100.0f, Scale * 4.8f, glm::vec4(1.0f, 0.4f, 0.0f, 1.0f), true);
 }
 
 void Editor::EditorOptions::Render_Common_Text()
 {
 	// Index of Y Position
-	float y_index = 26.0f + bar.BarOffset;
+	float y_index = 26.0f + bar.getOffset();
 
 	// X Position of Option Text
 	float x_index = -width / 2 + 5.0f * Scale;
 
 	// Size of Text
-	float size1 = 0.1f * Scale, size2 = 0.135f * Scale;
+	float size1 = 2.4f * Scale, size2 = 3.24f * Scale;
 
 	// Double Click
 	Source::Fonts::renderText("Requires A Second Mouse Click Before Object Can be Moved", x_index, y_index + 8.0f, size1, glm::vec4(0.0f, 4.0f, 0.0f, 1.0f), true);
@@ -506,13 +506,13 @@ void Editor::EditorOptions::Render_Common_Text()
 void Editor::EditorOptions::Render_Object_Text()
 {
 	// Index of Y Position
-	float y_index = 26.0f + bar.BarOffset;
+	float y_index = 26.0f + bar.getOffset();
 
 	// X Position of Option Text
 	float x_index = -width / 2 + 5.0f * Scale;
 
 	// Size of Text
-	float size1 = 0.1f * Scale, size2 = 0.135f * Scale;
+	float size1 = 2.4f * Scale, size2 = 3.24f * Scale;
 
 	// Comment for Object Hide / Ignore Option
 	Source::Fonts::renderText("Ignore Prevents Mouse From Interacting With Object. Hide Stops Object From Being Displayed", x_index, y_index + 8.0f, size1, glm::vec4(0.0f, 4.0f, 0.0f, 1.0f), true);
@@ -549,13 +549,13 @@ void Editor::EditorOptions::Render_Object_Text()
 void Editor::EditorOptions::Render_Function_Text()
 {
 	// Index of Y Position
-	float y_index = 26.0f + bar.BarOffset;
+	float y_index = 26.0f + bar.getOffset();
 
 	// X Position of Option Text
 	float x_index = -width / 2 + 5.0f * Scale;
 
 	// Size of Text
-	float size1 = 0.1f * Scale, size2 = 0.135f * Scale;
+	float size1 = 2.4f * Scale, size2 = 3.24f * Scale;
 
 	// Lock All
 	Source::Fonts::renderText("Locks All Objects in All Levels or a Specific Level", x_index, y_index + 8.0f, size1, glm::vec4(0.0f, 4.0f, 0.0f, 1.0f), true);
@@ -581,13 +581,13 @@ void Editor::EditorOptions::Render_Function_Text()
 void Editor::EditorOptions::Render_Extra_Text()
 {
 	// Index of Y Position
-	float y_index = 26.0f + bar.BarOffset;
+	float y_index = 26.0f + bar.getOffset();
 
 	// X Position of Option Text
 	float x_index = -width / 2 + 5.0f * Scale;
 
 	// Size of Text
-	float size1 = 0.1f * Scale, size2 = 0.135f * Scale;
+	float size1 = 2.4f * Scale, size2 = 3.24f * Scale;
 
 	// Camera Speed
 	Source::Fonts::renderText("Multiplier of the Camera Move Speed", x_index, y_index + 8.0f, size1, glm::vec4(0.0f, 4.0f, 0.0f, 1.0f), true);
@@ -619,14 +619,10 @@ void Editor::EditorOptions::Update()
 	mouseStaticY = Global::mouseY / Global::zoom_scale;
 
 	// Update Scroll Bar
-	if (bar_offset && Global::LeftClick)
-	{
-		bar.Scroll((float)mouseStaticY + bar_offset);
-		return;
-	}
+	if (bar.updateElement()) {}
 
 	// Mouse is In Mode Selection
-	if (mouseStaticY > 40.0f)
+	else if (mouseStaticY > 40.0f)
 	{
 		// Change Mouse Cursor
 		glfwSetCursor(Global::window, Global::Mouse_Textures.find("Hand")->second);
@@ -647,7 +643,7 @@ void Editor::EditorOptions::Update()
 				mode = temp_mode;
 
 				// Reset Scrollbar
-				bar.percent = 0;
+				bar.resetBar();
 
 				// Re-Initialize GUI
 				initialize_gui();
@@ -657,18 +653,8 @@ void Editor::EditorOptions::Update()
 		return;
 	}
 
-	// Test if ScrollBar Should Start Moving
-	if (bar.TestColloisions() && Global::LeftClick && bar_offset == 0.0f)
-	{
-		bar_offset = bar.BarPosY - (float)mouseStaticY;
-		return;
-	}
-
-	// Reset Bar Offset
-	bar_offset = 0.0f;
-
 	// Mouse is In Body of GUI
-	updateBoxes(glm::vec2(mouseStaticX, mouseStaticY - bar.BarOffset));
+	updateBoxes(glm::vec2(mouseStaticX, mouseStaticY - bar.getOffset()));
 }
 
 void Editor::EditorOptions::updateBoxes(glm::vec2 cursor)
@@ -707,8 +693,8 @@ void Editor::EditorOptions::Common_Vertices()
 		delete[] group_array;
 
 	// Allocate Memory for Groups and Boxes
-	box_array = new GUI::Box[23];
-	group_array = new GUI::ToggleGroup[11];
+	box_array = new Render::GUI::Box[23];
+	group_array = new Render::GUI::ToggleGroup[11];
 	box_count = 23;
 	group_count = 11;
 
@@ -772,8 +758,8 @@ void Editor::EditorOptions::Object_Vertices()
 		delete[] group_array;
 
 	// Allocate Memory for Groups and Boxes
-	box_array = new GUI::Box[39];
-	group_array = new GUI::ToggleGroup[13];
+	box_array = new Render::GUI::Box[39];
+	group_array = new Render::GUI::ToggleGroup[13];
 	box_count = 39;
 	group_count = 13;
 
@@ -828,46 +814,53 @@ void Editor::EditorOptions::Function_Vertices()
 		delete[] group_array;
 
 	// Allocate Memory for Groups and Boxes
-	box_array = new GUI::Box[7];
+	box_array = new Render::GUI::Box[7];
 	box_count = 7;
 	group_count = 0;
 
 	// Lock All Box
-	GUI::BoxData data = Source::Render::Initialize::constrtuctBox(GUI::FUNCTION_BOX, x_offsets[0], y_index, -1.4f, temp_width, temp_height, true, "All", background_colors, outline_colors, highlight_colors, text_colors);
-	box_array[0] = GUI::Box(data);
+	Render::GUI::BoxDataBundle data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::FUNCTION_BOX, x_offsets[0], y_index, -1.4f, temp_width, temp_height, true, "All", background_colors, outline_colors, highlight_colors, text_colors);
+	data.data1.is_static = true;
+	box_array[0] = Render::GUI::Box(data.data1, data.data2);
 	box_array[0].setFunctionPointer([this]()->void {this->lockAll(); });
 
 	// Lock Select Box
-	data = Source::Render::Initialize::constrtuctBox(GUI::FUNCTION_BOX, x_offsets[0] + 30.0f, y_index, -1.4f, temp_width, temp_height, true, "Select", background_colors, outline_colors, highlight_colors, text_colors);
-	box_array[1] = GUI::Box(data);
+	data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::FUNCTION_BOX, x_offsets[0] + 30.0f, y_index, -1.4f, temp_width, temp_height, true, "Select", background_colors, outline_colors, highlight_colors, text_colors);
+	data.data1.is_static = true;
+	box_array[1] = Render::GUI::Box(data.data1, data.data2);
 	box_array[1].setFunctionPointer([this]()->void {this->lockSelect(); });
 	y_index -= 18.0f;
 
 	// Unlock All Box
-	data = Source::Render::Initialize::constrtuctBox(GUI::FUNCTION_BOX, x_offsets[1], y_index, -1.4f, temp_width, temp_height, true, "All", background_colors, outline_colors, highlight_colors, text_colors);
-	box_array[2] = GUI::Box(data);
+	data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::FUNCTION_BOX, x_offsets[1], y_index, -1.4f, temp_width, temp_height, true, "All", background_colors, outline_colors, highlight_colors, text_colors);
+	data.data1.is_static = true;
+	box_array[2] = Render::GUI::Box(data.data1, data.data2);
 	box_array[2].setFunctionPointer([this]()->void {this->unlockAll(); });
 
 	// Unlock Select Box
-	data = Source::Render::Initialize::constrtuctBox(GUI::FUNCTION_BOX, x_offsets[1] + 30.0f, y_index, -1.4f, temp_width, temp_height, true, "Select", background_colors, outline_colors, highlight_colors, text_colors);
-	box_array[3] = GUI::Box(data);
+	data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::FUNCTION_BOX, x_offsets[1] + 30.0f, y_index, -1.4f, temp_width, temp_height, true, "Select", background_colors, outline_colors, highlight_colors, text_colors);
+	data.data1.is_static = true;
+	box_array[3] = Render::GUI::Box(data.data1, data.data2);
 	box_array[3].setFunctionPointer([this]()->void {this->unlockSelect(); });
 	y_index -= 18.0f;
 
 	// Delete Delete Box
-	data = Source::Render::Initialize::constrtuctBox(GUI::FUNCTION_BOX, x_offsets[2], y_index, -1.4f, temp_width, temp_height, true, "Delete", background_colors, outline_colors, highlight_colors, text_colors);
-	box_array[4] = GUI::Box(data);
+	data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::FUNCTION_BOX, x_offsets[2], y_index, -1.4f, temp_width, temp_height, true, "Delete", background_colors, outline_colors, highlight_colors, text_colors);
+	data.data1.is_static = true;
+	box_array[4] = Render::GUI::Box(data.data1, data.data2);
 	box_array[4].setFunctionPointer([this]()->void {this->deleteLevel(); });
 
 	// Delete Cull Box
-	data = Source::Render::Initialize::constrtuctBox(GUI::FUNCTION_BOX, x_offsets[2] + 30.0f, y_index, -1.4f, temp_width, temp_height, true, "Cull", background_colors, outline_colors, highlight_colors, text_colors);
-	box_array[5] = GUI::Box(data);
+	data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::FUNCTION_BOX, x_offsets[2] + 30.0f, y_index, -1.4f, temp_width, temp_height, true, "Cull", background_colors, outline_colors, highlight_colors, text_colors);
+	data.data1.is_static = true;
+	box_array[5] = Render::GUI::Box(data.data1, data.data2);
 	box_array[5].setFunctionPointer([this]()->void {this->cullEmptyLevels(); });
 	y_index -= 18.0f;
 
 	// Reset To Defaults Box
-	data = Source::Render::Initialize::constrtuctBox(GUI::FUNCTION_BOX, x_offsets[3], y_index, -1.4f, temp_width, temp_height, true, "Reset", background_colors, outline_colors, highlight_colors, text_colors);
-	box_array[6] = GUI::Box(data);
+	data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::FUNCTION_BOX, x_offsets[3], y_index, -1.4f, temp_width, temp_height, true, "Reset", background_colors, outline_colors, highlight_colors, text_colors);
+	data.data1.is_static = true;
+	box_array[6] = Render::GUI::Box(data.data1, data.data2);
 	box_array[6].setFunctionPointer([this]()->void {this->resetToDefault(); });
 	y_index -= 18.0f;
 
@@ -910,25 +903,28 @@ void Editor::EditorOptions::Extra_Vertices()
 		delete[] group_array;
 
 	// Allocate Memory for Groups and Boxes
-	box_array = new GUI::Box[3];
+	box_array = new Render::GUI::Box[3];
 	box_count = 3;
 	group_count = 0;
 
 	// Generate Camera Speed Box
-	GUI::BoxData data = Source::Render::Initialize::constrtuctBox(GUI::ABSOLUTE_NUMERICAL_TEXT_BOX, x_offsets[0], y_index, -1.4f, temp_width, temp_height, false, "", background_colors, outline_colors, highlight_colors, text_colors);
-	box_array[0] = GUI::Box(data);
+	Render::GUI::BoxDataBundle data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX, x_offsets[0], y_index, -1.4f, temp_width, temp_height, false, "", background_colors, outline_colors, highlight_colors, text_colors);
+	data.data1.is_static = true;
+	box_array[0] = Render::GUI::Box(data.data1, data.data2);
 	box_array[0].setDataPointer(&option_camera_speed);
 	y_index -= 18.0f;
 
 	// Generate Shift Speed Box
-	data = Source::Render::Initialize::constrtuctBox(GUI::ABSOLUTE_NUMERICAL_TEXT_BOX, x_offsets[1], y_index, -1.4f, temp_width, temp_height, false, "", background_colors, outline_colors, highlight_colors, text_colors);
-	box_array[1] = GUI::Box(data);
+	data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX, x_offsets[1], y_index, -1.4f, temp_width, temp_height, false, "", background_colors, outline_colors, highlight_colors, text_colors);
+	data.data1.is_static = true;
+	box_array[1] = Render::GUI::Box(data.data1, data.data2);
 	box_array[1].setDataPointer(&option_shift_speed);
 	y_index -= 18.0f;
 
 	// Generate Scroll Speed Box
-	data = Source::Render::Initialize::constrtuctBox(GUI::ABSOLUTE_NUMERICAL_TEXT_BOX, x_offsets[2], y_index, -1.4f, temp_width, temp_height, false, "", background_colors, outline_colors, highlight_colors, text_colors);
-	box_array[2] = GUI::Box(data);
+	data = Source::Rendering::Initialize::constrtuctBox(Render::GUI::ABSOLUTE_NUMERICAL_TEXT_BOX, x_offsets[2], y_index, -1.4f, temp_width, temp_height, false, "", background_colors, outline_colors, highlight_colors, text_colors);
+	data.data1.is_static = true;
+	box_array[2] = Render::GUI::Box(data.data1, data.data2);
 	box_array[2].setDataPointer(&option_scroll_speed);
 	y_index -= 18.0f;
 
@@ -947,19 +943,21 @@ void Editor::EditorOptions::generateBooleanBoxes(float* x_offsets, float& y_inde
 	const glm::vec4 text_colors(1.0f, 0.0f, 0.0f, 1.0f);
 
 	// Array of Two Boxes
-	GUI::BoxData boxes[2];
+	Render::GUI::BoxDataBundle boxes[2];
 
 	for (int i = begin; i < end; i++)
 	{
 		// False
-		boxes[0] = Source::Render::Initialize::constrtuctBox(GUI::GROUPED_BOX, x_offsets[i] + 30.0f, y_index, -1.4f, temp_width, temp_height, true, "False", background_colors, outline_colors, highlight_colors, text_colors);
+		boxes[0] = Source::Rendering::Initialize::constrtuctBox(Render::GUI::GROUPED_BOX, x_offsets[i] + 30.0f, y_index, -1.4f, temp_width, temp_height, true, "False", background_colors, outline_colors, highlight_colors, text_colors);
+		boxes[0].data1.is_static = true;
 
 		// True
-		boxes[1] = Source::Render::Initialize::constrtuctBox(GUI::GROUPED_BOX, x_offsets[i], y_index, -1.4f, temp_width, temp_height, true, "True", background_colors, outline_colors, highlight_colors, text_colors);
+		boxes[1] = Source::Rendering::Initialize::constrtuctBox(Render::GUI::GROUPED_BOX, x_offsets[i], y_index, -1.4f, temp_width, temp_height, true, "True", background_colors, outline_colors, highlight_colors, text_colors);
+		boxes[0].data1.is_static = true;
 
 		// Grouper
-		GUI::ToggleGroupData group_data = Source::Render::Initialize::constructGrouper(2, 0);
-		group_array[group_index] = GUI::ToggleGroup(group_data, box_array, box_index, boxes);
+		Render::GUI::ToggleGroupData group_data = Source::Rendering::Initialize::constructGrouper(2, 0);
+		group_array[group_index] = Render::GUI::ToggleGroup(group_data, box_array, box_index, boxes);
 
 		// Increment Values
 		box_index += 2;
@@ -977,7 +975,7 @@ void Editor::EditorOptions::generateMultipleBoxes(uint8_t stride, float* x_offse
 	const glm::vec4 text_colors(1.0f, 0.0f, 0.0f, 1.0f);
 
 	// Array of Boxes
-	GUI::BoxData* boxes = new GUI::BoxData[stride];
+	Render::GUI::BoxDataBundle* boxes = new Render::GUI::BoxDataBundle[stride];
 
 	for (int i = begin; i < end; i++)
 	{
@@ -985,12 +983,13 @@ void Editor::EditorOptions::generateMultipleBoxes(uint8_t stride, float* x_offse
 		for (int j = 0, offset = (int)x_offsets[i]; j < stride; j++, offset += 30)
 		{
 			// False
-			boxes[j] = Source::Render::Initialize::constrtuctBox(GUI::GROUPED_BOX, (float)offset, y_index, -1.4f, temp_width, temp_height, true, text[j], background_colors, outline_colors, highlight_colors, text_colors);
+			boxes[j] = Source::Rendering::Initialize::constrtuctBox(Render::GUI::GROUPED_BOX, (float)offset, y_index, -1.4f, temp_width, temp_height, true, text[j], background_colors, outline_colors, highlight_colors, text_colors);
+			boxes[j].data1.is_static = true;
 		}
 
 		// Grouper
-		GUI::ToggleGroupData group_data = Source::Render::Initialize::constructGrouper(stride, 0);
-		group_array[group_index] = GUI::ToggleGroup(group_data, box_array, box_index, boxes);
+		Render::GUI::ToggleGroupData group_data = Source::Rendering::Initialize::constructGrouper(stride, 0);
+		group_array[group_index] = Render::GUI::ToggleGroup(group_data, box_array, box_index, boxes);
 
 		// Increment Values
 		box_index += stride;
@@ -1005,7 +1004,7 @@ void Editor::EditorOptions::generateMultipleBoxes(uint8_t stride, float* x_offse
 std::string& Editor::EditorOptions::querry(std::string message, std::string input, int typing_mode)
 {
 	// Reset User Input String
-	GUI::AdvancedString string = input;
+	Render::GUI::AdvancedString string = input;
 	selected_text->assignText(&string, glm::vec2(0.0f, 0.0f), typing_mode, nullptr);
 
 	// Enable Typing Mode
@@ -1029,8 +1028,8 @@ std::string& Editor::EditorOptions::querry(std::string message, std::string inpu
 
 		// Draw Text
 		Global::fontShader.Use();
-		Source::Fonts::renderText(message, -Global::halfScalarX / 2 + 5.0f * Scale, 60.0f, 0.15f * Scale, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
-		Source::Fonts::renderText(string.getString(), -Global::halfScalarX / 2 + 12.0f * Scale, 28.0f, 0.15f * Scale, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
+		Source::Fonts::renderText(message, -Global::halfScalarX / 2 + 5.0f * Scale, 60.0f, 3.6f * Scale, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
+		Source::Fonts::renderText(string.getString(), -Global::halfScalarX / 2 + 12.0f * Scale, 28.0f, 3.6f * Scale, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 
 		// Update Window
 		glfwSwapBuffers(Global::window);

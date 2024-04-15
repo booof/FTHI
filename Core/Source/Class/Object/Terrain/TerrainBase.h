@@ -17,7 +17,8 @@ namespace Object::Terrain
 		BACKGROUND_2,
 		BACKGROUND_1,
 		FOREGROUND,
-		FORMERGROUND
+		FORMERGROUND,
+		STATIC
 	};
 
 	// Base Terrain Class
@@ -32,7 +33,7 @@ namespace Object::Terrain
 		int offset = 0;
 
 		// Instance of Object
-		int instance = 0;
+		int instance = -1;
 
 		// Initialize Object
 		TerrainBase(Shape::Shape* shape_, ObjectData data_, glm::vec2& offset);
@@ -77,6 +78,11 @@ namespace Object::Terrain
 		// Update Model Matrix
 		void updateModel();
 
+		// Reset Vertices, If Needed
+		void resetVertices();
+
+		// Override of Recursive Terrain Generation
+		void genTerrainRecursively(int& offset_static, int& offset_dynamic, int& instance, int& instance_index);
 	};
 
 	// Terrain Objects

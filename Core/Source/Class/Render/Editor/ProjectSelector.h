@@ -73,7 +73,7 @@ namespace Editor
 		GLuint windowVAO = 0, windowVBO = 0;
 
 		// The "Load GUI On Startup" Box
-		GUI::Box startup_enabled_box;
+		Render::GUI::Box startup_enabled_box;
 
 		// The Boolean That Determines if GUI Should be Shown on Startup
 		bool startup_enabled = true;
@@ -85,34 +85,34 @@ namespace Editor
 		bool use_24_hour_clock = false;
 
 		// Box to Search for Project
-		GUI::Box box_search;
+		Render::GUI::Box box_search;
 		std::string search_text = "";
 
 		// Box to Determine if Window Opens on Startup
-		GUI::Box box_startup_enabled;
+		Render::GUI::Box box_startup_enabled;
 
 		// Box to Open Project
-		GUI::Box box_open_project;
+		Render::GUI::Box box_open_project;
 
 		// Box to Open Project Directory
-		GUI::Box box_open_project_directory;
+		Render::GUI::Box box_open_project_directory;
 
 		// Box to Remove Project
-		GUI::Box box_remove_project;
+		Render::GUI::Box box_remove_project;
 
 		// Box to Create New Project
-		GUI::Box box_create_project;
+		Render::GUI::Box box_create_project;
 
 		// Box to Add Project From Directory
-		GUI::Box box_add_project;
+		Render::GUI::Box box_add_project;
 
 		// Bar for Project Selection List
-		GUI::VerticalScrollBar project_selection_bar;
+		Render::GUI::VerticalScrollBar project_selection_bar;
 		bool scrolling = false;
 		float scoll_offset = 0.0f;
 
 		// Master Element
-		GUI::MasterElement master_element;
+		Render::GUI::MasterElement master_element;
 
 		// Initial Constructor
 		ProjectSelector() {}

@@ -41,7 +41,7 @@ namespace Render::Objects
 }
 
 // Declaration for GUI
-namespace GUI
+namespace Render::GUI
 {
 	struct GUIData;
 	class GUI;
@@ -139,17 +139,17 @@ namespace Editor
 		int selected_selection = -1;
 
 		// Verticle Scroll Bar
-		GUI::VerticalScrollBar bar;
+		Render::GUI::VerticalScrollBar bar;
 
 		// Vertex Array for Boxes
-		std::vector<GUI::Box> boxes;
+		std::vector<Render::GUI::Box> boxes;
 
 		// Vertex Array for Text
-		std::vector<GUI::TextObject> text;
+		std::vector<Render::GUI::TextObject> text;
 
 		// Master Elements
-		GUI::MasterElement master_element_static;
-		GUI::MasterElement master_element_dynamic;
+		Render::GUI::MasterElement master_element_static;
+		Render::GUI::MasterElement master_element_dynamic;
 
 		// Location Where the Dynamic Elements Start
 		int dynamic_text_start = 0;
@@ -162,7 +162,7 @@ namespace Editor
 		Render::Objects::SceneData* level_data = nullptr;
 
 		// Pointer to the GUI Data Object for GUIs
-		GUI::GUIData* gui_data = nullptr;
+		Render::GUI::GUIData* gui_data = nullptr;
 
 		// Scene List Object
 		SceneList list;
@@ -200,8 +200,11 @@ namespace Editor
 		// Generate the Title and Exit Box
 		void genTitle();
 
+		// Generate the Basic Generation Layout Elements
+		void genBasicLayoutElements(Render::GUI::TextDataBundle& text_data, Render::GUI::BoxDataBundle& box_data, std::string instance_name, std::string chunk_name, float* width, float* height);
+
 		// Generate the Chunk Layout Elements
-		void genChunkLayoutElements(float initial_y, int initial_box, GUI::TextData& text_data, GUI::BoxData& box_data);
+		void genChunkLayoutElements(float initial_y, int initial_box, Render::GUI::TextDataBundle& text_data, Render::GUI::BoxDataBundle& box_data);
 
 		// Generate the Selection List for Levels and GUIs
 		void genSelectionList(std::vector<Instance>& vec);
@@ -241,6 +244,9 @@ namespace Editor
 
 		// Generate the Level Path
 		void genLevelPath(int index);
+
+		// Generate the GUI Path
+		void genGUIPath(int index);
 
 		// Pre-Loop Initialization
 		void initializeLoop(SCENE_MODES mode, bool& looping, std::function<void()>& exit_function);

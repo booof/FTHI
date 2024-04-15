@@ -242,8 +242,8 @@ void Vertices::Rectangle::genRectTextureNormal(float xPos, float yPos, float zPo
 void Vertices::Rectangle::genRectHilighter(float xPos, float yPos, float zPos, float width, float height, float* vertices)
 {
 	// Calculate Half Values of Width and Height to Make Calculations Easier
-	float half_width = width / 2.0f;
-	float half_height = height / 2.0f;
+	float half_width = width * 0.5f;
+	float half_height = height * 0.5f;
 
 	// Store Position
 	vertices[0] = xPos - half_width;

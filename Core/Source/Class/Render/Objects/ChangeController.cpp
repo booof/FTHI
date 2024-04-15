@@ -5,7 +5,9 @@
 #include "Class/Render/Editor/Selector.h"
 #include "Class/Render/Camera/Camera.h"
 #include "Class/Render/Struct/DataClasses.h"
-#include "Level.h"
+#include "Render\Container\Container.h"
+#include "Render\Objects\Level.h"
+#include "Render\GUI\GUI.h"
 
 bool Render::Objects::ChangeController::testIfSaved(SavedIdentifier test_identifier)
 {
@@ -60,11 +62,12 @@ void Render::Objects::ChangeController::addToUnsaved(DataClass::Data_Object* dat
 	else
 	{
 		// Fix the Coordinates of the Object if It has been Wrapped
-		level->wrapObjectPos(data_object->getPosition());
+		if (container->getContainerType() == CONTAINER_TYPES::LEVEL)
+			static_cast<Render::Objects::Level*>(container)->wrapObjectPos(data_object->getPosition());
 
 		// Get Position of Object in Terms of Level
 		glm::i16vec2 object_level_position;
-		level->updateLevelPos(data_object->getPosition(), object_level_position);
+		container->updateLevelPos(data_object->getPosition(), object_level_position);
 
 		//std::cout << "Adding To Level: " << object_level_position.x << " " << object_level_position.y << "  At Index: " << (int)level->getIndexFromLevel(object_level_position) << "\n";
 		std::cout << "Adding To Level: " << object_level_position.x << " " << object_level_position.y << "  At Index: " << "\n";
@@ -93,10 +96,10 @@ Render::Objects::ChangeController* Render::Objects::ChangeController::get()
 	return &instance;
 }
 
-void Render::Objects::ChangeController::storeLevelPointer(Level* level_)
+void Render::Objects::ChangeController::storeContainerPointer(Container* container_)
 {
 	// Store the Level Pointer
-	level = level_;
+	container = container_;
 
 	// Reset the Change List
 	reset(false);
@@ -105,12 +108,16 @@ void Render::Objects::ChangeController::storeLevelPointer(Level* level_)
 Render::Objects::UnsavedLevel* Render::Objects::ChangeController::getUnsavedLevel(int16_t x, int16_t y, int8_t z)
 {
 	// Iterate Through Unsaved Levels to Find Matching Coords
+	//std::cout << "begin unsaved iteration: " << unsaved_levels.size() << "  for " << x << " " << y << "\n";
 	for (std::vector<UnsavedLevel*>::iterator it = unsaved_levels.begin(); it != unsaved_levels.end(); it++)
 	{
 		Render::Objects::UnsavedLevel* unsaved_level = *it;
+		//std::cout << "unsaved " << *it << "  at: " << unsaved_level->level_x << " " << unsaved_level->level_y << "\n";
 		if (unsaved_level->level_x == x && unsaved_level->level_y == y && unsaved_level->level_version == z)
-			return *it;
+			return unsaved_level;
 	}
+
+	//std::cout << "iteration failed\n";
 
 	// Else, Create New Unsaved Level
 	return generateUnsavedLevel(x, y, z);
@@ -120,7 +127,7 @@ Render::Objects::UnsavedLevel* Render::Objects::ChangeController::getUnsavedLeve
 {
 	// Convert Position into Level Coords
 	glm::i16vec2 level_pos;
-	level->updateLevelPos(object->getPosition(), level_pos);
+	container->updateLevelPos(object->getPosition(), level_pos);
 
 	// Retrive the Level
 	return getUnsavedLevel(level_pos.x, level_pos.y, 0);
@@ -132,11 +139,16 @@ Render::Objects::UnsavedLevel* Render::Objects::ChangeController::generateUnsave
 
 	// Generate Object
 	glm::vec2 sizes = glm::vec2(0.0f, 0.0f);
-	level->getSublevelSize(sizes);
-	UnsavedLevel* new_unsaved_level = new UnsavedLevel(sizes, level);
+	container->getSublevelSize(sizes);
+	UnsavedLevel* new_unsaved_level = new UnsavedLevel(sizes, container);
 
 	// Generate Unmodified Data
-	new_unsaved_level->constructUnmodifiedData(x, y, z, sizes.x, sizes.y, level->getLevelDataPath(), level->getEditorLevelDataPath());
+	if (container->getContainerType() == CONTAINER_TYPES::LEVEL) {
+		Render::Objects::Level* level = static_cast<Render::Objects::Level*>(container);
+		new_unsaved_level->constructUnmodifiedDataLevel(x, y, z, sizes.x, sizes.y, level->getLevelDataPath(), level->getEditorLevelDataPath());
+	}
+	else
+		new_unsaved_level->contructUnmodifiedDataGUI(static_cast<Render::GUI::GUI*>(container)->getGUIPath());
 
 	// Test if Unsaved Level is Saved
 	identifier.level_x = x;
@@ -180,6 +192,13 @@ Render::Objects::UnsavedComplex* Render::Objects::ChangeController::getUnsavedCo
 
 void Render::Objects::ChangeController::incrementRemovedCount(int16_t x, int16_t y, int8_t z)
 {
+	// If Container is a GUI, Do Nothing Since There are No Sublevels
+	if (container->getContainerType() == Render::CONTAINER_TYPES::GUI)
+		return;
+
+	// Get Level Container
+	Render::Objects::Level* level = static_cast<Render::Objects::Level*>(container);
+
 	// Get the Index of the Sublevel
 	int8_t index = level->getIndexFromLevel(glm::i16vec2(x, y));
 	if (index == -1)
@@ -217,7 +236,7 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 	ChainMember* current_instance = master_stack->returnCurrentInstance();
 
 	// Store Camera Position in Current Instance
-	current_instance->camera_pos = glm::vec2(level->camera->Position.x, level->camera->Position.y);
+	current_instance->camera_pos = glm::vec2(container->camera->Position.x, container->camera->Position.y);
 
 	// Add All Data Objects
 	for (DataClass::Data_Object* data_object : selector->data_objects)
@@ -248,14 +267,14 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 	}
 
 	// Clear Temps
-	level->clearTemps();
+	container->clearTemps();
 
 	// Perform a Parent Reload on All Complex Objects
 	for (UnsavedComplex* group : unsaved_complex)
 		static_cast<DataClass::Data_ComplexParent*>(group->getComplexParent())->setInactive();
 
 	// Reload Objects
-	level->reloadAll();
+	container->reloadAll();
 
 	// Note: Should Probably Find a Way to Incorporate Objects Similar to Single Selector Return
 	// To Only Update Objects That Are Added. The Only Problem is Finding a Way to Deal With the
@@ -282,14 +301,14 @@ void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Da
 			data_object->updateSelectedPosition(offset.x, offset.y, false);
 
 			// Remove Children From Level
-			level->removeMarkedChildrenFromList(data_object);
+			container->removeMarkedChildrenFromList(data_object);
 			break;
 		}
 	}
 
 	// Get Position of Object in Terms of Level
 	glm::i16vec2 object_level_position;
-	level->updateLevelPos(data_object->getPosition(), object_level_position);
+	container->updateLevelPos(data_object->getPosition(), object_level_position);
 
 	// Get Unsaved Level of Where Object is Now
 	UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
@@ -322,7 +341,7 @@ void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Da
 		data_object->enableSelectionNonRecursive();
 		data_object->genChildrenRecursive(&object_list, list_size, object_list[0], offset, selector, true);
 		selector->addUnselectableRecursive(data_object);
-		level->incorperatNewObjects(object_list, list_size);
+		container->incorperatNewObjects(object_list, list_size);
 	}
 
 	// Add Single Object Into Level
@@ -331,7 +350,7 @@ void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Da
 		// Generate the Object
 		Object::Object* new_object = data_object->generateObject(offset);
 
-		level->incorperatNewObjects(&new_object, 1);
+		container->incorperatNewObjects(&new_object, 1);
 	}
 }
 
@@ -355,7 +374,7 @@ void Render::Objects::ChangeController::handleSelectorRealReturn(DataClass::Data
 				offset = *offset_ptr;
 
 			// Remove Children From Level
-			level->removeMarkedChildrenFromList(data_object);
+			container->removeMarkedChildrenFromList(data_object);
 			break;
 		}
 	}
@@ -402,7 +421,7 @@ void Render::Objects::ChangeController::handleSelectorRealReturn(DataClass::Data
 		}
 
 		// Add New Objects into the Level
-		level->incorperatNewObjects(object_list, list_size);
+		container->incorperatNewObjects(object_list, list_size);
 	}
 
 	// Add Single Object Into Level
@@ -411,7 +430,7 @@ void Render::Objects::ChangeController::handleSelectorRealReturn(DataClass::Data
 		// Generate the Object
 		Object::Object* new_object = data_object->generateObject(offset);
 
-		level->incorperatNewObjects(&new_object, 1);
+		container->incorperatNewObjects(&new_object, 1);
 	}
 }
 
@@ -429,7 +448,7 @@ void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* s
 	ChainMember* current_instance = master_stack->returnCurrentInstance();
 
 	// Store Camera Position in Current Instance
-	current_instance->camera_pos = glm::vec2(level->camera->Position.x, level->camera->Position.y);
+	current_instance->camera_pos = glm::vec2(container->camera->Position.x, container->camera->Position.y);
 
 	// Remove Parent from All Groups of Selected Objects
 	std::vector<DataClass::Data_Object*> orphan_list;
@@ -470,14 +489,14 @@ void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* s
 	}
 
 	// Clear Temps
-	level->clearTemps();
+	container->clearTemps();
 
 	// Perform a Parent Reload on All Complex Objects
 	for (UnsavedComplex* group : unsaved_complex)
 		static_cast<DataClass::Data_ComplexParent*>(group->getComplexParent())->setInactive();
 
 	// Reload Objects
-	level->reloadAll();
+	container->reloadAll();
 }
 
 void Render::Objects::ChangeController::handleSelectorCancelation(Editor::Selector* selector)
@@ -525,14 +544,14 @@ void Render::Objects::ChangeController::handleSelectorCancelation(Editor::Select
 	selector->deleteSelectedObjects();
 
 	// Clear Temps
-	level->clearTemps();
+	container->clearTemps();
 
 	// Perform a Parent Reload on All Complex Objects
 	for (UnsavedComplex* group : unsaved_complex)
 		static_cast<DataClass::Data_ComplexParent*>(group->getComplexParent())->setInactive();
 
 	// Reload Objects
-	level->reloadAll();
+	container->reloadAll();
 }
 
 void Render::Objects::ChangeController::undo()
@@ -560,8 +579,11 @@ void Render::Objects::ChangeController::reloadObjects()
 		//unsaved_levels[i]->switchInstance(current_instance->stack_indicies[i]);
 	}
 
-	// Reload Objects in Level
-	level->reloadAll(current_instance->camera_pos.x, current_instance->camera_pos.y);
+	// Reload Objects in Container
+	if (container->getContainerType() == CONTAINER_TYPES::LEVEL)
+		static_cast<Render::Objects::Level*>(container)->reloadAll(current_instance->camera_pos.x, current_instance->camera_pos.y);
+	else
+		container->reloadAll();
 }
 
 void Render::Objects::ChangeController::revertAllChanges()
@@ -610,7 +632,7 @@ void Render::Objects::ChangeController::save()
 	master_stack->reset();
 
 	// Reload Level
-	level->reloadAll();
+	container->reloadAll();
 }
 
 bool Render::Objects::ChangeController::returnIfUnsaved()
@@ -633,7 +655,7 @@ void Render::Objects::ChangeController::reset(bool reload)
 
 	// Reload Level
 	if (reload)
-		level->reloadAll();
+		container->reloadAll();
 }
 
 void Render::Objects::ChangeController::drawVisualizers()
@@ -643,9 +665,9 @@ void Render::Objects::ChangeController::drawVisualizers()
 		(*it)->drawVisualizer();
 }
 
-Render::Objects::Level* Render::Objects::ChangeController::getCurrentLevel()
+Render::Container* Render::Objects::ChangeController::getCurrentContainer()
 {
-	return level;
+	return container;
 }
 
 void Render::Objects::ChangeController::MasterStack::deleteInstance(uint8_t index)
