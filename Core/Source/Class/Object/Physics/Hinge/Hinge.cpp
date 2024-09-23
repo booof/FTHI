@@ -873,6 +873,12 @@ void DataClass::Data_Hinge::readObjectData(std::ifstream& object_file)
 	object_file.read(&file_name[0], file_name_size);
 }
 
+void DataClass::Data_Hinge::updateTraveresPositionHelper(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+}
+
 DataClass::Data_Hinge::Data_Hinge(uint8_t children_size)
 {
 	// Set Object Identifier
@@ -895,12 +901,6 @@ void DataClass::Data_Hinge::info(Editor::ObjectInfo& object_info)
 DataClass::Data_Object* DataClass::Data_Hinge::makeCopy()
 {
 	return new Data_Hinge(*this);
-}
-
-void DataClass::Data_Hinge::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
-{
-	data.position.x += deltaX;
-	data.position.y += deltaY;
 }
 
 int& DataClass::Data_Hinge::getScript()

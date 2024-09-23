@@ -57,6 +57,14 @@ void Object::Mask::Slant::initializeVisualizer(GLuint& VAO, GLuint& VBO, glm::ma
 
 #endif
 
+void DataClass::Data_Slant::updateTraveresPositionHelper(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	data.position2.x += deltaX;
+	data.position2.y += deltaY;
+}
+
 Object::Mask::SlantData& DataClass::Data_Slant::getSlantData()
 {
 	return data;
@@ -80,14 +88,6 @@ void DataClass::Data_Slant::generateInitialValues(glm::vec2& position, float& si
 	data.material = 0;
 }
 
-void DataClass::Data_Slant::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
-{
-	data.position.x += deltaX;
-	data.position.y += deltaY;
-	data.position2.x += deltaX;
-	data.position2.y += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
-}
 
 void DataClass::Data_Slant::offsetPosition(glm::vec2& offset)
 {

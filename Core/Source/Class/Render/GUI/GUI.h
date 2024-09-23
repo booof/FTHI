@@ -139,6 +139,9 @@ namespace Render::GUI
 		// The Number of Dynamic Object Vertices
 		int dynamic_vertex_count = 0;
 
+		// Only to be Used When Reallocating Objects Array
+		ObjectContainer& getContainer();
+
 		// Reload the Terrain Objects of Container
 		void constructTerrain();
 
@@ -167,7 +170,7 @@ namespace Render::GUI
 		void resetObjectPassOver();
 
 		// Store Level of Origin
-		void storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, Render::MOVE_WITH_PARENT disable_move);
+		void storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, Object::Object* real_object);
 
 		// Reallocate All Memory
 		void reallocateAll(bool del, uint32_t size);
@@ -182,6 +185,12 @@ namespace Render::GUI
 
 		// Returns the Type of Container Object
 		CONTAINER_TYPES getContainerType();
+
+		// Add Object and Decendants Into Container
+		void genObjectIntoContainer(DataClass::Data_Object* new_object, Object::Object* real_parent, uint16_t& index, int16_t delta_size);
+
+		// Generate Objects Into This Container
+		void buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, uint16_t& index, Object::Object* parent, glm::vec2 position_offset, uint16_t& active_index, Objects::UnsavedLevel& unsaved_level);
 
 		// Update Level Location
 		void updateLevelPos(glm::vec2 position, glm::i16vec2& level);

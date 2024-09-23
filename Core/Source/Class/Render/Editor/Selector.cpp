@@ -205,10 +205,9 @@ void Editor::Selector::blitzSelector()
 		// Get Rendering Data
 		Selected_VertexObjects& vertex_objects = selected_object->vertex_objects;
 
-		// Determine Delta Pos, If Needed
-		glm::vec3 delta_pos = glm::vec3(0.0f, 0.0f, 0.0f);
-		if (selected_object->complex_root != nullptr)
-			delta_pos = glm::vec3(*selected_object->object_x - selected_object->complex_root->pointerToPosition()->x, *selected_object->object_y - selected_object->complex_root->pointerToPosition()->y, 0.0f);
+		// Calculate How Much the Object Moved During Selection
+		float delta_object_x = *selected_object->object_x - selected_object->original_x;
+		float delta_object_y = *selected_object->object_y - selected_object->original_y;
 
 		// Object is a Object With Color and Texture
 		if (selected_object->vertex_objects.visualize_object)
@@ -223,20 +222,11 @@ void Editor::Selector::blitzSelector()
 			//glm::mat4 matrix = level->returnProjectionViewMatrix(4) * model;
 			//glUniformMatrix4fv(Global::objectStaticMatrixLoc, 1, GL_FALSE, glm::value_ptr(matrix));
 			Global::modelLocObjectStatic = glGetUniformLocation(Global::objectShaderStatic.Program, "model");
-			glUniformMatrix4fv(Global::modelLocObjectStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
 			glUniform4f(glGetUniformLocation(Global::objectShaderStatic.Program, "view_pos"), cam_pos.y, cam_pos.y, 0.0f, 0.0f);
 			//glUniform1f(glGetUniformLocation(Global::objectShaderStatic.Program, "material.shininess"), 1.0);
 
-			// Draw Object
-			glBindVertexArray(vertex_objects.objectVAO);
-			glDrawArrays(GL_TRIANGLES, 0, vertex_objects.object_vertex_count);
-
-			// If Belonging to a Complex Root, Draw Other Instances
-			if (selected_object->complex_root != nullptr)
-				static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelected(vertex_objects.object_vertex_count, GL_TRIANGLES, Global::modelLocObjectStatic, delta_pos, selected_object->complex_root);
-
-			// Unbind Object
-			glBindVertexArray(0);
+			// Draw the Object
+			blitzSingleSelectedObject(GL_TRIANGLES, Global::modelLocObjectStatic, delta_object_x, delta_object_y, selected_object, vertex_objects);
 		}
 
 		// Object is Composed of Lines
@@ -244,18 +234,9 @@ void Editor::Selector::blitzSelector()
 		{
 			// Bind Static Color Shader
 			Global::colorShaderStatic.Use();
-			glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
 
-			// Draw Object
-			glBindVertexArray(vertex_objects.objectVAO);
-			glDrawArrays(GL_LINES, 0, vertex_objects.object_vertex_count);
-
-			// If Belonging to a Complex Root, Draw Other Instances
-			if (selected_object->complex_root != nullptr)
-				static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelected(vertex_objects.object_vertex_count, GL_LINES, Global::modelLocColorStatic, delta_pos, selected_object->complex_root);
-
-			// Unbind Object
-			glBindVertexArray(0);
+			// Draw the Object
+			blitzSingleSelectedObject(GL_LINES, Global::modelLocColorStatic, delta_object_x, delta_object_y, selected_object, vertex_objects);
 		}
 
 		// Object Only Has a Texture
@@ -263,22 +244,13 @@ void Editor::Selector::blitzSelector()
 		{
 			// Bind Static Texture Shader
 			Global::texShaderStatic.Use();
-			glUniformMatrix4fv(Global::modelLocTextureStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
 
 			// Load Texture
 			glActiveTexture(GL_TEXTURE3);
 			glBindTexture(GL_TEXTURE_2D, texture.texture);
 
-			// Draw Object
-			glBindVertexArray(vertex_objects.objectVAO);
-			glDrawArrays(GL_TRIANGLES, 0, vertex_objects.object_vertex_count);
-
-			// If Belonging to a Complex Root, Draw Other Instances
-			if (selected_object->complex_root != nullptr)
-				static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelected(vertex_objects.object_vertex_count, GL_TRIANGLES, Global::modelLocTextureStatic, delta_pos, selected_object->complex_root);
-
-			// Unbind Object
-			glBindVertexArray(0);
+			// Draw the Object
+			blitzSingleSelectedObject(GL_TRIANGLES, Global::modelLocTextureStatic, delta_object_x, delta_object_y, selected_object, vertex_objects);
 		}
 
 		// Object Only Has a Color
@@ -286,30 +258,10 @@ void Editor::Selector::blitzSelector()
 		{
 			// Bind Static Color Shader
 			Global::colorShaderStatic.Use();
-			glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
 
-			// Draw Object
-			glBindVertexArray(vertex_objects.objectVAO);
-			glDrawArrays(GL_TRIANGLES, 0, vertex_objects.object_vertex_count);
-
-			// If Belonging to a Complex Root, Draw Other Instances
-			if (selected_object->complex_root != nullptr)
-				static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelected(vertex_objects.object_vertex_count, GL_TRIANGLES, Global::modelLocColorStatic, delta_pos, selected_object->complex_root);
-
-			// Unbind Object
-			glBindVertexArray(0);
+			// Draw the Object
+			blitzSingleSelectedObject(GL_TRIANGLES, Global::modelLocColorStatic, delta_object_x, delta_object_y, selected_object, vertex_objects);
 		}
-
-		// Draw Highlighter
-
-		// Bind Highlighter Shader
-		Global::colorShaderStatic.Use();
-		glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
-
-		// Draw Highllighter
-		glBindVertexArray(vertex_objects.outlineVAO);
-		glDrawArrays(GL_LINES, 0, vertex_objects.outline_vertex_count);
-		glBindVertexArray(0);
 	}
 
 	// Draw Pivot, if Enabled
@@ -334,68 +286,26 @@ void Editor::Selector::blitzSelector()
 	// Draw Visualizers for Groups
 	for (Selected_Object* selected_object : selected_objects)
 	{
-		// If This is a Complex Object, Draw As if From Complex Object
-		if (selected_object->data_object->getGroup() != nullptr && selected_object->data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
-		{
-			// If This Object Has a Nested Complex Parent, Draw to All Instances
-			if (selected_object->complex_root != nullptr)
-			{
-				// Determine the Real Object That Was Selected
-				for (Object::Object* object : selected_object->data_object->getObjects())
-				{
-					if (static_cast<Object::TempObject*>(object)->isOriginal())
-					{
-						// Determine the Offset of the Real Object
-						glm::vec2 offset = glm::vec2(*selected_object->object_x, *selected_object->object_y) - *object->pointerToPosition();
+		// Once Again Calculate How Much the Object Moved During Selection
+		float delta_object_x = *selected_object->object_x - selected_object->original_x - selected_object->data_object->getPosition().x;
+		float delta_object_y = *selected_object->object_y - selected_object->original_y - selected_object->data_object->getPosition().y;
 
-						// Draw Connections To All Children
-						for (Object::Object* object : selected_object->data_object->getObjects())
-						{
-							glm::vec2 combined_offest = *object->pointerToPosition() + offset;
-							selected_object->data_object->drawSelectedGroupVisualizerOffset(combined_offest, combined_offest - selected_object->data_object->getPosition());
-						}
+		// Determine if Object is Complex
+		bool complex = false;
+		if (selected_object->data_object->getGroup() != nullptr)
+			complex = selected_object->data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX;
 
-						break;
-					}
-				}
-			}
-
-			// Else, Draw Only Connections For This Object
-			else
-				selected_object->data_object->drawSelectedGroupVisualizer(glm::vec2(*selected_object->object_x, *selected_object->object_y));
-
-			// If Object Has a Parent, Draw Parent Connection
-			if (selected_object->complex_root == nullptr)
-				selected_object->data_object->drawParentConnection();
-			else
-			{
-				// Get Delta Position of Selected Object
-				glm::vec2 delta_pos = *selected_object->complex_root->pointerToPosition();
-
-				// Draw Connection ONLY to Parent
-				static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelectedConnectionParentOnly(selected_object->data_object, delta_pos);
-			}
-		}
-
-		// For Children of Normal Group Objects, Draw Parent Connection
-		else if (selected_object->complex_root == nullptr)
-		{
-			// Draw Visualizers to Children
+		// If Object is New, Only Render the Connections to Children
+		// It is Impossible for a New Object to Have a Parent
+		// However, it is Possible for a New Object to Have Children
+		if (selected_object->data_object->getOriginalObject() == nullptr) {
 			selected_object->data_object->drawSelectedGroupVisualizer(glm::vec2(0.0f, 0.0f));
-
-			// Draw Visualizer to Parent
-			selected_object->data_object->drawParentConnection();
+			continue;
 		}
-			
-		// For Children of Complex Objects, Draw Connection for All Instances
-		else
-		{
-			// Get Delta Position of Selected Object
-			glm::vec2 delta_pos = *selected_object->complex_root->pointerToPosition();
 
-			// Draw Connection for All Instances
-			static_cast<Render::Objects::UnsavedComplex*>(selected_object->complex_root->group_object)->drawSelectedConnection(selected_object->data_object, delta_pos);
-		}
+		// Draw Visualizers for Each Instance of an Object
+		for (Object::Object* real_object : selected_object->data_object->getObjects())
+			visualizeSingleSelectedObject(delta_object_x, delta_object_y, selected_object, real_object, complex);
 	}
 
 	// Draw Text, if Avaliable
@@ -835,6 +745,8 @@ bool Editor::Selector::selectedOnlyOne()
 
 void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Object::Object& origin_object)
 {
+	/*
+
 	// Get the Selected Object
 	DataClass::Data_Object* only_one = selected_objects.at(0)->data_object;
 
@@ -886,7 +798,7 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 	}
 
 	// Add Child to Selected Object
-	only_one->addChildViaSelection(data_object, Render::MOVE_WITH_PARENT::MOVE_DISSABLED);
+
 
 	// Update Number of Children Object Has
 	only_one->getObjectIdentifier()[3] = only_one->getGroup()->getNumberOfChildren();
@@ -985,6 +897,7 @@ void Editor::Selector::addChildToOnlyOne(DataClass::Data_Object* data_object, Ob
 		static_cast<Render::Objects::Level*>(scene_controller->getCurrentInstance())->incorperatNewObjects(object_list, list_size);
 		delete[] object_list;
 	}
+	*/
 }
 
 DataClass::Data_Object* Editor::Selector::getOnlyOne()
@@ -1160,8 +1073,12 @@ void Editor::Selector::initializeSelector()
 
 		// Store Object Data
 		Selected_Object* selected_object = storeSelectorData(data_object);
+		selected_object->original_x = *selected_object->object_x;
+		selected_object->original_y = *selected_object->object_y;
 		selected_object->vertex_objects = vertex_objects;
 		selected_objects.push_back(selected_object);
+
+		/*
 
 		// Test if Object Belongs to a Parent to Test for Complex Origin
 		if (data_object->getParent() != nullptr)
@@ -1178,6 +1095,8 @@ void Editor::Selector::initializeSelector()
 				selected_object->complex_root = static_cast<DataClass::Data_ComplexParent*>(root_parent)->getRootParent();
 			}
 		}
+
+		*/
 
 		// Bind Object Vertex Objects
 		glBindVertexArray(vertex_objects.objectVAO);
@@ -4408,6 +4327,85 @@ void Editor::Selector::uninitializeSelector()
 	glDeleteBuffers(1, &pivotVBO);
 }
 
+void Editor::Selector::blitzSingleSelectedObject(uint16_t array_shape, GLuint model_loc, float& delta_object_x, float& delta_object_y, Selected_Object* selected_object, Selected_VertexObjects& vertex_objects)
+{
+	// The Model Matrix for Each Real Object
+	glm::mat4 object_matrix = glm::mat4(1.0f);
+
+	// The Real Object Being Drawn
+	Object::TempObject* temp_object = nullptr;
+
+	// The Position of the Real Object
+	float object_position_x = 0;
+	float object_position_y = 0;
+
+	// Bind the Object Arrays
+	glBindVertexArray(vertex_objects.objectVAO);
+
+	// If Object is New, Only Draw the Single Selected Instance
+	if (selected_object->data_object->getOriginalObject() == nullptr) {
+		object_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(*selected_object->object_x, *selected_object->object_y, 0.0f));
+		glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(object_matrix));
+		glDrawArrays(array_shape, 0, vertex_objects.object_vertex_count);
+	}
+
+	// Else, Draw All Object Instances
+	else
+	{
+		// Draw Each Instance of the Selected Object Where the Real Objects are Located
+		for (Object::Object* real_object : selected_object->data_object->getObjects()) {
+
+			// Get the Real Object Being Drawn
+			Object::TempObject* temp_object = static_cast<Object::TempObject*>(real_object);
+
+			// Compute the Model Matrix for the Instance
+			object_position_x = temp_object->pointerToPosition()->x + delta_object_x;
+			object_position_y = temp_object->pointerToPosition()->y + delta_object_y;
+			object_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(object_position_x, object_position_y, 0.0f));
+
+			// Render the Object
+			glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(object_matrix));
+			glDrawArrays(array_shape, 0, vertex_objects.object_vertex_count);
+		}
+	}
+
+	// Bind Highlighter Shader
+	Global::colorShaderStatic.Use();
+	glUniformMatrix4fv(Global::modelLocColorStatic, 1, GL_FALSE, glm::value_ptr(vertex_objects.model));
+
+	// Draw Highllighter
+	glBindVertexArray(vertex_objects.outlineVAO);
+	glDrawArrays(GL_LINES, 0, vertex_objects.outline_vertex_count);
+
+	// Unbind the Array Buffer
+	glBindVertexArray(0);
+}
+
+void Editor::Selector::visualizeSingleSelectedObject(float& delta_object_x, float& delta_object_y, Selected_Object* selected_object, Object::Object* real_object, bool complex)
+{
+	// Calculate the Offset Between the Real Object and the Selected Object
+	glm::vec2 real_complex_offset = *real_object->pointerToPosition() + glm::vec2(delta_object_x, delta_object_y);
+
+	// Calculate the Complex Offset of the Real Object
+	glm::vec2 complex_offset = real_object->Object::Object::calculateComplexOffset(true);
+
+	// If Complex, Add the Distance Object Moved Into Offset
+	if (complex) {
+		float delta_x = *selected_object->object_x - selected_object->original_x;
+		float delta_y = *selected_object->object_y - selected_object->original_y;
+		selected_object->data_object->drawSelectedGroupVisualizerOffset(complex_offset + glm::vec2(delta_x, delta_y), real_complex_offset);
+		complex_offset = real_object->Object::Object::calculateComplexOffset(false);
+		selected_object->data_object->drawParentConnection(real_complex_offset, complex_offset);
+		return;
+	}
+
+	// Draw the Connection Between Children
+	selected_object->data_object->drawSelectedGroupVisualizerOffset(complex_offset, real_complex_offset);
+
+	// Draw Connection to Parent at Specified Offset
+	selected_object->data_object->drawParentConnection(real_complex_offset, complex_offset);
+}
+
 void Editor::Selector::genPivotVertices()
 {
 	// Generate Pivot VAO
@@ -4480,15 +4478,12 @@ void Editor::Selector::updateSelectedPositions(DataClass::Data_Object* data_obje
 	// Only Execute if Group Object is Not NULL
 	if (data_object->getGroup() != nullptr)
 	{
-		// If Group Object, Update Selected Positions of Child Data Objects
-		if (data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
-		{
-			for (DataClass::Data_Object* child : data_object->getGroup()->getChildren())
-				child->updateSelectedPosition(deltaX, deltaY, true);
-		}
+		// TODO: Add More Comprehensive Tests to Determine if Data Object Positions Should Also be Updated
+		// Example1: If a Complex Group Object and Decendant are Moved Simultaniously, Don't Update Positions, Only Visuals
+		// Note: All Ancestors of a Complex Group That are Moved Simultainously Also Shouldn't Update Positions
 
-		// If Complex Object, Only Update Visual Positions of Children
-		else
+		// If Complex Object or a Selected Ancestor is Complex, Only Update Visual Positions of Children
+		if (data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX || data_object->testSelectedComplexAncestor())
 		{
 			for (DataClass::Data_Object* child : data_object->getGroup()->getChildren())
 			{
@@ -4498,6 +4493,13 @@ void Editor::Selector::updateSelectedPositions(DataClass::Data_Object* data_obje
 						instance->updateSelectedComplexPosition(deltaX, deltaY);
 				}
 			}
+		}
+
+		// If Group Object, Update Selected Positions of Child Data Objects
+		else 
+		{
+			for (DataClass::Data_Object* child : data_object->getGroup()->getChildren())
+				child->updateSelectedPosition(deltaX, deltaY, true);
 		}
 	}
 }

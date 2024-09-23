@@ -108,21 +108,24 @@ namespace Render::Objects
 		// Describes the Process that Caused the Change, NOT What Happens During an Undo
 		enum CHANGE_TYPES : uint8_t
 		{
-			ADD = 1,
+			NULCHANGE = 0,
+			ADD,
 			REMOVE
 		};
 
 		// Individual Object Modification
 		struct Change
 		{
-			// The Type of Change
-			uint8_t change_type = 0;
-
-			// Determines if Object Should Move With Parent
-			MOVE_WITH_PARENT move_with_parent = MOVE_WITH_PARENT::MOVE_ENABLED;
-
 			// Pointer to Data Object At Identifier is to be Replaced With
 			DataClass::Data_Object* data = nullptr;
+
+			// The Total Movement this Object Had in Real Coordinates During a Change
+			// Will Replace the "New Object Pos - Old Object Pos" Method of Moving Children
+			// Using Real Coordinates in Case of Changes That Result in Movement In/Out of Groups
+			glm::vec2 change_offset = glm::vec2(0.0f, 0.0f);
+
+			// The Type of Change
+			uint8_t change_type = 0;
 		};
 
 	protected:
@@ -179,6 +182,9 @@ namespace Render::Objects
 
 			// Get Instance From Stack
 			Changes* returnInstance();
+
+			// Get Instance from Specified Direction
+			Changes* returnInstanceDirectionSpecified(bool backwards);
 
 			// Returns True if Stack is Empty
 			bool isEmpty();
@@ -268,10 +274,10 @@ namespace Render::Objects
 		void changeToSaved();
 
 		// Function to Add Objects While Transversing
-		virtual void addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent) = 0;
+		virtual void addWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset) = 0;
 
 		// Function to Remove Objects While Traversing
-		virtual void removeWhileTraversing(DataClass::Data_Object* data_object) = 0;
+		virtual void removeWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset) = 0;
 
 	private:
 
@@ -295,20 +301,23 @@ namespace Render::Objects
 		// Determines if Object was Previously Saved
 		bool saved = false;
 
-		// Pointer to Active Objects Array
-		Object::Active** active_objects = nullptr;
-
 		// Create a New Change by Appending a New Object
-		void createChangeAppend(DataClass::Data_Object* data_object, MOVE_WITH_PARENT disable_move);
+		void createChangeAppend(DataClass::Data_Object* data_object, glm::vec2 final_offset);
 
 		// Create a New Change by Removing an Object
-		void createChangePop(DataClass::Data_Object* data_object_to_remove, MOVE_WITH_PARENT disable_move);
+		void createChangePop(DataClass::Data_Object* data_object_to_remove, Object::Object* real_object);
 
 		// Reset a Change List in the Event it is Canceled
 		void resetChangeList();
 
+		// Prepare All Modified Objects in Change Prior to a Redo/Undo
+		void prepareChangeTraversal(bool backwards);
+
 		// Traverse through Slave Stack
 		void traverseChangeList(bool backward);
+
+		// Clear Flags of Modified Objects after a Redo/Undo
+		void endChangeTraversal(bool backwards);
 
 		// Remove Instance in Change List
 		virtual void removeChainListInstance() = 0;
@@ -321,6 +330,12 @@ namespace Render::Objects
 
 		// Get the Current Change List
 		std::vector<Change*>* getChanges();
+
+		// Remove a DataObject From an Instance With Changes
+		void yeetObjectFromInstance(DataClass::Data_Object* object);
+
+		// Returns True if an Object Exisits in Current Instance
+		bool testObjectExists(DataClass::Data_Object* test_object);
 	};
 }
 

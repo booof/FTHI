@@ -132,6 +132,12 @@ void DataClass::Data_TriggerMask::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&data, sizeof(Object::Mask::Trigger::TriggerData));
 }
 
+void DataClass::Data_TriggerMask::updateTraveresPositionHelper(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+}
+
 DataClass::Data_TriggerMask::Data_TriggerMask(uint8_t children_size)
 {
 	// Set Object Identifier
@@ -154,13 +160,6 @@ void DataClass::Data_TriggerMask::info(Editor::ObjectInfo& object_info)
 DataClass::Data_Object* DataClass::Data_TriggerMask::makeCopy()
 {
 	return new Data_TriggerMask(*this);
-}
-
-void DataClass::Data_TriggerMask::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
-{
-	data.position.x += deltaX;
-	data.position.y += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }
 
 Object::Mask::Trigger::TriggerData& DataClass::Data_TriggerMask::getTriggerData()

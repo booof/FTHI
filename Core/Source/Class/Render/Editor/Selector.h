@@ -199,6 +199,10 @@ namespace Editor
 			float master_offset_x = 0.0f;
 			float master_offset_y = 0.0f;
 
+			// The Position of the Object When Selection Began
+			float original_x = 0.0f;
+			float original_y = 0.0f;
+
 			// Shape of Editing Object
 			unsigned char editing_shape;
 
@@ -748,6 +752,12 @@ namespace Editor
 
 		// Uninitialize Selector
 		void uninitializeSelector();
+
+		// Render a Single Selected Object
+		void blitzSingleSelectedObject(uint16_t array_shape, GLuint model_loc, float& delta_object_x, float& delta_object_y, Selected_Object* selected_object, Selected_VertexObjects& vertex_objects);
+
+		// Render a Visualizer for a Selected Object
+		void visualizeSingleSelectedObject(float& delta_object_x, float& delta_object_y, Selected_Object* selected_object, Object::Object* real_object, bool complex);
 
 		// Generate the Vertex Object for Rotation Pivot Visualizer
 		void genPivotVertices();

@@ -215,6 +215,9 @@ void DataClass::Data_Terrain::info(Editor::ObjectInfo& object_info)
 	static unsigned int group_layer2;
 	group_layer2 = group_layer;
 
+	static int temp = 0;
+	temp = (int)this;
+
 	// Map to Shape Names
 	static std::string shape_name_map[] = { "Rectangle", "Trapezoid", "Triangle", "Circle", "Polygon" };
 
@@ -228,6 +231,7 @@ void DataClass::Data_Terrain::info(Editor::ObjectInfo& object_info)
 	object_info.addColorValue("Color: ", glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), &data.colors, true);
 	object_info.addSingleValue("Group Layer: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &group_layer2, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 	object_info.addSingleValue("Index: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &object_index, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
+	object_info.addSingleValue("PTR: ", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), &temp, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 }
 
 DataClass::Data_Object* DataClass::Data_Terrain::makeCopy()

@@ -8,6 +8,7 @@
 #include "Terrain/TerrainBase.h"
 #include "Render/Editor/ObjectInfo.h"
 #include "Render/Objects/ChangeController.h"
+#include "Render/Objects/UnsavedLevel.h"
 
 void Object::Object::initializeScript(int script)
 {
@@ -20,6 +21,8 @@ Object::Object::~Object()
 	// Need to Find a "super" Equivalent to Java to Call This
 	// Update: This Super Equivalent Happens Automatically
 	// This Also Messes up Temp Objects
+
+	Render::Objects::ChangeController* cc = change_controller;
 
 	// Delete the Children Array
 	if (children != nullptr && storage_type != STORAGE_TYPES::NULL_TEMP)
@@ -52,6 +55,11 @@ void Object::Object::genTerrainRecursively(int& offset_static, int& offset_dynam
 
 bool Object::Object::select(Editor::Selector& selector, Editor::ObjectInfo& object_info, bool add_children)
 {
+	// TODO: When Selecting, Set Complex Parent Data to Include Correct Position and Object Index
+	// Also, Fix Some of the Code for Parents
+
+	std::cout << "highlighting object: " << object_index << "    " << data_object << " " << this << "\n";
+
 	// Determine the Offset for the Highlighter
 	glm::vec2 highlight_offset = glm::vec2(0.0f, 0.0f);
 	Object* current_parent = parent;
@@ -63,8 +71,8 @@ bool Object::Object::select(Editor::Selector& selector, Editor::ObjectInfo& obje
 
 		// If Parent is Complex, Add Position To Offset
 		else if ((current_parent->data_object->getGroup() != nullptr && current_parent->data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
-			|| (current_parent->group_object != nullptr && current_parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX))
-		{
+			|| (current_parent->group_object != nullptr && current_parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)) 
+		{  
 			// Provide Offset
 			if (current_parent->storage_type == STORAGE_TYPES::NULL_TEMP)
 				highlight_offset += *static_cast<TempObject*>(current_parent)->pointerToSelectedPosition();
@@ -113,6 +121,7 @@ bool Object::Object::select(Editor::Selector& selector, Editor::ObjectInfo& obje
 	}
 
 	// If Object is Complex and is Active, Don't Select
+	/*
 	if (group_object != nullptr && group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX
 		&& static_cast<DataClass::Data_ComplexParent*>(static_cast<Render::Objects::UnsavedComplex*>(group_object)->getComplexParent())->isActive())
 	{
@@ -121,6 +130,7 @@ bool Object::Object::select(Editor::Selector& selector, Editor::ObjectInfo& obje
 		selector.activateHighlighter(highlight_offset, Editor::SelectedHighlight::INVALID_SELECTION);
 		return false;
 	}
+	*/
 
 	// Store Data Object in Selector
 	selector.highlighted_object = data_object;
@@ -148,6 +158,38 @@ void Object::Object::updateSelectedComplexPosition(float deltaX, float deltaY)
 		children[i]->updateSelectedComplexPosition(deltaX, deltaY);
 }
 
+glm::vec2 Object::Object::calculateComplexOffset(bool include_self)
+{
+	// The Calculated Offset
+	glm::vec2 offset = glm::vec2(0.0f, 0.0f);
+
+	// If Should Include Self, And is a Complex Object, Add Position to Offset
+	if (include_self && data_object->getGroup() != nullptr && data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+		offset = data_object->getPosition();
+
+	// If There is No Parent, Return Nothing
+	if (parent == nullptr)
+		return offset;
+
+	// Get Offset of Parent
+	offset += parent->calculateComplexOffset(false);
+
+	// If Parent is a Complex Group Object, Add Position to Offset
+	if (parent->data_object->getGroup() != nullptr && parent->data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX) {
+
+		// If Temp, Add Selected Position of Where the Data Object Currently Is
+		if (parent->storage_type == STORAGE_TYPES::NULL_TEMP)
+			offset += *static_cast<TempObject*>(parent)->pointerToSelectedPosition();
+
+		// Else, Add Selected Position
+		else
+			offset += parent->data_object->getPosition();
+	}
+
+	// Return Offset
+	return offset;
+}
+
 void Object::Object::debug_funct()
 {
 	std::cout << object_index << " i\n";
@@ -158,6 +200,36 @@ void Object::Object::drawGroupVisualizer()
 	// This Function Has Been Changed to be Recursive
 	if (parent == nullptr)
 		data_object->drawGroupVisualizer(glm::vec2(0.0f, 0.0f));
+}
+
+void Object::Object::deactivateDecendants()
+{
+	// Set All Decendants to be Inactive
+	for (int i = 0; i < children_size; i++)
+		children[i]->deactivateDecendants();
+
+	// Set This Object to be Inactive
+	active_ptr->active = false;
+}
+
+bool Object::Object::testSelectedComplexAncestor(bool passed_group)
+{
+	// Note: Current Implementation Returns True if Any Ancestor of First Group is Selected
+	// Needs Further Testing
+
+	// Determine if Complex
+	bool is_complex = passed_group || group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX;
+
+	// Test if Object is Selected
+	if (is_complex && storage_type == STORAGE_TYPES::NULL_TEMP && !static_cast<TempObject*>(this)->isReturned())
+		return true;
+
+	// Test Next Object, If it Exists
+	if (parent != nullptr)
+		return parent->testSelectedComplexAncestor(is_complex);
+
+	// Else, Return False Since No Complex Objects are Selected
+	return false;
 }
 
 Object::TempObject::TempObject(Object* object, glm::vec2* new_position_ptr, bool original_)
@@ -174,6 +246,7 @@ Object::TempObject::TempObject(Object* object, glm::vec2* new_position_ptr, bool
 	group_object = object->group_object;
 	storage_type = NULL_TEMP;
 	selected_position = new_position_ptr;
+	active_ptr = object->active_ptr;
 }
 
 Object::TempObject::~TempObject()
@@ -215,26 +288,65 @@ bool Object::TempObject::isOriginal()
 	return storage_type == NULL_TEMP && original;
 }
 
-void DataClass::Data_Object::updateSelectedPositionsHelper(float deltaX, float deltaY, bool update_real)
+bool Object::TempObject::isReturned()
 {
-	// If Group is Not Null, Perform Position Update on Children
-	if (group_object != nullptr)
-	{
-		for (DataClass::Data_Object* child : group_object->getChildren())
-		{
-			if (child->move_with_parent == Render::MOVE_WITH_PARENT::MOVE_ENABLED)
-				child->updateSelectedPosition(deltaX, deltaY, update_real);
-			else
-				child->move_with_parent = Render::MOVE_WITH_PARENT::MOVE_ENABLED;
+	return returned;
+}
+
+void Object::TempObject::deactivateDecendants()
+{
+	// Set This Object to be Inactive
+	active_ptr->active = false;
+	
+	// If There is No Group Object, Do Nothing Else
+	if (group_object == nullptr)
+		return;
+
+	// For Each Child Data Object, Find the Instance Whose Parent is This Object and Recurse
+	for (DataClass::Data_Object* data_object : group_object->getChildren()) {
+		for (Object* real_object : data_object->getObjects()) {
+			if (real_object->parent == this)
+				real_object->deactivateDecendants();
 		}
 	}
+}
 
-	// Perform Position Update on All Object Pointers
-	if (update_real)
-	{
-		for (std::vector<Object::Object*>::iterator it = object_pointers->begin(); it != object_pointers->end(); it++)
-			(*it)->updateSelectedPosition(deltaX, deltaY);
+glm::vec2 Object::TempObject::calculateComplexOffset(bool include_self)
+{
+	// If Should Include Self, And is a Complex Object, Return Selected Position
+	if (include_self && data_object->getGroup() != nullptr && data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX) {
+		return *selected_position;
 	}
+
+	// If Not Complex, and Has Parent, Test Parent
+	if (parent != nullptr && (data_object->getGroup() == nullptr || data_object->getGroup()->getCollectionType() != Render::Objects::UNSAVED_COLLECTIONS::COMPLEX))
+	{
+		// Get Offset Recursively From Parent
+		glm::vec2 offset = parent->calculateComplexOffset(false);
+
+		// If Parent is a Complex Group Object, Add Position to Offset
+		if (parent->data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX) {
+
+			// If Temp, Add Selected Position of Where the Data Object Currently Is
+			if (parent->storage_type == STORAGE_TYPES::NULL_TEMP)
+				offset += *static_cast<TempObject*>(parent)->pointerToSelectedPosition();
+
+			// Else, Add Selected Position
+			else
+				offset += parent->data_object->getPosition();
+		}
+
+		return offset;
+	}
+
+	// Temp Objects Already Returned Selected Position, Nothing Left to Add
+	return glm::vec2(0.0f, 0.0f);
+}
+
+void Object::TempObject::replaceSelectedPositionPointer(glm::vec2* new_pointer)
+{
+	selected_position = new_pointer;
+	returned = true;
 }
 
 void DataClass::Data_Object::readEditorData(std::ifstream& editor_file)
@@ -319,26 +431,12 @@ void DataClass::Data_Object::addChild(DataClass::Data_Object* data_object)
 	if (group_object == nullptr)
 	{
 		Render::Objects::UnsavedGroup* new_unsaved_group = new Render::Objects::UnsavedGroup(object_identifier[3]);
-		new_unsaved_group->setParent(this, Render::MOVE_WITH_PARENT::MOVE_DISSABLED);
+		new_unsaved_group->setParent(this);
 		group_object = new_unsaved_group;
 	}
 
 	// Store the Object in Group Object
 	group_object->addChild(data_object);
-}
-
-void DataClass::Data_Object::addChildViaSelection(DataClass::Data_Object* data_object, Render::MOVE_WITH_PARENT disable_move)
-{
-	// If Group Has Not Been Initialized, Allocate Memory and Create Group
-	if (group_object == nullptr)
-	{
-		Render::Objects::UnsavedGroup* new_unsaved_group = new Render::Objects::UnsavedGroup(object_identifier[3]);
-		new_unsaved_group->setParent(this, Render::MOVE_WITH_PARENT::MOVE_ENABLED);
-		group_object = new_unsaved_group;
-	}
-
-	// Create a New Append Change
-	group_object->createChangeAppend(data_object, disable_move);
 }
 
 void DataClass::Data_Object::drawGroupVisualizerHelper(glm::vec2& left_offset, glm::vec2& right_offset, glm::vec2& point_offset, glm::vec2 new_offset)
@@ -380,17 +478,19 @@ void DataClass::Data_Object::drawSelectedGroupVisualizer(glm::vec2 new_offset)
 
 void DataClass::Data_Object::drawSelectedGroupVisualizerOffset(glm::vec2 new_offset, glm::vec2 new_offset2)
 {
-	glm::vec2 null_vec = glm::vec2(0.0f, 0.0f);
 	if (group_object != nullptr)
 		drawGroupVisualizerHelper(new_offset2, new_offset, new_offset, new_offset);
 }
 
-void DataClass::Data_Object::drawParentConnection()
+void DataClass::Data_Object::drawParentConnection(glm::vec2& real_complex_offset, glm::vec2& complex_offset)
 {
 	if (parent != nullptr)
 	{
-		Vertices::Visualizer::visualizeLine(parent->getPosition(), getPosition(), 0.5f, returnLineColor(group_layer - 1));
-		Vertices::Visualizer::visualizePoint(getPosition(), 1.0f, returnLineColor(group_layer));
+		if (parent->level_editor_values.original_conditions != 0)
+			Vertices::Visualizer::visualizeLine(*parent->getOriginalObject()->pointerToSelectedPosition() + real_complex_offset, getPosition() + real_complex_offset, 0.5f, returnLineColor(group_layer - 1));
+		else
+			Vertices::Visualizer::visualizeLine(parent->getPosition() + complex_offset, getPosition() + real_complex_offset, 0.5f, returnLineColor(group_layer - 1));
+		Vertices::Visualizer::visualizePoint(getPosition() + real_complex_offset, 1.0f, returnLineColor(group_layer));
 	}
 }
 
@@ -407,21 +507,6 @@ void DataClass::Data_Object::setParent(Data_Object* new_parent)
 DataClass::Data_Object* DataClass::Data_Object::getParent()
 {
 	return parent;
-}
-
-void DataClass::Data_Object::disableMoveWithParent(Render::MOVE_WITH_PARENT mode)
-{
-	move_with_parent = mode;
-}
-
-void DataClass::Data_Object::enableMoveWithParent()
-{
-	move_with_parent = Render::MOVE_WITH_PARENT::MOVE_ENABLED;
-}
-
-Render::MOVE_WITH_PARENT DataClass::Data_Object::getMoveWithParent()
-{
-	return move_with_parent;
 }
 
 void DataClass::Data_Object::setGroupLayer(int8_t new_layer)
@@ -502,11 +587,27 @@ DataClass::Data_Object* DataClass::Data_Object::makeCopySelected(Editor::Selecto
 	// Make Copy
 	Data_Object* selected_copy = makeCopy();
 
+	/*
+
 	// If Object Has a Group, Update Parent for Each Child to the Copy
 	if (group_object != nullptr && group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
 	{
 		// Set Parent for Objects In the Group
-		static_cast<Render::Objects::UnsavedGroup*>(group_object)->setParent(selected_copy, Render::MOVE_WITH_PARENT::MOVE_DISSABLED);
+		static_cast<Render::Objects::UnsavedGroup*>(group_object)->setParent(selected_copy);
+
+		// For Any Group Objects Currently Selected, Also Update Their Parents
+		selector.updateParentofSelected(selected_copy);
+	}
+
+	*/
+
+	/*
+
+	// If Object Has a Group, Update Parent for Each Child to the Copy
+	if (group_object != nullptr && group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
+	{
+		// Set Parent for Objects In the Group
+		static_cast<Render::Objects::UnsavedGroup*>(group_object)->setParent(selected_copy);
 
 		// For Any Group Objects Currently Selected, Also Update Their Parents
 		selector.updateParentofSelected(selected_copy);
@@ -571,6 +672,8 @@ DataClass::Data_Object* DataClass::Data_Object::makeCopySelected(Editor::Selecto
 		root_parent = root_parent->getParent();
 	}
 
+	*/
+
 	// Return Copy
 	return selected_copy;
 }
@@ -616,6 +719,48 @@ DataClass::Data_Object* DataClass::Data_Object::makeCopyUnique()
 		static_cast<Data_UUID*>(static_cast<Data_Entity*>(unique_copy))->generateUUID();
 
 	return unique_copy;
+}
+
+void DataClass::Data_Object::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
+{
+	// Perform Update on Position
+	updateTraveresPositionHelper(deltaX, deltaY);
+
+	// If Group is Not Null, Perform Position Update on Children
+	if (group_object != nullptr)
+	{
+		for (DataClass::Data_Object* child : group_object->getChildren())
+		{
+			child->updateSelectedPosition(deltaX, deltaY, update_real);
+		}
+	}
+
+	// Perform Position Update on All Object Pointers
+	if (update_real)
+	{
+		for (std::vector<Object::Object*>::iterator it = object_pointers->begin(); it != object_pointers->end(); it++)
+			(*it)->updateSelectedPosition(deltaX, deltaY);
+	}
+}
+
+void DataClass::Data_Object::updateTraversePosition(float deltaX, float deltaY)
+{
+	// If Object is Was Also Modified, Do Nothing to Prevent Double Counting
+	// NOTE: Using Pointer Since Last Byte Can be 0
+	if (level_editor_values.original_conditions != nullptr)
+	//if (level_editor_values.change_list_flags.is_being_traversed)
+		return;
+
+	// Perform Position Update
+	updateTraveresPositionHelper(deltaX, deltaY);
+
+	// If Group is Null, and is Or Complex, DO NOT Perform Position Update on Children
+	if (group_object == nullptr || group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+		return;
+	
+	// Move Children
+	for (DataClass::Data_Object* child : group_object->getChildren())
+		child->updateTraversePosition(deltaX, deltaY);
 }
 
 void DataClass::Data_Object::genChildrenRecursive(Object::Object*** object_list, int& list_size, Object::Object* parent, glm::vec2& offset, Editor::Selector* selector, bool test_groups)
@@ -779,10 +924,10 @@ void DataClass::Data_Object::offsetPosition(glm::vec2& offset)
 void DataClass::Data_Object::offsetPositionRecursive(glm::vec2& offset)
 {
 	// Offset Position of Object
-	offsetPosition(offset);
+	//offsetPosition(offset);
 
 	// Check Children Recursively
-	offsetPositionRecursiveHelper(offset);
+	//offsetPositionRecursiveHelper(offset);
 }
 
 void DataClass::Data_Object::offsetPositionRecursiveHelper(glm::vec2& offset)
@@ -819,7 +964,7 @@ glm::vec4& DataClass::Data_Object::returnLineColor(int8_t index)
 	static glm::vec4 visualizer_group = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// If Index is -1 (Group Object), Color Should be White
-	if (index == -1)
+	if (index < 0)
 		return visualizer_group;
 
 	// Else, Return Color From 
@@ -829,6 +974,419 @@ glm::vec4& DataClass::Data_Object::returnLineColor(int8_t index)
 bool DataClass::Data_Object::hasReals()
 {
 	return object_pointers != nullptr;
+}
+
+void DataClass::Data_Object::becomeOrphan(Object::Object* real_object)
+{
+	// If Object Already Has No Parent, Remove From Level
+	if (parent == nullptr) {
+		forceRemoveFromUnsaved(real_object);
+		return;
+	}
+
+	// Create a Change in the Change Controller to Remove Orphan From Current Group
+	parent->group_object->createChangePop(this, real_object);
+
+	// Set Parent to Nothing
+	parent = nullptr;
+}
+
+void DataClass::Data_Object::adoptOrphan(Data_Object* orphan, Object::Object* real_object_orphan, Object::Object* real_object_new_parent, Editor::Selector& selector)
+{
+	// For Testing, Delete Later
+	Render::Objects::UnsavedLevel& test = *change_controller->getUnsavedLevel(0, -1, 0);
+
+	// Test if "Orphan" is Parent. If it is, Make This Object an Orphan and Add it to Level
+	if (parent != nullptr && parent->testMatchingObject(orphan)) {
+
+		// For All Children, Remove Complex Offset
+		if (group_object != nullptr) {
+			glm::vec2 complex_offset = real_object_new_parent->calculateComplexOffset(false);
+			for (Data_Object* object : group_object->getChildren())
+				object->updateSelectedPosition(complex_offset.x, complex_offset.y, false);
+		}
+
+		// Force This Object to Become an Orphan
+		becomeOrphan(real_object_new_parent);
+
+		// Regenerate Real Objects of This Orphaned Object
+		regernerateRealObjects(nullptr, true);
+
+		return;
+	}
+
+	// Test if "Orphan" is a Child of This Object. If so, Make it an Orphan and Add it to Level
+	DataClass::Data_Object* orphan_parent = orphan->getParent();
+	//if (orphan_parent != nullptr && orphan_parent->testMatchingObject(this)) {
+	if (group_object != nullptr && group_object->testObjectExists(orphan)) {
+
+		// Force Child to be an Orphan
+		orphan->becomeOrphan(real_object_orphan);
+
+		// Make Copy of Data Object for Change
+		DataClass::Data_Object* orphan_copy = orphan->makeCopy();
+
+		// Remove Compex Offset of Copied Object
+		glm::vec2 complex_offset = real_object_orphan->calculateComplexOffset(false);
+		orphan_copy->updateSelectedPosition(complex_offset.x, complex_offset.y, false);
+
+		// Revert Position of Original Object to Pre-Selected Position
+		orphan->getPosition() = orphan->level_editor_values.original_conditions->original_position;
+
+		// Add Object to Container
+		orphan_copy->forceAddtoUnsaved(glm::vec2(0.0f, 0.0f));
+
+		// Move Real Objects Into Copied Object
+		orphan_copy->regernerateRealObjects(nullptr, false);
+
+		return;
+	}
+
+	// Make Sure Orphan is Already an Orphan
+	orphan->becomeOrphan(real_object_orphan);
+
+	// Make Copy of Data Object for Change
+	DataClass::Data_Object* orphan_copy = orphan->makeCopy();
+	orphan_copy->object_pointers = orphan->object_pointers;
+
+	// Remove Compex Offset of Copied Object
+	glm::vec2 complex_offset = glm::vec2(0.0f, 0.0f);
+	if (real_object_new_parent != nullptr)
+		//complex_offset = real_object_orphan->calculateComplexOffset() - real_object_new_parent->calculateComplexOffset();
+		complex_offset = real_object_orphan->calculateComplexOffset(false) - real_object_new_parent->calculateComplexOffset(true);
+	else
+		complex_offset = real_object_orphan->calculateComplexOffset(false);
+	orphan_copy->updateSelectedPosition(complex_offset.x, complex_offset.y, false);
+
+	// Make a Group Object if One Does Not Already Exist
+	if (group_object == nullptr) {
+		group_object = new Render::Objects::UnsavedGroup(1);
+		static_cast<Render::Objects::UnsavedGroup*>(group_object)->setParent(this);
+		if (object_pointers != nullptr) {
+			for (Object::Object* object : *object_pointers)
+				object->group_object = group_object;	
+		}
+	}
+
+	// Create a Change in the Change Controller to Add Orphan to Group
+	group_object->createChangeAppend(orphan_copy, glm::vec2(0.0f, 0.0f));
+
+	// Regenerate Orphan and its Decendants as Members of New Parent
+	orphan_copy->regernerateRealObjects(this, false);
+
+	// Set Parent of Copied Object to This
+	orphan_copy->setParent(this);
+
+	// Update Group Layer of Orphan
+	orphan_copy->setGroupLayer(group_layer + 1);
+	if (orphan_copy->getGroup() != nullptr)
+		orphan_copy->getGroup()->recursiveSetGroupLayer(group_layer + 2);
+
+	// Update Children of Real Objects
+	
+	// Apply Any Offsets from Group Objects
+	//orphan_copy->getPosition() -= real_object_new_parent->calculateComplexOffset();
+}
+
+void DataClass::Data_Object::forceAddtoUnsaved(glm::vec2 complex_offset)
+{
+	// Determine Level Coordinates of Object
+	glm::i16vec2 level_coords = glm::i16vec2(0, 0);
+	change_controller->getCurrentContainer()->updateLevelPos(getPosition(), level_coords);
+
+	// Get the Unsaved Level
+	Render::Objects::UnsavedLevel* level = change_controller->getUnsavedLevel(level_coords.x, level_coords.y, 0);
+
+	// Append Object to Unsaved Level
+	level->createChangeAppend(this, glm::vec2(0.0f, 0.0f));
+}
+
+void DataClass::Data_Object::forceRemoveFromUnsaved(Object::Object* real_object)
+{
+	// Determine Level Coordinates of Object
+	glm::i16vec2 level_coords = glm::i16vec2(0, 0);
+	change_controller->getCurrentContainer()->updateLevelPos(getPosition(), level_coords);
+
+	// Get the Unsaved Level
+	Render::Objects::UnsavedLevel* level = change_controller->getUnsavedLevel(level_coords.x, level_coords.y, 0);
+
+	// Append Object to Unsaved Level
+	level->createChangePop(this, real_object);
+}
+
+glm::vec2 DataClass::Data_Object::getGroupOffsets(Object::Object* real_object)
+{
+	// The Total Offset
+	glm::vec2 offset = glm::vec2(0.0f, 0.0f);
+
+	// Iterate Through Each Parent. If Parent Provides an Offset, Add to Total Offset
+	DataClass::Data_Object* current_parent = this;
+	while (current_parent != nullptr)
+	{
+		if (current_parent->group_object != nullptr && current_parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX) {
+
+			// Add Offset of Group Object
+			offset += current_parent->getEditingOffset();
+
+			// Add Possible Offsets of Real Parent, If it Exists
+			if (real_object->parent != nullptr)
+				offset += real_object->parent->data_object->getGroupOffsets(real_object->parent);
+		}
+
+		// Check Next Parents
+		current_parent = current_parent->getParent();
+		real_object = real_object->parent;
+	}
+
+	return offset;
+}
+
+void DataClass::Data_Object::generateInitialConditions(glm::vec2 initial_complex_offset)
+{
+	// If No Initial Conditions Objects Exist, Create One and One for Each Decendant
+	if (level_editor_values.original_conditions == nullptr)
+	{
+		// Generate Object
+		level_editor_values.original_conditions = new OriginalConditions;
+
+		// Store Initial Values
+		level_editor_values.original_conditions->original_position = getPosition() + initial_complex_offset;
+
+		// Generate Initial Conditions for All Decendants
+		if (group_object != nullptr) {
+			std::vector<DataClass::Data_Object*>& children = group_object->getChildren();
+			for (int i = 0; i < children.size(); i++)
+				children.at(i)->generateInitialConditions(initial_complex_offset);
+		}
+
+		return;
+	}
+
+	// If Code Ever Reaches Here, A Parent Object Has Been Previously Selected and This Object is Now Selected
+	// Nothing Should Happen
+}
+
+void DataClass::Data_Object::resetInitialConditions()
+{
+	// Only Delete Initial Conditions if Not Already Nullptr
+	if (level_editor_values.original_conditions == nullptr)
+		return;
+
+	// Delete Original Conditions to Avoid Memory Leak
+	//delete level_editor_values.original_conditions;
+
+	// Set Original Conditions to Nullptr for Next Change
+	level_editor_values.original_conditions = nullptr;
+
+	// Do the Same For All Other Children That Also Have Initial Conditions
+	if (group_object == nullptr)
+		return;
+
+	// Delete Original Conditions of Children
+	std::vector<DataClass::Data_Object*>& children = group_object->getChildren();
+	for (int i = 0; i < group_object->getNumberOfChildren(); i++)
+		children.at(i)->resetInitialConditions();
+}
+
+void DataClass::Data_Object::testChangeAppend()
+{
+	// If Object Has an Append, Create a New Append
+	if (level_editor_values.original_conditions != nullptr && level_editor_values.original_conditions->append_change != nullptr)
+	{
+		// Delete Original Append Instance
+		removeMostRecentAppend();
+
+		// Create New Append Change in Parent's Group
+		parent->group_object->createChangeAppend(this, glm::vec2(0.0f, 0.0f));
+
+		return;
+	}
+
+	// If There are No Children, or Group Object is Complex, Do Nothing
+	if (group_object == nullptr || group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+		return;
+
+	// Else, Test All Other Children
+	for (Data_Object* child : group_object->getChildren())
+		child->testChangeAppend();
+}
+
+glm::vec2 DataClass::Data_Object::getEditingOffset()
+{
+	return getPosition();
+}
+
+glm::vec2 DataClass::Data_Object::calculateOffsetOverride()
+{
+	// The Calculated Offset Override for All Modified Parents
+	glm::vec2 offset_override = glm::vec2(0.0f, 0.0f);
+
+	// If Object has No Parent or Parent is a Complex Object, Return No Offset, Recursion is Finished
+	if (parent == nullptr || parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+		return glm::vec2(0.0f, 0.0f);
+
+	// Calculate the Distance the Parent Changed, If Parent Was Changed
+	if (parent->level_editor_values.original_conditions != nullptr)
+		offset_override = parent->level_editor_values.original_conditions->original_position - parent->getLevelPosition();
+
+	// Return the Offset Override for All Parents
+	return offset_override + parent->calculateOffsetOverride();
+}
+
+void DataClass::Data_Object::regernerateRealObjects(DataClass::Data_Object* new_parent, bool is_selected)
+{
+	// Determine if any Temporary Objects Exist
+	bool objects_are_temporary = false;
+	if (object_pointers->size() > 0)
+		objects_are_temporary = object_pointers->at(0)->storage_type == Object::STORAGE_TYPES::NULL_TEMP;
+
+	// Calculate the Number of Data Objects that are Decendants, Plus This Object
+	int16_t data_object_count = countDecendantsRecursively();
+	if (!is_selected)
+		data_object_count++;
+
+	// Calculate the Old Number of Objects to Remove from Container
+	int32_t old_real_count = object_pointers->size() * data_object_count;
+
+	// Calculate the New Number of Objects to Add in Container
+	int32_t new_real_count = data_object_count;
+	if (new_parent != nullptr && new_parent->object_pointers != nullptr)
+		new_real_count *= new_parent->object_pointers->size();
+
+	// Calculate the Change in Objects in Container
+	int32_t delta_objects = new_real_count - old_real_count;
+
+	// Set Old Real Objects to be Innactive
+	for (Object::Object* object : *object_pointers)
+		object->deactivateDecendants();
+
+	// Remove Actives From Container and Reallocate Memory to Fit New Real Objects
+	uint16_t initial_index = change_controller->getCurrentContainer()->reallocateObjectsArray(delta_objects);
+
+	// If This Object is Selected, Increment the Delta Size by 1 to Make Room for Temp Object in Active Array
+	// Without This, There Will be an Index Out of Bounds Error (Bad)
+	if (is_selected)
+		data_object_count++;
+
+	// Generate New Objects Into Container
+	if (new_parent == nullptr)
+		change_controller->getCurrentContainer()->genObjectIntoContainer(this, nullptr, initial_index, data_object_count);
+	else if (new_parent->object_pointers != nullptr) {
+		for (Object::Object* real_parent : *new_parent->object_pointers)
+			change_controller->getCurrentContainer()->genObjectIntoContainer(this, real_parent, initial_index, data_object_count);
+	}
+
+	// Apply Changes
+	change_controller->getCurrentContainer()->loadObjects();
+}
+
+int16_t DataClass::Data_Object::countDecendantsRecursively()
+{
+	// If Group Object is Nullptr, Return Nothing since This Object is a Dead End
+	if (group_object == nullptr)
+		return 0;
+
+	// The Number of Decendants of This Object
+	int16_t decendant_count = 0;
+
+	// Count the Number of Decendants
+	for (DataClass::Data_Object* child : group_object->getChildren())
+		decendant_count += child->countDecendantsRecursively();
+
+	// Return Number of Decendants Plus The Number of Children of This Object
+	return decendant_count + group_object->getChildren().size();
+}
+
+glm::vec2 DataClass::Data_Object::getLevelPosition()
+{
+	return getPosition();
+}
+
+DataClass::LevelEditorValues& DataClass::Data_Object::getLevelEditorFlags()
+{
+	return level_editor_values;
+}
+
+Object::TempObject* DataClass::Data_Object::getOriginalObject()
+{
+	// If Object is New, Return Nullptr
+	if (object_pointers == nullptr)
+		return nullptr;
+
+	for (Object::Object* object : *object_pointers) {
+		
+		// Prevent Real Objects From Being Selected
+		if (object->storage_type != Object::NULL_TEMP)
+			continue;
+
+		// Convert to Temp Object
+		Object::TempObject* temp_object = static_cast<Object::TempObject*>(object);
+
+		// If This Object is the Original, Return it
+		if (temp_object->isOriginal())
+			return temp_object;
+	}
+}
+
+bool DataClass::Data_Object::testMatchingObject(DataClass::Data_Object* test_object)
+{
+	// Prevent This Object From Being Nullptr
+	if (this == nullptr)
+		return false;
+
+	return this == test_object;
+}
+
+void DataClass::Data_Object::removeMostRecentAppend()
+{
+	// If No Append Exists, Do Nothing
+	if (level_editor_values.original_conditions->append_change == nullptr)
+		return;
+
+	// Delete Append from Vector
+	std::vector<Render::Objects::UnsavedBase::Change*>& changes = *static_cast<std::vector<Render::Objects::UnsavedBase::Change*>*>(level_editor_values.original_conditions->append_change_vector);
+	for (int i = 0; i < changes.size(); i++)
+	{
+		if (level_editor_values.original_conditions->append_change == changes.at(i)) {
+			changes.erase(changes.begin() + i);
+			break;
+		}
+	}
+
+	// Remove DataObject From Instance With Changes
+	static_cast<Render::Objects::UnsavedBase*>(level_editor_values.original_conditions->append_unsaved_object)->yeetObjectFromInstance(this);
+
+	// Set Append Change to Nullptr, In Case This Function is Called Again
+	level_editor_values.original_conditions->append_change = nullptr;
+}
+
+bool DataClass::Data_Object::testSelectedComplexAncestor()
+{
+	return level_editor_values.original_conditions->original_object->testSelectedComplexAncestor(false);
+}
+
+void DataClass::Data_Object::replaceSelectedPosition(glm::vec2* new_ptr)
+{
+	// Store Current Value for New Pointer
+	*new_ptr = getPosition();
+
+	// For Every Temp Object, Replace Selected Position Pointer
+	for (Object::Object* object : *object_pointers) {
+		static_cast<Object::TempObject*>(object)->replaceSelectedPositionPointer(new_ptr);
+	}
+}
+
+void DataClass::Data_SubObject::updateTraveresPositionHelper(float deltaX, float deltaY)
+{
+	// Update Primary Position of Object
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+
+	// Update Extra Shape Positions If Triangle
+	if ((object_identifier[0] == Object::TERRAIN ||
+		(object_identifier[0] == Object::PHYSICS && object_identifier[1] == (uint8_t)Object::Physics::PHYSICS_BASES::RIGID_BODY))
+		&& object_identifier[2] == Shape::SHAPES::TRIANGLE)
+		static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(this)->getShape())->updateSelectedPosition(deltaX, deltaY);
 }
 
 Object::ObjectData& DataClass::Data_SubObject::getObjectData()
@@ -844,20 +1402,6 @@ int& DataClass::Data_SubObject::getScript()
 glm::vec2& DataClass::Data_SubObject::getPosition()
 {
 	return data.position;
-}
-
-void DataClass::Data_SubObject::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
-{
-	data.position.x += deltaX;
-	data.position.y += deltaY;
-
-	// Update Shape Position If Triangle
-	if ((object_identifier[0] == Object::TERRAIN ||
-		(object_identifier[0] == Object::PHYSICS && object_identifier[1] == (uint8_t)Object::Physics::PHYSICS_BASES::RIGID_BODY))
-		&& object_identifier[2] == Shape::SHAPES::TRIANGLE)
-		static_cast<Shape::Triangle*>(static_cast<DataClass::Data_Shape*>(this)->getShape())->updateSelectedPosition(deltaX, deltaY);
-
-	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }
 
 Shape::Shape* DataClass::Data_Shape::getShape()

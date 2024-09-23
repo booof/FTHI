@@ -3980,7 +3980,7 @@ void Editor::EditorWindow::generateNewObject()
 	float new_size = 10.0f;
 
 	// New Data Object
-	DataClass::Data_Object* new_data_object;
+	DataClass::Data_Object* new_data_object = nullptr;
 
 	// Parse Object Identifier
 	switch (new_object_identifier[0])
@@ -4362,6 +4362,10 @@ void Editor::EditorWindow::generateNewObject()
 	}
 
 	}
+
+	// Generate Initial Conditions of New Data Object (Conditional is to Make the Compiler Happy)
+	if (new_data_object != nullptr)
+		new_data_object->generateInitialConditions(glm::vec2(0.0f, 0.0f));
 
 	// Store New Data Object
 	unadded_data_objects.push_back(new_data_object);

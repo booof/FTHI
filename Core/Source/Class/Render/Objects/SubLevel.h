@@ -67,10 +67,7 @@ namespace Render::Objects
 		SubLevel(std::string& gui_path);
 
 		// Read Level
-		void readLevel(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities);
-
-		// Read GUI
-		void readGUI(Object::Object** objects);
+		void readLevel(uint16_t& index_in_object_array);
 
 		// Pointer to Unsaved Level
 		UnsavedLevel* unsaved_level;
@@ -120,6 +117,9 @@ namespace Render::Objects
 
 		// Delete Level
 		void deleteSubLevel();
+
+		// Reload Actives Pointer
+		void reloadActivePointer();
 	};
 }
 

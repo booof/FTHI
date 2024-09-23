@@ -134,6 +134,14 @@ void DataClass::Data_Wire::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&wire, sizeof(Object::Physics::Soft::WireData));
 }
 
+void DataClass::Data_Wire::updateTraveresPositionHelper(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+	wire.position2.x += deltaX;
+	wire.position2.y += deltaY;
+}
+
 DataClass::Data_Wire::Data_Wire(uint8_t children_size)
 {
 	// Set Object Identifier
@@ -156,15 +164,6 @@ void DataClass::Data_Wire::info(Editor::ObjectInfo& object_info)
 DataClass::Data_Object* DataClass::Data_Wire::makeCopy()
 {
 	return new Data_Wire(*this);
-}
-
-void DataClass::Data_Wire::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
-{
-	data.position.x += deltaX;
-	data.position.y += deltaY;
-	wire.position2.x += deltaX;
-	wire.position2.y += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }
 
 void DataClass::Data_Wire::generateInitialValues(glm::vec2& position, float& size)

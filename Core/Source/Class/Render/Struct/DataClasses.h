@@ -67,6 +67,45 @@ namespace DataClass
 		bool lock = false;
 	};
 
+	// Original Conditions of an Object
+	struct OriginalConditions
+	{
+		// Original Position of Object, in Real Coordinates
+		glm::vec2 original_position = glm::vec2(0.0f, 0.0f);
+
+		// The Pointer to the "Pop" Change for This Object, If it Exists
+		void* pop_change = nullptr;
+
+		// The Pointer to the Most Recent "Append" Change for This Object
+		void* append_change = nullptr;
+
+		// The Pointer to the Vector That Contains the Most Recent "Append" Change
+		void* append_change_vector = nullptr;
+
+		// The Pointer to the Unsaved Object of the Appended Data Object
+		void* append_unsaved_object = nullptr;
+
+		// The Original Temp Object Pointer
+		Object::Object* original_object = nullptr;
+	};
+
+	// List of Flags for Traversal in Change List
+	// Must be the Size of a Pointer for Union
+	struct ChangeListFlags
+	{
+		// Determines if Object is Being Traversed
+		bool is_being_traversed = false;
+
+		// Extra Padding
+		uint8_t padding[7];
+	};
+
+	// Using a Union Because These Variables are Mutually Exclusive in Use
+	union LevelEditorValues {
+		OriginalConditions* original_conditions = nullptr; // Original Conditions For When An Object is Being Modified by Editor
+		ChangeListFlags     change_list_flags;             // Flags That will be Used when Redoing/Undoing
+	};
+
 	class Data_Object
 	{
 
@@ -90,9 +129,6 @@ namespace DataClass
 		// The Pointer to the Current Parent DataClass
 		Data_Object* parent = nullptr;
 
-		// Determines if the Object Should Move With Its Parent
-		Render::MOVE_WITH_PARENT move_with_parent = Render::MOVE_WITH_PARENT::MOVE_ENABLED;
-
 		// The Layer the Object is in In a Group
 		int8_t group_layer = 0;
 		
@@ -103,8 +139,10 @@ namespace DataClass
 		// This Array is Unique to Each Object Index
 		std::vector<Object::Object*>* object_pointers = nullptr;
 
-		// Helper Function to Update Selected Positions
-		void updateSelectedPositionsHelper(float deltaX, float deltaY, bool update_real);
+		LevelEditorValues level_editor_values = { 0 };
+
+		// Helper Function to Update Traversal Positions
+		virtual void updateTraveresPositionHelper(float deltaX, float deltaY) = 0;
 
 		// Read Editor Data in Generated Object
 		void readEditorData(std::ifstream& editor_file);
@@ -144,9 +182,6 @@ namespace DataClass
 		// Function to Add a Child to a Data Object
 		void addChild(DataClass::Data_Object* data_object);
 
-		// Function to Add a Child to a Data Object Via Selection
-		void addChildViaSelection(DataClass::Data_Object* data_object, Render::MOVE_WITH_PARENT disable_move);
-
 		// Function to Draw Group Visualizer Points and Lines With the Given Offsets
 		void drawGroupVisualizerHelper(glm::vec2& left_offset, glm::vec2& right_offset, glm::vec2& point_offset, glm::vec2 new_offset);
 
@@ -160,7 +195,7 @@ namespace DataClass
 		void drawSelectedGroupVisualizerOffset(glm::vec2 new_offset, glm::vec2 new_offset2);
 
 		// Function to Draw Group Visualizer With Parent
-		void drawParentConnection();
+		void drawParentConnection(glm::vec2& real_complex_offset, glm::vec2& complex_offset);
 
 		// Returns the Group Object
 		Render::Objects::UnsavedCollection* getGroup();
@@ -170,15 +205,6 @@ namespace DataClass
 
 		// Get the Parent Object
 		Data_Object* getParent();
-
-		// Disable the Move With Parent Feature
-		void disableMoveWithParent(Render::MOVE_WITH_PARENT mode);
-
-		// Re-Enable the Move With Parent Feature
-		void enableMoveWithParent();
-
-		// Get the Move With Parent Flag
-		Render::MOVE_WITH_PARENT getMoveWithParent();
 
 		// Set the Layer the Object is in a Group
 		virtual void setGroupLayer(int8_t new_layer);
@@ -228,8 +254,11 @@ namespace DataClass
 		// Make a Unique Copy of the Object  
 		Data_Object* makeCopyUnique();
 
-		// Update the Selected Position of an Object
-		virtual void updateSelectedPosition(float deltaX, float deltaY, bool update_real) = 0;
+		// Function to Update Positions of Children of Selected Objects
+		virtual void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+
+		// Update the Position of an Object During a Redo/Undo of a Parent
+		void updateTraversePosition(float deltaX, float deltaY);
 
 		// Generate Children Recursively
 		void genChildrenRecursive(Object::Object*** object_list, int& list_size, Object::Object* parent, glm::vec2& offset, Editor::Selector* selector, bool test_groups);
@@ -269,6 +298,64 @@ namespace DataClass
 
 		// Returns True if the Object Has Real Objects
 		bool hasReals();
+
+		// Become an Orphan Object With No Parent
+		void becomeOrphan(Object::Object* real_object);
+
+		// Become Parent of an Orphan Object
+		void adoptOrphan(DataClass::Data_Object* orphan, Object::Object* real_object_orphan, Object::Object* real_object_new_parent, Editor::Selector& selector);
+
+		// Force Object to be Added Into Unsaved Level
+		void forceAddtoUnsaved(glm::vec2 complex_offset);
+
+		// Force Object to be Removed From Unsaved Level
+		void forceRemoveFromUnsaved(Object::Object* real_object);
+
+		// Return the Total Offsets Created from Parent Group Objects
+		glm::vec2 getGroupOffsets(Object::Object* real_object);
+
+		// Generate the Initial Conditions When Editing of Object Begins
+		void generateInitialConditions(glm::vec2 initial_complex_offset);
+
+		// Reset Original Conditions When Changes are Finalized
+		void resetInitialConditions();
+
+		// Recursively Test if an Append Should be Re-evaluated
+		void testChangeAppend();
+
+		// Get the Editing Offset of the Object
+		glm::vec2 getEditingOffset();
+
+		// Get the Calculated Offset Override
+		glm::vec2 calculateOffsetOverride();
+
+		// Reload Real Objects and Decendants in Current Container
+		void regernerateRealObjects(DataClass::Data_Object* new_parent, bool is_selected);
+
+		// Count the Number of Data Objects That are Decendants
+		int16_t countDecendantsRecursively();
+
+		// Calculate the Position of the Object as it Would Appear in Level, Based on the Selected Real Object
+		glm::vec2 getLevelPosition();
+
+		// Get the Level Editor Flags
+		LevelEditorValues& getLevelEditorFlags();
+
+		// Get the Original Temp Object That Was Selected
+		Object::TempObject* getOriginalObject();
+
+		// Test if This Object Matches the Given Object
+		virtual bool testMatchingObject(DataClass::Data_Object* test_object);
+
+		// Remove an Object From Most Recent Append Change
+		void removeMostRecentAppend();
+
+		// Returns True if a Selected Complex Ancestor Exists
+		bool testSelectedComplexAncestor();
+
+		// Replace the Selected Position Pointer of Temp Objects With a New Pointer
+		void replaceSelectedPosition(glm::vec2* new_ptr);
+
 	};
 
 	// Sub Object Data Class
@@ -280,6 +367,9 @@ namespace DataClass
 		// Object Data
 		Object::ObjectData data;
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		Object::ObjectData& getObjectData();
@@ -287,9 +377,6 @@ namespace DataClass
 		int& getScript();
 
 		glm::vec2& getPosition();
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 	};
 
 	// A Helper Class Specifically for Complex Object to Hold Files
@@ -320,6 +407,9 @@ namespace DataClass
 	protected:
 
 		Object::Mask::HorizontalLineData data;
+
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
 		
 	public:
 
@@ -330,9 +420,6 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, float& size);
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
@@ -345,6 +432,9 @@ namespace DataClass
 
 		Object::Mask::SlantData data;
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		Object::Mask::SlantData& getSlantData();
@@ -354,9 +444,6 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, float& size);
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		// Offset the Position of the Object
 		void offsetPosition(glm::vec2& offset);
@@ -375,6 +462,9 @@ namespace DataClass
 
 		Object::Mask::SlopeData data;
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		Object::Mask::SlopeData& getSlopeData();
@@ -384,9 +474,6 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, float& size);
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
@@ -557,6 +644,9 @@ namespace DataClass
 
 		Object::Mask::VerticalLineData data;
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		Object::Mask::VerticalLineData& getVerticalLineData();
@@ -566,9 +656,6 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, float& size);
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
@@ -581,6 +668,9 @@ namespace DataClass
 
 		Object::Mask::CurveData data;
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		Object::Mask::CurveData& getCurveData();
@@ -590,9 +680,6 @@ namespace DataClass
 		glm::vec2& getPosition();
 
 		void generateInitialValues(glm::vec2& position, float& size);
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
 	};
@@ -707,6 +794,9 @@ namespace DataClass
 		// Function to Read Data From File
 		void readObjectData(std::ifstream& object_file);
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		// Trigger Mask Data
@@ -717,9 +807,6 @@ namespace DataClass
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		Object::Mask::Trigger::TriggerData& getTriggerData();
 
@@ -829,6 +916,9 @@ namespace DataClass
 		// Function to Read Data From File
 		void readObjectData(std::ifstream& object_file);
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		// Directional Light Data
@@ -839,9 +929,6 @@ namespace DataClass
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		Object::Light::Directional::DirectionalData& getDirectionalData();
 
@@ -871,6 +958,9 @@ namespace DataClass
 		// Function to Read Data From File
 		void readObjectData(std::ifstream& object_file);
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		// Point Light Data
@@ -881,9 +971,6 @@ namespace DataClass
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		Object::Light::Point::PointData& getPointData();
 
@@ -907,6 +994,9 @@ namespace DataClass
 		// Function to Read Data From File
 		void readObjectData(std::ifstream& object_file);
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		// Spot Light Data
@@ -917,9 +1007,6 @@ namespace DataClass
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		Object::Light::Spot::SpotData& getSpotData();
 
@@ -943,6 +1030,9 @@ namespace DataClass
 		// Function to Read Data From File
 		void readObjectData(std::ifstream& object_file);
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		// Beam Light Data
@@ -953,9 +1043,6 @@ namespace DataClass
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		Object::Light::Beam::BeamData& getBeamData();
 
@@ -1074,8 +1161,8 @@ namespace DataClass
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
 
 	public:
 
@@ -1127,8 +1214,8 @@ namespace DataClass
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
 
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
 
 	public:
 
@@ -1171,6 +1258,9 @@ namespace DataClass
 		// Function to Read Data From File
 		void readObjectData(std::ifstream& object_file);
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		// Wire Data
@@ -1181,9 +1271,6 @@ namespace DataClass
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		void generateInitialValues(glm::vec2& position, float& size);
 
@@ -1207,6 +1294,9 @@ namespace DataClass
 		// Function to Read Data From File
 		void readObjectData(std::ifstream& object_file);
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		// Anchor Data
@@ -1217,9 +1307,6 @@ namespace DataClass
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		int& getScript();
 
@@ -1250,6 +1337,9 @@ namespace DataClass
 		// Function to Read Data From File
 		void readObjectData(std::ifstream& object_file);
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		// Hinge Data
@@ -1260,9 +1350,6 @@ namespace DataClass
 
 		// Create a Copy of the Object
 		Data_Object* makeCopy();
-
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
 		int& getScript();
 
@@ -1424,6 +1511,9 @@ namespace DataClass
 		// Update the Selected Position of an Object
 		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
 
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
+
 	public:
 
 		// Group Object Data
@@ -1454,18 +1544,8 @@ namespace DataClass
 	// Will Be Created and Used Only While Editing, Will be Deleted After
 	class Data_ComplexParent : public Data_Object
 	{
-		// A Null Value
-		static int null_value;
-
-		// Determines if the Object is Active
-		bool active = false;
-
-		// Position Offset for Object
-		glm::vec2 position_offset = glm::vec2(0.0f, 0.0f);
-
-		// Root Parent of Object
-		// Will be Set When Activated
-		Object::Object* root_parent = nullptr;
+		// Pointers to All Group Objects This Object Represents
+		std::vector<DataClass::Data_Object*> group_objects;
 
 		// Function to Read Data and Create an Object
 		Object::Object* genObject(glm::vec2& offset);
@@ -1482,8 +1562,8 @@ namespace DataClass
 		// Get the Position of an Object
 		glm::vec2& getPosition();
 
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
 
 		// Set the Object Info of the Object
 		void info(Editor::ObjectInfo& object_info);
@@ -1498,6 +1578,8 @@ namespace DataClass
 
 		// Initialize Object
 		void setGroup(Render::Objects::UnsavedComplex* complex_group);
+
+		/*
 
 		// Set the Position Offset of Object
 		void setPositionOffset(glm::vec2 new_offset);
@@ -1519,11 +1601,24 @@ namespace DataClass
 
 		// Disables the Object
 		void setInactive();
+		*/
 
 		// Set the Layer the Object is in a Group
 		void setGroupLayer(int8_t new_layer);
 
 		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);
+
+		// Override Test if This Object Matches the Given Object to Test for All Complex Instances
+		bool testMatchingObject(DataClass::Data_Object* test_object);
+
+		// Add a Group Object Into the Group Object Array
+		void addGroupObject(DataClass::Data_Object* object);
+
+		// Remove a Group Object From the Group Objec Array
+		void removeGroupObject(DataClass::Data_Object* object);
+
+		// Get the Group Objects of This Object
+		std::vector<DataClass::Data_Object*>& getDataGroups();
 	};
 
 	// The Base DataClass for an Element in a GUI
@@ -1543,8 +1638,8 @@ namespace DataClass
 
 		glm::vec2& getPosition();
 
-		// Update the Selected Position of an Object
-		void updateSelectedPosition(float deltaX, float deltaY, bool update_real);
+		// Helper Function to Update Traversal Positions
+		void updateTraveresPositionHelper(float deltaX, float deltaY);
 
 		// Store the Element Position Pointer
 		void setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3);

@@ -26,13 +26,16 @@ void Render::Objects::ChangeController::addToUnsaved(DataClass::Data_Object* dat
 	// Set Parent in Object's Data Group
 	UnsavedCollection* data_group = data_object->getGroup();
 	if (data_group != nullptr && data_group->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
-		static_cast<Render::Objects::UnsavedGroup*>(data_group)->setParent(data_object, MOVE_WITH_PARENT::MOVE_DISSABLED);
+		static_cast<Render::Objects::UnsavedGroup*>(data_group)->setParent(data_object);
 
 	// Object Has a Parent
 	DataClass::Data_Object* parent = data_object->getParent();
 	if (parent != nullptr)
 	{
 		// If Complex, Create Offset
+		glm::vec2 offset_test = glm::vec2(0.0f, 0.0f);
+
+		std::cout << "initial pos: " << data_object->getPosition().x << " " << data_object->getPosition().y << "   " <<  data_object->getObjectIndex() << "\n";
 
 		// Get the Root Parent of Objects
 		DataClass::Data_Object* root_parent = parent;
@@ -40,22 +43,32 @@ void Render::Objects::ChangeController::addToUnsaved(DataClass::Data_Object* dat
 			root_parent = root_parent->getParent();
 
 		// If Parent Group is a Complex Group, Deactivate Root
-		if (root_parent->getGroup()->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
+		if (root_parent->getGroup()->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX && false)
 		{
 			// First, Offset Object
-			glm::vec2 offset = -static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
-			data_object->offsetPosition(offset);
+			//glm::vec2 offset = -static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+			//offset_test += offset;
+			//data_object->offsetPosition(offset);
 			//data_object->getPosition() -= static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
 
 			// Deactivate Object
-			static_cast<DataClass::Data_ComplexParent*>(root_parent)->setInactive();
+			//static_cast<DataClass::Data_ComplexParent*>(root_parent)->setInactive();
 		}
 
+		// Apply Complex Offset to Object
+		Object::Object* original_parent = data_object->getOriginalObject()->parent;
+		//data_object->getPosition() -= original_parent->calculateComplexOffsetWithoutTemp(true);
+		data_object->getPosition() -= original_parent->calculateComplexOffset(true);
+		
+		//data_object->getPosition() -= data_object->getOriginalObject()->calculateComplexOffset(false);
+
 		// Create a Change in the Group Object to Add the Object
-		parent->getGroup()->createChangeAppend(data_object, MOVE_WITH_PARENT::MOVE_DISSABLED);
+		parent->getGroup()->createChangeAppend(data_object, -offset_test);
 
 		// Disable Move With Parent in the Event A Parent Was Also Changed
 		parent->getGroup()->disableMoveWithParent(data_object);
+
+		std::cout << "final pos: " << data_object->getPosition().x << " " << data_object->getPosition().y << "   " << data_object->getObjectIndex() << "\n";
 	}
 
 	// Object is in the Level
@@ -75,7 +88,85 @@ void Render::Objects::ChangeController::addToUnsaved(DataClass::Data_Object* dat
 
 		// Get Unsaved Level of Where Object is Now
 		UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
-		temp_unsaved_level->createChangeAppend(data_object, MOVE_WITH_PARENT::MOVE_ENABLED);
+		temp_unsaved_level->createChangeAppend(data_object, glm::vec2(0.0f, 0.0f));
+	}
+}
+
+void Render::Objects::ChangeController::modifySelectedPositions(DataClass::Data_Object* deselected_object, Editor::Selector* selector)
+{
+	// The Number of New Objects to List
+	uint16_t modify_count = 0;
+
+	// If Object is Given, Count Only the Temp Objects of Given Object
+	if (deselected_object != nullptr)
+		modify_count = deselected_object->getObjects().size();
+
+	// If No Object is Given, Count Temp Objects for All Selected Objects
+	else {
+		for (DataClass::Data_Object* data_object : selector->data_objects) {
+			if (data_object->getOriginalObject() != nullptr)
+				modify_count += data_object->getObjects().size();
+		}
+	}
+
+	// List Already Exists
+	if (modified_selected_position_count)
+	{
+		// Generate a New List to Accomidate New Data
+		ModifiedSelectedPos* new_list = new ModifiedSelectedPos[modify_count + modified_selected_position_count];
+
+		// Transfer Data From Old List to New List
+		memcpy(new_list, modified_selected_positions, modified_selected_position_count * sizeof(ModifiedSelectedPos));
+
+		// Add New Temp Objects Into List
+		addTempsToSelectedPositionList(new_list, deselected_object, selector, modified_selected_position_count);
+
+		// Delete the Old List and Replace it
+		delete[] modified_selected_positions;
+		modified_selected_positions = new_list;
+	}
+
+	// List Does Not Exist
+	else
+	{
+		// Generate the List with Size of New Objects
+		modified_selected_positions = new ModifiedSelectedPos[modify_count];
+
+		// Add Temp Objects Into List
+		addTempsToSelectedPositionList(modified_selected_positions, deselected_object, selector, 0);
+	}
+
+	// Update the Number of Elements in the List
+	modified_selected_position_count += modify_count;
+
+	// Update the Pointers for All Temp Objects
+	for (int i = 0; i < modified_selected_position_count; i++)
+		modified_selected_positions[i].temp_object->replaceSelectedPositionPointer(&modified_selected_positions[i].new_selected_position);
+}
+
+void Render::Objects::ChangeController::addTempsToSelectedPositionList(ModifiedSelectedPos* list, DataClass::Data_Object* deselected_object, Editor::Selector* selector, uint16_t offset)
+{
+	// If Object is Given, Add Only the Temp Objects of Given Object
+	if (deselected_object != nullptr)
+		addTempToSelectedPositionList(list, deselected_object, offset);
+
+	// If No Object is Given, Add Temp Objects for All Selected Objects
+	else {
+		for (DataClass::Data_Object* object : selector->data_objects)
+			addTempToSelectedPositionList(list, object, offset);
+	}
+}
+
+void Render::Objects::ChangeController::addTempToSelectedPositionList(ModifiedSelectedPos* list, DataClass::Data_Object* object, uint16_t& offset)
+{
+	// If Object is a New Object, Don't Do Anything
+	if (object->getOriginalObject() == nullptr)
+		return;
+
+	for (Object::Object* temp_object : object->getObjects()) {
+		list[offset].temp_object = static_cast<Object::TempObject*>(temp_object);
+		list[offset].new_selected_position = object->getPosition();
+		offset++;
 	}
 }
 
@@ -224,8 +315,6 @@ void Render::Objects::ChangeController::transferObject(DataClass::Data_Object* d
 
 void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* selector)
 {
-	// Note: For Now, This Operation will Result in a Finalization of Changes. Will Change Later
-
 	// If This Return Occoured Further Back in the Undo Chain, Remove all Future Undos from the Stack
 	master_stack->deleteFromIndexToHead();
 
@@ -238,9 +327,31 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 	// Store Camera Position in Current Instance
 	current_instance->camera_pos = glm::vec2(container->camera->Position.x, container->camera->Position.y);
 
+	// Generate a List for the Original Selected Positions of All Objects
+	modifySelectedPositions(nullptr, selector);
+	//uint16_t data_object_count = selector->data_objects.size();
+	//glm::vec2* new_selected_positions = new glm::vec2[data_object_count];
+	//for (int i = 0; i < data_object_count; i++) {
+	//	selector->data_objects[i]->replaceSelectedPosition(new_selected_positions + i);
+	//}
+
 	// Add All Data Objects
 	for (DataClass::Data_Object* data_object : selector->data_objects)
 		addToUnsaved(data_object);
+
+	// Reload Parent Objects as Needed
+	// Note: This Addition is to Fix Incorrect Rendering of Visualizers From Child to Parent During Selection
+	// If Anything Else Breaks, Try Commenting Out This Loop and Check if Problem Persists
+	// This Problem Only Affects Groups, Not Complex Objects
+	for (int i = 0; i < modified_selected_position_count; i++) {
+		Render::Objects::UnsavedCollection* test_group = modified_selected_positions[i].temp_object->data_object->getGroup();
+		if (test_group != nullptr && test_group->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
+			static_cast<Render::Objects::UnsavedGroup*>(test_group)->updateParentofChildren();
+	}
+
+	// Delete the Modified Selected Positions
+	delete[] modified_selected_positions;
+	modified_selected_position_count = 0;
 
 	// Finalize Changes in Unsaved Levels
 	for (int i = 0; i < unsaved_levels.size(); i++)
@@ -270,8 +381,8 @@ void Render::Objects::ChangeController::handleSelectorReturn(Editor::Selector* s
 	container->clearTemps();
 
 	// Perform a Parent Reload on All Complex Objects
-	for (UnsavedComplex* group : unsaved_complex)
-		static_cast<DataClass::Data_ComplexParent*>(group->getComplexParent())->setInactive();
+	//for (UnsavedComplex* group : unsaved_complex)
+	//	static_cast<DataClass::Data_ComplexParent*>(group->getComplexParent())->setInactive();
 
 	// Reload Objects
 	container->reloadAll();
@@ -294,7 +405,8 @@ void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Da
 		if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
 		{
 			// Remove Offset From Objects and Children
-			glm::vec2 offset = static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+			//glm::vec2 offset = static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+			glm::vec2 offset;
 			glm::vec2* offset_ptr = static_cast<Render::Objects::UnsavedComplex*>(root_parent->getGroup())->getSelectedPosition();
 			if (offset_ptr != nullptr)
 				offset = *offset_ptr;
@@ -312,7 +424,7 @@ void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Da
 
 	// Get Unsaved Level of Where Object is Now
 	UnsavedLevel* temp_unsaved_level = getUnsavedLevel((int)object_level_position.x, (int)object_level_position.y, 0);
-	temp_unsaved_level->createChangeAppend(data_object, MOVE_WITH_PARENT::MOVE_DISSABLED);
+	temp_unsaved_level->createChangeAppend(data_object, glm::vec2(0.0f, 0.0f));
 
 	// If Should Not Keep Parent, Remove Parent and Reset Group Object
 	if (!keep_parent)
@@ -325,7 +437,7 @@ void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Da
 		UnsavedCollection* data_group = data_object->getGroup();
 		if (data_group != nullptr && data_group->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP)
 		{
-			static_cast<Render::Objects::UnsavedGroup*>(data_group)->setParent(data_object, MOVE_WITH_PARENT::MOVE_DISSABLED);
+			static_cast<Render::Objects::UnsavedGroup*>(data_group)->setParent(data_object);
 			data_group->recursiveSetGroupLayer(data_object->getGroupLayer() + 1);
 		}
 	}
@@ -356,6 +468,9 @@ void Render::Objects::ChangeController::handleSingleSelectorReturn(DataClass::Da
 
 void Render::Objects::ChangeController::handleSelectorRealReturn(DataClass::Data_Object* data_object, Editor::Selector* selector)
 {
+	// Store the Current Selected Position Before it is Overwritten
+	modifySelectedPositions(data_object, selector);
+
 	// Get the Root Parent of Objects
 	DataClass::Data_Object* root_parent = data_object;
 	glm::vec2 offset = glm::vec2(0.0f, 0.0f);
@@ -368,7 +483,8 @@ void Render::Objects::ChangeController::handleSelectorRealReturn(DataClass::Data
 		if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
 		{
 			// Remove Offset From Objects and Children
-			offset = static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+			//offset = static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+			glm::vec2 offset = glm::vec2(0.0f, 0.0f);
 			glm::vec2* offset_ptr = static_cast<Render::Objects::UnsavedComplex*>(root_parent->getGroup())->getSelectedPosition();
 			if (offset_ptr != nullptr)
 				offset = *offset_ptr;
@@ -386,7 +502,20 @@ void Render::Objects::ChangeController::handleSelectorRealReturn(DataClass::Data
 	if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
 	{
 		// Determine the Number of Instances to Create
-		int instance_size = data_object->getParent()->getObjects().size();
+		int instance_size = 0;
+		if (data_object->getParent()->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX) {
+			DataClass::Data_ComplexParent* complex_parent = static_cast<DataClass::Data_ComplexParent*>(data_object->getParent());
+			std::cout << "parent cringe:  " << (int)complex_parent->getObjectIdentifier()[0] << " " <<
+				(int)complex_parent->getObjectIdentifier()[1] << " " <<
+				(int)complex_parent->getObjectIdentifier()[2] << " " <<
+				(int)complex_parent->getObjectIdentifier()[3] << "\n";
+			for (DataClass::Data_Object* data_group : complex_parent->getDataGroups())
+				instance_size += data_group->getObjects().size();
+		}
+		else
+			instance_size = data_object->getParent()->getObjects().size();
+
+		// Generate Lists for the Real Objects to Create
 		int list_size = instance_size;
 		Object::Object** object_list = new Object::Object*[instance_size];
 		Object::Object* root_real_parent = nullptr;
@@ -396,28 +525,61 @@ void Render::Objects::ChangeController::handleSelectorRealReturn(DataClass::Data
 		data_object->enableSelectionNonRecursive();
 		selector->addUnselectableRecursive(data_object);
 
-		// Generate Children and Set Parent for Each Instance
-		for (int i = 0; i < instance_size; i++)
+		// If Parent is a Complex Object, Generate Object at Each Group Instance
+		if (data_object->getParent()->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
 		{
-			// Determine the Offset of This Individual Object
-			real_offset = glm::vec2(0.0f, 0.0f);
-			root_real_parent = data_object->getParent()->getObjects().at(i);
-			while (root_real_parent != nullptr)
-			{
-				if (root_real_parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
-				{
-					real_offset = *root_real_parent->pointerToPosition();
-					break;
+			int index = 0;
+			DataClass::Data_ComplexParent* complex_parent = static_cast<DataClass::Data_ComplexParent*>(data_object->getParent());
+			for (DataClass::Data_Object* data_group : complex_parent->getDataGroups()) {
+				for (Object::Object* real_group_object : data_group->getObjects()) {
+
+					std::cout << "Group Storage: " << (int)real_group_object->storage_type << "\n";
+
+					// Real Offset is Position of Group Object
+					if (real_group_object->storage_type == Object::NULL_TEMP)
+						real_offset = *static_cast<Object::TempObject*>(real_group_object)->pointerToSelectedPosition();
+					else
+						real_offset = *real_group_object->pointerToPosition();
+
+					// Generate the Object and Set the Parent
+					object_list[index] = data_object->generateObject(real_offset);
+					object_list[index]->parent = real_group_object;
+
+					// Generate the Children
+					data_object->genChildrenRecursive(&object_list, list_size, object_list[index], real_offset, selector, true);
+
+					// Increment Index
+					index++;
 				}
-				root_real_parent = root_real_parent->parent;
 			}
+		}
 
-			// Generate the Object and Set the Parent
-			object_list[i] = data_object->generateObject(real_offset);
-			object_list[i]->parent = data_object->getParent()->getObjects().at(i);
+		// Else, Generate Object at Every Instance of Parent
+		else
+		{
+			// Generate Children and Set Parent for Each Instance
+			for (int i = 0; i < instance_size; i++)
+			{
+				// Determine the Offset of This Individual Object
+				real_offset = glm::vec2(0.0f, 0.0f);
+				root_real_parent = data_object->getParent()->getObjects().at(i);
+				while (root_real_parent != nullptr)
+				{
+					if (root_real_parent->group_object->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
+					{
+						real_offset = *root_real_parent->pointerToPosition();
+						break;
+					}
+					root_real_parent = root_real_parent->parent;
+				}
 
-			// Generate the Children
-			data_object->genChildrenRecursive(&object_list, list_size, object_list[i], real_offset, selector, true);
+				// Generate the Object and Set the Parent
+				object_list[i] = data_object->generateObject(real_offset);
+				object_list[i]->parent = data_object->getParent()->getObjects().at(i);
+
+				// Generate the Children
+				data_object->genChildrenRecursive(&object_list, list_size, object_list[i], real_offset, selector, true);
+			}
 		}
 
 		// Add New Objects into the Level
@@ -492,8 +654,8 @@ void Render::Objects::ChangeController::handleSelectorDelete(Editor::Selector* s
 	container->clearTemps();
 
 	// Perform a Parent Reload on All Complex Objects
-	for (UnsavedComplex* group : unsaved_complex)
-		static_cast<DataClass::Data_ComplexParent*>(group->getComplexParent())->setInactive();
+	//for (UnsavedComplex* group : unsaved_complex)
+	//	static_cast<DataClass::Data_ComplexParent*>(group->getComplexParent())->setInactive();
 
 	// Reload Objects
 	container->reloadAll();
@@ -515,7 +677,8 @@ void Render::Objects::ChangeController::handleSelectorCancelation(Editor::Select
 			if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
 			{
 				// Remove Offset From Objects and Children
-				glm::vec2 offset = -static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+				//glm::vec2 offset = -static_cast<DataClass::Data_ComplexParent*>(root_parent)->getPositionOffset();
+				glm::vec2 offset = glm::vec2(0.0f, 0.0f);
 				glm::vec2* offset_ptr = static_cast<Render::Objects::UnsavedComplex*>(root_parent->getGroup())->getSelectedPosition();
 				if (offset_ptr != nullptr)
 					offset = -*offset_ptr;
@@ -547,8 +710,8 @@ void Render::Objects::ChangeController::handleSelectorCancelation(Editor::Select
 	container->clearTemps();
 
 	// Perform a Parent Reload on All Complex Objects
-	for (UnsavedComplex* group : unsaved_complex)
-		static_cast<DataClass::Data_ComplexParent*>(group->getComplexParent())->setInactive();
+	//for (UnsavedComplex* group : unsaved_complex)
+	//	static_cast<DataClass::Data_ComplexParent*>(group->getComplexParent())->setInactive();
 
 	// Reload Objects
 	container->reloadAll();
@@ -594,6 +757,12 @@ void Render::Objects::ChangeController::save()
 {
 	static SavedIdentifier identifier;
 	bool saved;
+
+	std::cout << "saving\n";
+
+	// Save the Number of Children of Each Object
+	for (std::vector<UnsavedGroup*>::iterator it = unsaved_groups.begin(); it != unsaved_groups.end(); it++)
+		(*it)->getParent()->getObjectIdentifier()[3] = (*it)->getChildren().size();
 
 	// Update Saved Levels Vector and Save Every Unsaved Level
 	for (std::vector<UnsavedLevel*>::iterator it = unsaved_levels.begin(); it != unsaved_levels.end(); it++)
@@ -689,6 +858,27 @@ void Render::Objects::ChangeController::MasterStack::deleteInstance(uint8_t inde
 	current_instance.stack_indicies.reserve(0);
 }
 
+void Render::Objects::ChangeController::MasterStack::performTraversal(bool backward)
+{
+	// Get the List of All Unsaved Containers With Simultanious Changes
+	ChainMember& chain_member = stack_array[stack_index];
+
+	// Prepare Data Objects for Change
+	for (UnsavedBase* unsaved_level : chain_member.stack_indicies)
+		unsaved_level->prepareChangeTraversal(backward);
+
+	// Make Changes in the Current Stack Index
+	for (UnsavedBase* unsaved_level : chain_member.stack_indicies)
+		unsaved_level->traverseChangeList(backward);
+
+	// Move Children of Group Objects
+	Objects::UnsavedGroup::finalizeParentMovement();
+
+	// Reset Flags That Were Used During Traversal
+	for (UnsavedBase* unsaved_level : chain_member.stack_indicies)
+		unsaved_level->endChangeTraversal(backward);
+}
+
 Render::Objects::ChangeController::MasterStack::MasterStack()
 {
 	// Allocate Memory for Array
@@ -714,13 +904,8 @@ bool Render::Objects::ChangeController::MasterStack::traverseForwards()
 	else
 		stack_index++;
 
-	// Make Changes in the Current Stack Index
-	ChainMember& chain_member = stack_array[stack_index];
-	for (UnsavedBase* unsaved_level : chain_member.stack_indicies)
-		unsaved_level->traverseChangeList(false);
-
-	// Move Children of Group Objects
-	Objects::UnsavedGroup::finalizeParentMovement();
+	// Make the Change
+	performTraversal(false);
 
 	return true;
 }
@@ -731,16 +916,8 @@ bool Render::Objects::ChangeController::MasterStack::traverseBackwards()
 	if (stack_index == tail)
 		return false;
 
-	// Make Inverse Changes in Current Stack Index
-	ChainMember& chain_member = stack_array[stack_index];
-
-	//for (UnsavedBase* unsaved_level : chain_member.stack_indicies)
-
-	for (UnsavedBase* unsaved_level : chain_member.stack_indicies)
-		unsaved_level->traverseChangeList(true);
-
-	// Move Children of Group Objects
-	Objects::UnsavedGroup::finalizeParentMovement();
+	// Make the Change
+	performTraversal(true);
 
 	// If At Beginning of Array, Circle Back to End of Array
 	if (stack_index == 0)

@@ -158,6 +158,8 @@ void DataClass::Data_GroupObject::readObjectData(std::ifstream& object_file)
 
 	// Get Unsaved Complex Object
 	group_object = reinterpret_cast<Render::Objects::UnsavedCollection*>(change_controller->getUnsavedComplex(file_path));
+	if (group_object != nullptr)
+		static_cast<DataClass::Data_ComplexParent*>(static_cast<Render::Objects::UnsavedComplex*>(group_object)->getComplexParent())->addGroupObject(this);
 }
 
 int& DataClass::Data_GroupObject::getScript()
@@ -170,11 +172,17 @@ glm::vec2& DataClass::Data_GroupObject::getPosition()
 	return data.position;
 }
 
-void DataClass::Data_GroupObject::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
+void DataClass::Data_GroupObject::updateTraveresPositionHelper(float deltaX, float deltaY)
 {
 	// Update Position
 	data.position.x += deltaX;
 	data.position.y += deltaY;
+}
+
+void DataClass::Data_GroupObject::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
+{
+	// Update Position of This Object
+	updateTraveresPositionHelper(deltaX, deltaY);
 
 	// Update Model Matrix of All Children
 	if (update_real)

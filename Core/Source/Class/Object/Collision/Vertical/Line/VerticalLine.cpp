@@ -50,6 +50,12 @@ void Object::Mask::VerticalLine::initializeVisualizer(GLuint& VAO, GLuint& VBO, 
 	glBindVertexArray(0);
 }
 
+void DataClass::Data_VerticalLine::updateTraveresPositionHelper(float deltaX, float deltaY)
+{
+	data.position.x += deltaX;
+	data.position.y += deltaY;
+}
+
 Object::Mask::VerticalLineData& DataClass::Data_VerticalLine::getVerticalLineData()
 {
 	return data;
@@ -71,13 +77,6 @@ void DataClass::Data_VerticalLine::generateInitialValues(glm::vec2& position, fl
 	data.height = size;
 	data.script = 0;
 	data.material = 0;
-}
-
-void DataClass::Data_VerticalLine::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
-{
-	data.position.x += deltaX;
-	data.position.y += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }
 
 void DataClass::Data_VerticalLine::setInfoPointers(int& index1, int& index2, int& index3, glm::vec2** position1, glm::vec2** position2, glm::vec2** position3)

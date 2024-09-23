@@ -11,8 +11,13 @@
 #include "Source\Events\EventListeners.h"
 #include "Source\Vertices\Buffer\ObjectBuffers.h"
 #include "Render\Struct\DataClasses.h"
-
+#include "Render\Objects\UnsavedCollection.h"
 #include "Source\Loaders\Fonts.h"
+
+Render::ObjectContainer& Render::GUI::GUI::getContainer()
+{
+	return container;
+}
 
 void Render::GUI::GUI::constructTerrain()
 {
@@ -243,13 +248,13 @@ void Render::GUI::GUI::resetObjectPassOver()
 		container.object_array[i]->skip_selection = false;
 }
 
-void Render::GUI::GUI::storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, Render::MOVE_WITH_PARENT disable_move)
+void Render::GUI::GUI::storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, Object::Object* real_object)
 {
 	// Unsaved Level of Object in GUI is Always 0,0
 	selector.level_of_origin = change_controller->getUnsavedLevel(0, 0, 0);
 
 	// Remove Object from Unsaved Level
-	selector.level_of_origin->createChangePop(selector.highlighted_object, disable_move);
+	selector.level_of_origin->createChangePop(selector.highlighted_object, real_object);
 
 	// Set Originated From Level Flag to True
 	selector.originated_from_level = true;
@@ -386,6 +391,52 @@ Render::GUI::GUI::~GUI()
 Render::CONTAINER_TYPES Render::GUI::GUI::getContainerType()
 {
 	return CONTAINER_TYPES::GUI;
+}
+
+void Render::GUI::GUI::genObjectIntoContainer(DataClass::Data_Object* new_object, Object::Object* real_parent, uint16_t& index, int16_t delta_size)
+{
+	// Get the Current Complex Offset of the New Object From Parent
+	glm::vec2 complex_offset = real_parent->calculateComplexOffset(false);
+	if (real_parent->group_object->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
+		complex_offset += real_parent->data_object->getPosition();
+}
+
+void Render::GUI::GUI::buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, uint16_t& index, Object::Object* parent, glm::vec2 position_offset, uint16_t& active_index, Objects::UnsavedLevel& unsaved_level)
+{
+	for (DataClass::Data_Object* data_object : data_object_array)
+	{
+		// Generate Object and Attach Data Object
+		Object::Object* new_object = data_object->generateObject(position_offset);
+		new_object->parent = parent;
+
+		// If Parent != Nullptr, Add to Parent's Children Array
+		if (parent != nullptr)
+		{
+			parent->children[parent->children_size] = new_object;
+			parent->children_size++;
+		}
+
+		// Add Object Into Object Array
+		container.object_array[index] = new_object;
+		index++;
+		unsaved_level.addToActivesList(new_object, active_index);
+
+		// Generate Children, if Applicable
+		UnsavedCollection* group = data_object->getGroup();
+		if (group != nullptr)
+		{
+			// Generate the Children Array in Object
+			new_object->children = new Object::Object * [group->getChildren().size()];
+
+			// Get the Potential Offset of the Object
+			glm::vec2 new_offset = position_offset;
+			if (group->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
+				new_offset = new_object->returnPosition();
+
+			// Recursively Generate Children
+			buildObjectsGenerator(group->getChildren(), index, new_object, new_offset, active_index, unsaved_level);
+		}
+	}
 }
 
 void Render::GUI::GUI::updateLevelPos(glm::vec2 position, glm::i16vec2& level)
@@ -559,7 +610,8 @@ void Render::GUI::GUI::reloadAll()
 	initialized = true;
 
 	// Read the GUI
-	sublevel.readGUI(container.object_array);
+	uint16_t temp_index = 0;
+	sublevel.readLevel(temp_index);
 
 	// Load the Objects
 	loadObjects();

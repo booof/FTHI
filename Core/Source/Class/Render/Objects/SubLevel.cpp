@@ -76,7 +76,7 @@ Render::Objects::SubLevel::SubLevel(std::string& gui_path)
 	readHeaders();
 }
 
-void Render::Objects::SubLevel::readLevel(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities)
+void Render::Objects::SubLevel::readLevel(uint16_t& index_in_object_array)
 {
 	// Get Pointer to Unsaved Level
 	unsaved_level = change_controller->getUnsavedLevel(level_x, level_y, level_version);
@@ -85,22 +85,7 @@ void Render::Objects::SubLevel::readLevel(Object::Object** objects, uint16_t& in
 	unsaved_level->active_objects = &active_objects;
 
 	// Read Unsaved Level
-	unsaved_level->buildObjectsLevel(objects, index, physics, entities, object_offsets);
-
-	// Level Has Been Initialized
-	initialized = true;
-}
-
-void Render::Objects::SubLevel::readGUI(Object::Object** objects)
-{
-	// Get Pointer to Unsaved Level
-	unsaved_level = change_controller->getUnsavedLevel(level_x, level_y, level_version);
-
-	// Set the Active Objects Pointer of Unsaved Level to Null
-	unsaved_level->active_objects = nullptr;
-
-	// Read Unsaved Level
-	unsaved_level->buildObjectsGUI(objects);
+	unsaved_level->buildObjects(index_in_object_array, object_offsets);
 
 	// Level Has Been Initialized
 	initialized = true;
@@ -113,7 +98,7 @@ void Render::Objects::SubLevel::readHeaders()
 	unsaved_level = change_controller->getUnsavedLevel(level_x, level_y, level_version);
 
 	// Store Pointer to Active Objects
-	//unsaved_level->active_objects = &active_objects;
+	unsaved_level->active_objects = &active_objects;
 
 	// Get Header From Unsaved Level
 	number_of_loaded_objects = unsaved_level->returnObjectHeader();
@@ -446,4 +431,13 @@ void Render::Objects::SubLevel::deleteSubLevel()
 	// Delete Active Objects Array
 	if (number_of_loaded_objects)
 		delete[] active_objects;
+}
+
+void Render::Objects::SubLevel::reloadActivePointer()
+{
+	// Get the Unsaved Level
+	UnsavedLevel* unsaved_level = change_controller->getUnsavedLevel(level_x, level_y, 0);
+
+	// Update the Active Pointer to the Unsaved Object
+	unsaved_level->active_objects = &active_objects;
 }

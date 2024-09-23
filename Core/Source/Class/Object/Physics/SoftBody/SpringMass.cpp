@@ -325,7 +325,7 @@ DataClass::Data_Object* DataClass::Data_SpringMassNode::makeCopy()
 	return this;
 }
 
-void DataClass::Data_SpringMassNode::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
+void DataClass::Data_SpringMassNode::updateTraveresPositionHelper(float deltaX, float deltaY)
 {
 	node_data.position.x += deltaX;
 	node_data.position.y += deltaY;
@@ -405,7 +405,7 @@ DataClass::Data_Object* DataClass::Data_SpringMassSpring::makeCopy()
 	return this;
 }
 
-void DataClass::Data_SpringMassSpring::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
+void DataClass::Data_SpringMassSpring::updateTraveresPositionHelper(float deltaX, float deltaY)
 {
 }
 

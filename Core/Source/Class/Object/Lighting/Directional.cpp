@@ -216,6 +216,14 @@ void DataClass::Data_Directional::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&light_data, sizeof(Object::Light::LightData));
 }
 
+void DataClass::Data_Directional::updateTraveresPositionHelper(float deltaX, float deltaY)
+{
+	light_data.position.x += deltaX;
+	light_data.position.y += deltaY;
+	directional.position2.x += deltaX;
+	directional.position2.y += deltaY;
+}
+
 DataClass::Data_Directional::Data_Directional(uint8_t children_size)
 {
 	// Set Object Identifier
@@ -240,15 +248,6 @@ void DataClass::Data_Directional::info(Editor::ObjectInfo& object_info)
 DataClass::Data_Object* DataClass::Data_Directional::makeCopy()
 {
 	return new Data_Directional(*this);
-}
-
-void DataClass::Data_Directional::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
-{
-	light_data.position.x += deltaX;
-	light_data.position.y += deltaY;
-	directional.position2.x += deltaX;
-	directional.position2.y += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }
 
 Object::Light::Directional::DirectionalData& DataClass::Data_Directional::getDirectionalData()

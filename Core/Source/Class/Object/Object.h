@@ -186,11 +186,22 @@ namespace Object
 		// Update Selected Position of Object From Complex Parent
 		void updateSelectedComplexPosition(float deltaX, float deltaY);
 
+		// Calculate the Offset Created by Complex Objects
+		virtual glm::vec2 calculateComplexOffset(bool include_self);
+
 		// Temp Debug Function
 		void debug_funct();
 
 		// Draw Group Visualizer
 		void drawGroupVisualizer();
+
+		// Deactivate Objects That are Decendants of This Real Object
+		virtual void deactivateDecendants();
+
+		// Returns True if a Selected Complex Ancestor Exists
+		bool testSelectedComplexAncestor(bool passed_group);
+
+		// Generate Real Object of All Children and Their Decendants
 
 #endif
 
@@ -225,6 +236,9 @@ namespace Object
 		// Determines if this is the Original Object
 		bool original = false;
 
+		// Determines if This Object Has Been Returned
+		bool returned = false;
+
 	public:
 
 		// Constructor
@@ -253,6 +267,18 @@ namespace Object
 
 		// Tests if This is the Original Object
 		bool isOriginal();
+
+		// Tests if This Object Has Been Returned From Selection
+		bool isReturned(); 
+
+		// Overload to Deactivate Decendants From the Group Object, Rather Than Deleted Children List
+		void deactivateDecendants();
+
+		// Override to Calculate the Offset Created by Complex Objects from a Selected Object
+		virtual glm::vec2 calculateComplexOffset(bool include_self);
+
+		// Replace the Selected Position Pointer of This Object
+		void replaceSelectedPositionPointer(glm::vec2* new_pointer);
 	};
 
 	// List of Objects

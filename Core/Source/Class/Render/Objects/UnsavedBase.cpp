@@ -48,6 +48,16 @@ Render::Objects::UnsavedBase::Changes* Render::Objects::UnsavedBase::SlaveStack:
 	return stack_array[stack_index];
 }
 
+Render::Objects::UnsavedBase::Changes* Render::Objects::UnsavedBase::SlaveStack::returnInstanceDirectionSpecified(bool backwards)
+{
+	// Backwards Changes Get Most Recent Instance
+	if (backwards)
+		return stack_array[stack_index];
+
+	// Forwards Changes Get Following Instance
+	return stack_array[stack_index + 1];
+}
+
 bool Render::Objects::UnsavedBase::SlaveStack::isEmpty()
 {
 	return (stack_size == 0 || stack_size == 1);
@@ -329,13 +339,15 @@ void Render::Objects::UnsavedBase::moveForwardsThroughChanges(Changes* changes)
 {
 	for (Change* change : changes->changes)
 	{
+		std::cout << "Forwards change: " << change << "    Type: " << (int)change->change_type << "    object: " << (int)change->data << "   index : " << change->data->getObjectIndex() << "\n";
+
 		// If this is an Add Change, Add Change to Current Data Object List
 		if (change->change_type == ADD)
-			addWhileTraversing(change->data, change->move_with_parent);
+			addWhileTraversing(change->data, change->change_offset);
 
 		// If this is a Remove Change Remove Change from Current Data Object List
 		else
-			removeWhileTraversing(change->data);
+			removeWhileTraversing(change->data, change->change_offset);
 	}
 }
 
@@ -343,32 +355,84 @@ void Render::Objects::UnsavedBase::moveBackwardsThroughChanges(Changes* changes)
 {
 	for (Change* change : changes->changes)
 	{
+		std::cout << "Backwards change: " << change << "    Type: " << (int)change->change_type << "    object: " << (int)change->data << "   index : " << change->data->getObjectIndex() << "\n";
+
 		// If this is a Remove Change, Add Change to Current Data Object List
 		if (change->change_type == REMOVE)
-		{
-			addWhileTraversing(change->data, change->move_with_parent);
-			if (change->move_with_parent == MOVE_WITH_PARENT::MOVE_SECONDARY_ONLY_NO_OFFSET)
-				change->move_with_parent = MOVE_WITH_PARENT::MOVE_SECONDARY_ONLY;
-		}
+			addWhileTraversing(change->data, change->change_offset);
 
 		// If this is an Add Change Remove Change from Current Data Object List
 		else
-			removeWhileTraversing(change->data);
+			removeWhileTraversing(change->data, -change->change_offset);
 	}
 }
 
-void Render::Objects::UnsavedBase::createChangeAppend(DataClass::Data_Object* data_object, MOVE_WITH_PARENT disable_move)
+void Render::Objects::UnsavedBase::prepareChangeTraversal(bool backwards)
+{
+	// Get the Change Instance
+	Changes* changes = slave_stack.returnInstanceDirectionSpecified(backwards);
+
+	// For Every Change, Clear the Flags of Data Object and Set Flag
+	for (Change* change : changes->changes) {
+		change->data->getLevelEditorFlags().change_list_flags = { 0 };
+		change->data->getLevelEditorFlags().change_list_flags.is_being_traversed = true;
+	}
+}
+
+void Render::Objects::UnsavedBase::endChangeTraversal(bool backwards)
+{
+	// Get the Change Instance
+	Changes* changes = slave_stack.returnInstanceDirectionSpecified(!backwards);
+
+	// For Every Change, Clear All Flags
+	for (Change* change : changes->changes)
+		change->data->getLevelEditorFlags().change_list_flags = { 0 };
+}
+
+void Render::Objects::UnsavedBase::createChangeAppend(DataClass::Data_Object* data_object, glm::vec2 final_offset)
 {
 	// Generate Change List if Not Generated Already
 	generateChangeList();
 
+	std::cout << "appending: " << data_object->getObjectIndex() << "  at: " << data_object->getPosition().x << " " << data_object->getPosition().y << "\n";
+
 	// Generate the New Change
 	Change* change = new Change;
+	std::cout << " append change: " << change << " " << data_object->getObjectIndex() << "\n";
 	change->change_type = CHANGE_TYPES::ADD;
-	change->move_with_parent = disable_move;
+
+	// If an Object Has No Original Conditions, There Should be No Offset
+	if (data_object->getLevelEditorFlags().original_conditions == nullptr)
+		change->change_offset = glm::vec2(0.0f, 0.0f);
+
+	// Else, Use Initial Conditions to Help Make Change
+	else {
+		// Potential Problem: Newly Created Objects Have no Original Conditions, So Selecting These Objects Creates a False "Pop" Change
+		// Potential Fix: All Newly Generated Data Objects Have an Original Condition
+
+		// Determine How Much the Object Moved in Change
+		change->change_offset = data_object->getPosition() - data_object->getLevelEditorFlags().original_conditions->original_position;
+
+		// Store Important Information Regarding This Append Change
+		data_object->getLevelEditorFlags().original_conditions->append_change = change;
+		data_object->getLevelEditorFlags().original_conditions->append_change_vector = &current_change_list->changes;
+		data_object->getLevelEditorFlags().original_conditions->append_unsaved_object = this;
+
+		// If There is a Corrisponding Pop Change, Store Opposite Offset
+		if (data_object->getLevelEditorFlags().original_conditions->pop_change != nullptr)
+			static_cast<Change*>(data_object->getLevelEditorFlags().original_conditions->pop_change)->change_offset = -change->change_offset;
+	}
+
+	std::cout << "change offset: " << change->change_offset.x << " " << change->change_offset.y << "   of object: " << data_object->getObjectIndex() << "\n";
 
 	// Store Data Object in Change
 	change->data = data_object;
+
+	// For All Children of Appended Object, If They Have an Append, Make a New One
+	if (data_object->getGroup() != nullptr && data_object->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::GROUP) {
+		for (DataClass::Data_Object* child : data_object->getGroup()->getChildren())
+			child->testChangeAppend();
+	}
 
 	// Execute Change
 	instance_with_changes.data_objects.push_back(data_object);
@@ -382,15 +446,35 @@ void Render::Objects::UnsavedBase::createChangeAppend(DataClass::Data_Object* da
 	changeToModified();
 }
 
-void Render::Objects::UnsavedBase::createChangePop(DataClass::Data_Object* data_object_to_remove, MOVE_WITH_PARENT disable_move)
+void Render::Objects::UnsavedBase::createChangePop(DataClass::Data_Object* data_object_to_remove, Object::Object* real_object)
 {
+	// TODO: If Initial Conditions are Already Generated, Don't Create a Pop, Instead Remove the Most Recent Append
+
 	// Generate Change List if Not Generated Already
 	generateChangeList();
 
+	std::cout << "popping: " << data_object_to_remove->getObjectIndex() << "  at: " << data_object_to_remove->getPosition().x << " " << data_object_to_remove->getPosition().y << "\n";
+
+	// If Object Has No Original Conditions, Generate Them for Object and Children
+	if (data_object_to_remove->getLevelEditorFlags().original_conditions == nullptr)
+		data_object_to_remove->generateInitialConditions(glm::vec2(0.0f, 0.0f));
+
+	// If a Pop Change Already Exists, Remove Most Recent Append Change. DONT CREATE A NEW POP CHANGE
+	else if (data_object_to_remove->getLevelEditorFlags().original_conditions->pop_change != nullptr)
+	{
+		// Find the Most Recent Append Change and Remove it
+		data_object_to_remove->removeMostRecentAppend();
+
+		// Return Early to Prevent a Second Pop Change
+		return;
+	}
+
 	// Generate the New Change
 	Change* change = new Change;
+	std::cout << " pop change: " << change << " " << data_object_to_remove->getObjectIndex() << "\n";
 	change->change_type = CHANGE_TYPES::REMOVE;
-	change->move_with_parent = disable_move;
+	change->change_offset = glm::vec2(0.0f, 0.0f);
+	data_object_to_remove->getLevelEditorFlags().original_conditions->pop_change = change;
 
 	// Find Data Object in the List of Data Objects, Remove it, and Store it in Change
 	for (int i = 0; i < instance_with_changes.data_objects.size(); i++)
@@ -403,6 +487,10 @@ void Render::Objects::UnsavedBase::createChangePop(DataClass::Data_Object* data_
 		}
 	}
 
+	// Test
+	if (change->data == nullptr)
+		throw "gay";
+
 	// Execute Change
 	instance_with_changes.number_of_loaded_objects--;
 
@@ -410,7 +498,8 @@ void Render::Objects::UnsavedBase::createChangePop(DataClass::Data_Object* data_
 	current_change_list->changes.push_back(change);
 
 	// Clear Objects List in Data Object
-	data_object_to_remove->clearObjects();
+	// Add Some Condition of When This Should Happen
+	//data_object_to_remove->clearObjects();
 
 	// Level Has Been Modified
 	selected_unmodified = false;
@@ -463,6 +552,16 @@ bool Render::Objects::UnsavedBase::finalizeChangeList()
 		// Changes Should be Made
 		making_changes = false;
 
+		// Calculate the Offset Modifier for Each Object in Case a Parent was Also Modified
+		//for (Change* change : current_change_list->changes)
+		//	change->offset_override = change->data->calculateOffsetOverride();
+
+		// Delete Original Conditions
+		for (Change* change : current_change_list->changes) {
+			std::cout << " making change: " << change << "    " << change->data << " " << change->data->getObjectIndex() << "\n";
+			change->data->resetInitialConditions();
+		}
+
 		// Add Code to Store Change List Somewhere
 		slave_stack.appendInstance(current_change_list);
 
@@ -479,4 +578,23 @@ std::vector<Render::Objects::UnsavedBase::Change*>* Render::Objects::UnsavedBase
 	if (current_change_list == nullptr)
 		return nullptr;
 	return &current_change_list->changes;
+}
+
+void Render::Objects::UnsavedBase::yeetObjectFromInstance(DataClass::Data_Object* object)
+{
+	for (int i = 0; i < instance_with_changes.data_objects.size(); i++)
+	{
+		if (object == instance_with_changes.data_objects.at(i))
+			instance_with_changes.data_objects.erase(instance_with_changes.data_objects.begin() + i);
+	}
+}
+
+bool Render::Objects::UnsavedBase::testObjectExists(DataClass::Data_Object* test_object)
+{
+	for (DataClass::Data_Object* object : instance_with_changes.data_objects) {
+		if (object == test_object)
+			return true;
+	}
+
+	return false;
 }

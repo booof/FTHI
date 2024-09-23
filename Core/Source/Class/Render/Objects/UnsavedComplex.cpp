@@ -81,7 +81,7 @@ void Render::Objects::UnsavedComplex::constructUnmodifiedDataHelper(ObjectsInsta
 	updateVisualizer();
 }
 
-void Render::Objects::UnsavedComplex::addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent)
+void Render::Objects::UnsavedComplex::addWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset)
 {
 	// Add Object To Change List
 	instance_with_changes.data_objects.push_back(data_object);
@@ -89,13 +89,10 @@ void Render::Objects::UnsavedComplex::addWhileTraversing(DataClass::Data_Object*
 	// If Object is a Parent, Update Group
 	UnsavedCollection* data_group = data_object->getGroup();
 	if (data_group != nullptr)
-		static_cast<UnsavedGroup*>(data_object->getGroup())->setParent(data_object, MOVE_WITH_PARENT::MOVE_ENABLED);
-
-	// Determine if Object Should Move With Parent
-	data_object->disableMoveWithParent(move_with_parent);
+		static_cast<UnsavedGroup*>(data_object->getGroup())->setParentTraverseChange(data_object, offset);
 }
 
-void Render::Objects::UnsavedComplex::removeWhileTraversing(DataClass::Data_Object* data_object)
+void Render::Objects::UnsavedComplex::removeWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset)
 {
 	// Remove Object From Change List
 	for (int i = 0; i < instance_with_changes.data_objects.size(); i++)
@@ -107,7 +104,13 @@ void Render::Objects::UnsavedComplex::removeWhileTraversing(DataClass::Data_Obje
 
 void Render::Objects::UnsavedComplex::updatePostTraverse()
 {
+	// Update the Parent of Children to the Generic Complex Parent Object
+	for (DataClass::Data_Object* child : instance_with_changes.data_objects)
+		child->setParent(&complex_parent);
 
+	// Recursively Set the Group Layer of Children
+	for (DataClass::Data_Object* child : instance_with_changes.data_objects)
+		child->getGroup()->recursiveSetGroupLayer(0);
 }
 
 void Render::Objects::UnsavedComplex::removeChainListInstance()
@@ -242,6 +245,12 @@ void Render::Objects::UnsavedComplex::recursiveSetGroupLayer(int8_t layer)
 		if (data_object->getGroup() != nullptr)
 			data_object->getGroup()->recursiveSetGroupLayer(0); // All Children Will Have a Layer of 0
 	}
+}
+
+void Render::Objects::UnsavedComplex::setParentTraverseChangeNoMove(DataClass::Data_Object* new_parent)
+{
+	for (DataClass::Data_Object* child : instance_with_changes.data_objects)
+		child->setParent(&complex_parent);
 }
 
 std::string& Render::Objects::UnsavedComplex::getFilePath()
@@ -380,6 +389,8 @@ void Render::Objects::UnsavedComplex::drawSelected(int object_vertex_count, int 
 
 void Render::Objects::UnsavedComplex::drawSelectedConnection(DataClass::Data_Object* selected_object, glm::vec2 position_offset)
 {
+	return;
+
 	// Iterate Through Each Instance and Draw the Connection to Selected Object
 	for (std::vector<Object::Object*>::iterator it = instance_vector.begin(); it != instance_vector.end(); it++)
 	{
@@ -465,15 +476,17 @@ void DataClass::Data_ComplexParent::readObjectData(std::ifstream& object_file)
 
 int& DataClass::Data_ComplexParent::getScript()
 {
+	static int null_value = 0;
 	return null_value;
 }
 
 glm::vec2& DataClass::Data_ComplexParent::getPosition()
 {
+	static glm::vec2 position_offset = glm::vec2(0.0f, 0.0f);
 	return position_offset;
 }
 
-void DataClass::Data_ComplexParent::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
+void DataClass::Data_ComplexParent::updateTraveresPositionHelper(float deltaX, float deltaY)
 {
 }
 
@@ -498,6 +511,8 @@ void DataClass::Data_ComplexParent::setGroup(Render::Objects::UnsavedComplex* co
 	// Store Complex Group Object
 	group_object = reinterpret_cast<Render::Objects::UnsavedCollection*>(complex_group);
 }
+
+/*
 
 void DataClass::Data_ComplexParent::setPositionOffset(glm::vec2 new_offset)
 {
@@ -528,6 +543,7 @@ void DataClass::Data_ComplexParent::storeRootParent(Object::Object* parent)
 {
 	root_parent = parent;
 }
+*/
 
 void DataClass::Data_ComplexParent::setGroupLayer(int8_t new_layer)
 {
@@ -542,9 +558,43 @@ void DataClass::Data_ComplexParent::setInfoPointers(int& index1, int& index2, in
 	position23Null(index2, index3, position2, position3);
 }
 
+bool DataClass::Data_ComplexParent::testMatchingObject(DataClass::Data_Object* test_object)
+{
+	for (DataClass::Data_Object* object : group_objects) {
+		if (object == test_object)
+			return true;
+	}
+
+	// If Code Reaches Here, No Matching Object Was Found
+	return false;
+}
+
+void DataClass::Data_ComplexParent::addGroupObject(DataClass::Data_Object* object)
+{
+	group_objects.push_back(object);
+}
+
+void DataClass::Data_ComplexParent::removeGroupObject(DataClass::Data_Object* object)
+{
+	for (int i = 0; i < group_objects.size(); i++) {
+		if (group_objects.at(i) == object) {
+			group_objects.erase(group_objects.begin() + i);
+			return;
+		}
+	}
+}
+
+std::vector<DataClass::Data_Object*>& DataClass::Data_ComplexParent::getDataGroups()
+{
+	return group_objects;
+}
+
+/*
+
 Object::Object* DataClass::Data_ComplexParent::getRootParent()
 {
 	return root_parent;
 }
 
 int DataClass::Data_ComplexParent::null_value = 0;
+*/

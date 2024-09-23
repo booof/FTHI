@@ -80,10 +80,10 @@ namespace Render::Objects
 		void constructUnmodifiedDataHelper(ObjectsInstance& instance);
 
 		// Function to Add Objects While Transversing
-		void addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent);
+		void addWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset_override);
 
 		// Function to Remove Objects While Traversing
-		void removeWhileTraversing(DataClass::Data_Object* data_object);
+		void removeWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset_override);
 
 		// Function to Perform Object-Specific Changes After an Undo/Redo
 		void updatePostTraverse();
@@ -110,6 +110,9 @@ namespace Render::Objects
 
 		// Recursively Set the Group Layer
 		void recursiveSetGroupLayer(int8_t layer);
+
+		// Set Parent During a Redo/Undo Without Moving Children
+		void setParentTraverseChangeNoMove(DataClass::Data_Object* new_parent);
 
 		// Returns the File Name of the Object
 		std::string& getFilePath();

@@ -30,8 +30,8 @@ void Render::Objects::UnsavedCollection::disableMoveWithParent(DataClass::Data_O
 		Change& change = *current_change_list->changes[i];
 
 		// If Data Objects Match, Disable Move With Parent in Change
-		if (change.data->getObjectIndex() == data_object->getObjectIndex())
-			change.move_with_parent = MOVE_DISSABLED;
+		//if (change.data->getObjectIndex() == data_object->getObjectIndex())
+		//	change.move_with_parent = MOVE_DISSABLED;
 	}
 }
 
@@ -107,10 +107,10 @@ void Render::Objects::UnsavedCollection::makeOrphans(Editor::Selector* selector,
 		data_object->offsetOppositePosition(offset);
 
 		// Remove Object From This Group
-		createChangePop(data_object, Render::MOVE_WITH_PARENT::MOVE_SECONDARY_ONLY);
+		createChangePop(data_object, nullptr);
 
 		// Add Object Into Level
-		level->createChangeAppend(data_copy, MOVE_WITH_PARENT::MOVE_DISSABLED);
+		level->createChangeAppend(data_copy, glm::vec2(0.0f, 0.0f));
 	}
 }
 

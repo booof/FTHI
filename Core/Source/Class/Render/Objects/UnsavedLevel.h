@@ -58,26 +58,14 @@ namespace Render::Objects
 		// Construct Unmodified Data Helper
 		void constructUnmodifiedDataHelper(ObjectsInstance& instance);
 
-		// Build Objects In Level Helper
-		void buildObjectsLevelHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, ObjectsInstance& instance, glm::vec2& object_offset);
-
-		// Build Objects In GUI Helper
-		void buildObjectsGUIHelper(Object::Object** objects, ObjectsInstance& instance);
-
-		// Generator to Build Objects
-		void buildObjectsGeneratorLevel(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Active* active_array, uint16_t& active_index, Object::Object* parent, glm::vec2 position_offset);
-
-		// Generator to Build Objects
-		void buildObjectsGeneratorGUI(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Object::Object* parent, glm::vec2 position_offset);
-
 		// Return Pointer to Shape Data
 		Shape::Shape* getShapePointer(Editor::Selector* selector);
 
 		// Function to Add Objects While Transversing
-		void addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent);
+		void addWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset);
 
 		// Function to Remove Objects While Traversing
-		void removeWhileTraversing(DataClass::Data_Object* data_object);
+		void removeWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset);
 
 		// Function to Perform Object-Specific Changes After an Undo/Redo
 		// Currently Not Doing Anything Right Now, Might Change Later
@@ -96,6 +84,12 @@ namespace Render::Objects
 		// Pointer to the Container Object
 		Container* main_container = nullptr;
 
+		// Pointer to Active Objects Array
+		Object::Active** active_objects = nullptr;
+
+		// Size of the Active Array
+		int16_t active_size = 0;
+
 		// Initialize Object
 		UnsavedLevel(glm::vec2& sizes, Container* level);
 
@@ -108,11 +102,8 @@ namespace Render::Objects
 		// Construct Unmodified Data As a Single GUI
 		void contructUnmodifiedDataGUI(std::string gui_path);
 
-		// Build Objects to Main Level
-		void buildObjectsLevel(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, glm::vec2& object_offset);
-
-		// Build Objects to GUI
-		void buildObjectsGUI(Object::Object** objects);
+		// Build Objects Into Container
+		void buildObjects(uint16_t& index, glm::vec2& object_offset);
 
 		// Write Current Instance to File
 		void write(bool& save);
@@ -140,6 +131,12 @@ namespace Render::Objects
 
 		// Update the Outline Model In Case of Wrapping
 		void updateModelMatrix();
+
+		// Reallocate the Actives Array for New Objects
+		int16_t reallocateActivesList(int16_t delta_size);
+
+		// Add Object to Actives List
+		void addToActivesList(Object::Object* new_object, uint16_t& active_index);
 	};
 }
 

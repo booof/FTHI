@@ -818,96 +818,50 @@ uint8_t Render::Container::testSelectorOnObject(Object::Object*** object_list, u
 
 			// If Attempting to Add a Child Object, Attempt to Add Object as a Child
 			if (selector.selectedOnlyOne() && (Global::Keys[GLFW_KEY_LEFT_ALT] || Global::Keys[GLFW_KEY_RIGHT_ALT]))
-			{
-				// Get Selected Object
-				DataClass::Data_Object* selected_object = selector.getOnlyOne();
-
-				// Get Parent of Selector
-				DataClass::Data_Object* selected_parent = selected_object->getParent();
-
-				// If Attempting to Add a Parent to its Child, Prevent That From Happening
-				// For Now, This Will Cause a Deselection, Might Do Something Else in the Future
-				// For This object.data_object is calling the function, Test is the selected_parent->getObjectIndex();
-				if (selected_parent != nullptr && object.data_object->testIsParent(selected_parent))
-				{
-					// If Selected Object Cannot be Returned to Level, Don't Deselect
-					if (!change_controller->getUnsavedLevelObject(selected_object)->testValidSelection(object.data_object, selected_object))
-						return 1;
-
-					// Remove Child from Current Group
-					object.data_object->getObjectIdentifier()[3]--;
-
-					// Set Parent of Selected Object to Nothing
-					selected_object->setParent(nullptr);
-
-					// Clear Parent of Selected Object in Selector
-					selector.clearOnlyOneComplexParent();
-
-					// Set Group Layer to 0
-					selected_object->setGroupLayer(0);
-
-					// Recursively Set Group Layer
-					Render::Objects::UnsavedCollection* data_group = selected_object->getGroup();
-					if (data_group != nullptr)
-						data_group->recursiveSetGroupLayer(1);
-				}
-
-				// Object Already Belongs to a Parent
-				else if (object.data_object->getParent() != nullptr)
-				{
-					// Determine if the Specified Operation is Valid
-					bool adding_to_current_parent = selected_object->testIsParent(object.data_object->getParent());
-					if (adding_to_current_parent) {
-						if (!change_controller->getUnsavedLevelObject(object.data_object)->testValidSelection(selected_object, object.data_object))
-							return 1;
-					}
-					else {
-						// Note: If Object Does Not Have a Group, It is a Standard Group Object
-						if (selected_object->getGroup() == nullptr) {
-							if (!Render::Objects::UnsavedGroup::testValidSelectionStatic(selected_object, object.data_object))
-								return 1;
-						}
-						else if (!selected_object->getGroup()->testValidSelection(selected_object, object.data_object))
-							return 1;
-					}
-
-					// Remove Child from Current Group
-					object.data_object->getParent()->getGroup()->createChangePop(object.data_object, Render::MOVE_WITH_PARENT::MOVE_DISSABLED);
-					object.data_object->getParent()->getObjectIdentifier()[3]--;
-
-					// If Attempting to Add To Its Current Parent, Remove Object From Being a Child
-					// For This, Selected Object DataObject is Calling the Function, Test is the object.data_object->getParent()->getObjectIndex();
-					if (adding_to_current_parent)
-						change_controller->handleSingleSelectorReturn(object.data_object->makeCopySelected(selector), object.data_object, &selector, true, false);
-
-					// Else, Swap Parents
-					else
-						selector.addChildToOnlyOne(object.data_object->makeCopySelected(selector), object);
-				}
-
-				// Else, Add Object as a New Child
-				else
-				{
-					// Test if Object can be Placed in Group
-					// Note: If Object Does Not Have a Group, It is a Standard Group Object
-					if (selected_object->getGroup() == nullptr) {
-						if (!Render::Objects::UnsavedGroup::testValidSelectionStatic(selected_object, object.data_object))
-							return 1;
-					}
-					else if (!selected_object->getGroup()->testValidSelection(selected_object, object.data_object))
-						return 1;
-
-					// Remove Child From Level
-					storeLevelOfOrigin(selector, object.returnPosition(), Render::MOVE_WITH_PARENT::MOVE_DISSABLED);
-
-					// Add Child to Parent
-					selector.addChildToOnlyOne(object.data_object->makeCopySelected(selector), object);
-				}
-			}
+				selector.getOnlyOne()->adoptOrphan(object.data_object, &object, selector.getOnlyOne()->getLevelEditorFlags().original_conditions->original_object, selector);
 
 			// Else, Add to Selector
 			else
 			{
+				// Activate Selector
+				selector.active = true;
+
+				// Calculate the Current Complex Offest
+				glm::vec2 complex_offset = object.calculateComplexOffset(false);
+
+				// If Object Already Has an Original Position, and Was Not Preveously Selected, Get Original Position
+				bool need_original_position = (selector.highlighted_object->getLevelEditorFlags().original_conditions != nullptr &&
+					selector.highlighted_object->getLevelEditorFlags().original_conditions->pop_change == nullptr);
+
+				// Store Level of Origin if Originated From Level
+				if (object.parent == nullptr)
+					storeLevelOfOrigin(selector, object.returnPosition(), &object);
+
+				// Remove From Parent, if Part of a Group Object
+				else
+					object.data_object->getParent()->getGroup()->createChangePop(object.data_object, &object);
+
+				// Make a Copy of the Data Class
+				DataClass::Data_Object* dataclass_copy = selector.highlighted_object->makeCopy();
+
+				// Apply Original Position to Original Object, If Needed
+				if (need_original_position)
+					selector.highlighted_object->getPosition() = selector.highlighted_object->getLevelEditorFlags().original_conditions->original_position;
+
+				// Remove Object From Global Objects List
+				removeMarkedFromList(temp_list[index], &dataclass_copy->getPosition(), container);
+
+				// Reset Object Info
+				object_info.clearAll();
+
+				// Apply Possible Complex Offset
+				dataclass_copy->offsetPosition(complex_offset);
+
+				// Select the Object
+				selector.unadded_data_objects.push_back(dataclass_copy);
+
+				/*
+
 				// Activate Selector
 				selector.active = true;
 
@@ -942,7 +896,7 @@ uint8_t Render::Container::testSelectorOnObject(Object::Object*** object_list, u
 
 				// Store Level of Origin if Originated From Level
 				if (object.parent == nullptr)
-					storeLevelOfOrigin(selector, object.returnPosition(), Render::MOVE_WITH_PARENT::MOVE_ENABLED);
+					storeLevelOfOrigin(selector, object.returnPosition(), &object);
 
 				// If Originated From Group, Remove from Group
 				else if (object.data_object->getParent() != nullptr)
@@ -987,7 +941,9 @@ uint8_t Render::Container::testSelectorOnObject(Object::Object*** object_list, u
 
 					// For All Group Objects, Simply Pop From Current Object
 					//object.data_object->getParent()->getGroup()->createChangePop(object.data_object, MOVE_WITH_PARENT::MOVE_ENABLED);
-					object.data_object->getParent()->getGroup()->createChangePop(object.data_object, Render::MOVE_WITH_PARENT::MOVE_DISSABLED);
+					object.data_object->getParent()->getGroup()->createChangePop(object.data_object, &object);
+
+					glm::vec2 test = object.calculateComplexOffset(false);
 				}
 
 				// Make a Copy of the Data Class
@@ -1004,6 +960,7 @@ uint8_t Render::Container::testSelectorOnObject(Object::Object*** object_list, u
 
 				// Select the Object
 				selector.unadded_data_objects.push_back(dataclass_copy);
+				*/
 			}
 
 			return 2;
@@ -1061,7 +1018,7 @@ inline uint8_t Render::Container::testSelectorOnList(Struct::List<Type>& object_
 				selector.active = true;
 
 				// Store Level of Origin
-				storeLevelOfOrigin(selector, object.returnPosition(), MOVE_WITH_PARENT::MOVE_ENABLED);
+				storeLevelOfOrigin(selector, object.returnPosition(), &object);
 
 				// Remove Object From List
 				object_list.removeObject(object_list.it);
@@ -1124,6 +1081,10 @@ void Render::Container::removeMarkedFromList(Object::Object* marked_object, glm:
 			// Generate the Temp Object
 			Object::TempObject* temp_object = new Object::TempObject(object, new_selected_position, object == marked_object);
 			temp_objects.push_back(temp_object);
+
+			// If This is the Original Object That Was Selected, Add pointer to Original Conditions
+			if (object == marked_object)
+				object->data_object->getLevelEditorFlags().original_conditions->original_object = temp_object;
 
 			// Store Temp Object in Place of Parent, If Object Has a Group
 			if (object->group_object != nullptr)
@@ -1369,4 +1330,38 @@ void Render::Container::clearTemps()
 
 	// Clear Temp Object Vector
 	temp_objects.clear();
+}
+
+int32_t Render::Container::reallocateObjectsArray(int32_t delta_size)
+{
+	// Get the Container Object
+	ObjectContainer& container = getContainer();
+
+	// Allocate a New Array for Objects
+	Object::Object** new_object_array = new Object::Object*[container.total_object_count + delta_size];
+
+	// Move All Active Objects Into New Array. Delete Any Innactive Objects
+	int new_index = 0;
+	for (int i = 0; i < container.total_object_count; i++)
+	{
+		// Add Active Object Into New Array
+		if (container.object_array[i]->active_ptr->active) {
+			new_object_array[new_index] = container.object_array[i];
+			new_index++;
+		}
+
+		// Delete Innactive Objects
+		else
+			delete container.object_array[i];
+	}
+
+	// Delete the Old Array
+	delete[] container.object_array;
+
+	// Store Modified Values in Container
+	container.object_array = new_object_array;
+	container.total_object_count += delta_size;
+
+	// Return the Index to Start Adding Objects Into
+	return new_index;
 }

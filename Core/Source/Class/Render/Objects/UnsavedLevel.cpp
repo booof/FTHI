@@ -105,133 +105,6 @@ void Render::Objects::UnsavedLevel::constructUnmodifiedDataHelper(ObjectsInstanc
 		change_controller->transferObject(object.data_object, object.object_x, object.object_y, 0);
 }
 
-void Render::Objects::UnsavedLevel::buildObjectsLevelHelper(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, ObjectsInstance& instance, glm::vec2& object_offset)
-{
-	// Allocate Memory for Active Array
-	if (instance.data_objects.size())
-		*active_objects = new Object::Active[instance.number_of_loaded_objects];
-	Object::Active* active_array = *active_objects;
-	uint16_t active_index = 0;
-
-	// Generate Objects
-	buildObjectsGeneratorLevel(instance.data_objects, objects, index, physics, entities, active_array, active_index, nullptr, object_offset);
-}
-
-void Render::Objects::UnsavedLevel::buildObjectsGUIHelper(Object::Object** objects, ObjectsInstance& instance)
-{
-	// The Index For Adding Objects Into Buffer
-	uint16_t index = 0;
-
-	// Generate Objects
-	buildObjectsGeneratorGUI(instance.data_objects, objects, index, nullptr, glm::vec2(0.0f, 0.0f));
-}
-
-void Render::Objects::UnsavedLevel::buildObjectsGeneratorLevel(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, Object::Active* active_array, uint16_t& active_index, Object::Object* parent, glm::vec2 position_offset)
-{
-	for (DataClass::Data_Object* data_object : data_object_array)
-	{
-		// Generate Object and Attach Data Object
-		Object::Object* new_object = data_object->generateObject(position_offset);
-		new_object->parent = parent;
-
-		// If Parent != Nullptr, Add to Parent's Children Array
-		if (parent != nullptr)
-		{
-			parent->children[parent->children_size] = new_object;
-			parent->children_size++;
-		}
-
-		// If Move With Parent is Ever Set to False, ReEnable it Here
-		data_object->enableMoveWithParent();
-
-		// Determine How to Store the Object
-		switch (data_object->getObjectIdentifier()[0])
-		{
-
-		// Generate a Physics Objects
-		case (Object::PHYSICS):
-		{
-			physics.appendStatic((Object::Physics::PhysicsBase*)new_object);
-			break;
-		}
-
-		// Generate an Entity
-		case (Object::ENTITY):
-		{
-			entities.appendStatic((Object::Entity::EntityBase*)new_object);
-			break;
-		}
-
-		// Generate Normal, Stationary Object
-		default:
-		{
-			objects[index] = new_object;
-			index++;
-			active_array[active_index] = Object::Active(true, true, glm::i16vec2(level_x, level_y), new_object);
-			new_object->active_ptr = &active_array[active_index];
-			active_index++;
-		}
-
-		}
-
-		// Generate Children, if Applicable
-		UnsavedCollection* group = data_object->getGroup();
-		if (group != nullptr)
-		{
-			// Generate the Children Array in Object
-			new_object->children = new Object::Object*[group->getChildren().size()];
-
-			// Get the Potential Offset of the Object
-			glm::vec2 new_offset = position_offset;
-			if (group->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
-				new_offset = new_object->returnPosition();
-
-			// Recursively Generate Children
-			buildObjectsGeneratorLevel(group->getChildren(), objects, index, physics, entities, active_array, active_index, new_object, new_offset);
-		}
-	}
-}
-
-void Render::Objects::UnsavedLevel::buildObjectsGeneratorGUI(std::vector<DataClass::Data_Object*>& data_object_array, Object::Object** objects, uint16_t& index, Object::Object* parent, glm::vec2 position_offset)
-{
-	for (DataClass::Data_Object* data_object : data_object_array)
-	{
-		// Generate Object and Attach Data Object
-		Object::Object* new_object = data_object->generateObject(position_offset);
-		new_object->parent = parent;
-
-		// If Parent != Nullptr, Add to Parent's Children Array
-		if (parent != nullptr)
-		{
-			parent->children[parent->children_size] = new_object;
-			parent->children_size++;
-		}
-
-		// If Move With Parent is Ever Set to False, ReEnable it Here
-		data_object->enableMoveWithParent();
-
-		// Add Object Into Object Array
-		objects[index] = new_object;
-		index++;
-
-		// Generate Children, if Applicable
-		UnsavedCollection* group = data_object->getGroup();
-		if (group != nullptr)
-		{
-			// Generate the Children Array in Object
-			new_object->children = new Object::Object*[group->getChildren().size()];
-
-			// Get the Potential Offset of the Object
-			glm::vec2 new_offset = position_offset;
-			if (group->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
-				new_offset = new_object->returnPosition();
-
-			// Recursively Generate Children
-			buildObjectsGeneratorGUI(group->getChildren(), objects, index, new_object, new_offset);
-		}
-	}
-}
-
 Shape::Shape* Render::Objects::UnsavedLevel::getShapePointer(Editor::Selector* selector)
 {
 	Shape::Shape* old_shape = static_cast<DataClass::Data_Shape*>(selector->data_objects.at(0))->getShape();
@@ -273,15 +146,15 @@ Shape::Shape* Render::Objects::UnsavedLevel::getShapePointer(Editor::Selector* s
 	return nullptr;
 }
 
-void Render::Objects::UnsavedLevel::addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent)
+void Render::Objects::UnsavedLevel::addWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset)
 {
 	instance_with_changes.data_objects.push_back(data_object);
 	UnsavedCollection* data_group = data_object->getGroup();
 	if (data_group != nullptr)
-		UnsavedGroup::enqueueLevelParent(data_object);
+		UnsavedGroup::enqueueLevelParent(data_object, offset);
 }
 
-void Render::Objects::UnsavedLevel::removeWhileTraversing(DataClass::Data_Object* data_object)
+void Render::Objects::UnsavedLevel::removeWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset)
 {
 	for (int i = 0; i < instance_with_changes.data_objects.size(); i++)
 	{
@@ -404,16 +277,17 @@ void Render::Objects::UnsavedLevel::contructUnmodifiedDataGUI(std::string gui_pa
 	constructUnmodifiedDataHelper(instance_with_changes);
 }
 
-void Render::Objects::UnsavedLevel::buildObjectsLevel(Object::Object** objects, uint16_t& index, Struct::List<Object::Physics::PhysicsBase>& physics, Struct::List<Object::Entity::EntityBase>& entities, glm::vec2& object_offset)
+void Render::Objects::UnsavedLevel::buildObjects(uint16_t& index, glm::vec2& object_offset)
 {
-	// Construct Objects
-	buildObjectsLevelHelper(objects, index, physics, entities, instance_with_changes, object_offset);
-}
+	// Allocate Memory for Active Array
+	if (instance_with_changes.data_objects.size())
+		*active_objects = new Object::Active[instance_with_changes.number_of_loaded_objects];
+	Object::Active* active_array = *active_objects;
+	active_size = instance_with_changes.number_of_loaded_objects;
+	uint16_t active_index = 0;
 
-void Render::Objects::UnsavedLevel::buildObjectsGUI(Object::Object** objects)
-{
-	// Construct Objects
-	buildObjectsGUIHelper(objects, instance_with_changes);
+	// Generate the Objects in the Container
+	change_controller->getCurrentContainer()->buildObjectsGenerator(instance_with_changes.data_objects, index, nullptr, object_offset, active_index, *this);
 }
 
 uint16_t Render::Objects::UnsavedLevel::returnObjectHeader()
@@ -475,6 +349,66 @@ void Render::Objects::UnsavedLevel::updateModelMatrix()
 
 	// Update Model Matrix
 	model = glm::translate(glm::mat4(1.0f), glm::vec3(object_pos.x, object_pos.y, 0.0f));
+}
+
+int16_t Render::Objects::UnsavedLevel::reallocateActivesList(int16_t delta_size)
+{
+	//return active_size;
+
+	//std::cout << " level: " << level_x << " " << level_y << "   size: " << active_size << "   delta: " << delta_size << "\n";
+
+	// Get Active Array
+	Object::Active* active_array = *active_objects;
+
+	//for (int i = 0; i < active_size; i++)
+	//	std::cout << "   active " << i << ": " << active_array[i].active << " " << active_array[i].alive << " " << active_array[i].object_ptr << "\n";
+
+	// Store Backup of Number of Objects
+	int16_t old_active_count = active_size;
+
+	// Update the New Size of the Actives Array
+	active_size += delta_size;
+	instance_with_changes.number_of_loaded_objects = active_size;
+
+	// Allocate New Array for Active Objects
+	Object::Active* new_active_array = new Object::Active[active_size];
+
+	// Copy Old Objects Into New Array, Ignore Inactive Objects
+	int last_active_index = 0;
+	for (int i = 0; i < old_active_count; i++)
+	{
+		// Add Active Object Into New Array
+		if (active_array[i].active) {
+			new_active_array[last_active_index] = active_array[i];
+			new_active_array[last_active_index].object_ptr->active_ptr = &new_active_array[last_active_index];
+			last_active_index++;
+		}
+	}
+
+	// Add in Temp Null Data for New Objects, if They Exist
+	for (int i = last_active_index; i < active_size; i++)
+		new_active_array[i] = Object::Active{ 0 };
+
+	// Delete the Old Active Array
+	delete[] active_array;
+
+	// Store New Active Array
+	*active_objects = new_active_array;
+
+	// Return the Index to Start Adding Objects Into
+	//return old_active_count;
+	return last_active_index;
+}
+
+void Render::Objects::UnsavedLevel::addToActivesList(Object::Object* new_object, uint16_t& active_index)
+{
+	Object::Active* active_array = *active_objects;
+	active_array[active_index] = Object::Active(true, true, glm::i16vec2(level_x, level_y), new_object);
+	new_object->active_ptr = &active_array[active_index];
+	active_index++;
+
+	if (level_x == 0 && level_y == 0)
+		std::cout << "adding to actives: " << active_index << " " << active_size << "\n";
 }
 
 void Render::Objects::UnsavedLevel::write(bool& save)

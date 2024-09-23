@@ -61,11 +61,17 @@ namespace Render::Objects
 
 		private:
 
+			// Structure for Holding Both Parent and Their Offset Override
+			struct QueuedParent {
+				glm::vec2 offset = glm::vec2(0.0f, 0.0f);
+				DataClass::Data_Object* parent;
+			};
+
 			// Constant Size for Parents Array
 			#define PARENTS_ARRAY_SIZE 10
 
 			// Array for Parents 
-			DataClass::Data_Object* parents_array[PARENTS_ARRAY_SIZE];
+			QueuedParent parents_array[PARENTS_ARRAY_SIZE];
 
 			// The Number of Parents Queued
 			uint8_t queue_amount = 0;
@@ -73,7 +79,7 @@ namespace Render::Objects
 		public:
 
 			// Enqueue a Parent to the Queue
-			void enqueueParent(DataClass::Data_Object* parent);
+			void enqueueParent(DataClass::Data_Object* parent, glm::vec2 offset_override);
 
 			// Perform Move Operations on Queued Parents
 			void moveParents();
@@ -92,10 +98,10 @@ namespace Render::Objects
 		void setChildLayer(DataClass::Data_Object* data_object, int8_t new_layer);
 
 		// Function to Add Objects While Transversing
-		void addWhileTraversing(DataClass::Data_Object* data_object, MOVE_WITH_PARENT move_with_parent);
+		void addWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset);
 
 		// Function to Remove Objects While Traversing
-		void removeWhileTraversing(DataClass::Data_Object* data_object);
+		void removeWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset);
 
 		// Function to Perform Object-Specific Changes After an Undo/Redo
 		void updatePostTraverse();
@@ -123,13 +129,19 @@ namespace Render::Objects
 		void updateParentofChildren();
 
 		// Set Parent Object
-		void setParent(DataClass::Data_Object* new_parent, MOVE_WITH_PARENT move);
+		void setParent(DataClass::Data_Object* new_parent);
+
+		// Set Parent During a Redo/Undo
+		void setParentTraverseChange(DataClass::Data_Object* new_parent, glm::vec2 offset);
+
+		// Set Parent During a Redo/Undo Without Moving Children
+		void setParentTraverseChangeNoMove(DataClass::Data_Object* new_parent);
 
 		// Get the Parent Object
 		DataClass::Data_Object* getParent();
 
 		// Add Parent From Level to Parent Queue
-		static void enqueueLevelParent(DataClass::Data_Object* data_object);
+		static void enqueueLevelParent(DataClass::Data_Object* data_object, glm::vec2 offset_override);
 
 		// Finalize Movement With Parent
 		static void finalizeParentMovement();

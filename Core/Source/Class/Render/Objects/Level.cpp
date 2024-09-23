@@ -70,7 +70,8 @@ int8_t Render::Objects::Level::getIndexFromLevel(glm::i16vec2 level_coords)
 
 	// Get the Coords From the Top-Left Corner
 	uint8_t top_left_x = level_coords.x - level_position.x - level_coord_offset;
-	uint8_t top_left_y = level_coords.y - level_position.y - level_coord_offset;
+	uint8_t top_left_y = level_coords.y - level_position.y + level_coord_offset;
+	//uint8_t top_left_y = level_coords.y - level_position.y - level_coord_offset;
 
 	// Get the Index From the Level Coord
 	return (uint8_t)(top_left_y * level_diameter + top_left_x);
@@ -92,7 +93,8 @@ glm::i16vec2 Render::Objects::Level::getLevelFromIndex(int8_t index)
 
 	// Get the 2-D Index Positions Relative to the Top Left Corner 
 	int8_t index_x = index % level_diameter;
-	int8_t index_y = floor((index - index_x) / level_diameter);
+	//int8_t index_y = floor((index - index_x) / level_diameter);
+	int8_t index_y = scene_data.render_distance - floor((index - index_x) / level_diameter);
 
 	// Get the Level Coords From the Indicies
 	coords.x = level_position.x + index_x + level_coord_offset;
@@ -175,6 +177,11 @@ void Render::Objects::Level::unwrapObjectPos(glm::vec2& pos)
 		pos.y += scene_size.y;
 }
 
+Render::ObjectContainer& Render::Objects::Level::getContainer()
+{
+	return container;
+}
+
 void Render::Objects::Level::testReload()
 {
 	// Get Level Coordinates of Camera
@@ -196,7 +203,7 @@ void Render::Objects::Level::testReload()
 		for (int i = 0; i < 9; i++)
 		{
 			if (!sublevels[i].initialized)
-				sublevels[i].readLevel(container.object_array, index, container.physics_list, container.entity_list);
+				sublevels[i].readLevel(index);
 		}
 
 		// Load the Objects
@@ -233,6 +240,10 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 
 		// Reset Entities
 		container.entity_list.erase();
+
+		// Remove Active Object Pointer for Every Object to Prevent Active Arrays from Being Accessed After Being Freed
+		for (int i = 0; i < container.total_object_count; i++)
+			container.object_array[i]->active_ptr = nullptr;
 
 		// Create New Objects
 		int iterater = 0;
@@ -465,6 +476,10 @@ void Render::Objects::Level::reloadLevels(glm::i16vec2& level_old, glm::i16vec2&
 	std::cout << "\n";
 #endif
 
+	// Update the Active Pointers for Each Sub Object That Was Moved
+	for (int i = 0; i < 9; i++)
+		sublevels[i].reloadActivePointer();
+
 	// Reallocate Memory of Pointers
 	reallocatePostReload(total_object_count_old);
 
@@ -562,6 +577,8 @@ void Render::Objects::Level::reallocatePostReload(uint32_t old_object_count)
 
 void Render::Objects::Level::reallocateAll(bool del, uint32_t size)
 {
+	Render::Objects::ChangeController* cc = change_controller;
+
 	// Test if Memory Has Previously Been Allocated
 	if (del)
 	{
@@ -821,7 +838,7 @@ Render::Objects::Level::Level(std::string& level_path, float initial_x, float in
 	uint16_t index2 = 0;
 	uint16_t index3 = 0;
 	for (int i = 0; i < level_count; i++)
-		sublevels[i].readLevel(container.object_array, index1, container.physics_list, container.entity_list);
+		sublevels[i].readLevel(index1);
 
 	loadObjects();
 }
@@ -910,6 +927,15 @@ void Render::Objects::Level::updateContainer()
 
 void Render::Objects::Level::drawContainer()
 {
+	// Test, Delete Later
+	for (int i = 0; i < container.total_object_count; i++) {
+		const int TEST_INDEX = 10;
+		if (container.object_array[i]->data_object->getObjectIndex() == TEST_INDEX) {
+			//std::cout << TEST_INDEX << ":  " << container.object_array[i]->data_object->getParent() << "   " << container.object_array[i]->parent << "\n";
+			//std::cout << TEST_INDEX << ":  " << container.object_array[i]->data_object->getPosition().x << "   " << container.object_array[i]->data_object->getPosition().y << "\n";
+		}
+	}
+
 	// If Framebuffer Resize, Remake Projection
 	if (Global::framebufferResize || Global::zoom || true)
 	{
@@ -1248,6 +1274,122 @@ void Render::Objects::Level::segregateObjects()
 
 #ifdef EDITOR
 
+void Render::Objects::Level::genObjectIntoContainer(DataClass::Data_Object* new_object, Object::Object* real_parent, uint16_t& index, int16_t delta_size)
+{
+	// Get the Current Complex Offset of the New Object From Parent
+	glm::vec2 complex_offset = glm::vec2(0.0f, 0.0f);
+	if (real_parent != nullptr) {
+		complex_offset = real_parent->calculateComplexOffset(false);
+		if (real_parent != nullptr && real_parent->group_object->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
+			complex_offset += real_parent->data_object->getPosition();
+	}
+
+	// Also get the Position of the Root Parent, or The Current Position of Data Object, If There is No Parent
+	glm::vec2 root_position = new_object->getPosition();
+	Object::Object* root_parent = real_parent;
+	while (root_parent != nullptr) {
+		root_position = *root_parent->pointerToPosition();
+		root_parent = root_parent->parent;
+	}
+
+	// Determine the Unsaved Level of the Root Parent to Store Active Objects in
+	glm::i16vec2 level_pos = glm::i16vec2(0, 0);
+	updateLevelPos(root_position, level_pos);
+	UnsavedLevel* unsaved_level = change_controller->getUnsavedLevel(level_pos.x, level_pos.y, 0);
+
+	// TODO: Change Delta Size so Any Inactive Objects Are Removed At the Sime Time the Array is Reallocated
+
+	// Reallocate Actives Array in Unsaved Level
+	uint16_t active_index = unsaved_level->reallocateActivesList(delta_size);
+
+	// Reallocate Parent's Children Array
+	if (real_parent != nullptr)
+		real_parent->children = new Object::Object*[1];
+
+	// Generate Objects Into Container
+	std::vector<DataClass::Data_Object*> temp_vector = { new_object };
+	buildObjectsGenerator(temp_vector, index, real_parent, complex_offset, active_index, *unsaved_level);
+}
+
+void Render::Objects::Level::buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, uint16_t& index, Object::Object* parent, glm::vec2 position_offset, uint16_t& active_index, UnsavedLevel& unsaved_level)
+{
+	for (DataClass::Data_Object* data_object : data_object_array)
+	{
+		// TODO: If Object is Currently Selected, Generate a Temp Object, Not a Real Object
+
+		// Generate Object and Attach Data Object
+		Object::Object*  new_object = data_object->generateObject(position_offset);
+		new_object->parent = parent;
+
+		// If Parent != Nullptr, Add to Parent's Children Array
+		if (parent != nullptr)
+		{
+			parent->children[parent->children_size] = new_object;
+			parent->children_size++;
+		}
+
+		// Normally, Add Object Into Container
+		if (data_object->getLevelEditorFlags().original_conditions == nullptr || !(
+			(data_object->getLevelEditorFlags().original_conditions->append_change == nullptr) ^ 
+			(data_object->getLevelEditorFlags().original_conditions->pop_change == nullptr)))
+		{
+			// Determine How to Store the Object
+			switch (data_object->getObjectIdentifier()[0])
+			{
+
+				// Generate a Physics Objects
+			case (Object::PHYSICS):
+			{
+				container.physics_list.appendStatic((Object::Physics::PhysicsBase*)new_object);
+				break;
+			}
+
+			// Generate an Entity
+			case (Object::ENTITY):
+			{
+				container.entity_list.appendStatic((Object::Entity::EntityBase*)new_object);
+				break;
+			}
+
+			// Generate Normal, Stationary Object
+			default:
+			{
+				container.object_array[index] = new_object;
+				index++;
+				unsaved_level.addToActivesList(new_object, active_index);
+			}
+
+			}
+		}
+		
+		// If Object is Being Edited, Make a Temp Object
+		else
+		{
+			unsaved_level.addToActivesList(new_object, active_index);
+			Object::Object* temp_object = new Object::TempObject(new_object, &data_object->getPosition(), false);
+			temp_objects.push_back(static_cast<Object::TempObject*>(temp_object));
+			delete new_object;
+			new_object = temp_object;
+		}
+
+		// Generate Children, if Applicable
+		UnsavedCollection* group = data_object->getGroup();
+		if (group != nullptr)
+		{
+			// Generate the Children Array in Object
+			new_object->children = new Object::Object * [group->getChildren().size()];
+
+			// Get the Potential Offset of the Object
+			glm::vec2 new_offset = position_offset;
+			if (group->getCollectionType() == UNSAVED_COLLECTIONS::COMPLEX)
+				new_offset = new_object->returnPosition();
+
+			// Recursively Generate Children
+			buildObjectsGenerator(group->getChildren(), index, new_object, new_offset, active_index, unsaved_level);
+		}
+	}
+}
+
 uint8_t Render::Objects::Level::testSelector(Editor::Selector& selector, Editor::ObjectInfo& object_info)
 {
 	// If Mouse Moved, Reset Object Pass Over Flag
@@ -1444,10 +1586,14 @@ void Render::Objects::Level::reloadAll()
 	uint16_t index2 = 0;
 	uint16_t index3 = 0;
 	for (int i = 0; i < 9; i++)
-		sublevels[i].readLevel(container.object_array, index1, container.physics_list, container.entity_list);
+		sublevels[i].readLevel(index1);
 
 	// Load the Objects
 	loadObjects();
+
+	//std::cout << "Reloaded Actives: \n";
+	//for (int i = 0; i < 9; i++)
+	//	std::cout << "   " << sublevels[i].level_x << " " << sublevels[i].level_y << "   " << sublevels[i].number_of_loaded_objects << "\n";
 }
 
 void Render::Objects::Level::incorperatNewObjects(Object::Object** new_objects, int new_objects_size)
@@ -1479,8 +1625,9 @@ void Render::Objects::Level::setActives(Object::Object** new_objects, int new_ob
 	}
 
 	// Update the Sublevel Active Pointers
-	for (int i = 0; i < 9; i++)
+	for (int i = 0; i < 9; i++) {
 		sublevels[i].includeNewActives(new_actives, new_objects_size, this);
+	}
 
 	// Delete the Temp Active Array
 	delete[] new_actives;
@@ -1492,7 +1639,7 @@ glm::mat4 Render::Objects::Level::returnProjectionViewMatrix(uint8_t layer)
 	return projection[layer] * camera->view;
 }
 
-void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, MOVE_WITH_PARENT disable_move)
+void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, Object::Object* real_object)
 {
 	// Get Level Coords of Object
 	glm::i16vec2 coords;
@@ -1503,7 +1650,7 @@ void Render::Objects::Level::storeLevelOfOrigin(Editor::Selector& selector, glm:
 	selector.level_of_origin = test;
 
 	// Remove Object from Unsaved Level
-	selector.level_of_origin->createChangePop(selector.highlighted_object, disable_move);
+	selector.level_of_origin->createChangePop(selector.highlighted_object, real_object);
 
 	// Set Originated From Level Flag to True
 	selector.originated_from_level = true;

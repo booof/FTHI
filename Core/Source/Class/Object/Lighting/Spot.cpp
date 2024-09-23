@@ -181,6 +181,12 @@ void DataClass::Data_Spot::readObjectData(std::ifstream& object_file)
 	object_file.read((char*)&light_data, sizeof(Object::Light::LightData));
 }
 
+void DataClass::Data_Spot::updateTraveresPositionHelper(float deltaX, float deltaY)
+{
+	light_data.position.x += deltaX;
+	light_data.position.y += deltaY;
+}
+
 DataClass::Data_Spot::Data_Spot(uint8_t children_size)
 {
 	// Set Object Identifier
@@ -204,13 +210,6 @@ void DataClass::Data_Spot::info(Editor::ObjectInfo& object_info)
 DataClass::Data_Object* DataClass::Data_Spot::makeCopy()
 {
 	return new Data_Spot(*this);
-}
-
-void DataClass::Data_Spot::updateSelectedPosition(float deltaX, float deltaY, bool update_real)
-{
-	light_data.position.x += deltaX;
-	light_data.position.y += deltaY;
-	updateSelectedPositionsHelper(deltaX, deltaY, update_real);
 }
 
 Object::Light::Spot::SpotData& DataClass::Data_Spot::getSpotData()

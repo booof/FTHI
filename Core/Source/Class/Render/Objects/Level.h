@@ -154,6 +154,9 @@ namespace Render::Objects
 		// The Object Container
 		ObjectContainer_Level container;
 
+		// Only to be Used When Reallocating Objects Array
+		ObjectContainer& getContainer();
+
 		// Test if SubLevels Should be Reloaded
 		void testReload();
 
@@ -233,6 +236,12 @@ namespace Render::Objects
 
 #ifdef EDITOR
 
+		// Add Object and Decendants Into Container
+		void genObjectIntoContainer(DataClass::Data_Object* new_object, Object::Object* real_parent, uint16_t& index, int16_t delta_size);
+
+		// Generate Objects Into This Container
+		void buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, uint16_t& index, Object::Object* parent, glm::vec2 position_offset, uint16_t& active_index, UnsavedLevel& unsaved_level);
+
 		// Test Selector Object
 		uint8_t testSelector(Editor::Selector& selector, Editor::ObjectInfo& object_info);
 
@@ -268,7 +277,7 @@ namespace Render::Objects
 		glm::mat4 returnProjectionViewMatrix(uint8_t layer);
 
 		// Store Level of Origin
-		void storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, MOVE_WITH_PARENT disable_move);
+		void storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, Object::Object* real_object);
 
 		// Return Size of Directional Light Buffer
 		GLuint returnDirectionalBufferSize();

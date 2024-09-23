@@ -43,6 +43,9 @@ namespace Render::Objects
 		// Determines What the Collection Type is
 		virtual UNSAVED_COLLECTIONS getCollectionType() = 0;
 
+		// Set Parent During a Redo/Undo Without Moving Children
+		virtual void setParentTraverseChangeNoMove(DataClass::Data_Object* new_parent) = 0;
+
 		// Test if Object Is Not Added to a Higher Parent
 		static bool preventCircularGroups(DataClass::Data_Object* parent, DataClass::Data_Object* test_child);
 	};

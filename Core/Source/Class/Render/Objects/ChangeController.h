@@ -31,6 +31,11 @@ namespace Render
 	class Container;
 }
 
+namespace Object
+{
+	class TempObject;
+}
+
 namespace Render::Objects
 {
 	class UnsavedBase;
@@ -63,6 +68,16 @@ namespace Render::Objects
 			glm::vec2 camera_pos;
 		};
 
+		// Structure for Modified Selected Positions
+		struct ModifiedSelectedPos
+		{
+			// The New Selected Position
+			glm::vec2 new_selected_position = glm::vec2(0.0f, 0.0f);
+
+			// The Temp Object This Data Belongs To
+			Object::TempObject* temp_object = nullptr;
+		};
+
 		// The Master Stack
 		class MasterStack
 		{
@@ -89,6 +104,9 @@ namespace Render::Objects
 
 			// Delete an Instance
 			void deleteInstance(uint8_t index);
+
+			// Perform a Traversal
+			void performTraversal(bool backward);
 
 		public:
 
@@ -144,6 +162,12 @@ namespace Render::Objects
 		// Vector of Saved Unsaved Levels
 		std::vector<SavedIdentifier> saved_levels;
 
+		// The List of Modified Selected Positions of Temp Objects
+		ModifiedSelectedPos* modified_selected_positions = nullptr;
+
+		// The Number of Modified Selected Position
+		uint16_t modified_selected_position_count = 0;
+
 		// Initialize Object
 		ChangeController() {}
 
@@ -152,6 +176,15 @@ namespace Render::Objects
 
 		// Add Data Object to Unsaved
 		void addToUnsaved(DataClass::Data_Object* data_object);
+
+		// Modifiy the Selected Position of Currently Deselected Objects
+		void modifySelectedPositions(DataClass::Data_Object* deselected_object, Editor::Selector* selector);
+
+		// Add Objects Into Selected Positions List
+		void addTempsToSelectedPositionList(ModifiedSelectedPos* list, DataClass::Data_Object* deselected_object, Editor::Selector* selector, uint16_t offset);
+
+		// Add a Single Object Into Selected Positions List
+		void addTempToSelectedPositionList(ModifiedSelectedPos* list, DataClass::Data_Object* object, uint16_t& offset);
 
 	public:
 

@@ -142,15 +142,6 @@ namespace Render
 		GUI
 	};
 
-	// The Modes That Can Occour When Moving Child Objects
-	enum MOVE_WITH_PARENT : uint8_t
-	{
-		MOVE_ENABLED = 0,
-		MOVE_DISSABLED,
-		MOVE_SECONDARY_ONLY,
-		MOVE_SECONDARY_ONLY_NO_OFFSET
-	};
-
 	// Container for Currently Loaded Objects
 	// TODO: Make Subclasses For This Class For Both GUIs and Levels
 	struct ObjectContainer
@@ -198,6 +189,9 @@ namespace Render
 
 		// Function to Finish Initializing Any Container Object
 		void initContainer();
+
+		// Only to be Used When Reallocating Objects Array
+		virtual ObjectContainer& getContainer() = 0;
 
 		// Reload the Terrain Objects of Container
 		virtual void constructTerrain() = 0;
@@ -283,7 +277,7 @@ namespace Render
 		bool searchObjectIndicies(uint32_t* indicies, int left, int right, uint32_t test_value);
 
 		// Store Level of Origin
-		virtual void storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, Render::MOVE_WITH_PARENT disable_move) = 0;
+		virtual void storeLevelOfOrigin(Editor::Selector& selector, glm::vec2 position, Object::Object* real_object) = 0;
 
 	public:
 
@@ -314,6 +308,12 @@ namespace Render
 		// Reload All Objects in Container
 		virtual void reloadAll() = 0;
 
+		// Add Object and Decendants Into Container
+		virtual void genObjectIntoContainer(DataClass::Data_Object* new_object, Object::Object* real_parent, uint16_t& index, int16_t delta_size) = 0;
+
+		// Generate Objects Into This Container
+		virtual void buildObjectsGenerator(std::vector<DataClass::Data_Object*>& data_object_array, uint16_t& index, Object::Object* parent, glm::vec2 position_offset, uint16_t& active_index, Objects::UnsavedLevel& unsaved_level) = 0;
+
 		// The Function to Select Objects in a Given Container
 		virtual uint8_t testSelector(Editor::Selector& selector, Editor::ObjectInfo& object_info) = 0;
 
@@ -328,6 +328,9 @@ namespace Render
 
 		// Get the Level Size
 		virtual void getSublevelSize(glm::vec2& sizes) = 0;
+
+		// Reallocate the Objects Array to Accomidate Objects Returned to From Editing
+		int32_t reallocateObjectsArray(int32_t delta_size);
 	};
 
 }

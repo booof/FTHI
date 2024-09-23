@@ -10,23 +10,20 @@ void Render::Objects::UnsavedGroup::setChildLayer(DataClass::Data_Object* data_o
 		data_group->recursiveSetGroupLayer(new_layer + 1);
 }
 
-void Render::Objects::UnsavedGroup::addWhileTraversing(DataClass::Data_Object* data_object,  MOVE_WITH_PARENT move_with_parent)
+void Render::Objects::UnsavedGroup::addWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset)
 {
 	// Add Object To Change List
 	instance_with_changes.data_objects.push_back(data_object);
 
-	// Determine if Object Should Move With Parent
-	data_object->disableMoveWithParent(move_with_parent);
-
 	UnsavedCollection* data_group = data_object->getGroup();
 	if (data_group != nullptr)
-		parent_queue.enqueueParent(data_object);
+		parent_queue.enqueueParent(data_object, offset);
 
 	// Set Group Layer
 	setChildLayer(data_object, parent_pointer->getGroupLayer() + 1);
 }
 
-void Render::Objects::UnsavedGroup::removeWhileTraversing(DataClass::Data_Object* data_object)
+void Render::Objects::UnsavedGroup::removeWhileTraversing(DataClass::Data_Object* data_object, glm::vec2 offset)
 {
 	// Remove Object From Change List
 	for (int i = 0; i < instance_with_changes.data_objects.size(); i++)
@@ -118,41 +115,47 @@ void Render::Objects::UnsavedGroup::updateParentofChildren()
 		child->setParent(parent_pointer);
 }
 
-void Render::Objects::UnsavedGroup::setParent(DataClass::Data_Object* new_parent, MOVE_WITH_PARENT move)
+void Render::Objects::UnsavedGroup::setParent(DataClass::Data_Object* new_parent)
 {
-	// Move Objects If Enabled
-	if (move == MOVE_WITH_PARENT::MOVE_ENABLED && parent_pointer != nullptr)
+	// Apply the Offset Override for the New Parent
+	//new_parent->getPosition() -= offset_override;
+
+	// If Already Has a Parent, Move Children
+	if (parent_pointer != nullptr)
 	{
 		// Determine How Much to Move Children
 		glm::vec2 delta_pos = new_parent->getPosition() - parent_pointer->getPosition();
+
+		//std::cout << "parent delta pos: " << delta_pos.x << " " << delta_pos.y << "   override: " << offset_override.x << " " << offset_override.y << "   parent offset: " << new_parent->getPosition().x - parent_pointer->getPosition().x << " " << new_parent->getPosition().y - parent_pointer->getPosition().y <<  "\n";
+
+		// Move Objects
+		//for (DataClass::Data_Object* child : instance_with_changes.data_objects)
+		//	child->updateSelectedPosition(delta_pos.x, delta_pos.y, true);
 		for (DataClass::Data_Object* child : instance_with_changes.data_objects)
-		{
-			// Move Child Based on Its Move Condition
-			switch (child->getMoveWithParent())
-			{
-			case MOVE_WITH_PARENT::MOVE_DISSABLED: child->enableMoveWithParent(); break;
-			case MOVE_WITH_PARENT::MOVE_ENABLED: child->updateSelectedPosition(delta_pos.x, delta_pos.y, true); break;
-			case MOVE_WITH_PARENT::MOVE_SECONDARY_ONLY: child->offsetOppositePosition(delta_pos); break;
-			case MOVE_WITH_PARENT::MOVE_SECONDARY_ONLY_NO_OFFSET:
-			{
-				// Need to Remove Any Offset From Complex Objects
-				DataClass::Data_Object* root_parent = parent_pointer->getParent();
-				glm::vec2 new_delta_pos = delta_pos;
-				while (root_parent != nullptr)
-				{
-					if (root_parent->getGroup()->getCollectionType() == Render::Objects::UNSAVED_COLLECTIONS::COMPLEX)
-					{
-						new_delta_pos += root_parent->getPosition();
-						break;
-					}
-					root_parent = root_parent->getParent();
-				}
-				child->offsetOppositePosition(new_delta_pos);
-			}
-			}
-		}
+			child->updateTraversePosition(delta_pos.x, delta_pos.y);
 	}
 
+	// Set the Parent Pointer to be the New Parent
+	parent_pointer = new_parent;
+
+	// Force an Update of Parent for Each Child
+	updateParentofChildren();
+}
+
+void Render::Objects::UnsavedGroup::setParentTraverseChange(DataClass::Data_Object* new_parent, glm::vec2 offset)
+{
+	std::cout << "setting parent: " << new_parent << "   at offset: " << offset.x << " " << offset.y << "\n";
+
+	// Apply Offset for Each Child
+	for (DataClass::Data_Object* child : instance_with_changes.data_objects)
+		child->updateTraversePosition(offset.x, offset.y);
+
+	// Set Parent for Children
+	setParentTraverseChangeNoMove(new_parent);
+}
+
+void Render::Objects::UnsavedGroup::setParentTraverseChangeNoMove(DataClass::Data_Object* new_parent)
+{
 	// Set the Parent Pointer to be the New Parent
 	parent_pointer = new_parent;
 
@@ -165,9 +168,9 @@ DataClass::Data_Object* Render::Objects::UnsavedGroup::getParent()
 	return parent_pointer;
 }
 
-void Render::Objects::UnsavedGroup::enqueueLevelParent(DataClass::Data_Object* data_object)
+void Render::Objects::UnsavedGroup::enqueueLevelParent(DataClass::Data_Object* data_object, glm::vec2 offset_override)
 {
-	parent_queue.enqueueParent(data_object);
+	parent_queue.enqueueParent(data_object, offset_override);
 }
 
 void Render::Objects::UnsavedGroup::finalizeParentMovement()
@@ -180,14 +183,14 @@ Render::Objects::UNSAVED_COLLECTIONS Render::Objects::UnsavedGroup::getCollectio
 	return UNSAVED_COLLECTIONS::GROUP;
 }
 
-void Render::Objects::UnsavedGroup::ParentQueue::enqueueParent(DataClass::Data_Object* parent)
+void Render::Objects::UnsavedGroup::ParentQueue::enqueueParent(DataClass::Data_Object* parent, glm::vec2 offset_override)
 {
 	// Test if Queue is Full. If So, Throw Error
 	if (queue_amount == PARENTS_ARRAY_SIZE)
 		throw "y";
 
 	// Add Parent to Queue
-	parents_array[queue_amount] = parent;
+	parents_array[queue_amount] = QueuedParent(offset_override, parent);
 
 	// Increment Array Size
 	queue_amount++;
@@ -195,23 +198,34 @@ void Render::Objects::UnsavedGroup::ParentQueue::enqueueParent(DataClass::Data_O
 
 void Render::Objects::UnsavedGroup::ParentQueue::moveParents()
 {
+	// TODO: Rebase This Static Class Into Unsaved Collection as It Uses Both Groups and Complex Objects
+
 	// For Each Parent, Perform Move Operation on Children
 	for (int i = 0; i < queue_amount; i++)
 	{
-		// Get Parent
-		DataClass::Data_Object* parent = parents_array[i];
+		// Get Parent and its Group
+		QueuedParent& current_parent_holder = parents_array[i];
+		DataClass::Data_Object* parent = current_parent_holder.parent;
+		UnsavedCollection* parent_group = static_cast<UnsavedGroup*>(parent->getGroup());
 
-		// Get Group Object
+		// If Parent is a Normal Group Object, Set Parent of Children and Apply Position Offsets
 		if (parent->getGroup()->getCollectionType() == UNSAVED_COLLECTIONS::GROUP)
 		{
-			UnsavedGroup* parent_group = static_cast<UnsavedGroup*>(parent->getGroup());
-
 			// Set New Parent for Group
-			parent_group->setParent(parent, MOVE_WITH_PARENT::MOVE_ENABLED);
+			static_cast<UnsavedGroup*>(parent_group)->setParentTraverseChange(parent, current_parent_holder.offset);
 
-			// Recursively Set Group Layer
-			parent_group->recursiveSetGroupLayer(parent->getGroupLayer() + 1);
 		}
+
+		// If Parent is a Complex Group Object, Set Parent Without Applying Position Offsets
+		else
+		{
+			// Set New Parent for Complex Group
+			parent_group->setParentTraverseChangeNoMove(parent);
+		}
+
+		// Recalculate the Group Layer for all Decendants
+		parent_group->recursiveSetGroupLayer(parent->getGroupLayer() + 1);
+
 	}
 
 	// Set Queue Size to 0
